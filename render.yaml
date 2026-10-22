@@ -14,7 +14,6 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
     autoDeployTrigger: commit
-    maxShutdownDelaySeconds: 60
     envVars:
       - key: SERVER_PORT
         value: "10000"
