@@ -2,7 +2,7 @@ services:
   - type: keyvalue
     name: evolution-redis
     plan: free
-    region: virginia
+    region: ohio
     ipAllowList: []
     maxmemoryPolicy: allkeys-lru
 
@@ -10,7 +10,7 @@ services:
     name: evolution-api
     runtime: docker
     plan: 0.5c-512mb
-    region: virginia
+    region: ohio
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
     autoDeployTrigger: commit
