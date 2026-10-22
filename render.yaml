@@ -74,3 +74,17 @@ services:
         value: "30"
       - key: LANGUAGE
         value: pt-BR
+      - key: TYPEBOT_ENABLED
+        value: "true"
+      - key: CHATWOOT_ENABLED
+        value: "true"
+      - key: OPENAI_ENABLED
+        value: "true"
+      - key: DIFY_ENABLED
+        value: "true"
+      - key: N8N_ENABLED
+        value: "true"
+      - key: EVOAI_ENABLED
+        value: "true"
+      - key: FLOWISE_ENABLED
+        value: "true"
