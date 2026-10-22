@@ -9,7 +9,7 @@ services:
   - type: web
     name: evolution-api
     runtime: docker
-    plan: 0.5c-512mb
+    plan: free
     region: ohio
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
@@ -56,7 +56,7 @@ services:
       - key: CACHE_LOCAL_ENABLED
         value: "false"
       - key: AUTHENTICATION_API_KEY
-        generateValue: true
+        value: "10092004@Matheus"
       - key: AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES
         value: "false"
       - key: TELEMETRY_ENABLED
