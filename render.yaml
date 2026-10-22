@@ -1,26 +1,16 @@
-databases:
-  - name: evolution-db
-    databaseName: evolution
-    user: evolution
-    plan: 0.5c-1g
-    region: oregon
-    postgresMajorVersion: "16"
-    ipAllowList: []
-
 services:
   - type: keyvalue
     name: evolution-redis
-    plan: 256mb
-    region: oregon
+    plan: free
+    region: virginia
     ipAllowList: []
-    maxmemoryPolicy: noeviction
-    persistenceMode: journal-snapshot
+    maxmemoryPolicy: allkeys-lru
 
   - type: web
     name: evolution-api
     runtime: docker
-    plan: 1c-2g
-    region: oregon
+    plan: 0.5c-512mb
+    region: virginia
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
     autoDeployTrigger: commit
@@ -31,9 +21,7 @@ services:
       - key: DATABASE_PROVIDER
         value: postgresql
       - key: DATABASE_CONNECTION_URI
-        fromDatabase:
-          name: evolution-db
-          property: connectionString
+        sync: false
       - key: DATABASE_CONNECTION_CLIENT_NAME
         value: evolution
       - key: DATABASE_SAVE_DATA_INSTANCE
