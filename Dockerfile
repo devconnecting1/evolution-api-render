@@ -13,6 +13,10 @@ COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY ./tsup.config.ts ./
 
+RUN git config --global url."https://github.com/".insteadOf "ssh://git@github.com/" && \
+    git config --global --add url."https://github.com/".insteadOf "git@github.com:" && \
+    npm config set allow-git all
+
 RUN npm ci --silent
 
 COPY ./src ./src
@@ -57,4 +61,4 @@ ENV DOCKER_ENV=true
 
 EXPOSE 8080
 
-ENTRYPOINT ["/bin/bash", "-c", ". ./Docker/scripts/deploy_database.sh && npm run start:prod" ]
+ENTRYPOINT ["/bin/bash", "-c", ". ./Docker/scripts/deploy_database.sh && if [ -z \"$SERVER_URL\" ] && [ -n \"$RENDER_EXTERNAL_URL\" ]; then export SERVER_URL=\"$RENDER_EXTERNAL_URL\"; fi && npm run start:prod" ]
