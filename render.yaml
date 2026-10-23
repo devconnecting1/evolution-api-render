@@ -99,7 +99,7 @@ services:
       - key: RENDER_OWNER_ID
         sync: false
       - key: RENDER_SERVICE_IDS
-        sync: false
+        value: "srv-dbd9qqi9lscs73aoe85g,red-dbd9qp29lscs73aoe2s0"
       - key: VERCEL_TOKEN
         sync: false
       - key: VERCEL_TEAM_ID
