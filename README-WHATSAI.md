@@ -59,9 +59,9 @@ Só existe `manager/dist` (bundle Vite). Patches já aplicados:
 2. **Server URL padrão** no login = URL do Render.
 3. **Favicon local** (`assets/images/favicon.svg`).
 4. **Aba README**: item na sidebar (acima de Documentação) que abre um painel **dentro do dashboard** (mesma aba, sidebar visível) com um resumo operacional em um único card; `/readme` também funciona como acesso direto. Conteúdo: `readmes/RESUMO.md`, com links para o guia comercial e o manual interno. Arquivos: `assets/readme-tab.js`, `assets/readme-tab.css`, `assets/marked.min.js` e `readmes/` (gerado por `scripts/sync-readmes.sh`). Para atualizar o conteúdo, rode o sync antes do deploy.
-5. **Observabilidade**: item na sidebar apontando para `/observability`, página standalone que consulta `GET /observability` com a chave global do localStorage. Arquivos: `observability/index.html`, `observability/observability.css` e `observability/observability.js`.
+5. **Observabilidade**: item na sidebar e no cabeçalho do dashboard (`/manager/observability` e `/manager/instance/:instanceId/observability`), página React nativa usando os componentes do projeto (`Card`, `Button`, `Badge`, `Alert`). Consulta `GET /observability` com a chave global do localStorage. A rota antiga `/observability` redireciona para a página nativa.
 
-Se o manager for reconstruído do zero, reaplicar esses patches. Rotas SPA via `manager/dist/vercel.json`; `/observability` tem rewrites explícitos antes do catch-all para `index.html`.
+Se o manager for reconstruído do zero, reaplicar esses patches. Rotas SPA via `manager/dist/vercel.json`; `/observability` tem rewrites explícitos antes do catch-all para a página de redirect.
 
 ## 5. Onboarding de cliente (runbook)
 
@@ -284,7 +284,7 @@ No modelo oficial, a Meta é **sempre paga pelo cliente**, direto na WABA. A Ope
 
 ## 10. Observabilidade
 
-A aba **Observabilidade** do manager (`/observability`) mostra, em um só lugar, storage/consumo/limites de Neon, Render, Vercel e GitHub Actions. O endpoint `GET /observability` exige o header `apikey` (chave global) e usa cache de 60 s; `?refresh=1` força a consulta. Ele apenas lê APIs externas, não grava no Postgres.
+A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/instance/:instanceId/observability`) mostra, em um só lugar, storage/consumo/limites de Neon, Render, Vercel e GitHub Actions. O endpoint `GET /observability` exige o header `apikey` (chave global) e usa cache de 60 s; `?refresh=1` força a consulta. Ele apenas lê APIs externas, não grava no Postgres. A rota antiga `/observability` redireciona para a página nativa.
 
 | Variável | Uso | Como obter |
 |---|---|---|
