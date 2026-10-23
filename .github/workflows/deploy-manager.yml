@@ -1,0 +1,41 @@
+name: Deploy Manager
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "manager/dist/**"
+      - ".github/workflows/deploy-manager.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-manager
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.repository == 'devconnecting1/evolution-api-render'
+    env:
+      VERCEL_ORG_ID: team_L4ydLNVlb1XnoQd49WIvXRfw
+      VERCEL_PROJECT_ID: prj_1qlhQq1PuLn20KRs2FK0fsD0GIvU
+      VERCEL_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24.x
+
+      - name: Deploy to Vercel
+        working-directory: manager/dist
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx -y vercel@65.2.0 deploy --prod --yes --archive=tgz

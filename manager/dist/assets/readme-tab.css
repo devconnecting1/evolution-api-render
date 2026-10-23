@@ -1,0 +1,147 @@
+#whatsai-readme {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  overflow: auto;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: "Geist", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light;
+}
+#whatsai-readme * { box-sizing: border-box; }
+#whatsai-readme.wr-inline {
+  top: 56px;
+  border-left: 1px solid hsl(var(--border));
+}
+#whatsai-readme .wr-wrap {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 24px 56px;
+}
+#whatsai-readme .wr-top {
+  position: sticky; top: 0; z-index: 5;
+  background: hsl(var(--background) / .95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid hsl(var(--border));
+}
+#whatsai-readme .wr-top-in {
+  max-width: 1120px; min-height: 56px; margin: 0 auto;
+  padding: 8px 24px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+#whatsai-readme .wr-brand {
+  display: flex; align-items: center; gap: 8px;
+  min-width: 0; color: hsl(var(--foreground));
+}
+#whatsai-readme .wr-actions {
+  margin-left: auto; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+#whatsai-readme .wr-top-links { display: flex; align-items: center; gap: 8px; }
+#whatsai-readme .wr-status { margin: 16px 4px; }
+#whatsai-readme .wr-card { overflow: hidden; }
+#whatsai-readme .wr-head-copy { min-width: 0; }
+#whatsai-readme .wr-chips { max-width: 360px; justify-content: flex-end; }
+#whatsai-readme .wr-chip { white-space: nowrap; }
+#whatsai-readme .wr-body {
+  font-size: 14px; line-height: 1.65;
+  color: hsl(var(--card-foreground));
+}
+#whatsai-readme .wr-body > :first-child { margin-top: 0; }
+#whatsai-readme .wr-body > :last-child { margin-bottom: 0; }
+#whatsai-readme .wr-body h1,
+#whatsai-readme .wr-body h2,
+#whatsai-readme .wr-body h3,
+#whatsai-readme .wr-body h4 {
+  color: hsl(var(--foreground)); line-height: 1.3;
+}
+#whatsai-readme .wr-body h1 {
+  margin: 28px 0 12px; font-size: 22px;
+  font-weight: 600; letter-spacing: -.02em;
+}
+#whatsai-readme .wr-body h2 {
+  margin: 28px 0 12px; font-size: 18px;
+  font-weight: 600; letter-spacing: -.01em;
+}
+#whatsai-readme .wr-body h3 {
+  margin: 20px 0 8px; font-size: 15px; font-weight: 600;
+}
+#whatsai-readme .wr-body h4 {
+  margin: 16px 0 6px; font-size: 14px; font-weight: 600;
+}
+#whatsai-readme .wr-body p { margin: 12px 0; }
+#whatsai-readme .wr-body ul,
+#whatsai-readme .wr-body ol { margin: 12px 0; padding-left: 22px; }
+#whatsai-readme .wr-body li { margin: 5px 0; }
+#whatsai-readme .wr-body a {
+  color: hsl(var(--primary)); text-decoration: none;
+  overflow-wrap: anywhere;
+}
+#whatsai-readme .wr-body a:hover { text-decoration: underline; }
+#whatsai-readme .wr-body strong { color: hsl(var(--foreground)); font-weight: 600; }
+#whatsai-readme .wr-body code {
+  font-family: "Geist Mono", monospace;
+  font-size: 12.5px; background: hsl(var(--muted)); color: hsl(var(--foreground));
+  padding: 2px 6px; border-radius: calc(var(--radius) - 4px);
+  overflow-wrap: anywhere;
+}
+#whatsai-readme .wr-body pre {
+  background: hsl(var(--muted)); border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px); padding: 14px 16px;
+  overflow: auto; margin: 14px 0; font-size: 12.5px;
+}
+#whatsai-readme .wr-body pre code { background: none; padding: 0; }
+#whatsai-readme .wr-body blockquote {
+  margin: 16px 0; padding: 12px 16px;
+  border-left: 2px solid hsl(var(--primary));
+  background: hsl(var(--muted) / .5);
+  border-radius: 0 calc(var(--radius) - 2px) calc(var(--radius) - 2px) 0;
+  color: hsl(var(--muted-foreground));
+}
+#whatsai-readme .wr-body blockquote p { margin: 0; }
+#whatsai-readme .wr-body hr {
+  border: 0; border-top: 1px solid hsl(var(--border)); margin: 20px 0;
+}
+#whatsai-readme .wr-body img {
+  max-width: 100%; height: auto;
+  border-radius: calc(var(--radius) - 2px);
+}
+#whatsai-readme .wr-table {
+  overflow-x: auto; margin: 14px 0; overscroll-behavior-x: contain;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+}
+#whatsai-readme .wr-body table {
+  width: 100%; min-width: 620px; border-collapse: collapse;
+  font-size: 13px; font-variant-numeric: tabular-nums;
+}
+#whatsai-readme .wr-body th {
+  padding: 10px 12px; text-align: left; vertical-align: middle;
+  background: hsl(var(--muted) / .7); color: hsl(var(--muted-foreground));
+  font-weight: 500; white-space: nowrap;
+  border-bottom: 1px solid hsl(var(--border));
+}
+#whatsai-readme .wr-body td {
+  padding: 10px 12px; text-align: left; vertical-align: top;
+  border-bottom: 1px solid hsl(var(--border));
+}
+#whatsai-readme .wr-body tbody tr:last-child td { border-bottom: 0; }
+#whatsai-readme .wr-body tbody tr:hover { background: hsl(var(--muted) / .45); }
+#whatsai-readme .wr-body td:first-child { font-weight: 500; color: hsl(var(--foreground)); }
+#whatsai-readme .wr-foot-links { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 720px) {
+  #whatsai-readme .wr-card-head { flex-direction: column; }
+  #whatsai-readme .wr-chips { justify-content: flex-start; max-width: none; }
+  #whatsai-readme .wr-body h1 { font-size: 20px; }
+  #whatsai-readme .wr-body h2 { font-size: 17px; }
+  #whatsai-readme .wr-body table { min-width: 560px; }
+}
+@media (max-width: 640px) {
+  #whatsai-readme .wr-top-in { padding: 8px 16px; }
+  #whatsai-readme .wr-wrap { padding: 16px 16px 40px; }
+  #whatsai-readme .wr-sub { display: none; }
+  #whatsai-readme .wr-top-links { display: none; }
+  #whatsai-readme .wr-foot { align-items: flex-start; flex-direction: column; }
+}

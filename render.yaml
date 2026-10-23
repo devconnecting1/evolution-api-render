@@ -55,7 +55,7 @@ services:
       - key: CACHE_LOCAL_ENABLED
         value: "false"
       - key: AUTHENTICATION_API_KEY
-        value: "10092004@Matheus"
+        sync: false
       - key: AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES
         value: "false"
       - key: TELEMETRY_ENABLED
@@ -88,3 +88,27 @@ services:
         value: "true"
       - key: FLOWISE_ENABLED
         value: "true"
+      - key: NEON_API_KEY
+        sync: false
+      - key: NEON_PROJECT_ID
+        value: spring-boat-14626479
+      - key: NEON_ORG_ID
+        value: org-soft-mouse-21767293
+      - key: RENDER_API_KEY
+        sync: false
+      - key: RENDER_OWNER_ID
+        sync: false
+      - key: RENDER_SERVICE_IDS
+        sync: false
+      - key: VERCEL_TOKEN
+        sync: false
+      - key: VERCEL_TEAM_ID
+        value: team_L4ydLNVlb1XnoQd49WIvXRfw
+      - key: VERCEL_PROJECT_ID
+        value: prj_1qlhQq1PuLn20KRs2FK0fsD0GIvU
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_OWNER
+        value: devconnecting1
+      - key: GITHUB_REPO
+        value: evolution-api-render

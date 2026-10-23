@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/observability",
+      "destination": "/observability/index.html"
+    },
+    {
+      "source": "/observability/",
+      "destination": "/observability/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

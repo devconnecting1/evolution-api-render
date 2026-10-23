@@ -1,0 +1,15 @@
+title = "WhatsAI Gitleaks policy"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignored local files, generated bundles, and upstream examples"
+paths = [
+  '''(^|/)\.env$''',
+  '''(^|/)\.env\.local$''',
+  '''(^|/)\.env\.example$''',
+  '''(^|/)node_modules/''',
+  '''(^|/)manager/dist/assets/.*\.js$''',
+  '''(^|/)Docker/swarm/''',
+]
