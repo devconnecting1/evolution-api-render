@@ -631,7 +631,7 @@ lodash-es/lodash.js:
         ]})
       ]})
     ]});
-    if(!data)return i.jsxs('main',{className:'flex flex-col gap-6',children:[
+    if(!data)return i.jsxs('main',{className:'container mx-auto flex flex-col gap-6 py-6',children:[
       header,
       error?i.jsxs(rI,{variant:'destructive',children:[
         i.jsx(sI,{children:'Falha ao carregar'}),
@@ -641,7 +641,7 @@ lodash-es/lodash.js:
         'Carregando...'
       ]})
     ]});
-    return i.jsxs('main',{className:'flex flex-col gap-6',children:[
+    return i.jsxs('main',{className:'container mx-auto flex flex-col gap-6 py-6',children:[
       header,
       summary,
       error?i.jsxs(rI,{variant:'destructive',children:[
