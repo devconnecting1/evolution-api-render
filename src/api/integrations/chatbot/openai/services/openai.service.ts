@@ -98,7 +98,10 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         this.initClient(creds.apiKey);
 
         // Transcribe the audio
-        const transcription = await this.speechToText(msg, instance);
+        const transcription = await this.speechToText(msg, instance).catch((error) => {
+          this.logOpenaiError('speechToText', error);
+          return null;
+        });
 
         if (transcription) {
           this.logger.log(`Audio transcribed: ${transcription}`);
@@ -357,7 +360,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     let threadId = session.sessionId;
 
     // Create a new thread if one doesn't exist or invalid format
-    if (!threadId || threadId === remoteJid) {
+    // A session created by the human takeover keeps the chat JID as sessionId (not a thread id)
+    if (!threadId || threadId === remoteJid || threadId.includes('@')) {
       const newThread = await this.client.beta.threads.create();
       threadId = newThread.id;
 
