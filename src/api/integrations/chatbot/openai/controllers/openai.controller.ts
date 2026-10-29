@@ -389,7 +389,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         ignoreJids: data.ignoreJids,
         splitMessages: data.splitMessages,
         timePerChar: data.timePerChar,
-        openaiIdFallback: data.fallbackId,
+        openaiIdFallback: data.fallbackId ?? data.openaiIdFallback, // docs send openaiIdFallback
         OpenaiCreds: data.openaiCredsId
           ? {
               connect: {
