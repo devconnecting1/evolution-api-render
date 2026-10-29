@@ -48,6 +48,18 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
     return 'openai';
   }
 
+  // Human takeover (pause on human fromMe, paused session creation, resume after humanResumeMinutes)
+  protected supportsHumanPause(): boolean {
+    return true;
+  }
+
+  // Bot value, then settings value, then default
+  protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
+    return {
+      tokenParam: bot?.tokenParam ?? settings?.tokenParam ?? 'auto',
+    };
+  }
+
   protected getAdditionalBotData(data: OpenaiDto): Record<string, any> {
     return {
       openaiCredsId: data.openaiCredsId,

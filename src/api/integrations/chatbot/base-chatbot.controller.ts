@@ -6,7 +6,17 @@ import { Events } from '@api/types/wa.types';
 import { Logger } from '@config/logger.config';
 import { BadRequestException } from '@exceptions';
 import { TriggerOperator, TriggerType } from '@prisma/client';
+import { isBotMessageId } from '@utils/botMessageRegistry';
 import { getConversationMessage } from '@utils/getConversationMessage';
+import {
+  getHumanLastMessageAt,
+  isHumanPaused,
+  isHumanPauseExpired,
+  resolveHumanResumeMinutes,
+  withHumanLastMessageAt,
+  withoutHumanLastMessageAt,
+} from '@utils/humanPause';
+import { jidNormalizedUser } from 'baileys';
 
 import { BaseChatbotDto } from './base-chatbot.dto';
 import { ChatbotController, ChatbotControllerInterface, EmitData } from './chatbot.controller';
@@ -491,16 +501,22 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
 
         return { bot: { ...instance, bot: { remoteJid: remoteJid, status: status } } };
       } else {
+        const where = {
+          instanceId: instanceId,
+          remoteJid: remoteJid,
+          botId: { not: null },
+        };
+
         const session = await this.sessionRepository.updateMany({
-          where: {
-            instanceId: instanceId,
-            remoteJid: remoteJid,
-            botId: { not: null },
-          },
+          where,
           data: {
             status: status,
           },
         });
+
+        // A manual status change ends any human-takeover timer: 'opened' must not be re-paused by an old
+        // timestamp and a manual 'paused' must only be lifted manually.
+        await this.clearHumanLastMessageAt(where);
 
         const botData = {
           remoteJid: remoteJid,
@@ -784,11 +800,200 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     }
   }
 
+  /**
+   * Whether this integration implements the full human takeover flow: a human `fromMe` message pauses the
+   * session (creating a paused one when the chat has none), the time of the last human message is kept in
+   * `parameters.humanLastMessageAt`, and the session resumes by itself after `humanResumeMinutes` (> 0).
+   *
+   * Other integrations keep the legacy behaviour (pause only an existing session, their services decide what
+   * to do with paused sessions, e.g. Typebot restarts them after `expire`).
+   */
+  protected supportsHumanPause(): boolean {
+    return false;
+  }
+
+  /** Integration-specific values added to the merged settings handed to processBot. */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
+    return {};
+  }
+
+  private humanPauseLocks = new Map<string, Promise<void>>();
+
+  /** Serialises the human takeover handling per chat so quick consecutive messages do not race. */
+  private async runExclusive(key: string, task: () => Promise<void>): Promise<void> {
+    const previous = this.humanPauseLocks.get(key) ?? Promise.resolve();
+    const current = previous.then(task, task);
+    const tail = current.catch(() => undefined);
+
+    this.humanPauseLocks.set(key, tail);
+
+    try {
+      await current;
+    } finally {
+      if (this.humanPauseLocks.get(key) === tail) this.humanPauseLocks.delete(key);
+    }
+  }
+
+  /**
+   * Every address the chat may be stored under. Baileys already swaps `@lid` for `remoteJidAlt` before the emit
+   * when it is known; when it is not, try the LID mapping so a session stored as `@s.whatsapp.net` is still found.
+   */
+  protected async resolveSessionJids(instance: InstanceDto, remoteJid: string, msg: any): Promise<string[]> {
+    const jids = new Set<string>(
+      [remoteJid, msg?.key?.remoteJid, msg?.key?.remoteJidAlt].filter(
+        (jid) => typeof jid === 'string' && jid.length > 0,
+      ),
+    );
+
+    const lidMapping = this.waMonitor.waInstances[instance.instanceName]?.client?.signalRepository?.lidMapping;
+
+    if (typeof lidMapping?.getPNForLID === 'function') {
+      for (const jid of [...jids]) {
+        if (!jid.endsWith('@lid')) continue;
+
+        try {
+          const pn = await lidMapping.getPNForLID(jid);
+          if (pn) jids.add(jidNormalizedUser(pn));
+        } catch (error) {
+          this.logger.verbose(`Could not resolve PN for ${jid}: ${error?.message || error}`);
+        }
+      }
+    }
+
+    return [...jids];
+  }
+
+  private preferredJid(remoteJid: string, sessionJids: string[]): string {
+    return sessionJids.find((jid) => jid.endsWith('@s.whatsapp.net')) ?? remoteJid;
+  }
+
+  private isOwnSession(session: any): boolean {
+    return !session?.type || session.type === this.getIntegrationType();
+  }
+
+  /**
+   * A human (the owner of the number) wrote in the chat: pause the session and record the time, extending the
+   * pause on every human message. When the chat has no session yet, create one already paused so the bot does
+   * not answer the contact over the human.
+   */
+  private async pauseForHumanMessage(
+    instance: InstanceDto,
+    remoteJid: string,
+    sessionJids: string[],
+    session: any,
+    bot: any,
+  ): Promise<void> {
+    await this.runExclusive(`${instance.instanceId}:${this.preferredJid(remoteJid, sessionJids)}`, async () => {
+      const now = new Date();
+
+      // Re-read inside the lock: a concurrent human message may have created or updated the session
+      const current = session
+        ? await this.sessionRepository.findUnique({ where: { id: session.id } })
+        : await this.getSession(remoteJid, instance, sessionJids);
+
+      if (current) {
+        // Finished conversations stay finished; sessions of other integrations are theirs to handle
+        if (current.status === 'closed' || !this.isOwnSession(current)) return;
+
+        await this.sessionRepository.update({
+          where: { id: current.id },
+          data: {
+            status: 'paused',
+            parameters: withHumanLastMessageAt(current.parameters, now),
+          },
+        });
+
+        this.logger.log(`Human message in ${remoteJid}: ${this.integrationName} session ${current.id} paused`);
+        return;
+      }
+
+      // The session existed when the message arrived but was removed meanwhile (e.g. finish keyword)
+      if (session) return;
+
+      // getSession() also returns null when another integration holds the chat; never compete with it
+      const latest = await this.sessionRepository.findFirst({
+        where: {
+          remoteJid: { in: sessionJids },
+          instanceId: instance.instanceId,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (latest && latest.status !== 'closed') {
+        this.logger.log(`Human message in ${remoteJid}: chat is held by another integration, nothing to pause`);
+        return;
+      }
+
+      const jid = this.preferredJid(remoteJid, sessionJids);
+
+      const created = await this.sessionRepository.create({
+        data: {
+          remoteJid: jid,
+          pushName: null, // pushName of a fromMe message is the owner's name, not the contact's
+          sessionId: jid,
+          status: 'paused',
+          awaitUser: false,
+          botId: bot.id,
+          instanceId: instance.instanceId,
+          type: this.getIntegrationType(),
+          parameters: withHumanLastMessageAt(null, now),
+        },
+      });
+
+      this.logger.log(`Human message in ${remoteJid}: created paused ${this.integrationName} session ${created.id}`);
+    });
+  }
+
+  /** Reopens a human-paused session, dropping the timestamp. Returns null when it changed meanwhile. */
+  private async resumeHumanPausedSession(session: any): Promise<any> {
+    const result = await this.sessionRepository.updateMany({
+      where: { id: session.id, status: session.status },
+      data: {
+        status: 'opened',
+        awaitUser: true,
+        parameters: withoutHumanLastMessageAt(session.parameters),
+      },
+    });
+
+    if (!result?.count) return null;
+
+    this.logger.log(
+      `Human pause expired for ${session.remoteJid}: ${this.integrationName} session ${session.id} resumed`,
+    );
+
+    return await this.sessionRepository.findUnique({ where: { id: session.id } });
+  }
+
+  private async clearHumanLastMessageAt(where: Record<string, any>) {
+    const sessions = await this.sessionRepository.findMany({ where });
+
+    for (const session of sessions) {
+      if (getHumanLastMessageAt(session) === null) continue;
+
+      await this.sessionRepository.update({
+        where: { id: session.id },
+        data: { parameters: withoutHumanLastMessageAt(session.parameters) },
+      });
+    }
+  }
+
   // Base implementation for emit
   public async emit({ instance, remoteJid, msg }: EmitData) {
     if (!this.integrationEnabled) return;
 
     try {
+      const key = (msg?.key ?? {}) as {
+        id: string;
+        remoteJid: string;
+        fromMe: boolean;
+        participant: string;
+      };
+
+      // Echo of a message sent by a chatbot: it is neither input for a bot (avoids loops when listeningFromMe
+      // is on) nor human activity (must not pause anything)
+      if (key.fromMe && (await isBotMessageId(instance.instanceId, key.id))) return;
+
       const settings = await this.settingsRepository.findFirst({
         where: {
           instanceId: instance.instanceId,
@@ -797,26 +1002,19 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
 
       if (this.checkIgnoreJids(settings?.ignoreJids, remoteJid)) return;
 
-      const session = await this.getSession(remoteJid, instance);
+      const sessionJids = await this.resolveSessionJids(instance, remoteJid, msg);
+
+      let session = await this.getSession(remoteJid, instance, sessionJids);
 
       const content = getConversationMessage(msg);
-
-      // Get integration type
-      // const integrationType = this.getIntegrationType();
 
       // Find a bot for this message
       let findBot: any = await this.findBotTrigger(this.botRepository, content, instance, session);
 
       // If no bot is found, try to use fallback
       if (!findBot) {
-        const fallback = await this.settingsRepository.findFirst({
-          where: {
-            instanceId: instance.instanceId,
-          },
-        });
-
         // Get the fallback ID for this integration type
-        const fallbackId = this.getFallbackBotId(fallback);
+        const fallbackId = this.getFallbackBotId(settings);
 
         if (fallbackId) {
           const findFallback = await this.botRepository.findFirst({
@@ -849,26 +1047,28 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
       let splitMessages = findBot.splitMessages;
       let timePerChar = findBot.timePerChar;
 
-      if (expire === undefined || expire === null) expire = settings.expire;
-      if (keywordFinish === undefined || keywordFinish === null) keywordFinish = settings.keywordFinish;
-      if (delayMessage === undefined || delayMessage === null) delayMessage = settings.delayMessage;
-      if (unknownMessage === undefined || unknownMessage === null) unknownMessage = settings.unknownMessage;
-      if (listeningFromMe === undefined || listeningFromMe === null) listeningFromMe = settings.listeningFromMe;
-      if (stopBotFromMe === undefined || stopBotFromMe === null) stopBotFromMe = settings.stopBotFromMe;
-      if (keepOpen === undefined || keepOpen === null) keepOpen = settings.keepOpen;
-      if (debounceTime === undefined || debounceTime === null) debounceTime = settings.debounceTime;
-      if (ignoreJids === undefined || ignoreJids === null) ignoreJids = settings.ignoreJids;
+      if (expire === undefined || expire === null) expire = settings?.expire;
+      if (keywordFinish === undefined || keywordFinish === null) keywordFinish = settings?.keywordFinish;
+      if (delayMessage === undefined || delayMessage === null) delayMessage = settings?.delayMessage;
+      if (unknownMessage === undefined || unknownMessage === null) unknownMessage = settings?.unknownMessage;
+      if (listeningFromMe === undefined || listeningFromMe === null) listeningFromMe = settings?.listeningFromMe;
+      if (stopBotFromMe === undefined || stopBotFromMe === null) stopBotFromMe = settings?.stopBotFromMe;
+      if (keepOpen === undefined || keepOpen === null) keepOpen = settings?.keepOpen;
+      if (debounceTime === undefined || debounceTime === null) debounceTime = settings?.debounceTime;
+      if (ignoreJids === undefined || ignoreJids === null) ignoreJids = settings?.ignoreJids;
       if (splitMessages === undefined || splitMessages === null) splitMessages = settings?.splitMessages ?? false;
       if (timePerChar === undefined || timePerChar === null) timePerChar = settings?.timePerChar ?? 0;
 
-      const key = msg.key as {
-        id: string;
-        remoteJid: string;
-        fromMe: boolean;
-        participant: string;
-      };
+      // Bot value, then settings value, then 0 (only manual resume)
+      const humanResumeMinutes = resolveHumanResumeMinutes(findBot, settings);
 
-      // Handle stopping the bot if message is from me
+      // Human takeover: a fromMe message that was not sent by a bot was written by the owner of the number
+      if (stopBotFromMe && key.fromMe && this.supportsHumanPause()) {
+        await this.pauseForHumanMessage(instance, remoteJid, sessionJids, session, findBot);
+        return;
+      }
+
+      // Legacy handling of stopping the bot if message is from me
       if (stopBotFromMe && key.fromMe && session) {
         await this.prismaRepository.integrationSession.update({
           where: {
@@ -915,7 +1115,39 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         ignoreJids,
         splitMessages,
         timePerChar,
+        humanResumeMinutes,
+        ...this.getAdditionalMergedSettings(findBot, settings),
       };
+
+      // Human takeover in progress: stay silent until it expires or someone reopens the session
+      if (this.supportsHumanPause() && session && isHumanPaused(session)) {
+        const normalizedContent = (content || '').toLowerCase().trim();
+        const isFinishKeyword = !!keywordFinish && normalizedContent === String(keywordFinish).toLowerCase();
+
+        if (isFinishKeyword) {
+          // Keep the finish keyword flow: the service closes/removes the session (no debounce, it is final)
+          await this.processBot(
+            this.waMonitor.waInstances[instance.instanceName],
+            remoteJid,
+            findBot,
+            session,
+            mergedSettings,
+            content,
+            msg?.pushName,
+            msg,
+          );
+          return;
+        }
+
+        // No database write here: any update would also bump updatedAt
+        if (!isHumanPauseExpired(session, humanResumeMinutes)) return;
+
+        const resumed = await this.resumeHumanPausedSession(session);
+        if (!resumed) return;
+
+        // Answer this very message
+        session = resumed;
+      }
 
       // Process with debounce if needed
       if (debounceTime && debounceTime > 0) {

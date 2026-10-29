@@ -167,10 +167,16 @@ export class ChatbotController {
     return false;
   }
 
-  public async getSession(remoteJid: string, instance: InstanceDto) {
+  /**
+   * Latest bot session of the chat. `alternativeJids` lets the same chat be found when the contact shows up
+   * with another address (e.g. `@lid` vs `@s.whatsapp.net`).
+   */
+  public async getSession(remoteJid: string, instance: InstanceDto, alternativeJids: string[] = []) {
+    const jids = [...new Set([remoteJid, ...alternativeJids].filter(Boolean))];
+
     let session = await this.prismaRepository.integrationSession.findFirst({
       where: {
-        remoteJid: remoteJid,
+        remoteJid: jids.length > 1 ? { in: jids } : remoteJid,
         instanceId: instance.instanceId,
       },
       orderBy: { createdAt: 'desc' },
