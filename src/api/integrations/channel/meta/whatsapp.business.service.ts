@@ -22,6 +22,7 @@ import { ChannelStartupService } from '@api/services/channel.service';
 import { Events, wa } from '@api/types/wa.types';
 import { AudioConverter, Chatwoot, ConfigService, Database, Openai, S3, WaBusiness } from '@config/env.config';
 import { BadRequestException, InternalServerErrorException } from '@exceptions';
+import { registerBotMessageId } from '@utils/botMessageRegistry';
 import { createJid } from '@utils/createJid';
 import { status } from '@utils/renderStatus';
 import { sendTelemetry } from '@utils/sendTelemetry';
@@ -1123,7 +1124,13 @@ export class BusinessStartupService extends ChannelStartupService {
     }
   }
 
-  protected async sendMessageWithTyping(number: string, message: any, options?: Options, isIntegration = false) {
+  protected async sendMessageWithTyping(
+    number: string,
+    message: any,
+    options?: Options,
+    isIntegration = false,
+    fromChatbot = false,
+  ) {
     try {
       let quoted: any;
       let webhookUrl: any;
@@ -1317,6 +1324,13 @@ export class BusinessStartupService extends ChannelStartupService {
         return messageSent;
       }
 
+      // The Cloud API assigns the id (wamid) on send, so it cannot be registered beforehand like in Baileys.
+      // There is no race: the API never echoes its own sends (smb_message_echoes only reports app messages),
+      // this only guards paths that may hand a chatbot message back to the chatbots (e.g. the Chatwoot emit).
+      if (fromChatbot && messageSent?.messages?.[0]?.id) {
+        await registerBotMessageId(this.instanceId, messageSent.messages[0].id);
+      }
+
       const messageRaw: any = {
         key: { fromMe: true, id: messageSent?.messages[0]?.id, remoteJid: createJid(number) },
         message: this.convertMessageToRaw(message, content),
@@ -1360,7 +1374,7 @@ export class BusinessStartupService extends ChannelStartupService {
   }
 
   // Send Message Controller
-  public async textMessage(data: SendTextDto, isIntegration = false) {
+  public async textMessage(data: SendTextDto, isIntegration = false, fromChatbot = false) {
     const res = await this.sendMessageWithTyping(
       data.number,
       {
@@ -1375,6 +1389,7 @@ export class BusinessStartupService extends ChannelStartupService {
         mentioned: data?.mentioned,
       },
       isIntegration,
+      fromChatbot,
     );
     return res;
   }
@@ -1471,7 +1486,7 @@ export class BusinessStartupService extends ChannelStartupService {
     }
   }
 
-  public async mediaMessage(data: SendMediaDto, file?: any, isIntegration = false) {
+  public async mediaMessage(data: SendMediaDto, file?: any, isIntegration = false, fromChatbot = false) {
     const mediaData: SendMediaDto = { ...data };
 
     if (file) mediaData.media = file.buffer.toString('base64');
@@ -1490,6 +1505,7 @@ export class BusinessStartupService extends ChannelStartupService {
         mentioned: data?.mentioned,
       },
       isIntegration,
+      fromChatbot,
     );
 
     return mediaSent;
@@ -1575,7 +1591,7 @@ export class BusinessStartupService extends ChannelStartupService {
     }
   }
 
-  public async audioWhatsapp(data: SendAudioDto, file?: any, isIntegration = false) {
+  public async audioWhatsapp(data: SendAudioDto, file?: any, isIntegration = false, fromChatbot = false) {
     const message = await this.processAudio(data.audio, data.number, file);
 
     const audioSent = await this.sendMessageWithTyping(
@@ -1590,12 +1606,13 @@ export class BusinessStartupService extends ChannelStartupService {
         mentioned: data?.mentioned,
       },
       isIntegration,
+      fromChatbot,
     );
 
     return audioSent;
   }
 
-  public async buttonMessage(data: SendButtonsDto) {
+  public async buttonMessage(data: SendButtonsDto, isIntegration = false, fromChatbot = false) {
     const embeddedMedia: any = {};
 
     const btnItems = {
@@ -1630,6 +1647,8 @@ export class BusinessStartupService extends ChannelStartupService {
         mentionsEveryOne: data?.mentionsEveryOne,
         mentioned: data?.mentioned,
       },
+      isIntegration,
+      fromChatbot,
     );
   }
 
@@ -1655,7 +1674,7 @@ export class BusinessStartupService extends ChannelStartupService {
     );
   }
 
-  public async listMessage(data: SendListDto) {
+  public async listMessage(data: SendListDto, isIntegration = false, fromChatbot = false) {
     const sectionsItems = {
       title: data.sections.map((list) => list.title),
     };
@@ -1685,14 +1704,20 @@ export class BusinessStartupService extends ChannelStartupService {
       },
     };
 
-    return await this.sendMessageWithTyping(data.number, sendData, {
-      delay: data?.delay,
-      presence: 'composing',
-      quoted: data?.quoted,
-      linkPreview: data?.linkPreview,
-      mentionsEveryOne: data?.mentionsEveryOne,
-      mentioned: data?.mentioned,
-    });
+    return await this.sendMessageWithTyping(
+      data.number,
+      sendData,
+      {
+        delay: data?.delay,
+        presence: 'composing',
+        quoted: data?.quoted,
+        linkPreview: data?.linkPreview,
+        mentionsEveryOne: data?.mentionsEveryOne,
+        mentioned: data?.mentioned,
+      },
+      isIntegration,
+      fromChatbot,
+    );
   }
 
   public async templateMessage(data: SendTemplateDto, isIntegration = false) {
