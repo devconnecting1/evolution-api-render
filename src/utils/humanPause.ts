@@ -11,8 +11,10 @@
  * still treated as paused.
  */
 export const HUMAN_LAST_MESSAGE_AT = 'humanLastMessageAt';
+/** Set by changeStatus 'paused': a manual pause is only lifted manually, never by humanResumeMinutes. */
+export const MANUAL_PAUSE = 'manualPause';
 
-type SessionLike = { status?: string; parameters?: unknown } | null | undefined;
+type SessionLike = { status?: string; parameters?: unknown; updatedAt?: Date | string } | null | undefined;
 
 const asObject = (parameters: unknown): Record<string, any> =>
   parameters && typeof parameters === 'object' && !Array.isArray(parameters)
@@ -33,12 +35,21 @@ export const withHumanLastMessageAt = (parameters: unknown, date: Date): Record<
   [HUMAN_LAST_MESSAGE_AT]: date.toISOString(),
 });
 
-/** Returns a copy of `parameters` (which may be null) without `humanLastMessageAt`. */
+/** Returns a copy of `parameters` (which may be null) without `humanLastMessageAt` (and the manual pause flag). */
 export const withoutHumanLastMessageAt = (parameters: unknown): Record<string, any> => {
   const result = asObject(parameters);
   delete result[HUMAN_LAST_MESSAGE_AT];
+  delete result[MANUAL_PAUSE];
   return result;
 };
+
+/** Returns a copy of `parameters` (which may be null) marking a manual pause, without `humanLastMessageAt`. */
+export const withManualPause = (parameters: unknown): Record<string, any> => ({
+  ...withoutHumanLastMessageAt(parameters),
+  [MANUAL_PAUSE]: true,
+});
+
+export const isManualPause = (session: SessionLike): boolean => asObject(session?.parameters)[MANUAL_PAUSE] === true;
 
 /** Bot value, then settings value, then 0 (never resume automatically). */
 export const resolveHumanResumeMinutes = (bot: any, settings: any): number => {
@@ -51,13 +62,18 @@ export const isHumanPaused = (session: SessionLike): boolean =>
 
 /**
  * True when a human pause can be lifted automatically: `minutes` > 0 and at least `minutes` have passed since
- * the last human message. A paused session without `humanLastMessageAt` (legacy, or paused through
- * changeStatus) is never resumed automatically.
+ * the last human message. A manual pause (changeStatus 'paused') is never lifted automatically. A legacy paused
+ * session (paused by a human before `humanLastMessageAt` existed) uses `updatedAt`, which is when it was paused.
  */
 export const isHumanPauseExpired = (session: SessionLike, minutes: number, now = Date.now()): boolean => {
   if (!minutes || minutes <= 0) return false;
+  if (isManualPause(session)) return false;
 
-  const last = getHumanLastMessageAt(session);
+  let last = getHumanLastMessageAt(session);
+  if (last === null && session?.status === 'paused' && session?.updatedAt) {
+    const updatedAt = new Date(session.updatedAt).getTime();
+    last = Number.isFinite(updatedAt) ? updatedAt : null;
+  }
   if (last === null) return false;
 
   return now - last >= minutes * 60 * 1000;

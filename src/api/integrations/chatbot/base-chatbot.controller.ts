@@ -12,8 +12,10 @@ import {
   getHumanLastMessageAt,
   isHumanPaused,
   isHumanPauseExpired,
+  isManualPause,
   resolveHumanResumeMinutes,
   withHumanLastMessageAt,
+  withManualPause,
   withoutHumanLastMessageAt,
 } from '@utils/humanPause';
 import { jidNormalizedUser } from 'baileys';
@@ -516,7 +518,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
 
         // A manual status change ends any human-takeover timer: 'opened' must not be re-paused by an old
         // timestamp and a manual 'paused' must only be lifted manually.
-        await this.clearHumanLastMessageAt(where);
+        await this.applyManualStatus(where, status);
 
         const botData = {
           remoteJid: remoteJid,
@@ -965,11 +967,19 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     return await this.sessionRepository.findUnique({ where: { id: session.id } });
   }
 
-  private async clearHumanLastMessageAt(where: Record<string, any>) {
+  private async applyManualStatus(where: Record<string, any>, status: string) {
     const sessions = await this.sessionRepository.findMany({ where });
 
     for (const session of sessions) {
-      if (getHumanLastMessageAt(session) === null) continue;
+      if (status === 'paused') {
+        await this.sessionRepository.update({
+          where: { id: session.id },
+          data: { parameters: withManualPause(session.parameters) },
+        });
+        continue;
+      }
+
+      if (getHumanLastMessageAt(session) === null && !isManualPause(session)) continue;
 
       await this.sessionRepository.update({
         where: { id: session.id },
