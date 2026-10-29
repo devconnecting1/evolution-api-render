@@ -283,7 +283,7 @@ No modelo oficial, a Meta é **sempre paga pelo cliente**, direto na WABA. A Ope
 | Cloud API não conecta | Token expirado, Phone Number ID/WABA errados ou número não verificado na Meta |
 | Cloud API não envia fora do horário | Janela de 24 h fechada; enviar template aprovado (custo à parte) |
 | Cloud API cobrando acima do esperado | Bot dividindo respostas em várias mensagens ou templates de marketing; revisar `splitMessages` e o rate card |
-| Bot parou de responder a um contato (Baileys) | Provável pausa humana: `GET /openai/fetchSessions/{openaiId}/{instancia}`, procurar `status: paused` (e `parameters.humanLastMessageAt`); reative com `POST /openai/changeStatus/{instancia}` (`opened`). Ver seção 12.2 |
+| Bot parou de responder a um contato (Baileys) | Provável pausa humana: `GET /openai/fetchSessions/{openaiId}/{instancia}`, procurar `status: paused` (e `parameters.humanLastMessageAt`); reative com `POST /openai/changeStatus/{instancia}` (`opened`). O campo `humanPause` de cada sessão mostra o motivo e quanto falta para retomar (seção 12.9). Ver seção 12.2 |
 | Erro `400 Unsupported parameter: 'max_tokens'` | Modelo de raciocínio (gpt-5, o-series, gpt-6) exige `max_completion_tokens`; deixe `tokenParam: "auto"` (seção 12.1) |
 | Cliente não recebe nada quando a OpenAI falha | Esperado se `unknownMessage` estiver vazio; configure em PT-BR (seção 12.5) |
 
@@ -488,3 +488,108 @@ As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa
 3. O merge na `main` dispara deploy automático no Render; a API fica ~4 min fora. Faça fora do horário comercial do escritório.
 4. **Rollback:** reverter o merge e deixar o Render redeployar. As colunas extras permanecem no banco e são ignoradas pelo código antigo.
 5. O script de migration imprime a `DATABASE_URL` no log de boot: não compartilhe esse trecho do log.
+
+### 12.9 Ver o estado da pausa por contato
+
+`GET /openai/fetchSessions/{openaiBotId}/{instancia}` devolve as sessões como antes e, em cada uma, o campo extra `humanPause`: `null` quando o bot está ativo naquele contato, ou um objeto com o estado da pausa. Só o bot OpenAI tem esse campo.
+
+```bash
+curl "$SERVER_URL/openai/fetchSessions/<openaiBotId>/$INSTANCE" -H "apikey: $APIKEY"
+```
+
+```json
+[
+  {
+    "id": "cmoab1c2d0001xyz",
+    "remoteJid": "5521999999999@s.whatsapp.net",
+    "status": "paused",
+    "botId": "<openaiBotId>",
+    "parameters": { "humanLastMessageAt": "2026-10-29T18:00:00.000Z" },
+    "updatedAt": "2026-10-29T18:00:00.123Z",
+    "humanPause": {
+      "reason": "human",
+      "since": "2026-10-29T18:00:00.000Z",
+      "lastHumanMessageAt": "2026-10-29T18:00:00.000Z",
+      "resumeMinutes": 60,
+      "resumesAt": "2026-10-29T19:00:00.000Z",
+      "remainingSeconds": 2710,
+      "autoResume": true
+    }
+  },
+  {
+    "id": "cmoab1c2d0002xyz",
+    "remoteJid": "5521988888888@s.whatsapp.net",
+    "status": "opened",
+    "humanPause": null
+  }
+]
+```
+
+(Os demais campos da sessão, como `sessionId`, `pushName`, `awaitUser`, `context`, `type`, `instanceId`, `createdAt`, seguem iguais e foram omitidos acima.)
+
+| Campo de `humanPause` | Significado |
+|---|---|
+| `reason` | `human`: o dono escreveu no WhatsApp. `manual`: `changeStatus` `paused`. `legacy`: pausada antes de existir `humanLastMessageAt` |
+| `since` | Desde quando conta a pausa (ISO): a última mensagem humana; no `manual` e no `legacy`, o `updatedAt` da sessão. Pode ser `null` num `legacy` sem `updatedAt` |
+| `lastHumanMessageAt` | Última mensagem humana registrada (ISO) ou `null` |
+| `resumeMinutes` | `humanResumeMinutes` efetivo (bot, depois settings, depois 0) |
+| `resumesAt` | Quando a pausa expira (ISO). `null` se for `manual` ou `resumeMinutes` for 0 |
+| `remainingSeconds` | Segundos que faltam (>= 0). `0` = já expirou: o bot **volta na próxima mensagem do cliente** (não há timer; ninguém reabre a sessão sozinho). `null` quando `resumesAt` é `null` |
+| `autoResume` | `true` quando existe um horário de retomada |
+
+Leitura rápida: `humanPause: null` = bot ativo; `autoResume: false` = só volta com `changeStatus` `opened` (ou pela `keywordFinish` do cliente); `remainingSeconds: 0` = expirada, falta o cliente escrever. Uma sessão `closed` também vem com `humanPause: null`.
+
+#### Webhook `openai.change_status`
+
+Aviso opcional, no momento em que o estado da pausa muda. É um evento novo, **opt-in**: só é enviado à instância que o assinar na lista de eventos do webhook (`OPENAI_CHANGE_STATUS`). Não exige variável de ambiente nem migration. Sem assinatura, nada muda para quem já usa webhook.
+
+```bash
+# Inclua OPENAI_CHANGE_STATUS na lista (a lista substitui a anterior: mande também os eventos que já usa)
+curl -X POST "$SERVER_URL/webhook/set/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{
+    "webhook": {
+      "enabled": true,
+      "url": "https://seu-painel.exemplo/webhook",
+      "byEvents": false,
+      "base64": false,
+      "events": ["MESSAGES_UPSERT", "OPENAI_CHANGE_STATUS"]
+    }
+  }'
+```
+
+Com `byEvents: true` a URL recebe o sufixo `/openai-change-status`.
+
+Quando dispara:
+
+| `reason` | `status` | Origem |
+|---|---|---|
+| `human` | `paused` | O dono escreveu no WhatsApp (inclui criar a sessão já pausada). Dispara a **cada** mensagem humana, porque `resumesAt` se move |
+| `resumed` | `opened` | Retomada automática: passou `humanResumeMinutes` e o cliente escreveu |
+| `manual` | `paused`, `opened`, `closed` ou `delete` | `POST /openai/changeStatus` |
+
+Corpo do evento (campo `data`; o envelope tem `event`, `instance`, `date_time`, `sender`, `server_url`, `apikey`):
+
+```json
+{
+  "event": "openai.change_status",
+  "instance": "escritorio-silva",
+  "data": {
+    "remoteJid": "5521999999999@s.whatsapp.net",
+    "status": "paused",
+    "reason": "human",
+    "session": { "id": "cmoab1c2d0001xyz", "botId": "<openaiBotId>" },
+    "humanPause": {
+      "reason": "human",
+      "since": "2026-10-29T18:00:00.000Z",
+      "lastHumanMessageAt": "2026-10-29T18:00:00.000Z",
+      "resumeMinutes": 60,
+      "resumesAt": "2026-10-29T19:00:00.000Z",
+      "remainingSeconds": 3600,
+      "autoResume": true
+    }
+  }
+}
+```
+
+`humanPause` tem o mesmo formato do `fetchSessions` e é `null` quando a sessão deixou de estar pausada (`resumed`, `opened`, `closed`, `delete`). Observações: o envio é em segundo plano e uma falha só aparece no log (não atrasa nem derruba o bot); o evento só vale para o webhook da instância (não existe chave `WEBHOOK_EVENTS_*` para o webhook global); o fechamento pela `keywordFinish` do cliente não gera evento; o webhook não é reenviado se a API reiniciar.
