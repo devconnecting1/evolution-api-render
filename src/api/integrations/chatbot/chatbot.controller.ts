@@ -129,7 +129,9 @@ export class ChatbotController {
       this.logger.log('Debounce complete. Processing message: ' + myQuestion);
 
       delete userMessageDebounce[remoteJid];
-      callback(myQuestion);
+      Promise.resolve(callback(myQuestion)).catch((error) => {
+        this.logger.error(`Error processing debounced message: ${error?.message || error}`);
+      });
     }, debounceTime * 1000);
   }
 

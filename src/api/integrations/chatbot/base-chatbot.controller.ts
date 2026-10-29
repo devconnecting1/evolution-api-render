@@ -978,6 +978,44 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     }
   }
 
+  /**
+   * Session state right before answering a debounced message: the stale copy captured when the first message
+   * arrived may no longer be valid (paused by a human, closed or removed during the debounce window).
+   */
+  private async reloadSessionAfterDebounce(
+    instance: InstanceDto,
+    remoteJid: string,
+    sessionJids: string[],
+    session: any,
+  ): Promise<{ skip: boolean; session: any; reason?: string }> {
+    if (session) {
+      const fresh = await this.sessionRepository.findUnique({ where: { id: session.id } });
+
+      if (!fresh) return { skip: true, session: null, reason: 'session removed' };
+      if (fresh.status === 'closed') return { skip: true, session: null, reason: 'session closed' };
+      if (this.supportsHumanPause() && isHumanPaused(fresh)) {
+        return { skip: true, session: null, reason: 'session paused by a human' };
+      }
+
+      return { skip: false, session: fresh };
+    }
+
+    if (!this.supportsHumanPause()) return { skip: false, session: null };
+
+    // A session may have been created during the window: a paused one by a human message, or an opened one by
+    // a previous answer still in flight (reuse it instead of creating a duplicate)
+    const fresh = await this.getSession(remoteJid, instance, sessionJids);
+
+    if (fresh && this.isOwnSession(fresh)) {
+      if (isHumanPaused(fresh)) return { skip: true, session: null, reason: 'session paused by a human' };
+      if (fresh.status === 'closed') return { skip: true, session: null, reason: 'session closed' };
+
+      return { skip: false, session: fresh };
+    }
+
+    return { skip: false, session: null };
+  }
+
   // Base implementation for emit
   public async emit({ instance, remoteJid, msg }: EmitData) {
     if (!this.integrationEnabled) return;
@@ -1152,11 +1190,18 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
       // Process with debounce if needed
       if (debounceTime && debounceTime > 0) {
         this.processDebounce(this.userMessageDebounce, content, remoteJid, debounceTime, async (debouncedContent) => {
+          const reloaded = await this.reloadSessionAfterDebounce(instance, remoteJid, sessionJids, session);
+
+          if (reloaded.skip) {
+            this.logger.log(`Discarding debounced message for ${remoteJid}: ${reloaded.reason}`);
+            return;
+          }
+
           await this.processBot(
             this.waMonitor.waInstances[instance.instanceName],
             remoteJid,
             findBot,
-            session,
+            reloaded.session,
             mergedSettings,
             debouncedContent,
             msg?.pushName,
