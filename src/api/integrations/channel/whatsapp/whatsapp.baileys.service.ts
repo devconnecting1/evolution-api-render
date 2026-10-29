@@ -80,6 +80,7 @@ import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import { Boom } from '@hapi/boom';
 import { createId as cuid } from '@paralleldrive/cuid2';
 import { Instance, Message } from '@prisma/client';
+import { registerBotMessageId } from '@utils/botMessageRegistry';
 import { createJid } from '@utils/createJid';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
 import { makeProxyAgent, makeProxyAgentUndici } from '@utils/makeProxyAgent';
@@ -104,6 +105,7 @@ import makeWASocket, {
   DisconnectReason,
   downloadContentFromMessage,
   downloadMediaMessage,
+  generateMessageIDV2,
   generateWAMessageFromContent,
   getAggregateVotesInPollMessage,
   GetCatalogOptions,
@@ -1891,7 +1893,13 @@ export class BaileysStartupService extends ChannelStartupService {
                 if (call.from.endsWith('@lid')) {
                   call.from = await this.client.signalRepository.lidMapping.getPNForLID(call.from as string);
                 }
-                const msg = await this.client.sendMessage(call.from, { text: settings.msgCall });
+                // Automatic reply re-emitted below as a fromMe upsert: register its id so it is not
+                // taken for a human message by the chatbots.
+                const msg = await this.client.sendMessage(
+                  call.from,
+                  { text: settings.msgCall },
+                  { messageId: await this.generateBotMessageId() },
+                );
 
                 this.client.ev.emit('messages.upsert', { messages: [msg], type: 'notify' });
               }
@@ -2286,11 +2294,24 @@ export class BaileysStartupService extends ChannelStartupService {
     );
   }
 
+  /**
+   * Pre-generates and registers the id of a message sent by the API itself (chatbots, call reply),
+   * so a fromMe echo of it can never be taken for a human typing on the phone or WhatsApp Web/Desktop.
+   * Uses the same generator Baileys uses when no messageId is given (`generateMessageIDV2(user.id)`),
+   * so the id keeps the 3EB0 format and `source` stays `web` (see the WZAP note in sendMessage).
+   */
+  private async generateBotMessageId(): Promise<string> {
+    const messageId = generateMessageIDV2(this.client.user?.id);
+    await registerBotMessageId(this.instanceId, messageId);
+    return messageId;
+  }
+
   private async sendMessageWithTyping<T = proto.IMessage>(
     number: string,
     message: T,
     options?: Options,
     isIntegration = false,
+    fromChatbot = false,
   ) {
     const isWA = (await this.whatsappNumber({ numbers: [number] }))?.shift();
 
@@ -2357,6 +2378,11 @@ export class BaileysStartupService extends ChannelStartupService {
       let mentions: string[];
       let contextInfo: any;
 
+      // Chatbot sends get their id generated and registered right before sending, so the registry
+      // already knows it whenever a fromMe echo shows up. Other sends (REST, Chatwoot agents) keep
+      // letting Baileys generate the id and keep counting as human/external.
+      const messageId = fromChatbot ? await this.generateBotMessageId() : null;
+
       if (isJidGroup(sender)) {
         let group;
         try {
@@ -2390,7 +2416,7 @@ export class BaileysStartupService extends ChannelStartupService {
           mentions,
           linkPreview,
           quoted,
-          null,
+          messageId,
           group?.ephemeralDuration,
           // group?.participants,
         );
@@ -2412,10 +2438,15 @@ export class BaileysStartupService extends ChannelStartupService {
           mentions,
           linkPreview,
           quoted,
-          null,
+          messageId,
           undefined,
           contextInfo,
         );
+      }
+
+      // Safety net for paths that may not honour the pre-generated id.
+      if (fromChatbot && messageSent?.key?.id && messageSent.key.id !== messageId) {
+        await registerBotMessageId(this.instanceId, messageSent.key.id);
       }
 
       if (Long.isLong(messageSent?.messageTimestamp)) {
@@ -2626,7 +2657,7 @@ export class BaileysStartupService extends ChannelStartupService {
   }
 
   // Send Message Controller
-  public async textMessage(data: SendTextDto, isIntegration = false) {
+  public async textMessage(data: SendTextDto, isIntegration = false, fromChatbot = false) {
     const text = data.text;
 
     if (!text || text.trim().length === 0) {
@@ -2645,6 +2676,7 @@ export class BaileysStartupService extends ChannelStartupService {
         mentioned: data?.mentioned,
       },
       isIntegration,
+      fromChatbot,
     );
   }
 
@@ -2978,7 +3010,7 @@ export class BaileysStartupService extends ChannelStartupService {
     return result;
   }
 
-  public async mediaMessage(data: SendMediaDto, file?: any, isIntegration = false) {
+  public async mediaMessage(data: SendMediaDto, file?: any, isIntegration = false, fromChatbot = false) {
     const mediaData: SendMediaDto = { ...data };
 
     if (file) mediaData.media = file.buffer.toString('base64');
@@ -2996,6 +3028,7 @@ export class BaileysStartupService extends ChannelStartupService {
         mentioned: data?.mentioned,
       },
       isIntegration,
+      fromChatbot,
     );
 
     return mediaSent;
@@ -3203,7 +3236,7 @@ export class BaileysStartupService extends ChannelStartupService {
     }
   }
 
-  public async audioWhatsapp(data: SendAudioDto, file?: any, isIntegration = false) {
+  public async audioWhatsapp(data: SendAudioDto, file?: any, isIntegration = false, fromChatbot = false) {
     const mediaData: SendAudioDto = { ...data };
 
     if (file?.buffer) {
@@ -3226,6 +3259,7 @@ export class BaileysStartupService extends ChannelStartupService {
           { audio: convert, ptt: true, mimetype: 'audio/ogg; codecs=opus' },
           { presence: 'recording', delay: data?.delay },
           isIntegration,
+          fromChatbot,
         );
 
         return result;
@@ -3243,6 +3277,7 @@ export class BaileysStartupService extends ChannelStartupService {
       },
       { presence: 'recording', delay: data?.delay },
       isIntegration,
+      fromChatbot,
     );
   }
 
@@ -3310,7 +3345,7 @@ export class BaileysStartupService extends ChannelStartupService {
     ['random', 'EVP'],
   ]);
 
-  public async buttonMessage(data: SendButtonsDto) {
+  public async buttonMessage(data: SendButtonsDto, isIntegration = false, fromChatbot = false) {
     if (data.buttons.length === 0) {
       throw new BadRequestException('At least one button is required');
     }
@@ -3351,13 +3386,19 @@ export class BaileysStartupService extends ChannelStartupService {
         },
       };
 
-      return await this.sendMessageWithTyping(data.number, message, {
-        delay: data?.delay,
-        presence: 'composing',
-        quoted: data?.quoted,
-        mentionsEveryOne: data?.mentionsEveryOne,
-        mentioned: data?.mentioned,
-      });
+      return await this.sendMessageWithTyping(
+        data.number,
+        message,
+        {
+          delay: data?.delay,
+          presence: 'composing',
+          quoted: data?.quoted,
+          mentionsEveryOne: data?.mentionsEveryOne,
+          mentioned: data?.mentioned,
+        },
+        isIntegration,
+        fromChatbot,
+      );
     }
 
     const generate = await (async () => {
@@ -3403,13 +3444,19 @@ export class BaileysStartupService extends ChannelStartupService {
       },
     };
 
-    return await this.sendMessageWithTyping(data.number, message, {
-      delay: data?.delay,
-      presence: 'composing',
-      quoted: data?.quoted,
-      mentionsEveryOne: data?.mentionsEveryOne,
-      mentioned: data?.mentioned,
-    });
+    return await this.sendMessageWithTyping(
+      data.number,
+      message,
+      {
+        delay: data?.delay,
+        presence: 'composing',
+        quoted: data?.quoted,
+        mentionsEveryOne: data?.mentionsEveryOne,
+        mentioned: data?.mentioned,
+      },
+      isIntegration,
+      fromChatbot,
+    );
   }
 
   public async locationMessage(data: SendLocationDto) {
@@ -3433,7 +3480,7 @@ export class BaileysStartupService extends ChannelStartupService {
     );
   }
 
-  public async listMessage(data: SendListDto) {
+  public async listMessage(data: SendListDto, isIntegration = false, fromChatbot = false) {
     return await this.sendMessageWithTyping(
       data.number,
       {
@@ -3453,6 +3500,8 @@ export class BaileysStartupService extends ChannelStartupService {
         mentionsEveryOne: data?.mentionsEveryOne,
         mentioned: data?.mentioned,
       },
+      isIntegration,
+      fromChatbot,
     );
   }
 

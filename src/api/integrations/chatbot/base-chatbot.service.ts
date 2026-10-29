@@ -172,6 +172,15 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
   }
 
   /**
+   * Checked before each part of an answer is sent (text parts, media). Integrations that support the human
+   * takeover override it to stop the remaining parts once a human wrote in the chat.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async shouldStopSending(instance: any, remoteJid: string): Promise<boolean> {
+    return false;
+  }
+
+  /**
    * Standard implementation for sending messages to WhatsApp
    * This handles common patterns like markdown links and formatting
    */
@@ -207,15 +216,26 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
           textBuffer = '';
         }
 
+        if (await this.shouldStopSending(instance, remoteJid)) {
+          this.logger.warn(`[BaseChatbot] Human took over ${remoteJid}, remaining media discarded`);
+          return;
+        }
+
         // Handle sending the media
         try {
           if (mediaType === 'audio') {
-            await instance.audioWhatsapp({
-              number: remoteJid.includes('@lid') ? remoteJid : remoteJid.split('@')[0],
-              delay: (settings as any)?.delayMessage || 1000,
-              audio: url,
-              caption: altText,
-            });
+            // Trailing `true` flags a chatbot send (fromChatbot) so the channel registers its id.
+            await instance.audioWhatsapp(
+              {
+                number: remoteJid.includes('@lid') ? remoteJid : remoteJid.split('@')[0],
+                delay: (settings as any)?.delayMessage || 1000,
+                audio: url,
+                caption: altText,
+              },
+              null,
+              false,
+              true,
+            );
           } else {
             await instance.mediaMessage(
               {
@@ -228,6 +248,7 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
               },
               null,
               false,
+              true,
             );
           }
         } catch (error) {
@@ -286,20 +307,26 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
       await instance.client.sendPresenceUpdate('composing', remoteJid);
     }
 
-    await new Promise<void>((resolve) => {
-      setTimeout(async () => {
-        await instance.textMessage(
-          {
-            number: remoteJid.includes('@lid') ? remoteJid : remoteJid.split('@')[0],
-            delay: settings?.delayMessage || 1000,
-            text: message,
-            linkPreview,
-          },
-          false,
-        );
-        resolve();
-      }, delay);
-    });
+    await new Promise<void>((resolve) => setTimeout(resolve, delay));
+
+    if (await this.shouldStopSending(instance, remoteJid)) {
+      this.logger.warn(`[BaseChatbot] Human took over ${remoteJid}, remaining message parts discarded`);
+      if (instance.integration === Integration.WHATSAPP_BAILEYS) {
+        await instance.client.sendPresenceUpdate('paused', remoteJid);
+      }
+      return;
+    }
+
+    await instance.textMessage(
+      {
+        number: remoteJid.includes('@lid') ? remoteJid : remoteJid.split('@')[0],
+        delay: settings?.delayMessage || 1000,
+        text: message,
+        linkPreview,
+      },
+      false,
+      true,
+    );
 
     if (instance.integration === Integration.WHATSAPP_BAILEYS) {
       await instance.client.sendPresenceUpdate('paused', remoteJid);

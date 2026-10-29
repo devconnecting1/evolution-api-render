@@ -334,6 +334,7 @@ export class TypebotService extends BaseChatbotService<TypebotModel, any> {
           },
           null,
           false,
+          true,
         );
 
         sendTelemetry('/message/sendMedia');
@@ -349,6 +350,7 @@ export class TypebotService extends BaseChatbotService<TypebotModel, any> {
           },
           null,
           false,
+          true,
         );
 
         sendTelemetry('/message/sendMedia');
@@ -362,7 +364,9 @@ export class TypebotService extends BaseChatbotService<TypebotModel, any> {
             encoding: true,
             audio: message.content.url,
           },
+          null,
           false,
+          true,
         );
 
         sendTelemetry('/message/sendWhatsAppAudio');
@@ -482,7 +486,7 @@ export class TypebotService extends BaseChatbotService<TypebotModel, any> {
       }
     }
 
-    await instance.listMessage(listJson);
+    await instance.listMessage(listJson, false, true);
   }
 
   /**
@@ -557,7 +561,7 @@ export class TypebotService extends BaseChatbotService<TypebotModel, any> {
       }
     }
 
-    await instance.buttonMessage(buttonJson);
+    await instance.buttonMessage(buttonJson, false, true);
   }
 
   /**

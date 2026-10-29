@@ -4,7 +4,9 @@
 
 Plataforma própria de atendimento automatizado: Evolution API (Cloud API oficial da Meta) + agente OpenAI por instância + painel WhatsAI. Cada cliente = 1 instância (1 número) com seu próprio agente.
 
-> Este README é o manual operacional e comercial do projeto. Atualizado em 23/10/2026.
+> Este README é o manual operacional e comercial do projeto. Atualizado em 29/10/2026.
+>
+> **Canal do escritório atual:** o escritório de advocacia em produção usa **Baileys** (`WHATSAPP-BAILEYS`, conexão por QR code), não a Cloud API. A oferta comercial das seções 5 e 6 é a Cloud API oficial, mas a **pausa humana** e a detecção bot x humano (seção 12) funcionam **somente no Baileys**; na Cloud API ficam para uma versão futura (limitações na seção 12.7).
 
 ## 1. Arquitetura
 
@@ -281,6 +283,9 @@ No modelo oficial, a Meta é **sempre paga pelo cliente**, direto na WABA. A Ope
 | Cloud API não conecta | Token expirado, Phone Number ID/WABA errados ou número não verificado na Meta |
 | Cloud API não envia fora do horário | Janela de 24 h fechada; enviar template aprovado (custo à parte) |
 | Cloud API cobrando acima do esperado | Bot dividindo respostas em várias mensagens ou templates de marketing; revisar `splitMessages` e o rate card |
+| Bot parou de responder a um contato (Baileys) | Provável pausa humana: `GET /openai/fetchSessions/{openaiId}/{instancia}`, procurar `status: paused` (e `parameters.humanLastMessageAt`); reative com `POST /openai/changeStatus/{instancia}` (`opened`). Ver seção 12.2 |
+| Erro `400 Unsupported parameter: 'max_tokens'` | Modelo de raciocínio (gpt-5, o-series, gpt-6) exige `max_completion_tokens`; deixe `tokenParam: "auto"` (seção 12.1) |
+| Cliente não recebe nada quando a OpenAI falha | Esperado se `unknownMessage` estiver vazio; configure em PT-BR (seção 12.5) |
 
 ## 10. Observabilidade
 
@@ -314,4 +319,172 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - Manager sem fonte: patches aplicados direto no bundle (documentados na seção 4).
 - Integrações habilitadas em `render.yaml` (commit `13f1bb28`).
 - Marca WhatsAI aplicada ao manager (título, logos, textos).
-- Conexão oficial (Cloud API) é a única oferta a clientes; modos de teste internos não são vendidos.
+- Conexão oficial (Cloud API) é a única oferta a clientes; modos de teste internos não são vendidos. Exceção operacional: o escritório de advocacia já em produção roda em Baileys (seção 12).
+- 29/10/2026: bot OpenAI ganhou `tokenParam` (compatibilidade com modelos de raciocínio) e `humanResumeMinutes` (pausa/retomada quando o dono escreve), só Baileys. `expire` continua sem efeito no OpenAI. Detalhes, curls, limitações e deploy na seção 12.
+
+## 12. Bot OpenAI: modelos, pausa humana e limitações
+
+Vale para o bot OpenAI (`/openai/*`) em instâncias **Baileys**. Os exemplos seguem o código do fork (rotas e campos `required` do schema), que em vários pontos difere da OpenAPI oficial.
+
+Variáveis usadas nos exemplos:
+
+```bash
+SERVER_URL="https://evolution-api-x93o.onrender.com"
+APIKEY="<chave global ou token da instância>"
+INSTANCE="escritorio-silva"
+```
+
+Header sempre `apikey: $APIKEY` e `Content-Type: application/json`. `creds` e `create` retornam 201; as demais rotas, 200.
+
+### 12.1 `tokenParam` e `maxTokens` (modelos de raciocínio)
+
+Modelos novos (gpt-5.x, gpt-6, o1/o3...) recusam `max_tokens` e exigem `max_completion_tokens`. O campo `tokenParam` existe no bot e nas settings (`'auto'` | `'max_tokens'` | `'max_completion_tokens'`; default `'auto'`). Precedência: bot > settings > `'auto'` (bot `null` herda do settings).
+
+- **`auto`:** modelos que casam com `/^(ft:)?(o\d|gpt-5|gpt-6)/i` usam `max_completion_tokens`; os demais (gpt-4o, gpt-4o-mini...) usam `max_tokens`.
+- **Retry único:** se a OpenAI responder 400 "Unsupported parameter", a API repete a chamada uma vez com o outro parâmetro. No `auto` o parâmetro que funcionou fica memorizado por modelo (só em memória; zera no restart). Em modo forçado também há 1 retry, com `WARN` no log, mas **sem** memorizar.
+- **`maxTokens` continua obrigatório** no `chatCompletion` (fallback interno de 500 se vier vazio). Modelos de raciocínio gastam tokens internos de "pensamento" dentro desse limite: com `maxTokens` baixo a resposta pode vir vazia ou cortada. Para gpt-5/o-series use um valor maior (ex.: 2000 ou mais).
+- Dois bots da mesma instância não podem ter o mesmo `model` + `maxTokens`; para trocar de modelo, atualize o bot existente (PUT).
+
+### 12.2 Pausa humana e `humanResumeMinutes`
+
+Problema resolvido: com `stopBotFromMe=true`, quando o dono escrevia (celular ou WhatsApp Web/Desktop) a sessão ia para `paused` e **nunca voltava**, e a primeira mensagem do cliente depois da pausa era engolida.
+
+`humanResumeMinutes` (inteiro >= 0; **default 0 = nunca volta sozinha**). Precedência: bot > settings > 0 (bot `null` herda do settings). **Requer `stopBotFromMe=true`.**
+
+| Situação | Comportamento |
+|---|---|
+| Dono escreve (celular, WhatsApp Web ou Desktop) com sessão existente | Sessão vai para `paused`; `parameters.humanLastMessageAt` = horário da mensagem humana. Atualizado a cada mensagem humana e nunca volta no tempo |
+| Dono escreve e **não existe sessão** | Cria uma sessão **já pausada** (o bot não entra). Exige que algum bot case com a mensagem: use `triggerType: "all"` ou configure o bot de fallback. Com bots só por palavra-chave e sem fallback, nenhuma sessão é criada |
+| Cliente escreve durante a pausa | Ignorado: sem resposta e sem gravar nada no banco. As mensagens **não ficam guardadas** para depois |
+| Passaram X minutos desde a **última** mensagem humana e o cliente escreve | A sessão reabre e a mensagem do cliente é respondida **na hora** |
+| `humanResumeMinutes = 0` | Só volta manualmente (`changeStatus` `opened`) ou pela `keywordFinish` do cliente (fecha/apaga a sessão) |
+| Resposta do próprio bot (inclui partes do `splitMessages`) | **Não** pausa: os ids das mensagens enviadas pelo bot ficam registrados (TTL 10 min) e o eco é ignorado |
+| Resposta da OpenAI chega depois que o humano escreveu | Descartada (a sessão volta a `paused`); as partes restantes do `splitMessages` também |
+| Humano escreve durante o debounce do cliente | Nenhuma resposta (o debounce relê a sessão ao disparar) |
+| Atendente responde pelo **Chatwoot** (integração ligada) | Conta como humano e pausa o bot |
+| Envio pela API REST (`/message/sendText`, n8n, CRM) | **Não** pausa: a API não recebe de volta o que ela mesma envia (`emitOwnEvents: false`). Para pausar ao assumir por um painel próprio, chame `changeStatus` `paused` |
+| Auto-resposta de chamada (`msgCall`) | Não pausa |
+
+### 12.3 Sessões legadas e pausa manual
+
+- **Sessão legada** (pausada antes desta versão, sem `humanLastMessageAt`): com `humanResumeMinutes > 0` usa o `updatedAt` da sessão (momento da pausa) como referência; com `0` fica pausada até `changeStatus` `opened`.
+- **`changeStatus` `paused` (manual):** marca `parameters.manualPause=true`; **nunca** é reaberta por `humanResumeMinutes` e só sai com `changeStatus` `opened`.
+- `changeStatus` `opened` limpa `humanLastMessageAt` e `manualPause`: a próxima mensagem do cliente é respondida e não repausa.
+- `keepOpen=true` + `keywordFinish`: a sessão fica `closed` e o bot silencia nesse contato até um `changeStatus` `opened`. Para o escritório prefira `keepOpen=false` (a sessão é apagada e a próxima mensagem abre outra).
+
+### 12.4 Exemplos (curl)
+
+```bash
+# 1. Credencial OpenAI (a mesma chave não pode ser cadastrada em duas instâncias)
+curl -X POST "$SERVER_URL/openai/creds/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{"name":"openai-escritorio","apiKey":"sk-proj-..."}'
+# a resposta traz o id: use como <openaiCredsId>
+
+# 2. Settings da instância. Obrigatórios: openaiCredsId, expire, keywordFinish, delayMessage,
+#    unknownMessage, listeningFromMe, stopBotFromMe, keepOpen, debounceTime, ignoreJids
+curl -X POST "$SERVER_URL/openai/settings/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{
+    "openaiCredsId": "<openaiCredsId>",
+    "expire": 0,
+    "keywordFinish": "#sair",
+    "delayMessage": 1500,
+    "unknownMessage": "Desculpe, tive um problema para responder agora. Um atendente do escritório vai falar com você em breve.",
+    "listeningFromMe": false,
+    "stopBotFromMe": true,
+    "keepOpen": false,
+    "debounceTime": 12,
+    "ignoreJids": ["@g.us"],
+    "speechToText": true,
+    "tokenParam": "auto",
+    "humanResumeMinutes": 60,
+    "openaiIdFallback": "<openaiBotId>"
+  }'
+# "openaiIdFallback" (como na doc oficial) e "fallbackId" são aceitos; nenhum dos dois é obrigatório.
+# O fetchSettings devolve esse campo como "fallbackId".
+
+# 3. Criar bot chatCompletion. Obrigatórios: enabled, openaiCredsId, botType, triggerType
+#    (chatCompletion exige ainda model e maxTokens; assistant exige assistantId)
+curl -X POST "$SERVER_URL/openai/create/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{
+    "enabled": true,
+    "openaiCredsId": "<openaiCredsId>",
+    "botType": "chatCompletion",
+    "model": "gpt-4o",
+    "systemMessages": ["Você é a assistente virtual do escritório. Responda em português, de forma curta e cordial."],
+    "assistantMessages": [],
+    "userMessages": [],
+    "maxTokens": 500,
+    "tokenParam": "auto",
+    "humanResumeMinutes": 60,
+    "triggerType": "all"
+  }'
+# Para gpt-5.x / gpt-6-luna use "model": "gpt-6-luna" e "maxTokens": 2000
+
+# 4. Atualizar bot (PUT). O corpo passa pelo MESMO schema do create: mande sempre
+#    enabled, openaiCredsId, botType e triggerType (+ model e maxTokens no chatCompletion)
+curl -X PUT "$SERVER_URL/openai/update/<openaiBotId>/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{
+    "enabled": true,
+    "openaiCredsId": "<openaiCredsId>",
+    "botType": "chatCompletion",
+    "model": "gpt-6-luna",
+    "maxTokens": 2000,
+    "triggerType": "all",
+    "tokenParam": "auto",
+    "humanResumeMinutes": 30
+  }'
+# Não há como voltar um campo do bot a "herdar do settings" (null é rejeitado); ajuste o valor ou use as settings.
+
+# 5. Ver as settings (tokenParam, humanResumeMinutes, fallbackId...)
+curl "$SERVER_URL/openai/fetchSettings/$INSTANCE" -H "apikey: $APIKEY"
+
+# 6. Reativar o bot para um contato, ou pausar manualmente. JID completo;
+#    status: opened | paused | closed | delete
+curl -X POST "$SERVER_URL/openai/changeStatus/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{"remoteJid":"5521999999999@s.whatsapp.net","status":"opened"}'
+
+curl -X POST "$SERVER_URL/openai/changeStatus/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{"remoteJid":"5521999999999@s.whatsapp.net","status":"paused"}'
+
+# 7. Ver as sessões: status (opened | paused | closed) e parameters
+curl "$SERVER_URL/openai/fetchSessions/<openaiBotId>/$INSTANCE" -H "apikey: $APIKEY"
+# pausa humana: "parameters": {"humanLastMessageAt": "2026-10-29T18:00:00.000Z"}
+# pausa manual: "parameters": {"manualPause": true}
+```
+
+### 12.5 `expire`, erros da OpenAI e `unknownMessage`
+
+- **`expire` não faz nada no bot OpenAI.** A doc oficial promete encerrar a sessão por inatividade, mas no fork só o Typebot aplica esse valor. A retomada após intervenção humana é feita por `humanResumeMinutes`, que **não** substitui `expire` (só vale para sessão pausada, contada desde a última mensagem humana).
+- **Erros da OpenAI nunca vão ao cliente.** O cliente recebe apenas o `unknownMessage` das settings, se configurado; string vazia = não envia nada (o erro fica só no log). A mesma regra vale para falha de transcrição de áudio.
+- Atenção: o default criado automaticamente é em inglês (`Sorry, I dont understand`). **Configure o `unknownMessage` em PT-BR** (exemplo acima). O envio só ocorre se a sessão ainda estiver `opened`.
+
+### 12.6 Imagens
+
+As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa pelo canal, usa o base64 da mensagem ou a URL pública (S3/MinIO). No modo Assistants a imagem sobe por upload `vision` e **os arquivos ficam na conta OpenAI** (considere na política de privacidade/LGPD). Se não conseguir obter a imagem, o fluxo segue só com texto e a nota `[imagem não pôde ser processada]` (no lugar do antigo erro `Failed to download file`).
+
+### 12.7 Limitações conhecidas
+
+- **Manager (bundle sem fonte):** não mostra nem edita `tokenParam` e `humanResumeMinutes`; só pela API. Salvar um bot/settings no Manager **não apaga** os valores definidos por API.
+- **Cloud API (WHATSAPP-BUSINESS):** a pausa humana **não funciona**.
+  - Sem Coexistence, o app do celular não envia mensagens pelo número (não existe eco).
+  - Com Coexistence, a Meta envia `smb_message_echoes`, que a API não trata.
+  - No app Meta assine só o campo `messages` (outros campos geram erro logado).
+- WhatsApp Web/Desktop do dono funciona igual ao celular (Baileys).
+- O registro de ids do bot e o mapa do `tokenParam` são **por processo**: valem para 1 réplica da API (Render atual). Com mais réplicas, pausa humana e memória do `tokenParam` ficam inconsistentes.
+- Envios pela API REST (n8n, CRM, painel próprio) **não** pausam o bot; só mensagens digitadas no WhatsApp (celular/Web/Desktop) ou respostas de atendente pelo Chatwoot. Para pausar a partir de um painel, use `changeStatus` `paused`.
+- Mensagens do cliente durante a pausa não são guardadas para responder depois.
+- Só o bot OpenAI tem retomada por `humanResumeMinutes`; Typebot, Dify etc. mantêm o comportamento anterior.
+
+### 12.8 Deploy e atualização
+
+1. **Antes do merge:** crie um snapshot/branch do projeto no Neon.
+2. A migration `20261029120000_add_openai_token_param_human_resume` é **aditiva** (colunas novas nullable ou com default) e roda no start do container (`Docker/scripts/deploy_database.sh` > `prisma migrate deploy`). O default `auto` preserva o comportamento do gpt-4o. **Atenção:** com `humanResumeMinutes = 0` (default) uma sessão pausada não reabre mais sozinha na mensagem seguinte do cliente (antes reabria, engolindo essa mensagem); logo após o deploy defina `humanResumeMinutes` pela API (settings e/ou bot) com o valor combinado com o escritório.
+3. O merge na `main` dispara deploy automático no Render; a API fica ~4 min fora. Faça fora do horário comercial do escritório.
+4. **Rollback:** reverter o merge e deixar o Render redeployar. As colunas extras permanecem no banco e são ignoradas pelo código antigo.
+5. O script de migration imprime a `DATABASE_URL` no log de boot: não compartilhe esse trecho do log.

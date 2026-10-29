@@ -48,6 +48,18 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
     return 'openai';
   }
 
+  // Human takeover (pause on human fromMe, paused session creation, resume after humanResumeMinutes)
+  protected supportsHumanPause(): boolean {
+    return true;
+  }
+
+  // Bot value, then settings value, then default
+  protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
+    return {
+      tokenParam: bot?.tokenParam ?? settings?.tokenParam ?? 'auto',
+    };
+  }
+
   protected getAdditionalBotData(data: OpenaiDto): Record<string, any> {
     return {
       openaiCredsId: data.openaiCredsId,
@@ -59,6 +71,8 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       assistantMessages: data.assistantMessages,
       userMessages: data.userMessages,
       maxTokens: data.maxTokens,
+      tokenParam: data.tokenParam,
+      humanResumeMinutes: data.humanResumeMinutes,
     };
   }
 
@@ -74,6 +88,8 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       assistantMessages: data.assistantMessages,
       userMessages: data.userMessages,
       maxTokens: data.maxTokens,
+      tokenParam: data.tokenParam,
+      humanResumeMinutes: data.humanResumeMinutes,
     };
   }
 
@@ -185,6 +201,8 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         debounceTime: data.debounceTime || 1,
         ignoreJids: data.ignoreJids || [],
         speechToText: false,
+        tokenParam: 'auto',
+        humanResumeMinutes: 0,
       });
     } else if (!existingSettings.openaiCredsId && data.openaiCredsId) {
       // Update settings with OpenAI credentials if they're missing
@@ -371,7 +389,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         ignoreJids: data.ignoreJids,
         splitMessages: data.splitMessages,
         timePerChar: data.timePerChar,
-        openaiIdFallback: data.fallbackId,
+        openaiIdFallback: data.fallbackId ?? data.openaiIdFallback, // docs send openaiIdFallback
         OpenaiCreds: data.openaiCredsId
           ? {
               connect: {
@@ -380,6 +398,8 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
             }
           : undefined,
         speechToText: data.speechToText,
+        tokenParam: data.tokenParam,
+        humanResumeMinutes: data.humanResumeMinutes,
       };
 
       if (existingSettings) {
@@ -417,6 +437,17 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       this.logger.error(error);
       throw new Error('Error setting default settings');
     }
+  }
+
+  // Expose the OpenAI-specific defaults even when no settings row exists yet
+  public async fetchSettings(instance: InstanceDto) {
+    const settings = await super.fetchSettings(instance);
+
+    return {
+      ...settings,
+      tokenParam: settings?.tokenParam ?? 'auto',
+      humanResumeMinutes: settings?.humanResumeMinutes ?? 0,
+    };
   }
 
   // Models - OpenAI specific functionality
