@@ -567,14 +567,15 @@ export class BusinessStartupService extends ChannelStartupService {
                     openAiDefaultSettings.speechToText
                   ) {
                     try {
+                      // speechToText(msg, instance) reads the audio from msg.message.mediaUrl
                       messageRaw.message.speechToText = `[audio] ${await this.openaiService.speechToText(
-                        openAiDefaultSettings.OpenaiCreds,
                         {
                           message: {
                             mediaUrl: messageRaw.message.mediaUrl,
                             ...messageRaw,
                           },
                         },
+                        this,
                       )}`;
                     } catch (speechError) {
                       this.logger.error(`Error processing speech-to-text: ${speechError}`);
@@ -610,14 +611,15 @@ export class BusinessStartupService extends ChannelStartupService {
 
               if (openAiDefaultSettings && openAiDefaultSettings.openaiCredsId && openAiDefaultSettings.speechToText) {
                 try {
+                  // speechToText(msg, instance) reads the audio from msg.message.base64
                   messageRaw.message.speechToText = `[audio] ${await this.openaiService.speechToText(
-                    openAiDefaultSettings.OpenaiCreds,
                     {
                       message: {
                         base64: openAiBase64,
                         ...messageRaw,
                       },
                     },
+                    this,
                   )}`;
                 } catch (speechError) {
                   this.logger.error(`Error processing speech-to-text: ${speechError}`);
