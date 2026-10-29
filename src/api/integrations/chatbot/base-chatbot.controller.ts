@@ -875,11 +875,6 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
   }
 
   /**
-   * A human (the owner of the number) wrote in the chat: pause the session and record the time, extending the
-   * pause on every human message. When the chat has no session yet, create one already paused so the bot does
-   * not answer the contact over the human.
-   */
-  /**
    * When the human wrote: the message timestamp (messages delivered late after a reconnection keep their real
    * time), never in the future.
    */
@@ -890,6 +885,11 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     return new Date(Number.isFinite(timestamp) && timestamp > 0 ? Math.min(timestamp, now) : now);
   }
 
+  /**
+   * A human (the owner of the number) wrote in the chat: pause the session and record the time, extending the
+   * pause on every human message. When the chat has no session yet, create one already paused so the bot does
+   * not answer the contact over the human.
+   */
   private async pauseForHumanMessage(
     instance: InstanceDto,
     remoteJid: string,
@@ -1206,8 +1206,14 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         // No database write here: any update would also bump updatedAt
         if (!isHumanPauseExpired(session, humanResumeMinutes)) return;
 
-        const resumed = await this.resumeHumanPausedSession(session);
-        if (!resumed) return;
+        let resumed = await this.resumeHumanPausedSession(session);
+
+        if (!resumed) {
+          // Another message of the same burst resumed it first: answer this one too (it joins the debounce)
+          const current = await this.sessionRepository.findUnique({ where: { id: session.id } });
+          if (!current || isHumanPaused(current) || current.status !== 'opened') return;
+          resumed = current;
+        }
 
         // Answer this very message
         session = resumed;
