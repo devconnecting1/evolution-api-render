@@ -3,6 +3,7 @@ import { OpenaiCredsDto, OpenaiDto } from '@api/integrations/chatbot/openai/dto/
 import { OpenaiService } from '@api/integrations/chatbot/openai/services/openai.service';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { WAMonitoringService } from '@api/services/monitor.service';
+import { Events } from '@api/types/wa.types';
 import { configService, Openai } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { BadRequestException } from '@exceptions';
@@ -52,6 +53,11 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
   // Human takeover (pause on human fromMe, paused session creation, resume after humanResumeMinutes)
   protected supportsHumanPause(): boolean {
     return true;
+  }
+
+  // Webhook `openai.change_status` on pause (human or manual) and resume
+  protected getChangeStatusEvent(): Events | null {
+    return Events.OPENAI_CHANGE_STATUS;
   }
 
   // Bot value, then settings value, then default

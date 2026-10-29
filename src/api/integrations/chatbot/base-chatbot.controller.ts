@@ -9,6 +9,7 @@ import { TriggerOperator, TriggerType } from '@prisma/client';
 import { isBotMessageId } from '@utils/botMessageRegistry';
 import { getConversationMessage } from '@utils/getConversationMessage';
 import {
+  describeHumanPause,
   getHumanLastMessageAt,
   isHumanPaused,
   isHumanPauseExpired,
@@ -478,6 +479,14 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
           },
         });
 
+        this.notifyStatusChange(instance, session, () => ({
+          remoteJid,
+          status,
+          reason: 'manual',
+          session,
+          humanPause: null,
+        }));
+
         return { bot: { remoteJid: remoteJid, status: status } };
       }
 
@@ -501,6 +510,14 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
           });
         }
 
+        this.notifyStatusChange(instance, session, () => ({
+          remoteJid,
+          status,
+          reason: 'manual',
+          session,
+          humanPause: null,
+        }));
+
         return { bot: { ...instance, bot: { remoteJid: remoteJid, status: status } } };
       } else {
         const where = {
@@ -509,7 +526,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
           botId: { not: null },
         };
 
-        const session = await this.sessionRepository.updateMany({
+        const updated = await this.sessionRepository.updateMany({
           where,
           data: {
             status: status,
@@ -520,10 +537,24 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         // timestamp and a manual 'paused' must only be lifted manually.
         await this.applyManualStatus(where, status);
 
+        this.notifyStatusChange(instance, session, async () => {
+          // Reload: applyManualStatus changed the parameters the pause state is read from
+          const fresh = await this.sessionRepository.findUnique({ where: { id: session.id } });
+          const bot = fresh?.botId ? await this.botRepository.findFirst({ where: { id: fresh.botId } }) : null;
+
+          return {
+            remoteJid,
+            status,
+            reason: 'manual',
+            session,
+            humanPause: describeHumanPause(fresh, resolveHumanResumeMinutes(bot, defaultSettingCheck)),
+          };
+        });
+
         const botData = {
           remoteJid: remoteJid,
           status: status,
-          session,
+          session: updated,
         };
 
         return { bot: { ...instance, bot: botData } };
@@ -802,6 +833,41 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     }
   }
 
+  /** Webhook event sent when the status of a session of this integration changes by pause or resume. */
+  protected getChangeStatusEvent(): Events | null {
+    return null;
+  }
+
+  /**
+   * Sends the change status webhook of the integration, if it has one. Fire and forget: the payload is built and
+   * delivered in the background and a failure is only logged, so it can never break or delay the bot flow.
+   * Sessions of other integrations (or none) are not reported.
+   */
+  private notifyStatusChange(
+    instance: InstanceDto,
+    session: any,
+    build: () => Record<string, any> | Promise<Record<string, any>>,
+  ): void {
+    const event = this.getChangeStatusEvent();
+    if (!event || !session || !this.isOwnSession(session)) return;
+
+    void (async () => {
+      try {
+        const waInstance = this.waMonitor.waInstances[instance.instanceName];
+        if (!waInstance) return;
+
+        const data = await build();
+
+        await waInstance.sendDataWebhook(event, {
+          ...data,
+          session: data.session ? { id: data.session.id, botId: data.session.botId ?? null } : null,
+        });
+      } catch (error) {
+        this.logger.error(`Could not send ${event} webhook: ${error?.message || error}`);
+      }
+    })();
+  }
+
   /**
    * Whether this integration implements the full human takeover flow: a human `fromMe` message pauses the
    * session (creating a paused one when the chat has none), the time of the last human message is kept in
@@ -896,6 +962,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     sessionJids: string[],
     session: any,
     bot: any,
+    resumeMinutes: number,
     msg?: any,
   ): Promise<void> {
     await this.runExclusive(`${instance.instanceId}:${this.preferredJid(remoteJid, sessionJids)}`, async () => {
@@ -910,7 +977,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         // Finished conversations stay finished; sessions of other integrations are theirs to handle
         if (current.status === 'closed' || !this.isOwnSession(current)) return;
 
-        await this.sessionRepository.update({
+        const paused = await this.sessionRepository.update({
           where: { id: current.id },
           data: {
             status: 'paused',
@@ -923,6 +990,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         });
 
         this.logger.log(`Human message in ${remoteJid}: ${this.integrationName} session ${current.id} paused`);
+        this.notifyHumanPause(instance, paused, resumeMinutes);
         return;
       }
 
@@ -960,11 +1028,22 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
       });
 
       this.logger.log(`Human message in ${remoteJid}: created paused ${this.integrationName} session ${created.id}`);
+      this.notifyHumanPause(instance, created, resumeMinutes);
     });
   }
 
+  private notifyHumanPause(instance: InstanceDto, session: any, resumeMinutes: number): void {
+    this.notifyStatusChange(instance, session, () => ({
+      remoteJid: session.remoteJid,
+      status: 'paused',
+      reason: 'human',
+      session,
+      humanPause: describeHumanPause(session, resumeMinutes),
+    }));
+  }
+
   /** Reopens a human-paused session, dropping the timestamp. Returns null when it changed meanwhile. */
-  private async resumeHumanPausedSession(session: any): Promise<any> {
+  private async resumeHumanPausedSession(instance: InstanceDto, session: any): Promise<any> {
     const result = await this.sessionRepository.updateMany({
       where: { id: session.id, status: session.status },
       data: {
@@ -980,7 +1059,17 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
       `Human pause expired for ${session.remoteJid}: ${this.integrationName} session ${session.id} resumed`,
     );
 
-    return await this.sessionRepository.findUnique({ where: { id: session.id } });
+    const resumed = await this.sessionRepository.findUnique({ where: { id: session.id } });
+
+    this.notifyStatusChange(instance, session, () => ({
+      remoteJid: session.remoteJid,
+      status: 'opened',
+      reason: 'resumed',
+      session,
+      humanPause: null,
+    }));
+
+    return resumed;
   }
 
   private async applyManualStatus(where: Record<string, any>, status: string) {
@@ -1128,7 +1217,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
 
       // Human takeover: a fromMe message that was not sent by a bot was written by the owner of the number
       if (stopBotFromMe && key.fromMe && this.supportsHumanPause()) {
-        await this.pauseForHumanMessage(instance, remoteJid, sessionJids, session, findBot, msg);
+        await this.pauseForHumanMessage(instance, remoteJid, sessionJids, session, findBot, humanResumeMinutes, msg);
         return;
       }
 
@@ -1206,7 +1295,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         // No database write here: any update would also bump updatedAt
         if (!isHumanPauseExpired(session, humanResumeMinutes)) return;
 
-        let resumed = await this.resumeHumanPausedSession(session);
+        let resumed = await this.resumeHumanPausedSession(instance, session);
 
         if (!resumed) {
           // Another message of the same burst resumed it first: answer this one too (it joins the debounce)

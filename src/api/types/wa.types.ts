@@ -30,6 +30,7 @@ export enum Events {
   CALL = 'call',
   TYPEBOT_START = 'typebot.start',
   TYPEBOT_CHANGE_STATUS = 'typebot.change-status',
+  OPENAI_CHANGE_STATUS = 'openai.change_status',
   LABELS_EDIT = 'labels.edit',
   LABELS_ASSOCIATION = 'labels.association',
   CREDS_UPDATE = 'creds.update',
