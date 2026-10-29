@@ -6,11 +6,12 @@ import { Logger } from '@config/logger.config';
 /**
  * Registry of message ids sent by the API itself (chatbots/integrations).
  *
- * Baileys echoes every message we send back through `messages.upsert` with `fromMe=true`.
- * The id prefix (3EB0...) and `source=web` are the same for WhatsApp Web/Desktop, so they
- * cannot tell a bot reply from a human typing. Ids are registered *before* sending, so the
- * echo can never arrive first, and checked in the chatbot emit to decide whether a fromMe
- * message was written by a human.
+ * A fromMe message reaching the chatbot emit may be an echo of something the API sent (the
+ * automatic call reply, the Chatwoot path, `emitOwnEvents`, another linked session) or a human
+ * typing on the phone or WhatsApp Web/Desktop. The id prefix (3EB0...) and `source=web` are the
+ * same for the API and WhatsApp Web, so they cannot tell them apart. Ids are registered *before*
+ * sending, so an echo can never arrive first, and checked in the chatbot emit to decide whether a
+ * fromMe message was written by a human.
  *
  * Stored in the configured cache (Redis or local) and always in process memory as fallback,
  * because the cache may be disabled.

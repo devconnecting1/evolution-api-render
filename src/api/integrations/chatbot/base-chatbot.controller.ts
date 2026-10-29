@@ -879,15 +879,27 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
    * pause on every human message. When the chat has no session yet, create one already paused so the bot does
    * not answer the contact over the human.
    */
+  /**
+   * When the human wrote: the message timestamp (messages delivered late after a reconnection keep their real
+   * time), never in the future.
+   */
+  private humanMessageDate(msg: any): Date {
+    const now = Date.now();
+    const timestamp = Number(msg?.messageTimestamp) * 1000;
+
+    return new Date(Number.isFinite(timestamp) && timestamp > 0 ? Math.min(timestamp, now) : now);
+  }
+
   private async pauseForHumanMessage(
     instance: InstanceDto,
     remoteJid: string,
     sessionJids: string[],
     session: any,
     bot: any,
+    msg?: any,
   ): Promise<void> {
     await this.runExclusive(`${instance.instanceId}:${this.preferredJid(remoteJid, sessionJids)}`, async () => {
-      const now = new Date();
+      const now = this.humanMessageDate(msg);
 
       // Re-read inside the lock: a concurrent human message may have created or updated the session
       const current = session
@@ -902,7 +914,11 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
           where: { id: current.id },
           data: {
             status: 'paused',
-            parameters: withHumanLastMessageAt(current.parameters, now),
+            // Never move the timestamp backwards (an old message delivered late, e.g. after a reconnection)
+            parameters: withHumanLastMessageAt(
+              current.parameters,
+              new Date(Math.max(now.getTime(), getHumanLastMessageAt(current) ?? 0)),
+            ),
           },
         });
 
@@ -1112,7 +1128,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
 
       // Human takeover: a fromMe message that was not sent by a bot was written by the owner of the number
       if (stopBotFromMe && key.fromMe && this.supportsHumanPause()) {
-        await this.pauseForHumanMessage(instance, remoteJid, sessionJids, session, findBot);
+        await this.pauseForHumanMessage(instance, remoteJid, sessionJids, session, findBot, msg);
         return;
       }
 
