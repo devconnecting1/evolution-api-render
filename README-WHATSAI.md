@@ -361,7 +361,8 @@ Problema resolvido: com `stopBotFromMe=true`, quando o dono escrevia (celular ou
 | Resposta do próprio bot (inclui partes do `splitMessages`) | **Não** pausa: os ids das mensagens enviadas pelo bot ficam registrados (TTL 10 min) e o eco é ignorado |
 | Resposta da OpenAI chega depois que o humano escreveu | Descartada (a sessão volta a `paused`); as partes restantes do `splitMessages` também |
 | Humano escreve durante o debounce do cliente | Nenhuma resposta (o debounce relê a sessão ao disparar) |
-| Envio por REST (`/message/sendText`), n8n, Chatwoot etc. pelo mesmo número | Conta como humano e pausa o bot |
+| Atendente responde pelo **Chatwoot** (integração ligada) | Conta como humano e pausa o bot |
+| Envio pela API REST (`/message/sendText`, n8n, CRM) | **Não** pausa: a API não recebe de volta o que ela mesma envia (`emitOwnEvents: false`). Para pausar ao assumir por um painel próprio, chame `changeStatus` `paused` |
 | Auto-resposta de chamada (`msgCall`) | Não pausa |
 
 ### 12.3 Sessões legadas e pausa manual
@@ -476,7 +477,7 @@ As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa
   - No app Meta assine só o campo `messages` (outros campos geram erro logado).
 - WhatsApp Web/Desktop do dono funciona igual ao celular (Baileys).
 - O registro de ids do bot e o mapa do `tokenParam` são **por processo**: valem para 1 réplica da API (Render atual). Com mais réplicas, pausa humana e memória do `tokenParam` ficam inconsistentes.
-- Envios via REST, n8n ou Chatwoot pelo mesmo número contam como humanos e pausam o bot.
+- Envios pela API REST (n8n, CRM, painel próprio) **não** pausam o bot; só mensagens digitadas no WhatsApp (celular/Web/Desktop) ou respostas de atendente pelo Chatwoot. Para pausar a partir de um painel, use `changeStatus` `paused`.
 - Mensagens do cliente durante a pausa não são guardadas para responder depois.
 - Só o bot OpenAI tem retomada por `humanResumeMinutes`; Typebot, Dify etc. mantêm o comportamento anterior.
 
