@@ -126,14 +126,36 @@ export class BusinessStartupService extends ChannelStartupService {
   public async connectToWhatsapp(data?: any): Promise<any> {
     if (!data) return;
 
-    const content = data.entry[0].changes[0].value;
+    const change = typeof data === 'object' ? data.entry?.[0]?.changes?.[0] : undefined;
+    const content = change?.value;
+    const field: string | undefined = change?.field;
+
+    if (!content || typeof content !== 'object') {
+      this.logger.verbose('Meta webhook without change value ignored');
+      return;
+    }
 
     try {
+      if (field === 'smb_app_state_sync' || field === 'history') {
+        // Coexistence contact/history sync: not stored by this channel
+        this.logger.verbose(`Meta webhook field ${field} ignored`);
+        return;
+      }
+
+      const sender = Array.isArray(content.messages) ? content.messages[0]?.from : undefined;
+      const recipient = Array.isArray(content.statuses) ? content.statuses[0]?.recipient_id : undefined;
+
+      if (!sender && !recipient) {
+        // Unknown fields (e.g. smb_message_echoes before it is handled) or payloads without messages/statuses
+        this.logger.verbose(`Meta webhook field ${field ?? 'unknown'} without messages or statuses ignored`);
+        return;
+      }
+
       this.loadChatwoot();
 
       this.eventHandler(content);
 
-      this.phoneNumber = createJid(content.messages ? content.messages[0].from : content.statuses[0]?.recipient_id);
+      this.phoneNumber = createJid(String(sender ?? recipient));
     } catch (error) {
       this.logger.error(error);
       throw new InternalServerErrorException(error?.toString());
