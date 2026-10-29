@@ -106,13 +106,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
           content = transcription;
         } else {
           this.logger.error('Failed to transcribe audio');
-          await this.sendMessageWhatsApp(
-            instance,
-            remoteJid,
-            "Sorry, I couldn't transcribe your audio message. Could you please type your message instead?",
-            settings,
-            true,
-          );
+          await this.sendErrorFallback(instance, remoteJid, settings, session);
           return;
         }
       } else {
@@ -248,7 +242,15 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         );
       } else {
         this.logger.log('Processing with ChatCompletion API');
-        message = await this.processChatCompletionMessage(instance, openaiBot, remoteJid, content, msg, settings);
+        message = await this.processChatCompletionMessage(
+          instance,
+          openaiBot,
+          remoteJid,
+          content,
+          msg,
+          settings,
+          session,
+        );
       }
 
       this.logger.log(`Got response from OpenAI: ${message?.substring(0, 50)}${message?.length > 50 ? '...' : ''}`);
@@ -287,13 +289,13 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         this.logger.error('No message to send to WhatsApp');
       }
 
-      // Update session status
-      await this.prismaRepository.integrationSession.update({
+      // Update session status, without reopening a session paused or closed while the answer was being sent
+      await this.prismaRepository.integrationSession.updateMany({
         where: {
           id: session.id,
+          status: 'opened',
         },
         data: {
-          status: 'opened',
           awaitUser: true,
         },
       });
@@ -426,9 +428,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         id: session.id,
       },
       data: {
-        status: 'opened',
         awaitUser: true,
-        sessionId: threadId, // Ensure thread ID is saved consistently
+        sessionId: threadId, // Ensure thread ID is saved consistently (status is left as is: a human may have paused it)
       },
     });
 
@@ -445,6 +446,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     content: string,
     msg?: any,
     settings?: OpenaiSetting,
+    currentSession?: IntegrationSession,
   ): Promise<string> {
     this.logger.log('Starting processChatCompletionMessage');
 
@@ -472,13 +474,15 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       `Using model: ${openaiBot.model}, tokenParam: ${tokenParam.mode} -> ${tokenParam.param}=${openaiBot.maxTokens || 500}`,
     );
 
-    // Get existing conversation history from the session
+    // Get existing conversation history from the session (by id: the chat may show up as @lid or @s.whatsapp.net)
     const session = await this.prismaRepository.integrationSession.findFirst({
-      where: {
-        remoteJid,
-        botId: openaiBot.id,
-        status: 'opened',
-      },
+      where: currentSession?.id
+        ? { id: currentSession.id }
+        : {
+            remoteJid,
+            botId: openaiBot.id,
+            status: 'opened',
+          },
     });
 
     let conversationHistory = [];
@@ -1031,6 +1035,18 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       `Image for message ${msg?.key?.id ?? 'unknown'} could not be obtained; continuing with text only`,
     );
     return null;
+  }
+
+  /**
+   * Stop sending the remaining parts of an answer (splitMessages / media) once a human took over the chat.
+   */
+  protected async shouldStopSending(instance: any, remoteJid: string): Promise<boolean> {
+    const session = await this.prismaRepository.integrationSession.findFirst({
+      where: { instanceId: instance?.instanceId, remoteJid, type: this.getBotType() },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return isHumanPaused(session);
   }
 
   /**
