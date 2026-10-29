@@ -1,5 +1,13 @@
 import { BaseChatbotDto, BaseChatbotSettingDto } from '../../base-chatbot.dto';
 
+/**
+ * Which token-limit parameter is sent to the Chat Completions API.
+ * - auto (default): max_completion_tokens for o-series / gpt-5 / gpt-6 models, max_tokens otherwise
+ * - max_tokens: always the legacy parameter
+ * - max_completion_tokens: always the new parameter
+ */
+export type OpenaiTokenParam = 'auto' | 'max_tokens' | 'max_completion_tokens';
+
 export class OpenaiCredsDto {
   name: string;
   apiKey: string;
@@ -15,10 +23,14 @@ export class OpenaiDto extends BaseChatbotDto {
   assistantMessages?: string[];
   userMessages?: string[];
   maxTokens?: number;
+  tokenParam?: OpenaiTokenParam;
+  humanResumeMinutes?: number;
 }
 
 export class OpenaiSettingDto extends BaseChatbotSettingDto {
   openaiCredsId?: string;
   openaiIdFallback?: string;
   speechToText?: boolean;
+  tokenParam?: OpenaiTokenParam;
+  humanResumeMinutes?: number;
 }
