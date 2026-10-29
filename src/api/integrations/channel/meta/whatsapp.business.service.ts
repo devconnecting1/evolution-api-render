@@ -142,11 +142,18 @@ export class BusinessStartupService extends ChannelStartupService {
         return;
       }
 
+      if (field === 'smb_message_echoes') {
+        // Coexistence: messages the owner sent with the WhatsApp Business app (or a companion device)
+        await this.loadChatwoot();
+        await this.messageEchoesHandle(content);
+        return;
+      }
+
       const sender = Array.isArray(content.messages) ? content.messages[0]?.from : undefined;
       const recipient = Array.isArray(content.statuses) ? content.statuses[0]?.recipient_id : undefined;
 
       if (!sender && !recipient) {
-        // Unknown fields (e.g. smb_message_echoes before it is handled) or payloads without messages/statuses
+        // Unknown fields (e.g. account_update) or payloads without messages/statuses
         this.logger.verbose(`Meta webhook field ${field ?? 'unknown'} without messages or statuses ignored`);
         return;
       }
@@ -692,12 +699,7 @@ export class BusinessStartupService extends ChannelStartupService {
 
         this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
 
-        await chatbotController.emit({
-          instance: { instanceName: this.instance.name, instanceId: this.instanceId },
-          remoteJid: messageRaw.key.remoteJid,
-          msg: messageRaw,
-          pushName: messageRaw.pushName,
-        });
+        await this.emitToChatbots(messageRaw);
 
         if (this.configService.get<Chatwoot>('CHATWOOT').ENABLED && this.localChatwoot?.enabled) {
           const chatwootSentMessage = await this.chatwootService.eventWhatsapp(
@@ -842,6 +844,167 @@ export class BusinessStartupService extends ChannelStartupService {
       }
     } catch (error) {
       this.logger.error(error);
+    }
+  }
+
+  /**
+   * Brazilian mobile numbers may come with or without the ninth digit (e.g. the `wa_id` of a received message
+   * and the `to` of an app echo) and createJid keeps the ninth digit for some area codes. Returns the other
+   * form, so a chatbot session created from either side is found.
+   */
+  private alternativeBrazilianJid(jid: string): string | undefined {
+    const match = /^55(\d{2})(9?)(\d{8})@s\.whatsapp\.net$/.exec(jid ?? '');
+    if (!match) return undefined;
+
+    const [, ddd, ninthDigit, local] = match;
+    // Landlines (2-5) have no ninth digit form
+    if (!/^[6-9]/.test(local)) return undefined;
+
+    return ninthDigit ? `55${ddd}${local}@s.whatsapp.net` : `55${ddd}9${local}@s.whatsapp.net`;
+  }
+
+  /** Hands a message to the chatbots, adding the alternative Brazilian form of the chat as `key.remoteJidAlt`. */
+  private async emitToChatbots(messageRaw: any) {
+    const remoteJidAlt = this.alternativeBrazilianJid(messageRaw.key.remoteJid);
+
+    await chatbotController.emit({
+      instance: { instanceName: this.instance.name, instanceId: this.instanceId },
+      remoteJid: messageRaw.key.remoteJid,
+      msg: remoteJidAlt ? { ...messageRaw, key: { ...messageRaw.key, remoteJidAlt } } : messageRaw,
+      pushName: messageRaw.pushName,
+    });
+  }
+
+  /** Content of an app echo in the same shape used for received messages (media is not downloaded). */
+  private messageEchoJson(echo: any): { type: string; messageType: string; content: any } | null {
+    // An edit echo carries the new content in `edit.message`
+    const source = echo.type === 'edit' && echo.edit?.message ? echo.edit.message : echo;
+    const type: string = source?.type;
+
+    if (!type) return null;
+
+    const payload = source[type];
+    let content: any;
+    let messageType = this.renderMessageType(type);
+
+    switch (type) {
+      case 'text':
+        content = { conversation: payload?.body ?? '' };
+        break;
+      case 'audio':
+        content = { audioMessage: { ...payload, ptt: payload?.voice || false } };
+        break;
+      case 'location':
+        content = {
+          locationMessage: {
+            degreesLatitude: payload?.latitude,
+            degreesLongitude: payload?.longitude,
+            name: payload?.name,
+            address: payload?.address,
+          },
+        };
+        break;
+      case 'reaction':
+        content = { reactionMessage: { key: { id: payload?.message_id }, text: payload?.emoji } };
+        messageType = 'reactionMessage';
+        break;
+      default:
+        // image, video, document, sticker and others: keep the Meta object (id, mime_type, caption...)
+        content = { [`${type}Message`]: payload || {} };
+        break;
+    }
+
+    const stanzaId = source.context?.id ?? echo.context?.id;
+    if (stanzaId) content = { ...content, contextInfo: { stanzaId } };
+
+    return { type, messageType, content };
+  }
+
+  /**
+   * Coexistence (WhatsApp Business app + Cloud API on the same number): `smb_message_echoes` reports the messages
+   * the owner sent with the app or a companion device. Messages sent through the Cloud API are not echoed. Each
+   * echo is handled like a message typed on the phone in Baileys: MESSAGES_UPSERT with `fromMe: true`, Chatwoot
+   * as an outgoing message and the chatbots, which pause the session (human takeover).
+   */
+  private async messageEchoesHandle(received: any) {
+    const echoes: any[] = Array.isArray(received?.message_echoes) ? received.message_echoes : [];
+
+    if (echoes.length === 0) {
+      this.logger.verbose('Meta webhook smb_message_echoes without message_echoes ignored');
+      return;
+    }
+
+    for (const echo of echoes) {
+      try {
+        await this.messageEchoHandle(echo);
+      } catch (error) {
+        this.logger.error(['Error handling message echo', error?.message, error?.stack]);
+      }
+    }
+  }
+
+  private async messageEchoHandle(echo: any) {
+    if (!echo?.id || !echo?.to) {
+      this.logger.verbose('Message echo without id or recipient ignored');
+      return;
+    }
+
+    if (echo.type === 'revoke') {
+      // A message deleted in the app: nothing new was written
+      this.logger.verbose(`Message echo ${echo.id} (revoke) ignored`);
+      return;
+    }
+
+    const parsed = this.messageEchoJson(echo);
+
+    if (!parsed) {
+      this.logger.verbose(`Message echo ${echo.id} without type ignored`);
+      return;
+    }
+
+    const timestamp = Number(echo.timestamp);
+
+    const messageRaw: any = {
+      // remoteJid is the contact (the echo goes from the business number to the contact)
+      key: { id: echo.id, remoteJid: createJid(String(echo.to)), fromMe: true },
+      pushName: '',
+      message: parsed.content,
+      contextInfo: parsed.content?.contextInfo,
+      messageType: parsed.messageType,
+      messageTimestamp: Number.isFinite(timestamp) && timestamp > 0 ? timestamp : Math.round(Date.now() / 1000),
+      source: 'unknown',
+      instanceId: this.instanceId,
+      status: status[2],
+    };
+
+    this.logger.log(messageRaw);
+
+    this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
+
+    await this.emitToChatbots(messageRaw);
+
+    if (this.configService.get<Chatwoot>('CHATWOOT').ENABLED && this.localChatwoot?.enabled) {
+      try {
+        const chatwootSentMessage = await this.chatwootService.eventWhatsapp(
+          Events.MESSAGES_UPSERT,
+          { instanceName: this.instance.name, instanceId: this.instanceId },
+          messageRaw,
+        );
+
+        if (chatwootSentMessage?.id) {
+          messageRaw.chatwootMessageId = chatwootSentMessage.id;
+          messageRaw.chatwootInboxId = chatwootSentMessage.inbox_id;
+          messageRaw.chatwootConversationId = chatwootSentMessage.conversation_id;
+        }
+      } catch (error) {
+        this.logger.error(['Error sending message echo to Chatwoot', error?.message]);
+      }
+    }
+
+    if (this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE) {
+      await this.prismaRepository.message.create({
+        data: messageRaw,
+      });
     }
   }
 
