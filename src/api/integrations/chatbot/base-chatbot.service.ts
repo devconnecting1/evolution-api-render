@@ -210,12 +210,18 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
         // Handle sending the media
         try {
           if (mediaType === 'audio') {
-            await instance.audioWhatsapp({
-              number: remoteJid.includes('@lid') ? remoteJid : remoteJid.split('@')[0],
-              delay: (settings as any)?.delayMessage || 1000,
-              audio: url,
-              caption: altText,
-            });
+            // Trailing `true` flags a chatbot send (fromChatbot) so the channel registers its id.
+            await instance.audioWhatsapp(
+              {
+                number: remoteJid.includes('@lid') ? remoteJid : remoteJid.split('@')[0],
+                delay: (settings as any)?.delayMessage || 1000,
+                audio: url,
+                caption: altText,
+              },
+              null,
+              false,
+              true,
+            );
           } else {
             await instance.mediaMessage(
               {
@@ -228,6 +234,7 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
               },
               null,
               false,
+              true,
             );
           }
         } catch (error) {
@@ -296,6 +303,7 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
             linkPreview,
           },
           false,
+          true,
         );
         resolve();
       }, delay);
