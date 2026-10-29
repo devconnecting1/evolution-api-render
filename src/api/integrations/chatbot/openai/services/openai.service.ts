@@ -6,9 +6,8 @@ import { IntegrationSession, OpenaiBot, OpenaiSetting } from '@prisma/client';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import axios from 'axios';
 import { downloadMediaMessage } from 'baileys';
-import { isURL } from 'class-validator';
 import FormData from 'form-data';
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
 import P from 'pino';
 
 import { BaseChatbotService } from '../../base-chatbot.service';
@@ -30,6 +29,13 @@ const learnedTokenParamByModel = new Map<string, TokenParamName>();
 
 /** Errors already logged in full, to avoid duplicated stack traces when rethrown. */
 const loggedOpenaiErrors = new WeakSet<object>();
+
+/** Text stored in place of an image in the conversation history / logs. */
+const IMAGE_HISTORY_PLACEHOLDER = '[imagem]';
+/** Note sent to the model when the customer's image could not be downloaded. */
+const IMAGE_UNAVAILABLE_NOTE = '[imagem não pôde ser processada]';
+/** OpenAI rejects images larger than 20 MB. */
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
 /**
  * OpenAI service that extends the common BaseChatbotService
@@ -296,37 +302,32 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       content: [{ type: 'text', text: content }],
     };
 
-    // Handle image messages
+    // Handle image messages. The Assistants API only accepts external URLs in image_url
+    // (no data URLs), so the image is uploaded as a 'vision' file and referenced by image_file.
     if (this.isImageMessage(content)) {
-      const media = content.split('|');
+      const caption = this.getImageCaption(content);
+      const image = await this.loadImageForOpenai(instance, msg, content);
+      let fileId: string | null = null;
 
-      if (msg.message.mediaUrl || msg.message.base64) {
-        let mediaBase64 = msg.message.base64 || null;
-
-        if (msg.message.mediaUrl && isURL(msg.message.mediaUrl)) {
-          const result = await axios.get(msg.message.mediaUrl, { responseType: 'arraybuffer' });
-          mediaBase64 = Buffer.from(result.data).toString('base64');
+      if (image) {
+        try {
+          const extension = image.mimetype.split('/')[1] || 'jpg';
+          const file = await this.client.files.create({
+            file: await toFile(Buffer.from(image.base64, 'base64'), `image.${extension}`, { type: image.mimetype }),
+            purpose: 'vision',
+          });
+          fileId = file.id;
+        } catch (error) {
+          this.logOpenaiError('processAssistantMessage.uploadImage', error);
         }
-
-        if (mediaBase64) {
-          messageData.content = [
-            { type: 'text', text: media[2] || content },
-            { type: 'image_url', image_url: { url: mediaBase64 } },
-          ];
-        }
-      } else {
-        const url = media[1].split('?')[0];
-
-        messageData.content = [
-          { type: 'text', text: media[2] || content },
-          {
-            type: 'image_url',
-            image_url: {
-              url: url,
-            },
-          },
-        ];
       }
+
+      messageData.content = fileId
+        ? [
+            { type: 'text', text: caption || IMAGE_HISTORY_PLACEHOLDER },
+            { type: 'image_file', image_file: { file_id: fileId } },
+          ]
+        : [{ type: 'text', text: this.withImageUnavailableNote(caption) }];
     }
 
     // Get thread ID from session or create new thread
@@ -466,7 +467,9 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         const sessionData =
           typeof session.context === 'string' ? JSON.parse(session.context as string) : session.context;
 
-        conversationHistory = sessionData.history || [];
+        // Strip image blocks saved by older versions (raw base64 / invalid WhatsApp URLs that make
+        // every following request fail with "400 Failed to download file")
+        conversationHistory = (sessionData.history || []).map((message) => this.stripImagesFromMessage(message));
         this.logger.log(`Retrieved conversation history from session, ${conversationHistory.length} messages`);
       } catch (error) {
         this.logger.error(`Error parsing session context: ${error.message}`);
@@ -513,29 +516,19 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       content: [{ type: 'text', text: content }],
     };
 
-    // Handle image messages
+    // Handle image messages: send the image inline as a data URL (WhatsApp CDN URLs and
+    // bare base64 are rejected by OpenAI with "400 Failed to download file")
     if (this.isImageMessage(content)) {
       this.logger.log('Found image message');
-      const media = content.split('|');
+      const caption = this.getImageCaption(content);
+      const image = await this.loadImageForOpenai(instance, msg, content);
 
-      if (msg.message.mediaUrl || msg.message.base64) {
-        messageData.content = [
-          { type: 'text', text: media[2] || content },
-          { type: 'image_url', image_url: { url: msg.message.base64 || msg.message.mediaUrl } },
-        ];
-      } else {
-        const url = media[1].split('?')[0];
-
-        messageData.content = [
-          { type: 'text', text: media[2] || content },
-          {
-            type: 'image_url',
-            image_url: {
-              url: url,
-            },
-          },
-        ];
-      }
+      messageData.content = image
+        ? [
+            ...(caption ? [{ type: 'text', text: caption }] : []),
+            { type: 'image_url', image_url: { url: `data:${image.mimetype};base64,${image.base64}` } },
+          ]
+        : [{ type: 'text', text: this.withImageUnavailableNote(caption) }];
     }
 
     // Combine all messages: system messages, pre-defined messages, conversation history, and current message
@@ -547,7 +540,9 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       messageData,
     ];
 
-    this.logger.log(`Final messages payload: ${JSON.stringify(messages)}`);
+    this.logger.log(
+      `Final messages payload: ${JSON.stringify(messages.map((message) => this.stripImagesFromMessage(message)))}`,
+    );
 
     if (instance.integration === Integration.WHATSAPP_BAILEYS) {
       this.logger.log('Setting typing indicator');
@@ -576,7 +571,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       }
 
       // Add the current exchange to the conversation history and update the session
-      conversationHistory.push(messageData);
+      // (images are replaced by a text placeholder so base64 never lands in session.context)
+      conversationHistory.push(this.stripImagesFromMessage(messageData));
       conversationHistory.push({
         role: 'assistant',
         content: responseContent,
@@ -924,5 +920,114 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     } catch (error) {
       this.logger.error(`Error sending unknownMessage fallback: ${error?.message || JSON.stringify(error)}`);
     }
+  }
+
+  /**
+   * Caption of an "imageMessage|<id or url>|<caption>" content string ('' when there is none).
+   */
+  private getImageCaption(content: string): string {
+    if (!content.startsWith('imageMessage|')) {
+      return content.trim();
+    }
+
+    return content.split('|').slice(2).join('|').trim();
+  }
+
+  private withImageUnavailableNote(caption: string): string {
+    return caption ? `${caption}\n${IMAGE_UNAVAILABLE_NOTE}` : IMAGE_UNAVAILABLE_NOTE;
+  }
+
+  private normalizeMimetype(mimetype: unknown): string | undefined {
+    if (typeof mimetype !== 'string') return undefined;
+    const normalized = mimetype.split(';')[0].trim().toLowerCase();
+    return normalized || undefined;
+  }
+
+  /**
+   * Get the raw bytes (base64) and mimetype of the customer's image, in this order:
+   * 1. base64 already present in the payload (webhook base64 enabled);
+   * 2. download through the channel (Baileys / Cloud API getBase64FromMediaMessage);
+   * 3. download from a public http(s) mediaUrl (S3 / MinIO).
+   * Returns null (and logs) when the image cannot be obtained.
+   */
+  private async loadImageForOpenai(
+    instance: any,
+    msg: any,
+    content: string,
+  ): Promise<{ base64: string; mimetype: string } | null> {
+    const message = msg?.message;
+    const declaredMimetype =
+      this.normalizeMimetype(message?.imageMessage?.mimetype ?? message?.imageMessage?.mime_type) || 'image/jpeg';
+
+    // 1. base64 already in the payload (with or without a data: prefix)
+    if (typeof message?.base64 === 'string' && message.base64.length > 0) {
+      const dataUrl = /^data:([^;,]+)?(?:;base64)?,/i.exec(message.base64);
+      if (dataUrl) {
+        return {
+          base64: message.base64.slice(dataUrl[0].length),
+          mimetype: this.normalizeMimetype(dataUrl[1]) || declaredMimetype,
+        };
+      }
+      return { base64: message.base64, mimetype: declaredMimetype };
+    }
+
+    // 2. Download through the channel. Shallow copies keep the original message untouched.
+    if (message && typeof instance?.getBase64FromMediaMessage === 'function') {
+      try {
+        const media = await instance.getBase64FromMediaMessage({ message: { ...msg, message: { ...message } } });
+        if (media?.base64) {
+          return { base64: media.base64, mimetype: this.normalizeMimetype(media.mimetype) || declaredMimetype };
+        }
+      } catch (error) {
+        this.logger.warn(`Could not download image through the channel: ${error?.message || error}`);
+      }
+    }
+
+    // 3. Public URL (S3 / MinIO). With S3 enabled the content also carries the media URL.
+    const contentUrl = content.startsWith('imageMessage|') ? content.split('|')[1] : undefined;
+    const url = [message?.mediaUrl, contentUrl].find(
+      (candidate) => typeof candidate === 'string' && /^https?:\/\//i.test(candidate),
+    );
+
+    if (url) {
+      try {
+        const response = await axios.get(url, {
+          responseType: 'arraybuffer',
+          timeout: 20000,
+          maxContentLength: MAX_IMAGE_BYTES,
+        });
+        const headerMimetype = this.normalizeMimetype(response.headers?.['content-type']);
+        return {
+          base64: Buffer.from(response.data).toString('base64'),
+          mimetype: headerMimetype?.startsWith('image/') ? headerMimetype : declaredMimetype,
+        };
+      } catch (error) {
+        this.logger.warn(`Could not download image from mediaUrl: ${error?.message || error}`);
+      }
+    }
+
+    this.logger.error(
+      `Image for message ${msg?.key?.id ?? 'unknown'} could not be obtained; continuing with text only`,
+    );
+    return null;
+  }
+
+  /**
+   * Copy of a chat message with image blocks replaced by a short text placeholder,
+   * so base64 payloads never reach session.context (or the logs).
+   */
+  private stripImagesFromMessage(message: any): any {
+    if (!message || !Array.isArray(message.content)) {
+      return message;
+    }
+
+    return {
+      ...message,
+      content: message.content.map((part: any) =>
+        part?.type === 'image_url' || part?.type === 'image_file'
+          ? { type: 'text', text: IMAGE_HISTORY_PLACEHOLDER }
+          : part,
+      ),
+    };
   }
 }
