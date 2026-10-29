@@ -28,6 +28,9 @@ const MAX_COMPLETION_TOKENS_MODEL_REGEX = /^(ft:)?(o\d|gpt-5|gpt-6)/i;
  */
 const learnedTokenParamByModel = new Map<string, TokenParamName>();
 
+/** Errors already logged in full, to avoid duplicated stack traces when rethrown. */
+const loggedOpenaiErrors = new WeakSet<object>();
+
 /**
  * OpenAI service that extends the common BaseChatbotService
  * Handles both Assistant API and ChatCompletion API
@@ -268,10 +271,9 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         },
       });
     } catch (error) {
-      this.logger.error(`Error in sendMessageToBot: ${error.message || JSON.stringify(error)}`);
-      if (error.response) {
-        this.logger.error(`API Response data: ${JSON.stringify(error.response.data || {})}`);
-      }
+      // Never forward the raw error to the customer: log everything, send only the configured fallback
+      this.logOpenaiError('sendMessageToBot', error);
+      await this.sendErrorFallback(instance, remoteJid, settings, session);
       return;
     }
   }
@@ -366,14 +368,17 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     }
 
     // Wait for the assistant to complete
-    const response = await this.getAIResponse(threadId, runAssistant.id, openaiBot.functionUrl, remoteJid, pushName);
-
-    if (instance.integration === Integration.WHATSAPP_BAILEYS) {
-      await instance.client.sendPresenceUpdate('paused', remoteJid);
+    let response: Awaited<ReturnType<typeof this.getAIResponse>>;
+    try {
+      response = await this.getAIResponse(threadId, runAssistant.id, openaiBot.functionUrl, remoteJid, pushName);
+    } finally {
+      if (instance.integration === Integration.WHATSAPP_BAILEYS) {
+        await instance.client.sendPresenceUpdate('paused', remoteJid).catch(() => undefined);
+      }
     }
 
     // Extract the response text safely with type checking
-    let responseText = "I couldn't generate a proper response. Please try again.";
+    let responseText = '';
     try {
       const messages = response?.data || [];
       if (messages.length > 0) {
@@ -389,6 +394,10 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       this.logger.error(`Error extracting response text: ${error}`);
     }
 
+    if (!responseText) {
+      throw new Error(`Assistant run ${runAssistant.id} on thread ${threadId} returned no text content`);
+    }
+
     // Update session with the thread ID to ensure continuity
     await this.prismaRepository.integrationSession.update({
       where: {
@@ -401,7 +410,6 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       },
     });
 
-    // Return fallback message if unable to extract text
     return responseText;
   }
 
@@ -426,8 +434,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       });
 
       if (!creds) {
-        this.logger.error(`OpenAI credentials not found. CredsId: ${openaiBot.openaiCredsId}`);
-        return 'Error: OpenAI credentials not found';
+        throw new Error(`OpenAI credentials not found. CredsId: ${openaiBot.openaiCredsId}`);
       }
 
       this.initClient(creds.apiKey);
@@ -435,8 +442,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
 
     // Check if model is defined
     if (!openaiBot.model) {
-      this.logger.error('OpenAI model not defined');
-      return 'Error: OpenAI model not configured';
+      throw new Error(`OpenAI model not configured for bot ${openaiBot.id}`);
     }
 
     const tokenParam = this.resolveTokenParam(openaiBot, settings);
@@ -558,8 +564,16 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         await instance.client.sendPresenceUpdate('paused', remoteJid);
       }
 
-      const responseContent = completions.choices[0].message.content;
-      this.logger.log(`Received response from OpenAI: ${JSON.stringify(completions.choices[0])}`);
+      const responseContent = completions.choices?.[0]?.message?.content;
+      this.logger.log(`Received response from OpenAI: ${JSON.stringify(completions.choices?.[0])}`);
+
+      if (!responseContent) {
+        // e.g. reasoning models that spend the whole token budget (finish_reason "length") or a refusal
+        throw new Error(
+          `OpenAI returned empty content (model: ${openaiBot.model}, finish_reason: ` +
+            `${completions.choices?.[0]?.finish_reason ?? 'unknown'})`,
+        );
+      }
 
       // Add the current exchange to the conversation history and update the session
       conversationHistory.push(messageData);
@@ -588,12 +602,14 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
 
       return responseContent;
     } catch (error) {
-      this.logger.error(`Error calling OpenAI: ${error.message || JSON.stringify(error)}`);
-      if (error.response) {
-        this.logger.error(`API Response status: ${error.response.status}`);
-        this.logger.error(`API Response data: ${JSON.stringify(error.response.data || {})}`);
+      this.logOpenaiError('processChatCompletionMessage', error);
+
+      if (instance.integration === Integration.WHATSAPP_BAILEYS) {
+        await instance.client.sendPresenceUpdate('paused', remoteJid).catch(() => undefined);
       }
-      return `Sorry, there was an error: ${error.message || 'Unknown error'}`;
+
+      // Let sendMessageToBot decide what (if anything) the customer receives
+      throw error;
     }
   }
 
@@ -672,8 +688,12 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       const messages = await this.client.beta.threads.messages.list(threadId);
       return messages;
     } else {
-      this.logger.error(`Assistant run failed with status: ${status.status}`);
-      return { data: [{ content: [{ text: { value: 'Failed to get a response from the assistant.' } }] }] };
+      this.logger.error(
+        `Assistant run ${runId} did not complete. Status: ${status.status}, last_error: ${JSON.stringify(
+          status.last_error ?? null,
+        )}, incomplete_details: ${JSON.stringify(status.incomplete_details ?? null)}`,
+      );
+      throw new Error(`Assistant run ${runId} ended with status: ${status.status}`);
     }
   }
 
@@ -838,5 +858,71 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
 
     const message = String(error?.message ?? error?.error?.message ?? error?.response?.data?.error?.message ?? '');
     return /unsupported (parameter|value)/i.test(message) && message.includes(`'${param}'`);
+  }
+
+  /**
+   * Log every detail of an OpenAI / HTTP error (status, code, param, type, request id, body).
+   * Each error object is logged in full only once, even if it is rethrown and caught again.
+   */
+  private logOpenaiError(context: string, error: any): void {
+    if (error && typeof error === 'object') {
+      if (loggedOpenaiErrors.has(error)) {
+        this.logger.error(`[${context}] OpenAI error (already logged): ${error?.message}`);
+        return;
+      }
+      loggedOpenaiErrors.add(error);
+    }
+
+    const details = {
+      name: error?.name,
+      message: error?.message ?? String(error),
+      status: error?.status ?? error?.response?.status,
+      code: error?.code,
+      param: error?.param,
+      type: error?.type,
+      requestId: error?.request_id,
+      error: error?.error,
+      responseData: error?.response?.data,
+    };
+
+    this.logger.error(`[${context}] OpenAI error: ${JSON.stringify(details)}`);
+    if (error?.stack) {
+      this.logger.error(error.stack);
+    }
+  }
+
+  /**
+   * What the customer receives when the bot could not produce an answer.
+   * Policy: only `settings.unknownMessage` when it is a non-empty string; otherwise nothing.
+   * Raw error messages are never sent. Skipped when the session is no longer open
+   * (e.g. paused/closed while OpenAI was being called).
+   */
+  private async sendErrorFallback(
+    instance: any,
+    remoteJid: string,
+    settings: OpenaiSetting,
+    session?: IntegrationSession,
+  ): Promise<void> {
+    try {
+      const fallback = typeof settings?.unknownMessage === 'string' ? settings.unknownMessage.trim() : '';
+      if (!fallback) {
+        this.logger.warn(`No unknownMessage configured, nothing sent to ${remoteJid} after OpenAI failure`);
+        return;
+      }
+
+      if (session?.id) {
+        const current = await this.prismaRepository.integrationSession.findUnique({ where: { id: session.id } });
+        if (!current || current.status !== 'opened') {
+          this.logger.warn(
+            `Session ${session.id} is ${current?.status ?? 'gone'}, not sending unknownMessage to ${remoteJid}`,
+          );
+          return;
+        }
+      }
+
+      await this.sendMessageWhatsApp(instance, remoteJid, fallback, settings, true);
+    } catch (error) {
+      this.logger.error(`Error sending unknownMessage fallback: ${error?.message || JSON.stringify(error)}`);
+    }
   }
 }
