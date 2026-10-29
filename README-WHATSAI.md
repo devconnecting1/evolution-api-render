@@ -482,8 +482,8 @@ As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa
 
 ### 12.8 Deploy e atualização
 
-1. **Antes do merge:** crie um snapshot/branch do Neon (projeto `spring-boat-14626479`).
-2. A migration `20251029120000_add_openai_token_param_human_resume` é **aditiva** (colunas novas nullable ou com default) e roda no start do container (`Docker/scripts/deploy_database.sh` > `prisma migrate deploy`). Os defaults `auto` / `0` preservam o comportamento atual.
+1. **Antes do merge:** crie um snapshot/branch do projeto no Neon.
+2. A migration `20261029120000_add_openai_token_param_human_resume` é **aditiva** (colunas novas nullable ou com default) e roda no start do container (`Docker/scripts/deploy_database.sh` > `prisma migrate deploy`). O default `auto` preserva o comportamento do gpt-4o. **Atenção:** com `humanResumeMinutes = 0` (default) uma sessão pausada não reabre mais sozinha na mensagem seguinte do cliente (antes reabria, engolindo essa mensagem); logo após o deploy defina `humanResumeMinutes` pela API (settings e/ou bot) com o valor combinado com o escritório.
 3. O merge na `main` dispara deploy automático no Render; a API fica ~4 min fora. Faça fora do horário comercial do escritório.
 4. **Rollback:** reverter o merge e deixar o Render redeployar. As colunas extras permanecem no banco e são ignoradas pelo código antigo.
 5. O script de migration imprime a `DATABASE_URL` no log de boot: não compartilhe esse trecho do log.
