@@ -433,6 +433,8 @@ model OpenaiBot {
   assistantMessages Json?            @db.JsonB
   userMessages      Json?            @db.JsonB
   maxTokens         Int?             @db.Integer
+  tokenParam         String?          @db.VarChar(30)
+  humanResumeMinutes Int?             @db.Integer
   expire            Int?             @default(0) @db.Integer
   keywordFinish     String?          @db.VarChar(100)
   delayMessage      Int?             @db.Integer
@@ -489,6 +491,8 @@ model OpenaiSetting {
   splitMessages    Boolean?     @default(false) @db.Boolean
   timePerChar      Int?         @default(50) @db.Integer
   speechToText     Boolean?     @default(false) @db.Boolean
+  tokenParam         String?      @default("auto") @db.VarChar(30)
+  humanResumeMinutes Int?         @default(0) @db.Integer
   createdAt        DateTime?    @default(now()) @db.Timestamp
   updatedAt        DateTime     @updatedAt @db.Timestamp
   OpenaiCreds      OpenaiCreds? @relation(fields: [openaiCredsId], references: [id])
