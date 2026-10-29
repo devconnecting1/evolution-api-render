@@ -990,7 +990,8 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         });
 
         this.logger.log(`Human message in ${remoteJid}: ${this.integrationName} session ${current.id} paused`);
-        this.notifyHumanPause(instance, paused, resumeMinutes);
+        // Only the transition is notified; later human messages just move resumesAt (see fetchSessions)
+        if (!isHumanPaused(current)) this.notifyHumanPause(instance, paused, resumeMinutes);
         return;
       }
 

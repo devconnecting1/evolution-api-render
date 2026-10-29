@@ -564,7 +564,7 @@ Quando dispara:
 
 | `reason` | `status` | Origem |
 |---|---|---|
-| `human` | `paused` | O dono escreveu no WhatsApp (inclui criar a sessão já pausada). Dispara a **cada** mensagem humana, porque `resumesAt` se move |
+| `human` | `paused` | O dono escreveu no WhatsApp (inclui criar a sessão já pausada). Dispara só na **entrada** da pausa; mensagens humanas seguintes só adiam o `resumesAt` (veja no `fetchSessions`) |
 | `resumed` | `opened` | Retomada automática: passou `humanResumeMinutes` e o cliente escreveu |
 | `manual` | `paused`, `opened`, `closed` ou `delete` | `POST /openai/changeStatus` |
 
