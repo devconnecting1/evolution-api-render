@@ -13,6 +13,21 @@ import P from 'pino';
 
 import { BaseChatbotService } from '../../base-chatbot.service';
 
+type TokenParamName = 'max_tokens' | 'max_completion_tokens';
+type TokenParamMode = 'auto' | TokenParamName;
+
+/**
+ * Models that reject `max_tokens` and require `max_completion_tokens`
+ * (o-series reasoning models, gpt-5.x, gpt-6.x), optionally fine-tuned ("ft:").
+ */
+const MAX_COMPLETION_TOKENS_MODEL_REGEX = /^(ft:)?(o\d|gpt-5|gpt-6)/i;
+
+/**
+ * Token parameter that worked for a given model in "auto" mode, learned after
+ * OpenAI rejected the other one. Process-wide, shared by every instance.
+ */
+const learnedTokenParamByModel = new Map<string, TokenParamName>();
+
 /**
  * OpenAI service that extends the common BaseChatbotService
  * Handles both Assistant API and ChatCompletion API
@@ -229,7 +244,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         );
       } else {
         this.logger.log('Processing with ChatCompletion API');
-        message = await this.processChatCompletionMessage(instance, openaiBot, remoteJid, content, msg);
+        message = await this.processChatCompletionMessage(instance, openaiBot, remoteJid, content, msg, settings);
       }
 
       this.logger.log(`Got response from OpenAI: ${message?.substring(0, 50)}${message?.length > 50 ? '...' : ''}`);
@@ -399,6 +414,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     remoteJid: string,
     content: string,
     msg?: any,
+    settings?: OpenaiSetting,
   ): Promise<string> {
     this.logger.log('Starting processChatCompletionMessage');
 
@@ -423,7 +439,10 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       return 'Error: OpenAI model not configured';
     }
 
-    this.logger.log(`Using model: ${openaiBot.model}, max tokens: ${openaiBot.maxTokens || 500}`);
+    const tokenParam = this.resolveTokenParam(openaiBot, settings);
+    this.logger.log(
+      `Using model: ${openaiBot.model}, tokenParam: ${tokenParam.mode} -> ${tokenParam.param}=${openaiBot.maxTokens || 500}`,
+    );
 
     // Get existing conversation history from the session
     const session = await this.prismaRepository.integrationSession.findFirst({
@@ -533,11 +552,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     // Send the request to OpenAI
     try {
       this.logger.log('Sending request to OpenAI API');
-      const completions = await this.client.chat.completions.create({
-        model: openaiBot.model,
-        messages: messages,
-        max_tokens: openaiBot.maxTokens || 500, // Add default if maxTokens is missing
-      });
+      const completions = await this.createChatCompletion(openaiBot, messages, tokenParam);
 
       if (instance.integration === Integration.WHATSAPP_BAILEYS) {
         await instance.client.sendPresenceUpdate('paused', remoteJid);
@@ -730,5 +745,98 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     });
 
     return response?.data?.text;
+  }
+
+  /**
+   * Resolve which token limit parameter to send to the Chat Completions API.
+   * Precedence: bot.tokenParam -> settings.tokenParam -> 'auto'.
+   */
+  private resolveTokenParam(
+    openaiBot: OpenaiBot,
+    settings?: OpenaiSetting,
+  ): { mode: TokenParamMode; param: TokenParamName } {
+    const configured = openaiBot.tokenParam ?? settings?.tokenParam ?? 'auto';
+    const mode: TokenParamMode =
+      configured === 'max_tokens' || configured === 'max_completion_tokens' ? configured : 'auto';
+
+    if (mode !== 'auto') {
+      return { mode, param: mode };
+    }
+
+    const model = openaiBot.model || '';
+    const learned = learnedTokenParamByModel.get(model);
+    if (learned) {
+      return { mode, param: learned };
+    }
+
+    return {
+      mode,
+      param: MAX_COMPLETION_TOKENS_MODEL_REGEX.test(model) ? 'max_completion_tokens' : 'max_tokens',
+    };
+  }
+
+  /**
+   * Call the Chat Completions API with the resolved token parameter. If OpenAI rejects
+   * that parameter (400 "Unsupported parameter"), retry exactly once with the other one.
+   * In "auto" mode the working parameter is remembered per model; in forced mode it is not.
+   */
+  private async createChatCompletion(
+    openaiBot: OpenaiBot,
+    messages: any[],
+    tokenParam: { mode: TokenParamMode; param: TokenParamName },
+  ) {
+    const maxTokens = openaiBot.maxTokens || 500;
+    const buildParams = (param: TokenParamName) => {
+      const params: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = { model: openaiBot.model, messages };
+      params[param] = maxTokens;
+      return params;
+    };
+
+    try {
+      return await this.client.chat.completions.create(buildParams(tokenParam.param));
+    } catch (error) {
+      if (!this.isUnsupportedTokenParamError(error, tokenParam.param)) {
+        throw error;
+      }
+
+      const fallbackParam: TokenParamName = tokenParam.param === 'max_tokens' ? 'max_completion_tokens' : 'max_tokens';
+
+      if (tokenParam.mode === 'auto') {
+        this.logger.warn(
+          `Model ${openaiBot.model} rejected '${tokenParam.param}', retrying once with '${fallbackParam}'`,
+        );
+      } else {
+        this.logger.warn(
+          `Forced tokenParam '${tokenParam.mode}' was rejected by model ${openaiBot.model} ` +
+            `(bot ${openaiBot.id}); retrying once with '${fallbackParam}'. ` +
+            `Consider setting tokenParam to 'auto' for this bot/settings.`,
+        );
+      }
+
+      const completion = await this.client.chat.completions.create(buildParams(fallbackParam));
+
+      if (tokenParam.mode === 'auto' && openaiBot.model) {
+        learnedTokenParamByModel.set(openaiBot.model, fallbackParam);
+        this.logger.log(`Learned tokenParam '${fallbackParam}' for model ${openaiBot.model}`);
+      }
+
+      return completion;
+    }
+  }
+
+  /**
+   * Whether an OpenAI error is a 400 rejecting the given token limit parameter.
+   */
+  private isUnsupportedTokenParamError(error: any, param: TokenParamName): boolean {
+    const status = error?.status ?? error?.response?.status;
+    if (status !== 400) return false;
+
+    const errorParam = error?.param ?? error?.error?.param ?? error?.response?.data?.error?.param;
+    if (errorParam === 'max_tokens' || errorParam === 'max_completion_tokens') {
+      return errorParam === param;
+    }
+
+    const message = String(error?.message ?? error?.error?.message ?? error?.response?.data?.error?.message ?? '');
+    return /unsupported (parameter|value)/i.test(message) && message.includes(`'${param}'`);
   }
 }
