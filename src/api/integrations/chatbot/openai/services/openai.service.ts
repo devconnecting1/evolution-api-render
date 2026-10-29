@@ -3,6 +3,7 @@ import { WAMonitoringService } from '@api/services/monitor.service';
 import { Integration } from '@api/types/wa.types';
 import { ConfigService, Language, Openai as OpenaiConfig } from '@config/env.config';
 import { IntegrationSession, OpenaiBot, OpenaiSetting } from '@prisma/client';
+import { hasHumanWrittenSince, isHumanPaused } from '@utils/humanPause';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import axios from 'axios';
 import { downloadMediaMessage } from 'baileys';
@@ -133,6 +134,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       const keywordFinish = settings?.keywordFinish || '';
       const normalizedContent = content.toLowerCase().trim();
       if (keywordFinish.length > 0 && normalizedContent === keywordFinish.toLowerCase()) {
+        if (!session) return;
+
         if (settings?.keepOpen) {
           await this.prismaRepository.integrationSession.update({
             where: {
@@ -183,18 +186,10 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         return;
       }
 
-      // If session exists but is paused
-      if (session.status === 'paused') {
-        await this.prismaRepository.integrationSession.update({
-          where: {
-            id: session.id,
-          },
-          data: {
-            status: 'opened',
-            awaitUser: true,
-          },
-        });
-
+      // Pause/resume is decided in the controller emit, which reopens an expired human pause before calling
+      // process() so the same message is answered. A session still paused here must not be answered.
+      if (isHumanPaused(session)) {
+        this.logger.log(`Session ${session.id} is paused, not answering ${remoteJid}`);
         return;
       }
 
@@ -257,6 +252,32 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       }
 
       this.logger.log(`Got response from OpenAI: ${message?.substring(0, 50)}${message?.length > 50 ? '...' : ''}`);
+
+      // The model may take long: a human may have taken over (or the session was closed) meanwhile
+      if (message) {
+        const currentSession = await this.prismaRepository.integrationSession.findUnique({
+          where: { id: session.id },
+        });
+        const humanWrote = hasHumanWrittenSince(session, currentSession);
+
+        if (!currentSession || currentSession.status !== 'opened' || humanWrote) {
+          this.logger.warn(
+            `Discarding OpenAI response for ${remoteJid}: ${
+              humanWrote ? 'a human replied meanwhile' : `session ${currentSession?.status ?? 'removed'}`
+            }`,
+          );
+
+          // Something reopened the session after the human paused it (e.g. the assistant run update): restore it
+          if (humanWrote && currentSession?.status === 'opened') {
+            await this.prismaRepository.integrationSession.update({
+              where: { id: session.id },
+              data: { status: 'paused' },
+            });
+          }
+
+          return;
+        }
+      }
 
       // Send the response
       if (message) {
