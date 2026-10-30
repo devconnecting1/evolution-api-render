@@ -25,6 +25,14 @@ export class OpenaiDto extends BaseChatbotDto {
   maxTokens?: number;
   tokenParam?: OpenaiTokenParam;
   humanResumeMinutes?: number;
+  // Media and conversation window: absent/null on the bot = inherit from the default settings
+  transcribeAudio?: boolean;
+  transcriptionModel?: string;
+  maxAudioSeconds?: number;
+  readImages?: boolean;
+  readDocuments?: boolean;
+  maxDocumentMB?: number;
+  historyMessages?: number;
 }
 
 export class OpenaiSettingDto extends BaseChatbotSettingDto {
@@ -33,4 +41,12 @@ export class OpenaiSettingDto extends BaseChatbotSettingDto {
   speechToText?: boolean;
   tokenParam?: OpenaiTokenParam;
   humanResumeMinutes?: number;
+  // Media and conversation window (defaults in OPENAI_MEDIA_DEFAULTS)
+  transcribeAudio?: boolean;
+  transcriptionModel?: string;
+  maxAudioSeconds?: number;
+  readImages?: boolean;
+  readDocuments?: boolean;
+  maxDocumentMB?: number;
+  historyMessages?: number;
 }

@@ -63,6 +63,8 @@ Só existe `manager/dist` (bundle Vite). Patches já aplicados:
 4. **Aba README**: item na sidebar (acima de Documentação) que abre um painel **dentro do dashboard** (mesma aba, sidebar visível) com um resumo operacional em um único card; `/readme` também funciona como acesso direto. Conteúdo: `readmes/RESUMO.md`, com links para o guia comercial e o manual interno. Arquivos: `assets/readme-tab.js`, `assets/readme-tab.css`, `assets/marked.min.js` e `readmes/` (gerado por `scripts/sync-readmes.sh`). Para atualizar o conteúdo, rode o sync antes do deploy.
 5. **Observabilidade**: item na sidebar e no cabeçalho do dashboard (`/manager/observability` e `/manager/instance/:instanceId/observability`), página React nativa usando os componentes do projeto (`Card`, `Button`, `Badge`, `Alert`). Consulta `GET /observability` com a chave global do localStorage. A rota antiga `/observability` redireciona para a página nativa.
 
+Campos do bot OpenAI no Manager: `manager/patches/openai-fields.py` (tokenParam, pausa humana, descrições), `manager/patches/responsive.py` (celular/tablet) e `manager/patches/openai-media.py` (seção Mídia e memória da conversa, seção 12.10), aplicados nessa ordem; cada um aceita `--check`.
+
 Se o manager for reconstruído do zero, reaplicar esses patches. Rotas SPA via `manager/dist/vercel.json`; `/observability` tem rewrites explícitos antes do catch-all para a página de redirect.
 
 ## 5. Onboarding de cliente (runbook)
@@ -523,3 +525,53 @@ Corpo do evento (campo `data`; o envelope tem `event`, `instance`, `date_time`, 
 ```
 
 `humanPause` tem o mesmo formato do `fetchSessions` e é `null` quando a sessão deixou de estar pausada (`resumed`, `opened`, `closed`, `delete`). Observações: o envio é em segundo plano e uma falha só aparece no log (não atrasa nem derruba o bot); o evento só vale para o webhook da instância (não existe chave `WEBHOOK_EVENTS_*` para o webhook global); o fechamento pela `keywordFinish` do cliente não gera evento; o webhook não é reenviado se a API reiniciar.
+
+### 12.10 Mídia (áudio, imagem, documentos) e memória da conversa
+
+Campos do bot OpenAI e das settings. No bot, `null`/ausente = **herda** das settings; nas settings valem os defaults abaixo (aplicados pela migration `20261030120000_add_openai_media_and_history`, aditiva). Precedência: bot > settings > default. No Manager ficam na seção **"Mídia (áudio, imagem, documentos)"** do bot e das Configurações Padrão; `historyMessages` fica junto do `maxTokens` (bot) e do `tokenParam` (settings).
+
+| Campo | Default | O que faz |
+|---|---|---|
+| `transcribeAudio` | `true` | Áudio do contato é transcrito e a IA responde ao texto. `false`: a IA recebe `[o contato enviou um áudio]` |
+| `transcriptionModel` | `gpt-transcribe` | Modelo de `/v1/audio/transcriptions`. Se a OpenAI recusar o modelo (400/404 `model_not_found`), tenta `whisper-1` **uma vez** e loga `WARN` |
+| `maxAudioSeconds` | `300` | Áudio mais longo (duração informada pelo WhatsApp) não é transcrito: `[o contato enviou um áudio de N min; a equipe vai ouvir]`. `0` = sem limite |
+| `readImages` | `true` | `false`: a imagem não é baixada; a IA recebe `[o contato enviou uma imagem]` + legenda |
+| `readDocuments` | `true` | PDFs dentro do limite vão para a IA (ver abaixo). `false`: todo documento vira descrição |
+| `maxDocumentMB` | `10` | Tamanho máximo do PDF enviado à IA (1 a 32) |
+| `historyMessages` | `10` | Quantas mensagens anteriores a IA lembra no Chat Completions (2 a 100). Mais mensagens = menos perguntas repetidas e custo um pouco maior. **Recomendado 30–40 para triagens longas** (com 10, o nome dito no início da triagem sai da janela) |
+
+O que a IA recebe em cada tipo de mensagem (só no bot OpenAI; Typebot, Dify etc. continuam recebendo o texto cru):
+
+| Mensagem | Texto que chega à IA |
+|---|---|
+| Vídeo (inclusive vídeo redondo e visualização única) | `[o contato enviou um vídeo]` + legenda |
+| Figurinha | `[figurinha]` (antes chegava a palavra `unknown`) |
+| Localização | `[localização: -23.5613, -46.6565 - Nome - Endereço]` (nome/endereço quando houver) |
+| Contato | `[contato compartilhado: Maria Souza]` |
+| Documento que não é PDF (doc, docx, xls...) ou PDF acima do limite | `[o contato enviou o documento contrato.docx (DOCX)]` + legenda |
+| PDF com mais de 20 páginas | `[o contato enviou o documento autos.pdf (PDF, 35 páginas)]` |
+
+**PDF:** no `chatCompletion` o PDF vai como *file input* do Chat Completions (`{"type":"file","file":{"filename","file_data":"data:application/pdf;base64,..."}}`, suportado pelo SDK `openai` instalado), sem biblioteca de PDF no servidor. Antes de enviar a API confere o tamanho (declarado pelo WhatsApp e real, após o download), se o arquivo é mesmo um PDF e conta as páginas (limite fixo de 20, para controlar custo: a OpenAI lê cada página como texto **e** imagem). Se o modelo recusar o arquivo (400), a chamada é refeita uma vez com o documento descrito como texto e o cliente recebe resposta normalmente. No modo **Assistants** os PDFs são só descritos (a API de threads não aceita arquivo na mensagem).
+
+**Privacidade e custo:**
+
+- Base64 de imagem/PDF **nunca** vai para o histórico (`session.context`) nem para os logs: no histórico fica `[imagem]` / `[documento: nome.pdf]`. Por isso, nas mensagens seguintes a IA só lembra do documento pelo que ela mesma respondeu.
+- O conteúdo das transcrições e dos PDFs não é logado (só tamanho, páginas e modelo).
+- A transcrição usa a credencial **do bot**. Custo de referência: `gpt-transcribe` US$ 0,0045/min.
+- `speechToText` das settings (transcrição no recebimento, para webhook/Chatwoot e outros bots) **não mudou**. Atenção: com ele ligado o áudio já chega transcrito a todos os bots, inclusive ao OpenAI, mesmo com `transcribeAudio=false`; essa transcrição agora também usa o `transcriptionModel` das settings (com o mesmo fallback para `whisper-1`).
+
+```bash
+# Settings: triagem longa e PDFs de até 15 MB (os demais campos obrigatórios como em 12.4)
+curl -X POST "$SERVER_URL/openai/settings/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{ "...": "campos obrigatórios", "historyMessages": 40, "maxDocumentMB": 15, "transcriptionModel": "gpt-transcribe" }'
+
+# Bot: não ler imagens e áudios de até 2 min (false e 0 são valores; campo ausente = herda)
+curl -X PUT "$SERVER_URL/openai/update/<openaiBotId>/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{ "enabled": true, "openaiCredsId": "<openaiCredsId>", "botType": "chatCompletion",
+        "model": "gpt-6-luna", "maxTokens": 2000, "triggerType": "all",
+        "readImages": false, "maxAudioSeconds": 120 }'
+```
+
+Limitações: na Cloud API o WhatsApp não informa a duração do áudio (o limite de `maxAudioSeconds` não se aplica) nem sempre o tamanho do documento (a checagem é feita após o download); com `debounceTime`, só a **última** mensagem da rajada tem a mídia baixada (áudios/imagens anteriores da mesma rajada viram descrição); como nos outros campos, não dá para voltar um campo do bot a "herdar" depois de definido.

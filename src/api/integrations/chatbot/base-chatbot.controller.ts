@@ -884,6 +884,14 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     return false;
   }
 
+  /**
+   * Text of the incoming message handed to the trigger and to the bot. Integrations may describe message types
+   * they cannot read (e.g. the OpenAI bot turns a sticker or a location into a clear sentence for the model).
+   */
+  protected getConversationContent(msg: any): string {
+    return getConversationMessage(msg);
+  }
+
   /** Integration-specific values added to the merged settings handed to processBot. */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
@@ -1164,7 +1172,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
 
       let session = await this.getSession(remoteJid, instance, sessionJids);
 
-      const content = getConversationMessage(msg);
+      const content = this.getConversationContent(msg);
 
       // Find a bot for this message
       let findBot: any = await this.findBotTrigger(this.botRepository, content, instance, session);

@@ -4,6 +4,23 @@ import { Integration } from '@api/types/wa.types';
 import { ConfigService, Language, Openai as OpenaiConfig } from '@config/env.config';
 import { IntegrationSession, OpenaiBot, OpenaiSetting } from '@prisma/client';
 import { hasHumanWrittenSince, isHumanPaused } from '@utils/humanPause';
+import {
+  countPdfPages,
+  describeDocument,
+  describeLongAudio,
+  documentHistoryPlaceholder,
+  DocumentInfo,
+  FALLBACK_TRANSCRIPTION_MODEL,
+  getAudioSeconds,
+  getDocumentInfo,
+  getDocumentMessage,
+  MAX_PDF_PAGES,
+  MEDIA_TEXT,
+  normalizeMimetype,
+  OpenaiMediaOptions,
+  resolveOpenaiMediaOptions,
+  withCaption,
+} from '@utils/openaiMedia';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import axios from 'axios';
 import { downloadMediaMessage } from 'baileys';
@@ -37,6 +54,25 @@ const IMAGE_HISTORY_PLACEHOLDER = '[imagem]';
 const IMAGE_UNAVAILABLE_NOTE = '[imagem não pôde ser processada]';
 /** OpenAI rejects images larger than 20 MB. */
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+
+type MediaTokenType =
+  | 'audioMessage'
+  | 'imageMessage'
+  | 'videoMessage'
+  | 'documentMessage'
+  | 'documentWithCaptionMessage';
+
+/** A media line of the content built by getConversationMessage: "<type>|<message id or media url>|<caption>". */
+type MediaToken = { type: MediaTokenType; id: string; caption: string };
+
+const MEDIA_TOKEN_REGEX =
+  /^(audioMessage|imageMessage|videoMessage|documentWithCaptionMessage|documentMessage)\|([^|]*)(?:\|([\s\S]*))?$/;
+
+/** What the customer's message turns into before it is sent to OpenAI. Media is loaded once, here. */
+type UserSegment =
+  | { kind: 'text'; text: string }
+  | { kind: 'image'; caption: string; image: { base64: string; mimetype: string } | null }
+  | { kind: 'pdf'; info: DocumentInfo; base64: string };
 
 /**
  * OpenAI service that extends the common BaseChatbotService
@@ -79,46 +115,34 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     try {
       this.logger.log(`Starting process for remoteJid: ${remoteJid}, bot type: ${openaiBot.botType}`);
 
-      // Handle audio message transcription
-      if (content.startsWith('audioMessage|') && msg) {
-        this.logger.log('Detected audio message, attempting to transcribe');
-
-        // Get OpenAI credentials for transcription
-        const creds = await this.prismaRepository.openaiCreds.findUnique({
-          where: { id: openaiBot.openaiCredsId },
-        });
-
-        if (!creds) {
-          this.logger.error(`OpenAI credentials not found. CredsId: ${openaiBot.openaiCredsId}`);
-          return;
-        }
-
-        // Transcribe the audio
-        const transcription = await this.speechToText(msg, instance).catch((error) => {
-          this.logOpenaiError('speechToText', error);
-          return null;
-        });
-
-        if (transcription) {
-          this.logger.log(`Audio transcribed: ${transcription}`);
-          // Replace the audio message identifier with the transcription
-          content = transcription;
-        } else {
-          this.logger.error('Failed to transcribe audio');
-          await this.sendErrorFallback(instance, remoteJid, settings, session);
-          return;
-        }
-      } else {
-        // Get the OpenAI credentials
-        const creds = await this.prismaRepository.openaiCreds.findUnique({
-          where: { id: openaiBot.openaiCredsId },
-        });
-
-        if (!creds) {
-          this.logger.error(`OpenAI credentials not found. CredsId: ${openaiBot.openaiCredsId}`);
-          return;
-        }
+      // Message types without any text (e.g. reactions) are not answered
+      if (typeof content !== 'string') {
+        this.logger.log(`Message without text content for ${remoteJid}: not sent to OpenAI`);
+        return;
       }
+
+      // Get the OpenAI credentials
+      const creds = await this.prismaRepository.openaiCreds.findUnique({
+        where: { id: openaiBot.openaiCredsId },
+      });
+
+      if (!creds) {
+        this.logger.error(`OpenAI credentials not found. CredsId: ${openaiBot.openaiCredsId}`);
+        return;
+      }
+
+      // Audio is transcribed (or described) and unreadable media described before anything else, so the finish
+      // keyword and the model see plain text
+      const media = resolveOpenaiMediaOptions(openaiBot, settings);
+      const prepared = await this.prepareMediaContent(instance, content, msg, media, creds.apiKey);
+
+      if (prepared === null) {
+        this.logger.error('Failed to transcribe audio');
+        await this.sendErrorFallback(instance, remoteJid, settings, session);
+        return;
+      }
+
+      content = prepared;
 
       // Handle keyword finish
       const keywordFinish = settings?.keywordFinish || '';
@@ -318,36 +342,10 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
   ): Promise<string> {
     const messageData: any = {
       role: fromMe ? 'assistant' : 'user',
-      content: [{ type: 'text', text: content }],
+      content: fromMe
+        ? [{ type: 'text', text: content }]
+        : await this.buildAssistantContent(client, instance, content, msg),
     };
-
-    // Handle image messages. The Assistants API only accepts external URLs in image_url
-    // (no data URLs), so the image is uploaded as a 'vision' file and referenced by image_file.
-    if (this.isImageMessage(content)) {
-      const caption = this.getImageCaption(content);
-      const image = await this.loadImageForOpenai(instance, msg, content);
-      let fileId: string | null = null;
-
-      if (image) {
-        try {
-          const extension = image.mimetype.split('/')[1] || 'jpg';
-          const file = await client.files.create({
-            file: await toFile(Buffer.from(image.base64, 'base64'), `image.${extension}`, { type: image.mimetype }),
-            purpose: 'vision',
-          });
-          fileId = file.id;
-        } catch (error) {
-          this.logOpenaiError('processAssistantMessage.uploadImage', error);
-        }
-      }
-
-      messageData.content = fileId
-        ? [
-            { type: 'text', text: caption || IMAGE_HISTORY_PLACEHOLDER },
-            { type: 'image_file', image_file: { file_id: fileId } },
-          ]
-        : [{ type: 'text', text: this.withImageUnavailableNote(caption) }];
-    }
 
     // Get thread ID from session or create new thread
     let threadId = session.sessionId;
@@ -476,6 +474,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
           },
     });
 
+    // How many previous messages the model sees (bot > settings > 10)
+    const historyLimit = resolveOpenaiMediaOptions(openaiBot, settings).historyMessages;
     let conversationHistory = [];
 
     if (session && session.context) {
@@ -485,7 +485,9 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
 
         // Strip image blocks saved by older versions (raw base64 / invalid WhatsApp URLs that make
         // every following request fail with "400 Failed to download file")
-        conversationHistory = (sessionData.history || []).map((message) => this.stripImagesFromMessage(message));
+        conversationHistory = (sessionData.history || [])
+          .map((message) => this.stripMediaFromMessage(message))
+          .slice(-historyLimit);
         this.logger.log(`Retrieved conversation history from session, ${conversationHistory.length} messages`);
       } catch (error) {
         this.logger.error(`Error parsing session context: ${error.message}`);
@@ -526,26 +528,12 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       };
     });
 
-    // Prepare current message
+    // Prepare current message (images as data URLs, PDFs as file inputs)
+    const media = resolveOpenaiMediaOptions(openaiBot, settings);
     const messageData: any = {
       role: 'user',
-      content: [{ type: 'text', text: content }],
+      content: await this.buildChatCompletionContent(instance, content, msg, media),
     };
-
-    // Handle image messages: send the image inline as a data URL (WhatsApp CDN URLs and
-    // bare base64 are rejected by OpenAI with "400 Failed to download file")
-    if (this.isImageMessage(content)) {
-      this.logger.log('Found image message');
-      const caption = this.getImageCaption(content);
-      const image = await this.loadImageForOpenai(instance, msg, content);
-
-      messageData.content = image
-        ? [
-            ...(caption ? [{ type: 'text', text: caption }] : []),
-            { type: 'image_url', image_url: { url: `data:${image.mimetype};base64,${image.base64}` } },
-          ]
-        : [{ type: 'text', text: this.withImageUnavailableNote(caption) }];
-    }
 
     // Combine all messages: system messages, pre-defined messages, conversation history, and current message
     const messages: any[] = [
@@ -557,7 +545,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     ];
 
     this.logger.log(
-      `Final messages payload: ${JSON.stringify(messages.map((message) => this.stripImagesFromMessage(message)))}`,
+      `Final messages payload: ${JSON.stringify(messages.map((message) => this.stripMediaFromMessage(message)))}`,
     );
 
     if (instance.integration === Integration.WHATSAPP_BAILEYS) {
@@ -569,7 +557,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     // Send the request to OpenAI
     try {
       this.logger.log('Sending request to OpenAI API');
-      const completions = await this.createChatCompletion(client, openaiBot, messages, tokenParam);
+      const completions = await this.createChatCompletionWithFiles(client, openaiBot, messages, tokenParam);
 
       if (instance.integration === Integration.WHATSAPP_BAILEYS) {
         await instance.client.sendPresenceUpdate('paused', remoteJid);
@@ -587,16 +575,16 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       }
 
       // Add the current exchange to the conversation history and update the session
-      // (images are replaced by a text placeholder so base64 never lands in session.context)
-      conversationHistory.push(this.stripImagesFromMessage(messageData));
+      // (images and documents are replaced by a text placeholder so base64 never lands in session.context)
+      conversationHistory.push(this.stripMediaFromMessage(messages[messages.length - 1]));
       conversationHistory.push({
         role: 'assistant',
         content: responseContent,
       });
 
-      // Limit history length to avoid token limits (keep last 10 messages)
-      if (conversationHistory.length > 10) {
-        conversationHistory = conversationHistory.slice(conversationHistory.length - 10);
+      // Limit history length to avoid token limits (keep the last `historyMessages` messages)
+      if (conversationHistory.length > historyLimit) {
+        conversationHistory = conversationHistory.slice(conversationHistory.length - historyLimit);
       }
 
       // Save the updated conversation history to the session
@@ -715,27 +703,45 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
   }
 
   /**
-   * Implementation of speech-to-text transcription for audio messages
+   * Transcription of an audio message (/v1/audio/transcriptions). Also used by the channels (settings.speechToText)
+   * and by other bots. Without `options` the credentials and the model come from the instance OpenAI settings;
+   * the OpenAI bot passes the key of its own credentials and its resolved `transcriptionModel`.
+   * If OpenAI rejects the model, whisper-1 is tried once.
    */
-  public async speechToText(msg: any, instance: any): Promise<string | null> {
-    const settings = await this.prismaRepository.openaiSetting.findFirst({
-      where: {
-        instanceId: instance.instanceId,
-      },
-    });
+  public async speechToText(
+    msg: any,
+    instance: any,
+    options: { apiKey?: string; model?: string } = {},
+  ): Promise<string | null> {
+    let apiKey = options.apiKey;
+    let model = options.model;
 
-    if (!settings) {
-      this.logger.error(`OpenAI settings not found. InstanceId: ${instance.instanceId}`);
-      return null;
-    }
+    if (!apiKey || !model) {
+      const settings = await this.prismaRepository.openaiSetting.findFirst({
+        where: {
+          instanceId: instance.instanceId,
+        },
+      });
 
-    const creds = await this.prismaRepository.openaiCreds.findUnique({
-      where: { id: settings.openaiCredsId },
-    });
+      if (!apiKey) {
+        if (!settings) {
+          this.logger.error(`OpenAI settings not found. InstanceId: ${instance.instanceId}`);
+          return null;
+        }
 
-    if (!creds) {
-      this.logger.error(`OpenAI credentials not found. CredsId: ${settings.openaiCredsId}`);
-      return null;
+        const creds = await this.prismaRepository.openaiCreds.findUnique({
+          where: { id: settings.openaiCredsId },
+        });
+
+        if (!creds) {
+          this.logger.error(`OpenAI credentials not found. CredsId: ${settings.openaiCredsId}`);
+          return null;
+        }
+
+        apiKey = creds?.apiKey || this.configService.get<OpenaiConfig>('OPENAI').API_KEY_GLOBAL;
+      }
+
+      model = model || resolveOpenaiMediaOptions(null, settings).transcriptionModel;
     }
 
     let audio: Buffer;
@@ -763,12 +769,33 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       ? 'pt'
       : this.configService.get<Language>('LANGUAGE');
 
+    try {
+      return await this.requestTranscription(audio, model, lang, apiKey);
+    } catch (error) {
+      if (model === FALLBACK_TRANSCRIPTION_MODEL || !this.isModelRejectedError(error)) {
+        throw error;
+      }
+
+      this.logger.warn(
+        `Transcription model '${model}' was rejected by OpenAI (${
+          error?.response?.status ?? error?.status
+        }); retrying once with '${FALLBACK_TRANSCRIPTION_MODEL}'. Check transcriptionModel in the OpenAI settings.`,
+      );
+      return await this.requestTranscription(audio, FALLBACK_TRANSCRIPTION_MODEL, lang, apiKey);
+    }
+  }
+
+  /** One call to /v1/audio/transcriptions. */
+  protected async requestTranscription(
+    audio: Buffer,
+    model: string,
+    language: string,
+    apiKey: string,
+  ): Promise<string | null> {
     const formData = new FormData();
     formData.append('file', audio, 'audio.ogg');
-    formData.append('model', 'whisper-1');
-    formData.append('language', lang);
-
-    const apiKey = creds?.apiKey || this.configService.get<OpenaiConfig>('OPENAI').API_KEY_GLOBAL;
+    formData.append('model', model);
+    formData.append('language', language);
 
     const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
       headers: {
@@ -778,6 +805,320 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     });
 
     return response?.data?.text;
+  }
+
+  /** Whether OpenAI rejected the requested model (unknown, not available or not allowed for this endpoint). */
+  private isModelRejectedError(error: any): boolean {
+    const status = error?.response?.status ?? error?.status;
+    if (status !== 400 && status !== 404) return false;
+
+    const body = error?.response?.data?.error ?? error?.error ?? {};
+    const code = String(body?.code ?? error?.code ?? '');
+    const param = String(body?.param ?? error?.param ?? '');
+    const message = String(body?.message ?? error?.message ?? '');
+
+    return code === 'model_not_found' || param === 'model' || /model/i.test(message);
+  }
+
+  /**
+   * Content of the customer's message as text for the finish keyword and the model, following the media options:
+   * the audio of this message is transcribed (or described when off / too long), images described when
+   * `readImages` is off, documents described unless they are a PDF the model may read (that line is kept and the
+   * PDF is loaded when the request is built). Returns null when the audio could not be transcribed.
+   */
+  protected async prepareMediaContent(
+    instance: any,
+    content: string,
+    msg: any,
+    media: OpenaiMediaOptions,
+    apiKey: string,
+  ): Promise<string | null> {
+    const lines = content.split('\n');
+
+    for (let index = 0; index < lines.length; index++) {
+      const token = this.parseMediaToken(lines[index]);
+      if (!token) continue;
+
+      const current = this.isCurrentMedia(token, msg);
+
+      if (token.type === 'audioMessage') {
+        if (!current) {
+          // An earlier audio of a debounced burst: only the last message can be downloaded
+          lines[index] = MEDIA_TEXT.audio;
+          continue;
+        }
+
+        if (!media.transcribeAudio) {
+          this.logger.log('Audio transcription is off (transcribeAudio): sending a description to the model');
+          lines[index] = MEDIA_TEXT.audio;
+          continue;
+        }
+
+        const seconds = getAudioSeconds(msg);
+        if (media.maxAudioSeconds > 0 && seconds !== undefined && seconds > media.maxAudioSeconds) {
+          this.logger.log(
+            `Audio of ${seconds}s is longer than maxAudioSeconds (${media.maxAudioSeconds}): not transcribed`,
+          );
+          lines[index] = describeLongAudio(seconds);
+          continue;
+        }
+
+        this.logger.log(`Detected audio message, transcribing with ${media.transcriptionModel}`);
+        const transcription = await this.speechToText(msg, instance, {
+          apiKey,
+          model: media.transcriptionModel,
+        }).catch((error) => {
+          this.logOpenaiError('speechToText', error);
+          return null;
+        });
+
+        if (!transcription) return null;
+
+        // Only the size: the content of the conversation is not logged
+        this.logger.log(`Audio transcribed (${transcription.length} characters)`);
+        lines[index] = transcription;
+      } else if (token.type === 'imageMessage') {
+        if (!media.readImages) {
+          lines[index] = withCaption(MEDIA_TEXT.image, token.caption);
+        }
+      } else if (token.type === 'videoMessage') {
+        lines[index] = withCaption(MEDIA_TEXT.video, token.caption);
+      } else {
+        const info = getDocumentInfo(current ? msg : null, token.caption);
+        const maxBytes = media.maxDocumentMB * 1024 * 1024;
+        const readable =
+          current && media.readDocuments && info.isPdf && !(info.sizeBytes !== undefined && info.sizeBytes > maxBytes);
+
+        if (!readable) {
+          lines[index] = describeDocument(info);
+        }
+      }
+    }
+
+    return lines.join('\n');
+  }
+
+  private parseMediaToken(line: string): MediaToken | null {
+    const match = MEDIA_TOKEN_REGEX.exec(line);
+    if (!match) return null;
+    return { type: match[1] as MediaTokenType, id: match[2], caption: (match[3] ?? '').trim() };
+  }
+
+  /**
+   * Whether the media line belongs to `msg`, the message handed to process() (with debounce, the last one of the
+   * burst): only that media can be downloaded.
+   */
+  private isCurrentMedia(token: MediaToken, msg: any): boolean {
+    const message = msg?.message;
+    if (!message || !token.id) return false;
+    if (token.id !== msg?.key?.id && token.id !== message.mediaUrl) return false;
+
+    switch (token.type) {
+      case 'audioMessage':
+        return !!message.audioMessage;
+      case 'imageMessage':
+        return !!message.imageMessage;
+      case 'videoMessage':
+        return !!message.videoMessage;
+      default:
+        return !!getDocumentMessage(msg);
+    }
+  }
+
+  /**
+   * The customer's message split into text, images and PDFs, with the media already loaded. PDFs are only loaded
+   * when `readPdf` (Chat Completions); otherwise they are described.
+   */
+  private async buildUserSegments(
+    instance: any,
+    content: string,
+    msg: any,
+    options: { readPdf: boolean; maxDocumentMB: number },
+  ): Promise<UserSegment[]> {
+    const segments: UserSegment[] = [];
+    const pushText = (text: string) => {
+      const last = segments[segments.length - 1];
+      if (last?.kind === 'text') last.text = `${last.text}\n${text}`;
+      else segments.push({ kind: 'text', text });
+    };
+
+    for (const line of content.split('\n')) {
+      const token = this.parseMediaToken(line);
+
+      if (token?.type === 'imageMessage') {
+        const image = this.isCurrentMedia(token, msg) ? await this.loadImageForOpenai(instance, msg, line) : null;
+        segments.push({ kind: 'image', caption: token.caption, image });
+      } else if (token?.type === 'documentMessage' || token?.type === 'documentWithCaptionMessage') {
+        const current = this.isCurrentMedia(token, msg);
+        const info = getDocumentInfo(current ? msg : null, token.caption);
+
+        if (!current || !info.isPdf) {
+          pushText(describeDocument(info));
+        } else if (!options.readPdf) {
+          this.logger.log('PDF not read in assistant mode (the Assistants API has no file input in messages)');
+          pushText(describeDocument(info));
+        } else {
+          const pdf = await this.loadPdfForOpenai(instance, msg, line, info, options.maxDocumentMB);
+          if ('base64' in pdf) segments.push({ kind: 'pdf', info, base64: pdf.base64 });
+          else pushText(describeDocument(info, pdf.details));
+        }
+      } else {
+        pushText(line);
+      }
+    }
+
+    return segments;
+  }
+
+  /** Content parts of the customer's message for Chat Completions. */
+  private async buildChatCompletionContent(
+    instance: any,
+    content: string,
+    msg: any,
+    media: OpenaiMediaOptions,
+  ): Promise<any[]> {
+    const segments = await this.buildUserSegments(instance, content, msg, {
+      readPdf: media.readDocuments,
+      maxDocumentMB: media.maxDocumentMB,
+    });
+    const parts: any[] = [];
+
+    for (const segment of segments) {
+      if (segment.kind === 'text') {
+        parts.push({ type: 'text', text: segment.text });
+      } else if (segment.kind === 'image') {
+        // WhatsApp CDN URLs and bare base64 are rejected by OpenAI ("400 Failed to download file"): data URL
+        if (segment.image) {
+          if (segment.caption) parts.push({ type: 'text', text: segment.caption });
+          parts.push({
+            type: 'image_url',
+            image_url: { url: `data:${segment.image.mimetype};base64,${segment.image.base64}` },
+          });
+        } else {
+          parts.push({ type: 'text', text: this.withImageUnavailableNote(segment.caption) });
+        }
+      } else {
+        if (segment.info.caption) parts.push({ type: 'text', text: segment.info.caption });
+        parts.push({
+          type: 'file',
+          file: {
+            filename: segment.info.fileName || 'documento.pdf',
+            file_data: `data:application/pdf;base64,${segment.base64}`,
+          },
+        });
+      }
+    }
+
+    return this.mergeTextParts(parts.length ? parts : [{ type: 'text', text: content }]);
+  }
+
+  /**
+   * Content parts of the customer's message for the Assistants API. It only accepts external URLs in image_url (no
+   * data URLs), so images are uploaded as 'vision' files and referenced by image_file.
+   */
+  private async buildAssistantContent(client: OpenAI, instance: any, content: string, msg: any): Promise<any[]> {
+    const segments = await this.buildUserSegments(instance, content, msg, { readPdf: false, maxDocumentMB: 0 });
+    const parts: any[] = [];
+
+    for (const segment of segments) {
+      if (segment.kind === 'text') {
+        parts.push({ type: 'text', text: segment.text });
+      } else if (segment.kind === 'image') {
+        let fileId: string | null = null;
+
+        if (segment.image) {
+          try {
+            const extension = segment.image.mimetype.split('/')[1] || 'jpg';
+            const file = await client.files.create({
+              file: await toFile(Buffer.from(segment.image.base64, 'base64'), `image.${extension}`, {
+                type: segment.image.mimetype,
+              }),
+              purpose: 'vision',
+            });
+            fileId = file.id;
+          } catch (error) {
+            this.logOpenaiError('processAssistantMessage.uploadImage', error);
+          }
+        }
+
+        if (fileId) {
+          parts.push({ type: 'text', text: segment.caption || IMAGE_HISTORY_PLACEHOLDER });
+          parts.push({ type: 'image_file', image_file: { file_id: fileId } });
+        } else {
+          parts.push({ type: 'text', text: this.withImageUnavailableNote(segment.caption) });
+        }
+      }
+    }
+
+    return this.mergeTextParts(parts.length ? parts : [{ type: 'text', text: content }]);
+  }
+
+  /** Adjacent text parts joined in one. */
+  private mergeTextParts(parts: any[]): any[] {
+    return parts.reduce((merged: any[], part) => {
+      const last = merged[merged.length - 1];
+      if (part.type === 'text' && last?.type === 'text') {
+        merged[merged.length - 1] = { type: 'text', text: `${last.text}\n${part.text}` };
+      } else {
+        merged.push(part);
+      }
+      return merged;
+    }, []);
+  }
+
+  /**
+   * Call Chat Completions; if the model rejects the PDF file input (400), retry once with each document replaced
+   * by its description, so the customer still gets an answer.
+   */
+  private async createChatCompletionWithFiles(
+    client: OpenAI,
+    openaiBot: OpenaiBot,
+    messages: any[],
+    tokenParam: { mode: TokenParamMode; param: TokenParamName },
+  ) {
+    try {
+      return await this.createChatCompletion(client, openaiBot, messages, tokenParam);
+    } catch (error) {
+      const current = messages[messages.length - 1];
+      const hasFiles = Array.isArray(current?.content) && current.content.some((part: any) => part?.type === 'file');
+      if (!hasFiles || !this.isFileInputRejectedError(error)) throw error;
+
+      this.logger.warn(
+        `Model ${openaiBot.model} rejected the PDF file input (${error?.status ?? error?.response?.status}: ` +
+          `${error?.message}); retrying once with the document described as text`,
+      );
+
+      messages[messages.length - 1] = {
+        ...current,
+        content: this.mergeTextParts(
+          current.content.map((part: any) =>
+            part?.type === 'file'
+              ? {
+                  type: 'text',
+                  text: describeDocument({ fileName: part.file?.filename, typeLabel: 'PDF', isPdf: true }),
+                }
+              : part,
+          ),
+        ),
+      };
+
+      return await this.createChatCompletion(client, openaiBot, messages, tokenParam);
+    }
+  }
+
+  /** A 400 of OpenAI about the file input (model without PDF support, invalid or unreadable file). */
+  private isFileInputRejectedError(error: any): boolean {
+    const status = error?.status ?? error?.response?.status;
+    if (status !== 400) return false;
+    if (this.isUnsupportedTokenParamError(error, 'max_tokens')) return false;
+    if (this.isUnsupportedTokenParamError(error, 'max_completion_tokens')) return false;
+
+    const body = error?.error ?? error?.response?.data?.error ?? {};
+    const text = [error?.message, body?.message, body?.param, error?.param, body?.code, error?.code]
+      .filter(Boolean)
+      .join(' ');
+
+    return /file|pdf|document/i.test(text);
   }
 
   /**
@@ -940,25 +1281,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     }
   }
 
-  /**
-   * Caption of an "imageMessage|<id or url>|<caption>" content string ('' when there is none).
-   */
-  private getImageCaption(content: string): string {
-    if (!content.startsWith('imageMessage|')) {
-      return content.trim();
-    }
-
-    return content.split('|').slice(2).join('|').trim();
-  }
-
   private withImageUnavailableNote(caption: string): string {
     return caption ? `${caption}\n${IMAGE_UNAVAILABLE_NOTE}` : IMAGE_UNAVAILABLE_NOTE;
-  }
-
-  private normalizeMimetype(mimetype: unknown): string | undefined {
-    if (typeof mimetype !== 'string') return undefined;
-    const normalized = mimetype.split(';')[0].trim().toLowerCase();
-    return normalized || undefined;
   }
 
   /**
@@ -975,7 +1299,87 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
   ): Promise<{ base64: string; mimetype: string } | null> {
     const message = msg?.message;
     const declaredMimetype =
-      this.normalizeMimetype(message?.imageMessage?.mimetype ?? message?.imageMessage?.mime_type) || 'image/jpeg';
+      normalizeMimetype(message?.imageMessage?.mimetype ?? message?.imageMessage?.mime_type) || 'image/jpeg';
+
+    const media = await this.loadMediaForOpenai(instance, msg, content, {
+      declaredMimetype,
+      maxBytes: MAX_IMAGE_BYTES,
+      isExpectedMimetype: (mimetype) => mimetype.startsWith('image/'),
+      label: 'image',
+    });
+
+    if (!media) {
+      this.logger.error(
+        `Image for message ${msg?.key?.id ?? 'unknown'} could not be obtained; continuing with text only`,
+      );
+    }
+
+    return media;
+  }
+
+  /**
+   * The customer's PDF as base64, if it is within `maxDocumentMB` and MAX_PDF_PAGES. Otherwise `details` says why
+   * it is described instead (undefined: the generic description). Its content is never logged.
+   */
+  private async loadPdfForOpenai(
+    instance: any,
+    msg: any,
+    content: string,
+    info: DocumentInfo,
+    maxDocumentMB: number,
+  ): Promise<{ base64: string } | { details?: string }> {
+    const maxBytes = maxDocumentMB * 1024 * 1024;
+    const pdf = await this.loadMediaForOpenai(instance, msg, content, {
+      declaredMimetype: 'application/pdf',
+      maxBytes,
+      isExpectedMimetype: (mimetype) => mimetype === 'application/pdf',
+      label: 'document',
+    });
+
+    if (!pdf) {
+      this.logger.warn(`PDF of message ${msg?.key?.id ?? 'unknown'} could not be obtained; describing it instead`);
+      return {};
+    }
+
+    const bytes = Buffer.from(pdf.base64, 'base64');
+
+    if (bytes.length > maxBytes) {
+      this.logger.log(`PDF of ${bytes.length} bytes is larger than maxDocumentMB (${maxDocumentMB}): not sent`);
+      return {};
+    }
+
+    if (bytes.subarray(0, 1024).indexOf('%PDF-') < 0) {
+      this.logger.warn(`Document ${info.fileName ?? ''} declared as PDF is not a PDF file: not sent`);
+      return {};
+    }
+
+    const pages = countPdfPages(bytes);
+    if (pages !== null && pages > MAX_PDF_PAGES) {
+      this.logger.log(`PDF with ${pages} pages is longer than ${MAX_PDF_PAGES} pages: not sent`);
+      return { details: `${pages} páginas` };
+    }
+
+    this.logger.log(`Sending PDF to the model (${bytes.length} bytes, ${pages ?? 'unknown'} pages)`);
+    return { base64: pdf.base64 };
+  }
+
+  /**
+   * Raw bytes (base64) and mimetype of the media of `msg`: base64 already in the payload, then the channel
+   * download (Baileys / Cloud API getBase64FromMediaMessage), then a public http(s) mediaUrl (S3 / MinIO).
+   */
+  private async loadMediaForOpenai(
+    instance: any,
+    msg: any,
+    content: string,
+    options: {
+      declaredMimetype: string;
+      maxBytes: number;
+      isExpectedMimetype: (mimetype: string) => boolean;
+      label: string;
+    },
+  ): Promise<{ base64: string; mimetype: string } | null> {
+    const message = msg?.message;
+    const { declaredMimetype } = options;
 
     // 1. base64 already in the payload (with or without a data: prefix)
     if (typeof message?.base64 === 'string' && message.base64.length > 0) {
@@ -983,7 +1387,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       if (dataUrl) {
         return {
           base64: message.base64.slice(dataUrl[0].length),
-          mimetype: this.normalizeMimetype(dataUrl[1]) || declaredMimetype,
+          mimetype: normalizeMimetype(dataUrl[1]) || declaredMimetype,
         };
       }
       return { base64: message.base64, mimetype: declaredMimetype };
@@ -994,15 +1398,15 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       try {
         const media = await instance.getBase64FromMediaMessage({ message: { ...msg, message: { ...message } } });
         if (media?.base64) {
-          return { base64: media.base64, mimetype: this.normalizeMimetype(media.mimetype) || declaredMimetype };
+          return { base64: media.base64, mimetype: normalizeMimetype(media.mimetype) || declaredMimetype };
         }
       } catch (error) {
-        this.logger.warn(`Could not download image through the channel: ${error?.message || error}`);
+        this.logger.warn(`Could not download ${options.label} through the channel: ${error?.message || error}`);
       }
     }
 
     // 3. Public URL (S3 / MinIO). With S3 enabled the content also carries the media URL.
-    const contentUrl = content.startsWith('imageMessage|') ? content.split('|')[1] : undefined;
+    const contentUrl = MEDIA_TOKEN_REGEX.exec(content)?.[2];
     const url = [message?.mediaUrl, contentUrl].find(
       (candidate) => typeof candidate === 'string' && /^https?:\/\//i.test(candidate),
     );
@@ -1012,21 +1416,18 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         const response = await axios.get(url, {
           responseType: 'arraybuffer',
           timeout: 20000,
-          maxContentLength: MAX_IMAGE_BYTES,
+          maxContentLength: options.maxBytes,
         });
-        const headerMimetype = this.normalizeMimetype(response.headers?.['content-type']);
+        const headerMimetype = normalizeMimetype(response.headers?.['content-type']);
         return {
           base64: Buffer.from(response.data).toString('base64'),
-          mimetype: headerMimetype?.startsWith('image/') ? headerMimetype : declaredMimetype,
+          mimetype: headerMimetype && options.isExpectedMimetype(headerMimetype) ? headerMimetype : declaredMimetype,
         };
       } catch (error) {
-        this.logger.warn(`Could not download image from mediaUrl: ${error?.message || error}`);
+        this.logger.warn(`Could not download ${options.label} from mediaUrl: ${error?.message || error}`);
       }
     }
 
-    this.logger.error(
-      `Image for message ${msg?.key?.id ?? 'unknown'} could not be obtained; continuing with text only`,
-    );
     return null;
   }
 
@@ -1043,21 +1444,25 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
   }
 
   /**
-   * Copy of a chat message with image blocks replaced by a short text placeholder,
+   * Copy of a chat message with image and document blocks replaced by a short text placeholder,
    * so base64 payloads never reach session.context (or the logs).
    */
-  private stripImagesFromMessage(message: any): any {
+  private stripMediaFromMessage(message: any): any {
     if (!message || !Array.isArray(message.content)) {
       return message;
     }
 
     return {
       ...message,
-      content: message.content.map((part: any) =>
-        part?.type === 'image_url' || part?.type === 'image_file'
-          ? { type: 'text', text: IMAGE_HISTORY_PLACEHOLDER }
-          : part,
-      ),
+      content: message.content.map((part: any) => {
+        if (part?.type === 'image_url' || part?.type === 'image_file') {
+          return { type: 'text', text: IMAGE_HISTORY_PLACEHOLDER };
+        }
+        if (part?.type === 'file') {
+          return { type: 'text', text: documentHistoryPlaceholder(part.file?.filename) };
+        }
+        return part;
+      }),
     };
   }
 }

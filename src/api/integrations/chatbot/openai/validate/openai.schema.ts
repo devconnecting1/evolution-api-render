@@ -1,4 +1,10 @@
-import { JSONSchema7 } from 'json-schema';
+import {
+  HISTORY_MESSAGES_MAX,
+  HISTORY_MESSAGES_MIN,
+  MAX_AUDIO_SECONDS_LIMIT,
+  MAX_DOCUMENT_MB_LIMIT,
+} from '@utils/openaiMedia';
+import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { v4 } from 'uuid';
 
 const isNotEmpty = (...propertyNames: string[]): JSONSchema7 => {
@@ -20,6 +26,17 @@ const isNotEmpty = (...propertyNames: string[]): JSONSchema7 => {
   };
 };
 
+/** Media handling and conversation window, shared by the bot (absent = inherit) and the default settings. */
+const mediaProperties: Record<string, JSONSchema7Definition> = {
+  transcribeAudio: { type: 'boolean' },
+  transcriptionModel: { type: 'string', minLength: 1, maxLength: 100, pattern: '^[A-Za-z0-9._:-]+$' },
+  maxAudioSeconds: { type: 'integer', minimum: 0, maximum: MAX_AUDIO_SECONDS_LIMIT },
+  readImages: { type: 'boolean' },
+  readDocuments: { type: 'boolean' },
+  maxDocumentMB: { type: 'integer', minimum: 1, maximum: MAX_DOCUMENT_MB_LIMIT },
+  historyMessages: { type: 'integer', minimum: HISTORY_MESSAGES_MIN, maximum: HISTORY_MESSAGES_MAX },
+};
+
 export const openaiSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
@@ -37,6 +54,7 @@ export const openaiSchema: JSONSchema7 = {
     maxTokens: { type: 'integer' },
     tokenParam: { type: 'string', enum: ['auto', 'max_tokens', 'max_completion_tokens'] },
     humanResumeMinutes: { type: 'integer', minimum: 0 },
+    ...mediaProperties,
     triggerType: { type: 'string', enum: ['all', 'keyword', 'none', 'advanced'] },
     triggerOperator: { type: 'string', enum: ['equals', 'contains', 'startsWith', 'endsWith', 'regex'] },
     triggerValue: { type: 'string' },
@@ -92,6 +110,7 @@ export const openaiSettingSchema: JSONSchema7 = {
     speechToText: { type: 'boolean' },
     tokenParam: { type: 'string', enum: ['auto', 'max_tokens', 'max_completion_tokens'] },
     humanResumeMinutes: { type: 'integer', minimum: 0 },
+    ...mediaProperties,
     ignoreJids: { type: 'array', items: { type: 'string' } },
     openaiIdFallback: { type: 'string' },
   },
