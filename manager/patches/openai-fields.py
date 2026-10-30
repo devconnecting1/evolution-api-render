@@ -643,10 +643,11 @@ def bump_index(html):
         raise PatchError('index.html: bundle script tag not found exactly once')
     end = html.index('"', pos)
     current = html[pos + len(SCRIPT_TAG):end]
-    if current == CACHE_VERSION:
-        return html
-    if not current.isdigit() or int(current) >= int(CACHE_VERSION):
+    if not current.isdigit():
         raise PatchError(f'index.html: unexpected bundle version ?v={current}')
+    if int(current) >= int(CACHE_VERSION):
+        # already bumped (a later patch such as responsive.py may have bumped it further)
+        return html
     return html[:pos + len(SCRIPT_TAG)] + CACHE_VERSION + html[end:]
 
 
