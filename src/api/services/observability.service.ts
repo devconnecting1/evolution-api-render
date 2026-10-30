@@ -1,54 +1,50 @@
+import { prismaRepository, waMonitor } from '@api/server.module';
+import { redisClient } from '@cache/rediscache.client';
+import { CacheConf, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
+
+import {
+  buildMetric,
+  finite,
+  formatBytes,
+  formatNumber,
+  Metric,
+  ProviderLink,
+  ProviderView,
+  Resource,
+  withTimeout,
+  worstStatus,
+} from './observability.shared';
+import { RedisState, SystemDeps, SystemProbe } from './observability.system';
+
+export type { Metric, ProviderView, Resource } from './observability.shared';
 
 const logger = new Logger('ObservabilityService');
 
 const CACHE_TTL_MS = 60_000;
+const HTTP_TIMEOUT_MS = 8_000;
+const PROVIDER_TIMEOUT_MS = 10_000;
 const NEON_API_URL = 'https://console.neon.tech/api/v2';
 const RENDER_API_URL = 'https://api.render.com/v1';
 const VERCEL_API_URL = 'https://api.vercel.com';
 const GITHUB_API_URL = 'https://api.github.com';
 
-type ProviderStatus = 'ok' | 'partial' | 'missing' | 'error';
-type MetricStatus = 'ok' | 'warning' | 'critical' | 'unknown';
-type MetricUnit = 'bytes' | 'hours' | 'cu_hours' | 'count' | 'minutes' | 'number';
+const GB = 1024 * 1024 * 1024;
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
 
-type Metric = {
-  id: string;
-  label: string;
-  used: number | null;
-  limit: number | null;
-  unit: MetricUnit;
-  percent: number | null;
-  status: MetricStatus;
-  detail?: string;
-};
+/** Neon Free (https://neon.com/docs/introduction/plans): per project, compute and egress reset monthly. */
+const NEON_FREE = { computeCuHours: 100, storageBytes: GB, egressBytes: 5 * GB, branches: 10 };
+/** Render: 750 Free instance hours per workspace per calendar month (https://render.com/docs/free). */
+const RENDER_FREE_INSTANCE_HOURS = 750;
+/** Vercel Hobby (https://vercel.com/docs/limits): deployments per day; build time per deployment (all plans). */
+const VERCEL_HOBBY_DEPLOYS_PER_DAY = 100;
+const VERCEL_BUILD_MINUTES_PER_DEPLOY = 45;
+/** GitHub Free: Actions minutes per month for private repositories (public repositories are free). */
+const GITHUB_FREE_ACTIONS_MINUTES = 2000;
 
-type Resource = {
-  id: string;
-  name: string;
-  type?: string;
-  status?: string;
-  plan?: string;
-  region?: string;
-  url?: string;
-  detail?: string;
-};
-
-type ProviderView = {
-  id: string;
-  name: string;
-  description: string;
-  configured: boolean;
-  plan: string | null;
-  status: ProviderStatus;
-  updatedAt: string;
-  metrics: Metric[];
-  resources: Resource[];
-  notes: string[];
-  links: { label: string; url: string }[];
-  error?: string;
-};
+const RENDER_FAILED_DEPLOY = new Set(['build_failed', 'update_failed', 'pre_deploy_failed', 'canceled']);
 
 type Overview = {
   generatedAt: string;
@@ -57,27 +53,132 @@ type Overview = {
   providers: ProviderView[];
 };
 
-type CachedOverview = {
-  at: number;
-  data: Overview;
-};
+type HttpResponse = { data: any; status?: number };
+export type HttpClient = { get: (path: string, config?: { params?: Record<string, any> }) => Promise<HttpResponse> };
+export type HttpFactory = (baseURL: string, headers: Record<string, string>) => HttpClient;
 
-type RenderSeriesValue = {
-  timestamp?: string;
-  value?: number;
+export type ObservabilityOptions = {
+  http?: HttpFactory;
+  env?: NodeJS.ProcessEnv;
+  now?: () => number;
+  /** null disables the local provider (tests of the external providers). */
+  system?: SystemProbe | null;
+  providerTimeoutMs?: number;
 };
 
 type RenderSeries = {
   unit?: string;
-  values?: RenderSeriesValue[];
+  labels?: { field?: string; value?: string }[];
+  values?: { timestamp?: string; value?: number }[];
 };
 
+type SetupHelp = { description: string; note: string; links: ProviderLink[] };
+
+/** What each provider needs and where the key is created (shown on the "Não configurado" cards). */
+const SETUP: Record<string, SetupHelp> = {
+  neon: {
+    description: 'Postgres gerenciado',
+    note: 'Crie uma API key no Neon (Account settings > API keys, ou uma chave da organização com escopo do projeto) e salve no Environment do serviço no Render.',
+    links: [
+      { label: 'Criar API key', url: 'https://console.neon.tech/app/settings/api-keys' },
+      { label: 'Como criar', url: 'https://neon.com/docs/manage/api-keys' },
+    ],
+  },
+  render: {
+    description: 'Hospedagem da API',
+    note: 'Crie uma API key no Render (Account Settings > API Keys) e salve no Environment do serviço. Ela lê serviços, deploys e métricas.',
+    links: [
+      { label: 'Criar API key', url: 'https://dashboard.render.com/u/settings#api-keys' },
+      { label: 'Como criar', url: 'https://render.com/docs/api#1-create-an-api-key' },
+    ],
+  },
+  vercel: {
+    description: 'Hospedagem do painel',
+    note: 'Crie um token na Vercel (Account Settings > Tokens) com escopo apenas do team do painel e salve no Environment do serviço no Render.',
+    links: [
+      { label: 'Criar token', url: 'https://vercel.com/account/settings/tokens' },
+      { label: 'Como criar', url: 'https://vercel.com/docs/rest-api/reference/welcome#creating-an-access-token' },
+    ],
+  },
+  github: {
+    description: 'CI/CD e Actions',
+    note: 'Opcional. Crie um fine-grained token só deste repositório com Actions: read (e a permissão de conta Plan: read para ver os minutos) e salve no Environment do serviço no Render.',
+    links: [
+      { label: 'Criar token', url: 'https://github.com/settings/personal-access-tokens/new' },
+      {
+        label: 'Como criar',
+        url: 'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token',
+      },
+    ],
+  },
+};
+
+const defaultHttp: HttpFactory = (baseURL, headers) => axios.create({ baseURL, headers, timeout: HTTP_TIMEOUT_MS });
+
+const unwrapList = (data: any, key: string): any[] =>
+  (Array.isArray(data) ? data : Array.isArray(data?.[`${key}s`]) ? data[`${key}s`] : [])
+    .map((item: any) => item?.[key] ?? item)
+    .filter(Boolean);
+
+const capitalize = (value: string | null | undefined): string | null =>
+  value ? value.charAt(0).toUpperCase() + value.slice(1) : null;
+
+const httpStatus = (error: unknown): number | undefined =>
+  axios.isAxiosError(error) ? error.response?.status : (error as any)?.response?.status;
+
+const formatDate = (value: unknown): string | null => {
+  const time = typeof value === 'number' ? value : Date.parse(String(value ?? ''));
+  if (!Number.isFinite(time)) return null;
+  return new Date(time).toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+/** Last numeric value of a Render metric series list (e.g. the current memory of the instance). */
+export function renderLatest(series: RenderSeries[] | null | undefined): number | null {
+  const values = (Array.isArray(series) ? series : [])
+    .flatMap((item) => item?.values ?? [])
+    .filter((item) => typeof item?.value === 'number')
+    .sort((a, b) => Date.parse(a.timestamp ?? '') - Date.parse(b.timestamp ?? ''));
+  return values.length ? (values[values.length - 1].value as number) : null;
+}
+
+/** Distinct hourly buckets with data (any instance): an estimate of the hours the service was running. */
+export function renderActiveHours(series: RenderSeries[] | null | undefined): number | null {
+  const buckets = new Set<string>();
+  for (const item of Array.isArray(series) ? series : []) {
+    for (const value of item?.values ?? []) {
+      if (typeof value?.value === 'number' && value.timestamp) buckets.add(value.timestamp.slice(0, 13));
+    }
+  }
+  return buckets.size ? buckets.size : null;
+}
+
+/** Sum of a Render bandwidth series (unit "mb") in bytes. */
+export function renderBandwidthBytes(series: RenderSeries[] | null | undefined): number | null {
+  const list = Array.isArray(series) ? series : [];
+  const values = list.flatMap((item) => item?.values ?? []).filter((item) => typeof item?.value === 'number');
+  if (!values.length) return null;
+  const unit = String(list[0]?.unit ?? 'mb').toLowerCase();
+  const factor = unit === 'gb' ? GB : unit === 'kb' ? 1024 : unit === 'b' || unit === 'bytes' ? 1 : 1024 * 1024;
+  return values.reduce((total, item) => total + (item.value as number) * factor, 0);
+}
+
 export class ObservabilityService {
-  private cache: CachedOverview | null = null;
+  private cache: { at: number; data: Overview } | null = null;
   private inFlight: Promise<Overview> | null = null;
+  private systemProbe: SystemProbe | null | undefined;
+
+  constructor(private readonly options: ObservabilityOptions = {}) {
+    this.systemProbe = options.system;
+  }
 
   public async getOverview(force = false): Promise<Overview> {
-    if (!force && this.cache && Date.now() - this.cache.at < CACHE_TTL_MS) {
+    if (!force && this.cache && this.now() - this.cache.at < CACHE_TTL_MS) {
       return { ...this.cache.data, cached: true };
     }
 
@@ -93,21 +194,25 @@ export class ObservabilityService {
   }
 
   private async buildOverview(): Promise<Overview> {
+    const system = this.getSystemProbe();
     const providers = await Promise.all([
-      this.loadProvider('neon', 'Neon', 'Postgres gerenciado', () => this.getNeon()),
-      this.loadProvider('render', 'Render', 'Hospedagem da API', () => this.getRender()),
-      this.loadProvider('vercel', 'Vercel', 'Hospedagem do painel', () => this.getVercel()),
-      this.loadProvider('github', 'GitHub', 'CI/CD e Actions', () => this.getGithub()),
+      ...(system
+        ? [this.loadProvider('system', 'Sistema', 'Servidor da API, banco e instâncias', () => system.collect())]
+        : []),
+      this.loadProvider('neon', 'Neon', SETUP.neon.description, () => this.getNeon()),
+      this.loadProvider('render', 'Render', SETUP.render.description, () => this.getRender()),
+      this.loadProvider('vercel', 'Vercel', SETUP.vercel.description, () => this.getVercel()),
+      this.loadProvider('github', 'GitHub', SETUP.github.description, () => this.getGithub()),
     ]);
 
     const data: Overview = {
-      generatedAt: new Date().toISOString(),
+      generatedAt: new Date(this.now()).toISOString(),
       cached: false,
       cacheTtlSeconds: CACHE_TTL_MS / 1000,
       providers,
     };
 
-    this.cache = { at: Date.now(), data };
+    this.cache = { at: this.now(), data };
 
     return data;
   }
@@ -119,135 +224,172 @@ export class ObservabilityService {
     loader: () => Promise<ProviderView>,
   ): Promise<ProviderView> {
     try {
-      return await loader();
+      return await withTimeout(
+        loader(),
+        this.options.providerTimeoutMs ?? PROVIDER_TIMEOUT_MS,
+        'O provedor não respondeu dentro do tempo esperado.',
+      );
     } catch (error) {
-      logger.error(`${name}: ${this.describeError(error)}`);
-      return this.errorView(id, name, description, error);
+      const message = this.describeError(error);
+      logger.error(`${name}: ${message}`);
+      return this.errorView(id, name, description, message);
     }
   }
 
+  private getSystemProbe(): SystemProbe | null {
+    if (this.systemProbe !== undefined) return this.systemProbe;
+
+    // Built on the first request: the application modules are fully initialized by then
+    const cacheConf = configService.get<CacheConf>('CACHE');
+    const deps: SystemDeps = {
+      prisma: prismaRepository as unknown as SystemDeps['prisma'],
+      waInstances: () => waMonitor?.waInstances,
+      databaseProvider: configService.get<Database>('DATABASE')?.PROVIDER,
+      cache: {
+        redisEnabled: Boolean(cacheConf?.REDIS?.ENABLED && cacheConf?.REDIS?.URI),
+        localEnabled: Boolean(cacheConf?.LOCAL?.ENABLED),
+        redisState: async (): Promise<RedisState> => {
+          const client = redisClient.peek();
+          if (!client) return { state: 'absent' };
+          if (!client.isReady) return { state: client.isOpen ? 'connecting' : 'down' };
+          const startedAt = Date.now();
+          await client.ping();
+          return { state: 'ready', latencyMs: Date.now() - startedAt };
+        },
+      },
+    };
+
+    this.systemProbe = new SystemProbe(deps);
+    return this.systemProbe;
+  }
+
+  // ---------------------------------------------------------------------------------------------- Neon
+
   private async getNeon(): Promise<ProviderView> {
+    const missing = this.missingEnv(['NEON_API_KEY', 'NEON_PROJECT_ID']);
+    if (missing.length) return this.missingView('neon', 'Neon', missing);
+
     const apiKey = this.env('NEON_API_KEY');
-    const projectId = this.env('NEON_PROJECT_ID');
-    const configured = Boolean(apiKey && projectId);
+    const projectId = encodeURIComponent(this.env('NEON_PROJECT_ID'));
+    const client = this.http(NEON_API_URL, { Authorization: `Bearer ${apiKey}`, Accept: 'application/json' });
 
-    if (!configured) {
-      return this.missingView(
-        'neon',
-        'Neon',
-        'Postgres gerenciado',
-        ['NEON_API_KEY', 'NEON_PROJECT_ID'],
-        'Configure a chave da API e o ID do projeto para acompanhar storage, compute e egress.',
-      );
-    }
+    const [projectResult, branchesResult, endpointsResult] = await Promise.allSettled([
+      client.get(`/projects/${projectId}`),
+      client.get(`/projects/${projectId}/branches`),
+      client.get(`/projects/${projectId}/endpoints`),
+    ]);
 
-    const client = this.client(NEON_API_URL, { Authorization: `Bearer ${apiKey}` });
-    const projectResponse = await client.get(`/projects/${projectId}`);
-    const project = projectResponse.data?.project ?? projectResponse.data;
+    if (projectResult.status === 'rejected') throw projectResult.reason;
 
+    const project = projectResult.value.data?.project ?? projectResult.value.data;
     if (!project?.id) {
       throw new Error('Projeto Neon não encontrado na resposta da API.');
     }
 
-    const orgId = project.org_id || this.env('NEON_ORG_ID');
     const notes: string[] = [];
     let partial = false;
-    let plan: string | null = null;
-    let branches: any[] = [];
 
-    const [branchesResult, orgResult] = await Promise.allSettled([
-      client.get(`/projects/${projectId}/branches`),
-      orgId ? client.get(`/organizations/${orgId}`) : Promise.resolve(null),
-    ]);
+    // The plan comes with the project (owner.subscription_type, e.g. "free_v3"); the organization endpoint is
+    // only a fallback, and a project-scoped key cannot read it
+    let subscription: string | null = project.owner?.subscription_type ?? null;
+    const orgId = project.org_id || this.env('NEON_ORG_ID');
+    if (!subscription && orgId) {
+      try {
+        const org = (await client.get(`/organizations/${encodeURIComponent(orgId)}`)).data;
+        subscription = org?.plan ?? org?.organization?.plan ?? null;
+      } catch {
+        notes.push('Não foi possível confirmar o plano da organização.');
+      }
+    }
+    const isFree = /^free/i.test(subscription ?? '');
+    const plan = isFree ? 'Free' : capitalize(subscription?.replace(/_v\d+$/i, '') ?? null);
 
-    const branchesLoaded = branchesResult.status === 'fulfilled';
-    if (branchesLoaded) {
-      branches = branchesResult.value?.data?.branches ?? [];
-    } else {
+    const branches: any[] = branchesResult.status === 'fulfilled' ? (branchesResult.value.data?.branches ?? []) : [];
+    if (branchesResult.status === 'rejected') {
       partial = true;
       notes.push('Não foi possível ler as branches; o armazenamento pode estar incompleto.');
     }
 
-    if (orgResult.status === 'fulfilled' && orgResult.value) {
-      plan = orgResult.value.data?.plan ?? null;
-    } else if (orgId) {
-      partial = true;
-      notes.push('Não foi possível confirmar o plano da organização.');
-    }
-
-    const storageUsed = branchesLoaded
-      ? branches.reduce((total, branch) => total + Number(branch.logical_size ?? 0), 0)
-      : null;
-    const isFree = String(plan ?? '').toLowerCase() === 'free';
+    // Child branches share the parent's data (copy-on-write): the primary branch is the closest number to the
+    // project storage; the sum of all branches overstates it
+    const primary = branches.find((branch) => branch.default || branch.primary) ?? branches[0];
+    const storageUsed = primary ? (finite(primary.logical_size) ?? 0) : null;
+    const storageSum = branches.reduce((total, branch) => total + (finite(branch.logical_size) ?? 0), 0);
     const storageLimit = isFree
-      ? 1024 * 1024 * 1024
-      : Number(project.branch_logical_size_limit_bytes) ||
-        Number(project.branch_logical_size_limit) * 1024 * 1024 ||
-        null;
-    const computeSeconds = Number(project.compute_time_seconds ?? project.cpu_used_sec ?? 0);
-    const activeSeconds = Number(project.active_time_seconds ?? project.active_time ?? 0);
-    const egressBytes = Number(project.data_transfer_bytes ?? 0);
-    const freeComputeLimit = isFree ? 100 : null;
-    const freeEgressLimit = isFree ? 5 * 1024 * 1024 * 1024 : null;
-    const freeBranchesLimit = isFree ? 10 : null;
-    const periodEnd = project.consumption_period_end || project.quota_reset_at;
+      ? NEON_FREE.storageBytes
+      : (finite(project.branch_logical_size_limit_bytes) ??
+        (finite(project.branch_logical_size_limit) ? finite(project.branch_logical_size_limit) * 1024 * 1024 : null));
 
-    notes.push('Os números refletem o período de consumo atual e podem ter atraso.');
-    if (periodEnd) {
-      notes.push(`O período atual termina em ${new Date(periodEnd).toLocaleString('pt-BR')}.`);
-    }
-    if (isFree) {
-      notes.push('Limites do Neon Free: 100 CU-horas, 1 GB de storage e 5 GB de egress por projeto.');
-    }
+    // compute_time_seconds is in CU-seconds (active time x compute size), so / 3600 = CU-hours
+    const computeSeconds = finite(project.compute_time_seconds) ?? 0;
+    const activeSeconds = finite(project.active_time_seconds) ?? 0;
+    const egressBytes = finite(project.data_transfer_bytes) ?? 0;
+    const branchesLimit = finite(project.owner?.branches_limit) ?? (isFree ? NEON_FREE.branches : null);
+
+    const endpoints: any[] =
+      endpointsResult.status === 'fulfilled' ? (endpointsResult.value.data?.endpoints ?? []) : [];
+    const primaryEndpoint = endpoints.find((endpoint) => endpoint.branch_id === primary?.id) ?? endpoints[0];
+    const computeState = primaryEndpoint?.current_state ?? (activeSeconds > 0 ? 'active' : 'idle');
+
+    const metrics = [
+      buildMetric('storage', 'Armazenamento', storageUsed, storageLimit, 'bytes', {
+        detail: primary
+          ? `Branch ${primary.name}${branches.length > 1 ? ` · ${branches.length} branches somam ${formatBytes(storageSum)}` : ''}`
+          : undefined,
+      }),
+      buildMetric('compute', 'Compute', computeSeconds / 3600, isFree ? NEON_FREE.computeCuHours : null, 'cu_hours', {
+        detail: 'CU-horas no período (tempo ativo x tamanho do compute)',
+      }),
+      buildMetric('egress', 'Egress', egressBytes, isFree ? NEON_FREE.egressBytes : null, 'bytes', {
+        detail: 'Transferência pública de saída no período',
+      }),
+      buildMetric('active_time', 'Tempo ativo', activeSeconds / 3600, null, 'hours', {
+        detail: 'Tempo com o compute ligado no período',
+      }),
+      buildMetric(
+        'branches',
+        'Branches',
+        branchesResult.status === 'fulfilled' ? branches.length : null,
+        branchesLimit,
+        'count',
+        {
+          detail: 'Branches do projeto',
+        },
+      ),
+    ];
+
+    const periodEnd = formatDate(project.consumption_period_end);
+    notes.push('Compute e egress reiniciam a cada período de consumo; os números podem ter alguns minutos de atraso.');
+    if (periodEnd) notes.push(`O período atual termina em ${periodEnd}.`);
+    if (isFree) notes.push('Limites do Neon Free: 100 CU-horas/mês, 1 GB de storage e 5 GB de egress/mês por projeto.');
+
+    const lastActive = formatDate(project.compute_last_active_at);
 
     return {
       id: 'neon',
       name: 'Neon',
-      description: 'Postgres gerenciado',
+      description: SETUP.neon.description,
       configured: true,
       plan,
-      status: partial ? 'partial' : 'ok',
-      updatedAt: new Date().toISOString(),
-      metrics: [
-        this.metric(
-          'storage',
-          'Armazenamento',
-          storageUsed,
-          storageLimit,
-          'bytes',
-          'Soma do logical_size das branches',
-        ),
-        this.metric(
-          'compute',
-          'Compute',
-          computeSeconds / 3600,
-          freeComputeLimit,
-          'cu_hours',
-          'Compute time acumulado no período',
-        ),
-        this.metric('egress', 'Egress', egressBytes, freeEgressLimit, 'bytes', 'Transferência pública de saída'),
-        this.metric('active_time', 'Tempo ativo', activeSeconds / 3600, null, 'hours', 'Wall-clock dos endpoints'),
-        this.metric(
-          'branches',
-          'Branches',
-          branchesLoaded ? branches.length : null,
-          freeBranchesLimit,
-          'count',
-          'Branches ativas',
-        ),
-      ],
+      status: partial || worstStatus(metrics) !== 'ok' ? 'partial' : 'ok',
+      updatedAt: this.isoNow(),
+      metrics,
       resources: [
         {
           id: project.id,
           name: project.name,
-          type: 'Postgres',
-          status: activeSeconds > 0 ? 'active' : 'idle',
-          plan,
+          type: `Postgres ${project.pg_version ?? ''}`.trim(),
+          status: computeState,
+          plan: plan ?? undefined,
           region: project.region_id,
-          detail:
-            activeSeconds > 0
-              ? `Tempo ativo no período: ${this.formatNumber(activeSeconds / 3600)} h`
-              : 'Sem atividade registrada no período.',
+          detail: [
+            primaryEndpoint
+              ? `Compute ${primaryEndpoint.autoscaling_limit_min_cu ?? '?'}-${primaryEndpoint.autoscaling_limit_max_cu ?? '?'} CU`
+              : null,
+            lastActive ? `última atividade ${lastActive}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
         },
       ],
       notes,
@@ -258,495 +400,625 @@ export class ObservabilityService {
     };
   }
 
+  // -------------------------------------------------------------------------------------------- Render
+
   private async getRender(): Promise<ProviderView> {
-    const apiKey = this.env('RENDER_API_KEY');
-    const configured = Boolean(apiKey);
+    const missing = this.missingEnv(['RENDER_API_KEY']);
+    if (missing.length) return this.missingView('render', 'Render', missing);
 
-    if (!configured) {
-      return this.missingView(
-        'render',
-        'Render',
-        'Hospedagem da API',
-        ['RENDER_API_KEY'],
-        'A API do Render permite listar serviços, deploys e métricas. O medidor de billing continua no dashboard.',
-      );
-    }
+    const client = this.http(RENDER_API_URL, {
+      Authorization: `Bearer ${this.env('RENDER_API_KEY')}`,
+      Accept: 'application/json',
+    });
+    const ids = (this.env('RENDER_SERVICE_IDS') ?? '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const notes: string[] = [];
+    let partial = false;
+    let services: any[] = [];
+    let keyValues: any[] = [];
 
-    const client = this.client(RENDER_API_URL, { Authorization: `Bearer ${apiKey}` });
-    let ownerId = this.env('RENDER_OWNER_ID');
-    let ownerName = ownerId;
-
-    if (!ownerId) {
-      const ownersResponse = await client.get('/owners', { params: { limit: 20 } });
-      const owners = (ownersResponse.data ?? []).map((item) => item?.owner ?? item);
-      const owner = owners[0];
-
-      if (!owner?.id) {
-        throw new Error('Nenhum workspace do Render foi encontrado para esta chave.');
-      }
-
-      ownerId = owner.id;
-      ownerName = owner.name;
-    }
-
-    const serviceFilter = new Set(
-      (this.env('RENDER_SERVICE_IDS') ?? '')
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean),
-    );
-
-    const servicesResponse = await client.get('/services', { params: { ownerId, limit: 100 } });
-    const services = (servicesResponse.data ?? [])
-      .map((item) => item?.service ?? item)
-      .filter((service) => service?.id && (serviceFilter.size === 0 || serviceFilter.has(service.id)));
-
-    if (services.length === 0) {
-      return {
-        ...this.missingView(
-          'render',
-          'Render',
-          'Hospedagem da API',
-          ['RENDER_API_KEY'],
-          'Nenhum serviço foi encontrado para este workspace.',
+    if (ids.length) {
+      // Key Value instances (red-...) are not returned by /services: each id is read from its own endpoint
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          client.get(
+            id.startsWith('red-') ? `/key-value/${encodeURIComponent(id)}` : `/services/${encodeURIComponent(id)}`,
+          ),
         ),
-        configured: true,
+      );
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          if ([401, 403].includes(httpStatus(result.reason))) throw result.reason;
+          partial = true;
+          notes.push(`Não foi possível ler ${ids[index]} (verifique RENDER_SERVICE_IDS).`);
+          return;
+        }
+        const data = result.value.data?.service ?? result.value.data?.keyValue ?? result.value.data;
+        if (ids[index].startsWith('red-')) keyValues.push(data);
+        else services.push(data);
+      });
+    } else {
+      let ownerId = this.env('RENDER_OWNER_ID');
+      if (!ownerId) {
+        const owners = unwrapList((await client.get('/owners', { params: { limit: 20 } })).data, 'owner');
+        ownerId = owners[0]?.id;
+        if (!ownerId) throw new Error('Nenhum workspace do Render foi encontrado para esta chave.');
+      }
+      const [servicesResult, keyValueResult] = await Promise.allSettled([
+        client.get('/services', { params: { ownerId, limit: 100 } }),
+        client.get('/key-value', { params: { ownerId, limit: 100 } }),
+      ]);
+      if (servicesResult.status === 'rejected') throw servicesResult.reason;
+      services = unwrapList(servicesResult.value.data, 'service');
+      keyValues = keyValueResult.status === 'fulfilled' ? unwrapList(keyValueResult.value.data, 'keyValue') : [];
+    }
+
+    services = services.filter((service) => service?.id);
+    keyValues = keyValues.filter((keyValue) => keyValue?.id);
+
+    if (services.length === 0 && keyValues.length === 0) {
+      return {
+        ...this.baseView('render', 'Render', SETUP.render.description),
         status: 'partial',
+        notes: [...notes, 'Nenhum serviço foi encontrado para esta chave.'],
+        links: [{ label: 'Abrir Render', url: 'https://dashboard.render.com/' }],
       };
     }
 
-    const notes: string[] = [];
-    const resources: Resource[] = [];
-    const now = new Date();
-    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
-    let instanceHours = 0;
-    let estimated = false;
-    let allFree = true;
-    let metricsFailed = false;
+    const now = this.now();
+    const monthStart = Date.UTC(new Date(now).getUTCFullYear(), new Date(now).getUTCMonth(), 1);
+    // The metrics API only answers for the last 30 days
+    const historyStart = Math.max(monthStart, now - 30 * DAY_MS + 5 * 60 * 1000);
+    const recentStart = now - 30 * 60 * 1000;
+    const metric = async (name: string, resource: string, start: number, resolutionSeconds?: number) => {
+      const response = await client.get(`/metrics/${name}`, {
+        params: {
+          resource,
+          startTime: new Date(start).toISOString(),
+          endTime: new Date(now).toISOString(),
+          ...(resolutionSeconds ? { resolutionSeconds } : {}),
+        },
+      });
+      return (Array.isArray(response.data) ? response.data : []) as RenderSeries[];
+    };
 
-    for (const service of services) {
+    const metrics: Metric[] = [];
+    const resources: Resource[] = [];
+    const links: ProviderLink[] = [];
+    let metricsFailed = false;
+    let freeWebHours: number | null = null;
+    let bandwidthBytes: number | null = null;
+    let hasFreeWeb = false;
+
+    const serviceData = await Promise.all(
+      services.map(async (service) => {
+        const [deploys, cpu, cpuLimit, memory, memoryLimit, hours, bandwidth] = await Promise.allSettled([
+          client.get(`/services/${service.id}/deploys`, { params: { limit: 1 } }),
+          metric('cpu', service.id, recentStart, 300),
+          metric('cpu-limit', service.id, recentStart, 300),
+          metric('memory', service.id, recentStart, 300),
+          metric('memory-limit', service.id, recentStart, 300),
+          metric('cpu', service.id, historyStart, 3600),
+          metric('bandwidth', service.id, historyStart),
+        ]);
+        return { service, deploys, cpu, cpuLimit, memory, memoryLimit, hours, bandwidth };
+      }),
+    );
+
+    for (const { service, deploys, cpu, cpuLimit, memory, memoryLimit, hours, bandwidth } of serviceData) {
       const details = service.serviceDetails ?? {};
       const plan = details.plan ?? null;
       const isFree = String(plan ?? '').toLowerCase() === 'free';
-      allFree = allFree && isFree;
+      const value = (result: PromiseSettledResult<RenderSeries[]>) =>
+        result.status === 'fulfilled' ? renderLatest(result.value) : null;
 
-      let latestDeploy = null;
-      try {
-        const deployResponse = await client.get(`/services/${service.id}/deploys`, { params: { limit: 1 } });
-        latestDeploy = deployResponse.data?.[0]?.deploy ?? deployResponse.data?.[0] ?? null;
-      } catch {
-        notes.push(`Não foi possível ler o último deploy de ${service.name}.`);
+      if ([cpu, cpuLimit, memory, memoryLimit].some((result) => result.status === 'rejected')) metricsFailed = true;
+
+      const memoryUsed = value(memory);
+      const memoryMax = value(memoryLimit);
+      const cpuUsed = value(cpu);
+      const cpuMax = value(cpuLimit);
+      const label = services.length > 1 ? ` (${service.name})` : '';
+
+      metrics.push(
+        buildMetric(`memory_${service.id}`, `Memória${label}`, memoryUsed, memoryMax, 'bytes', {
+          detail: `${service.name} · uso atual do container`,
+          warnAt: 80,
+          criticalAt: 90,
+        }),
+        buildMetric(
+          `cpu_${service.id}`,
+          `CPU (% do limite)${label}`,
+          cpuUsed !== null && cpuMax ? (cpuUsed / cpuMax) * 100 : null,
+          100,
+          'number',
+          {
+            detail:
+              cpuUsed !== null
+                ? `${formatNumber(cpuUsed, 3)} de ${cpuMax !== null ? formatNumber(cpuMax, 2) : '?'} vCPU`
+                : 'Sem dados recentes',
+            warnAt: 80,
+            criticalAt: 95,
+          },
+        ),
+      );
+
+      if (service.type === 'web_service' && isFree) {
+        hasFreeWeb = true;
+        const serviceHours = hours.status === 'fulfilled' ? renderActiveHours(hours.value) : null;
+        if (serviceHours !== null) freeWebHours = (freeWebHours ?? 0) + serviceHours;
+      }
+      if (bandwidth.status === 'fulfilled') {
+        const bytes = renderBandwidthBytes(bandwidth.value);
+        if (bytes !== null) bandwidthBytes = (bandwidthBytes ?? 0) + bytes;
       }
 
-      const [cpu, memory, bandwidth, hours] = await Promise.allSettled([
-        this.renderLatestMetric(client, 'cpu', service.id, now),
-        this.renderLatestMetric(client, 'memory', service.id, now),
-        this.renderLatestMetric(client, 'bandwidth', service.id, now),
-        this.renderInstanceHours(client, service.id, monthStart, now),
-      ]);
-
-      if (cpu.status === 'rejected' || memory.status === 'rejected' || bandwidth.status === 'rejected') {
-        metricsFailed = true;
+      const deploy = deploys.status === 'fulfilled' ? (unwrapList(deploys.value.data, 'deploy')[0] ?? null) : null;
+      if (deploys.status === 'rejected') notes.push(`Não foi possível ler o último deploy de ${service.name}.`);
+      const deployStatus = deploy?.status ? String(deploy.status).toLowerCase() : null;
+      if (deployStatus && RENDER_FAILED_DEPLOY.has(deployStatus)) {
+        partial = true;
+        notes.push(`O último deploy de ${service.name} terminou como ${deployStatus}.`);
       }
-
-      if (hours.status === 'fulfilled' && hours.value !== null) {
-        instanceHours += hours.value;
-        estimated = true;
-      }
-
-      const parts: string[] = [];
-      if (cpu.status === 'fulfilled' && cpu.value) {
-        parts.push(`CPU ${this.formatNumber(cpu.value.value)}${cpu.value.unit ? ` ${cpu.value.unit}` : ''}`);
-      }
-      if (memory.status === 'fulfilled' && memory.value) {
-        parts.push(
-          `Memória ${this.formatNumber(memory.value.value)}${memory.value.unit ? ` ${memory.value.unit}` : ''}`,
-        );
-      }
-      if (bandwidth.status === 'fulfilled' && bandwidth.value) {
-        parts.push(
-          `Rede ${this.formatNumber(bandwidth.value.value)}${bandwidth.value.unit ? ` ${bandwidth.value.unit}` : ''}`,
-        );
-      }
-      if (latestDeploy?.status) {
-        parts.push(`Deploy ${String(latestDeploy.status).toLowerCase()}`);
+      const suspended = service.suspended === 'suspended';
+      if (suspended) {
+        partial = true;
+        notes.push(`${service.name} está suspenso.`);
       }
 
       resources.push({
         id: service.id,
         name: service.name,
-        type: service.type,
-        status: service.suspended === 'suspended' ? 'suspenso' : latestDeploy?.status || 'sem deploy',
-        plan,
+        type: service.type === 'web_service' ? 'Web service' : service.type,
+        status: suspended ? 'suspenso' : deployStatus || 'sem deploy',
+        plan: capitalize(plan) ?? undefined,
         region: details.region,
         url: details.url,
-        detail: parts.join(' • '),
+        detail: [
+          deploy ? `Deploy ${formatDate(deploy.finishedAt ?? deploy.createdAt) ?? ''}`.trim() : null,
+          deploy?.commit?.id ? `commit ${String(deploy.commit.id).slice(0, 7)}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      });
+      if (service.dashboardUrl) links.push({ label: `Abrir ${service.name}`, url: service.dashboardUrl });
+    }
+
+    const keyValueData = await Promise.all(
+      keyValues.map(async (keyValue) => {
+        const [memory, memoryLimit] = await Promise.allSettled([
+          metric('memory', keyValue.id, recentStart, 300),
+          metric('memory-limit', keyValue.id, recentStart, 300),
+        ]);
+        return { keyValue, memory, memoryLimit };
+      }),
+    );
+
+    for (const { keyValue, memory, memoryLimit } of keyValueData) {
+      if (memory.status === 'rejected' || memoryLimit.status === 'rejected') metricsFailed = true;
+      metrics.push(
+        buildMetric(
+          `memory_${keyValue.id}`,
+          `Key Value (${keyValue.name})`,
+          memory.status === 'fulfilled' ? renderLatest(memory.value) : null,
+          memoryLimit.status === 'fulfilled' ? renderLatest(memoryLimit.value) : null,
+          'bytes',
+          {
+            detail: `Memória usada · política ${keyValue.options?.maxmemoryPolicy ?? '—'}`,
+            warnAt: 80,
+            criticalAt: 90,
+          },
+        ),
+      );
+      if (keyValue.status && keyValue.status !== 'available') partial = true;
+      resources.push({
+        id: keyValue.id,
+        name: keyValue.name,
+        type: `Key Value ${keyValue.version ?? ''}`.trim(),
+        status: keyValue.status ?? undefined,
+        plan: capitalize(keyValue.plan) ?? undefined,
+        region: keyValue.region,
       });
     }
 
-    if (metricsFailed) {
-      notes.push('Algumas métricas do Render não puderam ser lidas agora.');
-    }
-    if (estimated) {
-      notes.push(
-        'As horas de instância são uma estimativa a partir do instance-count; o medidor oficial fica no dashboard.',
+    if (hasFreeWeb) {
+      metrics.push(
+        buildMetric('instance_hours', 'Horas de instância (mês)', freeWebHours, RENDER_FREE_INSTANCE_HOURS, 'hours', {
+          detail: 'Estimativa: horas com o serviço Free ligado no mês',
+        }),
       );
     }
-    notes.push('A API pública do Render não expõe o consumo mensal de billing (bandwidth e build minutes).');
+    metrics.push(
+      buildMetric('bandwidth', 'Banda de saída (mês)', bandwidthBytes, null, 'bytes', {
+        detail: 'Soma da métrica de bandwidth do mês',
+      }),
+    );
+
+    if (metricsFailed) {
+      partial = true;
+      notes.push('Algumas métricas do Render não puderam ser lidas agora.');
+    }
+    if (hasFreeWeb) {
+      notes.push(
+        'Free: 750 horas de instância por workspace/mês e o serviço dorme após 15 min sem tráfego. As horas são estimadas pela série de CPU.',
+      );
+    }
+    if (historyStart > monthStart) notes.push('A API de métricas cobre só os últimos 30 dias.');
+    notes.push('O consumo oficial de billing (banda e build minutes) fica no dashboard do Render.');
+
+    const allFree = [
+      ...services.map((service) => service.serviceDetails?.plan),
+      ...keyValues.map((kv) => kv.plan),
+    ].every((plan) => String(plan ?? '').toLowerCase() === 'free');
 
     return {
       id: 'render',
       name: 'Render',
-      description: 'Hospedagem da API',
+      description: SETUP.render.description,
       configured: true,
       plan: allFree ? 'Free' : 'Pago',
-      status: metricsFailed ? 'partial' : 'ok',
-      updatedAt: new Date().toISOString(),
-      metrics: [
-        this.metric('services', 'Serviços', services.length, null, 'count', 'Serviços monitorados'),
-        this.metric(
-          'instance_hours',
-          'Horas de instância',
-          estimated ? instanceHours : null,
-          allFree ? 750 : null,
-          'hours',
-          'Estimativa do mês corrente',
-        ),
-      ],
+      status: partial || worstStatus(metrics) !== 'ok' ? 'partial' : 'ok',
+      updatedAt: this.isoNow(),
+      metrics,
       resources,
       notes,
-      links: [
-        { label: 'Abrir Render', url: 'https://dashboard.render.com/' },
-        ...(ownerName ? [{ label: 'Workspace', url: 'https://dashboard.render.com/' }] : []),
-      ],
+      links: links.length ? links : [{ label: 'Abrir Render', url: 'https://dashboard.render.com/' }],
     };
   }
 
+  // -------------------------------------------------------------------------------------------- Vercel
+
   private async getVercel(): Promise<ProviderView> {
-    const token = this.env('VERCEL_TOKEN');
+    const missing = this.missingEnv(['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID']);
+    if (missing.length) return this.missingView('vercel', 'Vercel', missing);
+
     const teamId = this.env('VERCEL_TEAM_ID');
     const projectId = this.env('VERCEL_PROJECT_ID');
-    const configured = Boolean(token && teamId && projectId);
+    const client = this.http(VERCEL_API_URL, { Authorization: `Bearer ${this.env('VERCEL_TOKEN')}` });
+    const now = this.now();
 
-    if (!configured) {
-      return this.missingView(
-        'vercel',
-        'Vercel',
-        'Hospedagem do painel',
-        ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
-        'No plano Hobby a Vercel não expõe o consumo via API; o painel mostra plano, deploys e builds recentes.',
-      );
-    }
-
-    const client = this.client(VERCEL_API_URL, { Authorization: `Bearer ${token}` });
-    const [teamResponse, projectResponse, deploymentsResponse] = await Promise.all([
-      client.get(`/v2/teams/${teamId}`),
-      client.get(`/v9/projects/${projectId}`, { params: { teamId } }),
-      client.get('/v6/deployments', { params: { projectId, teamId, limit: 100 } }),
+    const [teamResult, projectResult, deploymentsResult] = await Promise.allSettled([
+      client.get(`/v2/teams/${encodeURIComponent(teamId)}`),
+      client.get(`/v9/projects/${encodeURIComponent(projectId)}`, { params: { teamId } }),
+      client.get('/v6/deployments', { params: { projectId, teamId, limit: 100, since: now - 30 * DAY_MS } }),
     ]);
 
-    const team = teamResponse.data;
-    const project = projectResponse.data;
-    const deployments = deploymentsResponse.data?.deployments ?? [];
+    if (deploymentsResult.status === 'rejected') throw deploymentsResult.reason;
+
+    const notes: string[] = [];
+    let partial = false;
+    const team = teamResult.status === 'fulfilled' ? teamResult.value.data : null;
+    const project = projectResult.status === 'fulfilled' ? projectResult.value.data : null;
+    if (!team || !project) {
+      partial = true;
+      notes.push('Não foi possível ler todos os dados do team/projeto com este token.');
+    }
+
+    const deployments: any[] = [...(deploymentsResult.value.data?.deployments ?? [])].sort(
+      (a, b) => Number(b.created ?? b.createdAt) - Number(a.created ?? a.createdAt),
+    );
+    const createdAt = (deployment: any) => Number(deployment.created ?? deployment.createdAt);
+    const state = (deployment: any) => String(deployment.readyState ?? deployment.state ?? '').toUpperCase();
+    const buildMinutes = (deployment: any) =>
+      deployment.ready && deployment.buildingAt
+        ? Math.max(0, Number(deployment.ready) - Number(deployment.buildingAt)) / 60000
+        : null;
+
+    const recent = deployments.filter((deployment) => createdAt(deployment) >= now - 30 * DAY_MS);
+    const lastDay = deployments.filter((deployment) => createdAt(deployment) >= now - DAY_MS);
+    const failed = recent.filter((deployment) => state(deployment) === 'ERROR');
+    const totalBuild = recent.reduce((total, deployment) => total + (buildMinutes(deployment) ?? 0), 0);
     const latest = deployments[0];
-    const plan = team?.billing?.plan ?? null;
-    const since = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const recent = deployments.filter((deployment) => Number(deployment.created) >= since);
-    const buildMilliseconds = recent.reduce((total, deployment) => {
-      if (!deployment.ready || !deployment.buildingAt) return total;
-      return total + Math.max(0, Number(deployment.ready) - Number(deployment.buildingAt));
-    }, 0);
-    const lastBuildMilliseconds =
-      latest?.ready && latest?.buildingAt ? Math.max(0, Number(latest.ready) - Number(latest.buildingAt)) : null;
-    const domains = (project?.alias ?? []).map((alias) => alias.domain).filter(Boolean);
+    const production = deployments.find((deployment) => deployment.target === 'production') ?? latest;
+    const lastBuild = latest ? buildMinutes(latest) : null;
+
+    const rawPlan = team?.billing?.plan ?? null;
+    const plan = capitalize(rawPlan);
+    const isHobby = String(rawPlan ?? '').toLowerCase() === 'hobby';
+    const domains: string[] = (
+      project?.targets?.production?.alias ??
+      (project?.alias ?? []).map((alias: any) => (typeof alias === 'string' ? alias : alias?.domain))
+    ).filter(Boolean);
+
+    if (production && state(production) === 'ERROR') {
+      partial = true;
+      notes.push('O último deploy de produção falhou.');
+    }
+
+    const metrics = [
+      buildMetric(
+        'deployments_24h',
+        'Deploys (24h)',
+        lastDay.length,
+        isHobby ? VERCEL_HOBBY_DEPLOYS_PER_DAY : null,
+        'count',
+        {
+          detail: isHobby ? 'Hobby permite 100 deploys por dia' : 'Deploys criados nas últimas 24 horas',
+        },
+      ),
+      buildMetric('deployments', 'Deploys (30 dias)', recent.length, null, 'count', {
+        detail: failed.length ? `${failed.length} com erro` : 'Nenhum com erro',
+        status: failed.length ? 'warning' : 'ok',
+      }),
+      buildMetric('build_minutes', 'Builds (30 dias)', totalBuild, null, 'minutes', {
+        detail: 'Soma do tempo de build dos deploys; não é o medidor oficial',
+      }),
+      buildMetric('last_build', 'Último build', lastBuild, VERCEL_BUILD_MINUTES_PER_DEPLOY, 'minutes', {
+        detail: latest ? `Limite de 45 min por deploy · ${state(latest).toLowerCase()}` : 'Sem deploys recentes',
+      }),
+    ];
+
+    notes.push('A API de uso (billing) da Vercel não está disponível no Hobby; o consumo oficial fica no dashboard.');
+    if (deploymentsResult.value.data?.pagination?.next && recent.length >= 100) {
+      notes.push('Mais de 100 deploys no período: os totais consideram só os 100 mais recentes.');
+    }
+
+    const slug = team?.slug ?? teamId;
+    const projectName = project?.name ?? production?.name ?? '';
+    const productionUrl = domains[0]
+      ? `https://${domains[0]}`
+      : production?.url
+        ? `https://${production.url}`
+        : undefined;
 
     return {
       id: 'vercel',
       name: 'Vercel',
-      description: 'Hospedagem do painel',
+      description: SETUP.vercel.description,
       configured: true,
       plan,
-      status: 'ok',
-      updatedAt: new Date().toISOString(),
-      metrics: [
-        this.metric('deployments', 'Deploys (30 dias)', recent.length, null, 'count', 'Deploys retornados pela API'),
-        this.metric(
-          'build_minutes',
-          'Builds (30 dias)',
-          buildMilliseconds / 60000,
-          null,
-          'minutes',
-          'Soma dos builds recentes; não é o medidor oficial',
-        ),
-        this.metric(
-          'last_build',
-          'Último build',
-          lastBuildMilliseconds === null ? null : lastBuildMilliseconds / 60000,
-          null,
-          'minutes',
-          latest?.url ? `Deploy: ${latest.readyState || latest.state}` : undefined,
-        ),
-      ],
+      status: partial ? 'partial' : 'ok',
+      updatedAt: this.isoNow(),
+      metrics,
       resources: [
         {
           id: project?.id ?? projectId,
-          name: project?.name ?? 'Projeto Vercel',
+          name: projectName || 'Projeto Vercel',
           type: 'Projeto',
-          status: latest?.readyState || latest?.state || 'sem deploy',
-          plan,
-          region: undefined,
-          url: latest?.url ? `https://${latest.url}` : undefined,
-          detail: domains.length ? `Domínios: ${domains.join(', ')}` : undefined,
+          status: production ? state(production).toLowerCase() : 'sem deploy',
+          plan: plan ?? undefined,
+          url: productionUrl,
+          detail: [
+            production ? `Produção ${formatDate(createdAt(production)) ?? ''}`.trim() : null,
+            production?.meta?.githubCommitSha ? `commit ${String(production.meta.githubCommitSha).slice(0, 7)}` : null,
+            domains.length ? `Domínios: ${domains.join(', ')}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
         },
       ],
-      notes: [
-        'A API de uso da Vercel exige plano Pro/Enterprise; no Hobby, o consumo oficial fica no dashboard.',
-        'Os builds abaixo são calculados a partir do histórico de deploys retornado pela API.',
-      ],
+      notes,
       links: [
-        {
-          label: 'Abrir projeto',
-          url: `https://vercel.com/${team?.slug ?? teamId}/${project?.name ?? ''}`,
-        },
-        {
-          label: 'Ver usage',
-          url: `https://vercel.com/${team?.slug ?? teamId}/${project?.name ?? ''}/usage`,
-        },
+        { label: 'Abrir projeto', url: `https://vercel.com/${slug}/${projectName}` },
+        { label: 'Ver usage', url: `https://vercel.com/${slug}/~/usage` },
       ],
     };
   }
 
+  // -------------------------------------------------------------------------------------------- GitHub
+
   private async getGithub(): Promise<ProviderView> {
-    const token = this.env('GITHUB_TOKEN');
+    const missing = this.missingEnv(['GITHUB_TOKEN']);
+    if (missing.length) return this.missingView('github', 'GitHub', missing);
+
     const owner = this.env('GITHUB_OWNER') ?? 'devconnecting1';
     const repo = this.env('GITHUB_REPO') ?? 'evolution-api-render';
-    const configured = Boolean(token);
-
-    if (!configured) {
-      return this.missingView(
-        'github',
-        'GitHub',
-        'CI/CD e Actions',
-        ['GITHUB_TOKEN'],
-        'Opcional. Use um token com permissão de billing para ver os minutos de Actions.',
-      );
-    }
-
-    const client = this.client(GITHUB_API_URL, {
-      Authorization: `Bearer ${token}`,
+    const fullName = `${owner}/${repo}`;
+    const client = this.http(GITHUB_API_URL, {
+      Authorization: `Bearer ${this.env('GITHUB_TOKEN')}`,
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
     });
+    const now = new Date(this.now());
 
+    const [repoResult, runsResult] = await Promise.allSettled([
+      client.get(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`),
+      client.get(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/actions/runs`, {
+        params: { per_page: 100, created: `>=${new Date(now.getTime() - 30 * DAY_MS).toISOString().slice(0, 10)}` },
+      }),
+    ]);
+
+    // An invalid token (or GitHub unreachable) fails everything: show an error instead of a half-empty card
+    if (
+      repoResult.status === 'rejected' &&
+      runsResult.status === 'rejected' &&
+      [401, undefined].includes(httpStatus(repoResult.reason))
+    ) {
+      throw repoResult.reason;
+    }
+
+    const notes: string[] = [];
+    let partial = false;
+    const repository = repoResult.status === 'fulfilled' ? repoResult.value.data : null;
+    const isPrivate = repository ? Boolean(repository.private) : true;
+    const ownerIsOrg = repository?.owner?.type === 'Organization';
+
+    // The product-specific /settings/billing/actions endpoints were closed down in 2025; the usage report of
+    // the enhanced billing platform replaces them (Actions minutes = sum of `quantity` of the minute SKUs)
+    let minutes: number | null = null;
+    let cost: number | null = null;
     try {
-      const billingResponse = await client.get(`/users/${owner}/settings/billing/actions`);
-      const billing = billingResponse.data ?? {};
-      const used = Number(billing.total_minutes_used ?? 0);
-      const limit = Number(billing.included_minutes ?? 2000);
+      const response = await client.get(
+        `/${ownerIsOrg ? 'organizations' : 'users'}/${encodeURIComponent(owner)}/settings/billing/usage`,
+        { params: { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 } },
+      );
+      const items: any[] = response.data?.usageItems ?? [];
+      const actions = items.filter(
+        (item) =>
+          String(item?.product ?? '').toLowerCase() === 'actions' &&
+          String(item?.unitType ?? '')
+            .toLowerCase()
+            .startsWith('minute'),
+      );
+      minutes = actions.reduce((total, item) => total + (finite(item.quantity ?? item.netQuantity) ?? 0), 0);
+      cost = actions.reduce((total, item) => total + (finite(item.netAmount) ?? 0), 0);
+    } catch (error) {
+      partial = true;
+      const status = httpStatus(error);
+      if (status === 401 || status === 403) {
+        notes.push(
+          'O token não pode ler o billing: adicione a permissão de conta "Plan" (read) ao fine-grained token.',
+        );
+      } else if (status === 404 || status === 410) {
+        notes.push('O relatório de uso de billing não está disponível para esta conta (HTTP ' + status + ').');
+      } else {
+        notes.push('Não foi possível ler os minutos de Actions agora.');
+      }
+    }
 
-      return {
-        id: 'github',
-        name: 'GitHub',
-        description: 'CI/CD e Actions',
-        configured: true,
-        plan: 'Free',
-        status: 'ok',
-        updatedAt: new Date().toISOString(),
-        metrics: [this.metric('actions_minutes', 'Minutos de Actions', used, limit, 'minutes', 'Uso do mês corrente')],
-        resources: [
+    const runs: any[] = runsResult.status === 'fulfilled' ? (runsResult.value.data?.workflow_runs ?? []) : [];
+    if (runsResult.status === 'rejected') {
+      partial = true;
+      notes.push(
+        [401, 403, 404].includes(httpStatus(runsResult.reason))
+          ? 'O token não pode listar as execuções do Actions (permissão Actions: read).'
+          : 'Não foi possível listar as execuções do Actions agora.',
+      );
+    }
+    const completed = runs.filter((run) => run.status === 'completed');
+    const failures = completed.filter((run) => ['failure', 'timed_out', 'startup_failure'].includes(run.conclusion));
+    const latest = runs[0];
+    const defaultBranch = repository?.default_branch ?? 'main';
+    const latestOnDefault = completed.find((run) => run.head_branch === defaultBranch);
+    if (latestOnDefault && latestOnDefault.conclusion === 'failure') {
+      partial = true;
+      notes.push(`A última execução em ${defaultBranch} (${latestOnDefault.name}) falhou.`);
+    }
+
+    const metrics: Metric[] = [];
+    if (minutes !== null) {
+      metrics.push(
+        buildMetric(
+          'actions_minutes',
+          'Minutos de Actions (mês)',
+          minutes,
+          isPrivate ? GITHUB_FREE_ACTIONS_MINUTES : null,
+          // "count" shows "156 de 2.000" (the "minutes" unit would render 2h 36min of 33h 20min)
+          'count',
           {
-            id: `${owner}/${repo}`,
-            name: `${owner}/${repo}`,
-            type: 'Repositório',
-            status: 'privado',
-            detail: billing.total_paid_minutes_used
-              ? `${billing.total_paid_minutes_used} minutos pagos`
-              : 'Sem minutos pagos no período',
+            detail: cost ? `Custo líquido US$ ${formatNumber(cost, 2)}` : 'Sem custo no mês',
           },
-        ],
-        notes: ['O repositório privado inclui 2.000 minutos de Actions por mês.'],
-        links: [
-          { label: 'Ver Actions', url: `https://github.com/${owner}/${repo}/actions` },
-          { label: 'Billing', url: 'https://github.com/settings/billing/actions' },
-        ],
-      };
-    } catch {
-      return {
-        id: 'github',
-        name: 'GitHub',
-        description: 'CI/CD e Actions',
-        configured: true,
-        plan: 'Free',
-        status: 'partial',
-        updatedAt: new Date().toISOString(),
-        metrics: [],
-        resources: [
-          {
-            id: `${owner}/${repo}`,
-            name: `${owner}/${repo}`,
-            type: 'Repositório',
-            status: 'privado',
-          },
-        ],
-        notes: [
-          'O token atual não tem permissão para ler o billing de Actions.',
-          'Adicione o escopo manage_billing:read para ver os minutos consumidos.',
-        ],
-        links: [{ label: 'Ver Actions', url: `https://github.com/${owner}/${repo}/actions` }],
-      };
+        ),
+      );
     }
-  }
-
-  private async renderLatestMetric(
-    client: AxiosInstance,
-    metric: 'cpu' | 'memory' | 'bandwidth',
-    resourceId: string,
-    now: Date,
-  ): Promise<{ value: number; unit: string } | null> {
-    const start = new Date(now.getTime() - 30 * 60 * 1000);
-    const data = await client.get(`/metrics/${metric}`, {
-      params: {
-        resource: resourceId,
-        startTime: start.toISOString(),
-        endTime: now.toISOString(),
-        resolutionSeconds: 300,
-      },
-    });
-
-    const series: RenderSeries[] = Array.isArray(data.data) ? data.data : [];
-    const values = series.flatMap((item) => item?.values ?? []);
-    const last = values[values.length - 1];
-
-    if (!last || typeof last.value !== 'number') {
-      return null;
+    if (runsResult.status === 'fulfilled') {
+      metrics.push(
+        buildMetric('runs', 'Execuções (30 dias)', runsResult.value.data?.total_count ?? runs.length, null, 'count', {
+          detail: failures.length
+            ? `${failures.length} falha(s) entre as últimas ${completed.length}`
+            : 'Sem falhas recentes',
+          status: failures.length ? 'warning' : 'ok',
+        }),
+      );
     }
 
-    return { value: last.value, unit: series[0]?.unit ?? '' };
-  }
-
-  private async renderInstanceHours(
-    client: AxiosInstance,
-    resourceId: string,
-    monthStart: Date,
-    now: Date,
-  ): Promise<number | null> {
-    const data = await client.get('/metrics/instance-count', {
-      params: {
-        resource: resourceId,
-        startTime: monthStart.toISOString(),
-        endTime: now.toISOString(),
-        resolutionSeconds: 3600,
-      },
-    });
-
-    const series: RenderSeries[] = Array.isArray(data.data) ? data.data : [];
-    const values = series.flatMap((item) => item?.values ?? []);
-
-    if (values.length === 0) {
-      return null;
-    }
-
-    return values.reduce((total, item) => total + (typeof item.value === 'number' ? item.value : 0), 0);
-  }
-
-  private metric(
-    id: string,
-    label: string,
-    used: number | null,
-    limit: number | null,
-    unit: MetricUnit,
-    detail?: string,
-  ): Metric {
-    const safeUsed = typeof used === 'number' && Number.isFinite(used) ? used : null;
-    const safeLimit = typeof limit === 'number' && Number.isFinite(limit) && limit > 0 ? limit : null;
-    const percent = safeUsed !== null && safeLimit !== null ? (safeUsed / safeLimit) * 100 : null;
-
-    let status: MetricStatus = 'unknown';
-    if (safeUsed !== null) {
-      status = 'ok';
-      if (percent !== null && percent >= 95) status = 'critical';
-      else if (percent !== null && percent >= 75) status = 'warning';
-    }
+    if (isPrivate) notes.push('GitHub Free inclui 2.000 minutos de Actions por mês em repositórios privados.');
+    else notes.push('Actions em repositórios públicos não consome minutos.');
 
     return {
-      id,
-      label,
-      used: safeUsed,
-      limit: safeLimit,
-      unit,
-      percent: percent === null ? null : this.round(percent, 2),
-      status,
-      detail,
-    };
-  }
-
-  private client(baseURL: string, headers: Record<string, string>): AxiosInstance {
-    return axios.create({
-      baseURL,
-      headers,
-      timeout: 15000,
-    });
-  }
-
-  private missingView(id: string, name: string, description: string, envNames: string[], note: string): ProviderView {
-    return {
-      id,
-      name,
-      description,
-      configured: false,
+      id: 'github',
+      name: 'GitHub',
+      description: SETUP.github.description,
+      configured: true,
       plan: null,
-      status: 'missing',
-      updatedAt: new Date().toISOString(),
-      metrics: [],
-      resources: [],
-      notes: [note, `Variáveis necessárias: ${envNames.join(', ')}.`],
-      links: [],
+      status: partial ? 'partial' : 'ok',
+      updatedAt: this.isoNow(),
+      metrics,
+      resources: [
+        {
+          id: fullName,
+          name: fullName,
+          type: 'Repositório',
+          status: repository ? (isPrivate ? 'privado' : 'público') : undefined,
+          url: `https://github.com/${fullName}`,
+          detail: latest
+            ? `Última execução: ${latest.name} · ${latest.conclusion ?? latest.status} · ${formatDate(latest.created_at) ?? ''}`.trim()
+            : undefined,
+        },
+      ],
+      notes,
+      links: [
+        { label: 'Ver Actions', url: `https://github.com/${fullName}/actions` },
+        {
+          label: 'Billing',
+          url: ownerIsOrg
+            ? `https://github.com/organizations/${owner}/settings/billing`
+            : 'https://github.com/settings/billing',
+        },
+      ],
     };
   }
 
-  private errorView(id: string, name: string, description: string, error: unknown): ProviderView {
+  // ------------------------------------------------------------------------------------------- helpers
+
+  private http(baseURL: string, headers: Record<string, string>): HttpClient {
+    return (this.options.http ?? defaultHttp)(baseURL, headers);
+  }
+
+  private baseView(id: string, name: string, description: string): ProviderView {
     return {
       id,
       name,
       description,
       configured: true,
       plan: null,
-      status: 'error',
-      updatedAt: new Date().toISOString(),
+      status: 'ok',
+      updatedAt: this.isoNow(),
       metrics: [],
       resources: [],
       notes: [],
       links: [],
-      error: this.describeError(error),
     };
   }
 
+  private missingView(id: string, name: string, envNames: string[]): ProviderView {
+    const help = SETUP[id];
+    return {
+      ...this.baseView(id, name, help.description),
+      configured: false,
+      status: 'missing',
+      missingEnv: envNames,
+      notes: [help.note, `Variáveis necessárias: ${envNames.join(', ')}.`],
+      links: help.links,
+    };
+  }
+
+  private errorView(id: string, name: string, description: string, message: string): ProviderView {
+    return { ...this.baseView(id, name, description), status: 'error', error: message };
+  }
+
+  /** Short, safe message: never includes headers, URLs or response bodies (tokens stay out of the UI/logs). */
   private describeError(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const code = (error.response?.data as any)?.error?.code;
+    const status = httpStatus(error);
+    if (status === 401 || status === 403) return 'Credencial inválida ou sem permissão.';
+    if (status === 404) return 'Recurso não encontrado: confira os IDs configurados.';
+    if (status === 429) return 'Limite de consultas do provedor atingido.';
+    if (status) return `Falha na API do provedor (HTTP ${status}).`;
+    if (axios.isAxiosError(error)) return 'Sem resposta do provedor (rede indisponível ou tempo esgotado).';
 
-      if (status === 401 || status === 403) return 'Credencial inválida ou sem permissão.';
-      if (status === 429) return 'Limite de consultas do provedor atingido.';
-      if (status) return `Falha na API do provedor (HTTP ${status}${code ? `: ${code}` : ''}).`;
-      return 'O provedor não respondeu dentro do tempo esperado.';
-    }
+    const message = error instanceof Error ? error.message : '';
+    return message && message.length <= 160 && !/bearer|token|key=/i.test(message)
+      ? message
+      : 'Falha ao consultar o provedor.';
+  }
 
-    return error instanceof Error ? error.message : 'Falha ao consultar o provedor.';
+  private missingEnv(names: string[]): string[] {
+    return names.filter((name) => !this.env(name));
   }
 
   private env(name: string): string | undefined {
-    const value = process.env[name]?.trim();
+    const value = (this.options.env ?? process.env)[name]?.trim();
     return value || undefined;
   }
 
-  private formatNumber(value: number): string {
-    return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(value);
+  private now(): number {
+    return (this.options.now ?? Date.now)();
   }
 
-  private round(value: number, digits: number): number {
-    const factor = 10 ** digits;
-    return Math.round(value * factor) / factor;
+  private isoNow(): string {
+    return new Date(this.now()).toISOString();
   }
 }
 
