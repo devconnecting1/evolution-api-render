@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /manager
 Disallow: /observability
+Disallow: /readme
 Disallow: /readmes/
 
 Sitemap: https://whatsaibr.vercel.app/sitemap.xml
