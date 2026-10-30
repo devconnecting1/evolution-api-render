@@ -9,7 +9,8 @@ export class ObservabilityRouter {
 
   constructor() {
     this.router.get('/', authGuard['apikey'], async (req, res) => {
-      const force = req.query?.refresh === '1' || req.query?.refresh === 'true';
+      // `refresh=1` (used by the Manager) and `force=1` both skip the 60s cache
+      const force = ['refresh', 'force'].some((name) => req.query?.[name] === '1' || req.query?.[name] === 'true');
       const overview = await observabilityService.getOverview(force);
 
       res.set('Cache-Control', 'no-store');

@@ -492,7 +492,7 @@ lodash-es/lodash.js:
   function statusLabel(s){return s==='ok'?'Operacional':s==='partial'?'Parcial':s==='missing'?'Não configurado':s==='error'?'Erro':String(s||'—');}
   function statusVariant(s){return s==='ok'?'default':s==='partial'?'warning':s==='missing'?'outline':s==='error'?'destructive':'secondary';}
   function mark(p){return ({neon:'N',render:'R',vercel:'V',github:'G'})[p.id]||String(p.name||'?').slice(0,1).toUpperCase();}
-  function clamp(v){const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(100,n)):null;}
+  function clamp(v){if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(100,n)):null;}function resourceVariant(s){const v=String(s||'').toLowerCase();if(['desconectada','desconectado','sem resposta','suspenso','suspended','error','failed','build_failed','update_failed','pre_deploy_failed','canceled','cancelled','unavailable'].includes(v))return 'destructive';if(['conectando','reconectando','connecting','queued','building','build_in_progress','update_in_progress','created','initializing'].includes(v))return 'warning';return 'secondary';}/*whatsai-patch:observability-ui:v1*/
   function safeUrl(value){if(!value)return null;try{const u=new URL(value,window.location.origin);return u.protocol==='http:'||u.protocol==='https:'?u.href:null;}catch{return null;}}
   function ObsStatus({status}){return i.jsx(vu,{variant:statusVariant(status),children:statusLabel(status)});}
   function ObsMetric({metric:m}){
@@ -503,7 +503,7 @@ lodash-es/lodash.js:
         i.jsx('span',{className:'text-sm font-medium',children:m.label}),
         i.jsx('span',{className:'text-sm tabular-nums',children:metricValue(m.used,m.unit)})
       ]}),
-      m.limit!=null?i.jsxs('div',{className:'text-xs text-muted-foreground',children:['de ',metricValue(m.limit,m.unit),percent!=null?` · ${num(percent,0)}%`:'']}):null,
+      m.limit!=null?i.jsxs('div',{className:'text-xs text-muted-foreground',children:['de ',metricValue(m.limit,m.unit),percent!=null?` · ${num(m.percent,0)}%`:'']}):null,
       percent!=null?i.jsx('div',{className:'h-2 w-full overflow-hidden rounded-full bg-muted',children:i.jsx('div',{className:Ie('h-full rounded-full',bar),style:{width:`${percent}%`}})}):null,
       m.detail?i.jsx('div',{className:'text-xs text-muted-foreground',children:m.detail}):null
     ]});
@@ -515,7 +515,7 @@ lodash-es/lodash.js:
       i.jsxs('div',{className:'space-y-1',children:[
         i.jsxs('div',{className:'flex flex-wrap items-center gap-2',children:[
           i.jsx('span',{className:'text-sm font-medium',children:r.name}),
-          r.status?i.jsx(vu,{variant:'secondary',children:r.status}):null
+          r.status?i.jsx(vu,{variant:resourceVariant(r.status),children:r.status}):null
         ]}),
         meta?i.jsx('div',{className:'text-xs text-muted-foreground',children:meta}):null,
         r.detail?i.jsx('div',{className:'text-xs text-muted-foreground',children:r.detail}):null
@@ -652,7 +652,7 @@ lodash-es/lodash.js:
         i.jsx(RX,{children:`${errors} provedor(es) com erro de consulta. Veja os detalhes nos cards.`})
       ]}):missing?i.jsxs(rI,{variant:'warning',children:[
         i.jsx(sI,{children:'Chaves pendentes'}),
-        i.jsx(RX,{children:[`${missing} provedor(es) sem chave. `,i.jsx('a',{href:'#observability-config',className:'underline underline-offset-4',children:'Configure as variáveis'}),' para liberar os dados.']})
+        i.jsx(RX,{children:[`${missing} provedor(es) sem chave. `,i.jsx('a',{href:'#observability-config',className:'underline underline-offset-4',onClick:e=>{const d=document.getElementById('observability-config');if(d){e.preventDefault();d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}},children:'Configure as variáveis'}),' para liberar os dados.']})
       ]}):null,
       i.jsx('div',{className:'grid gap-6 md:grid-cols-2 lg:grid-cols-3',children:providers.map(p=>i.jsx(ObsProviderCard,{provider:p},p.id))}),
       i.jsxs('details',{id:'observability-config',className:'rounded-lg border bg-card text-card-foreground shadow-sm',children:[
@@ -663,7 +663,7 @@ lodash-es/lodash.js:
             i.jsx('p',{children:'• Neon: NEON_API_KEY, NEON_PROJECT_ID e, opcionalmente, NEON_ORG_ID.'}),
             i.jsx('p',{children:'• Render: RENDER_API_KEY e, opcionalmente, RENDER_OWNER_ID ou RENDER_SERVICE_IDS.'}),
             i.jsx('p',{children:'• Vercel: VERCEL_TOKEN, VERCEL_TEAM_ID e VERCEL_PROJECT_ID.'}),
-            i.jsx('p',{children:'• GitHub: GITHUB_TOKEN com permissão de billing (opcional).'})
+            i.jsx('p',{children:'• GitHub (opcional): GITHUB_TOKEN (fine-grained, Actions: read e Plan: read) e, para outro repositório, GITHUB_OWNER e GITHUB_REPO.'})
           ]}),
           i.jsx('p',{children:'Depois de salvar as variáveis no Render, use Atualizar ou aguarde o próximo ciclo de 60 segundos.'})
         ]})

@@ -4,7 +4,13 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import { HttpFactory, ObservabilityService, renderActiveHours } from '@api/services/observability.service';
-import { readCgroupCpuLimit, readCgroupMemory, SystemDeps, SystemProbe } from '@api/services/observability.system';
+import {
+  cuidFloor,
+  readCgroupCpuLimit,
+  readCgroupMemory,
+  SystemDeps,
+  SystemProbe,
+} from '@api/services/observability.system';
 
 import * as fx from '../fixtures/observability';
 
@@ -201,7 +207,7 @@ describe('observability: Sistema provider', () => {
 
     assert.deepEqual(
       overview.providers.map((item) => item.id),
-      ['system', 'neon', 'render', 'vercel', 'github'],
+      ['system', 'whatsapp', 'neon', 'render', 'vercel', 'github'],
     );
     const system = overview.providers[0];
     assert.equal(system.name, 'Sistema');
@@ -424,7 +430,7 @@ describe('observability: overview without keys, cache and isolation', () => {
     const github = routesWithHang.providers.find((item) => item.id === 'github');
     assert.equal(github.status, 'error');
     assert.equal(github.error, 'O provedor não respondeu dentro do tempo esperado.');
-    assert.equal(routesWithHang.providers.find((item) => item.id === 'neon').status, 'ok');
+    assert.notEqual(routesWithHang.providers.find((item) => item.id === 'neon').status, 'error');
   });
 
   test('errors are short and never carry the token', async () => {
@@ -448,26 +454,29 @@ describe('observability: overview without keys, cache and isolation', () => {
 // ----------------------------------------------------------------------------------------- Neon
 
 describe('observability: Neon (real response shape)', () => {
-  test('free_v3 project: storage of the primary branch, CU-hours, egress and branches against the Free limits', async () => {
+  test('free_v3 project: storage summed across branches, CU-hours, egress and branches against the Free limits', async () => {
     const calls: Call[] = [];
     const view = await provider('neon', fullEnv, neonRoutes, calls);
 
-    assert.equal(view.status, 'ok');
+    // partial: at the pace of the fixture a full month would exceed the 100 CU-hours (see the projection test)
+    assert.equal(view.status, 'partial');
     assert.equal(view.plan, 'Free');
     // the plan comes with the project: the organization endpoint (not readable by project-scoped keys) is skipped
     assert.ok(!calls.some((call) => call.url.includes('/organizations/')));
     assert.equal(calls[0].headers.Authorization, 'Bearer neon-test-not-real');
 
     const storage = metric(view, 'storage');
-    assert.deepEqual([storage.used, storage.limit], [40484864, 1024 * MB]);
-    assert.match(storage.detail, /Branch production · 3 branches somam 104,7 MB/);
+    // Neon documents the Free cap as the logical_size summed across branches; the limit comes from the project
+    assert.deepEqual([storage.used, storage.limit], [40484864 + 2 * 34660352, 1024 * MB]);
+    assert.match(storage.detail, /3 branch\(es\) somadas · production 38,6 MB/);
 
     const compute = metric(view, 'compute');
     assert.equal(compute.unit, 'cu_hours');
     assert.equal(Math.round(compute.used * 100) / 100, 33.68);
     assert.equal(compute.limit, 100);
     assert.equal(metric(view, 'egress').used, 178364830);
-    assert.equal(metric(view, 'egress').limit, 5 * 1024 * MB);
+    // Neon bills in decimal GB
+    assert.equal(metric(view, 'egress').limit, 5e9);
     assert.equal(Math.round(metric(view, 'active_time').used), 132);
     assert.deepEqual([metric(view, 'branches').used, metric(view, 'branches').limit], [3, 10]);
 
@@ -702,5 +711,267 @@ describe('observability: GitHub (Actions runs + billing usage report)', () => {
     });
     assert.equal(unreachable.status, 'error');
     assert.equal(unreachable.error, 'Sem resposta do provedor (rede indisponível ou tempo esgotado).');
+  });
+});
+
+// ------------------------------------------------------------------------ fixes of the verification
+
+describe('observability: degraded responses, forced refresh and alerts', () => {
+  test('a non-JSON body (HTML of a proxy, empty) is an error, never "zero deploys" or "public repository"', async () => {
+    for (const body of ['<html>Bad gateway</html>', '', null]) {
+      const overview = await service(fullEnv, {
+        ...neonRoutes,
+        'api.vercel.com/v6/deployments': body,
+        'api.github.com/repos/devconnecting1/evolution-api-render': body,
+        'api.github.com/repos/devconnecting1/evolution-api-render/actions/runs': body,
+      }).getOverview();
+      const byId = Object.fromEntries(overview.providers.map((item) => [item.id, item]));
+      assert.equal(byId.vercel.status, 'error');
+      assert.equal(byId.vercel.error, 'Resposta inválida do provedor (não é JSON).');
+      assert.equal(byId.github.status, 'error');
+      assert.notEqual(byId.neon.status, 'error');
+    }
+  });
+
+  test('GitHub: a token without access to the repository (403 on every read) is an error card', async () => {
+    const view = await provider('github', fullEnv, {
+      'api.github.com/repos/devconnecting1/evolution-api-render': httpError(403),
+      'api.github.com/repos/devconnecting1/evolution-api-render/actions/runs': httpError(403),
+    });
+    assert.equal(view.status, 'error');
+    assert.equal(view.error, 'Credencial inválida ou sem permissão.');
+    // the error card says what to check and where to create a new key
+    assert.match(view.notes[0], /^Confira GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO no Environment/);
+    assert.deepEqual(
+      view.links.map((link) => link.label),
+      ['Criar token', 'Como criar'],
+    );
+
+    const down = await provider('neon', fullEnv, {
+      'console.neon.tech/api/v2/projects/spring-boat-14626479': httpError(503),
+    });
+    assert.equal(down.error, 'Falha na API do provedor (HTTP 503).');
+    assert.match(down.notes[0], /instável/);
+  });
+
+  test('GitHub organization billing without permission asks for "Administration", not "Plan"', async () => {
+    const view = await provider(
+      'github',
+      { GITHUB_TOKEN: 'x', GITHUB_OWNER: 'acme', GITHUB_REPO: 'api' },
+      {
+        'api.github.com/repos/acme/api': { ...fx.githubRepo, owner: { login: 'acme', type: 'Organization' } },
+        'api.github.com/repos/acme/api/actions/runs': fx.githubRuns,
+        'api.github.com/organizations/acme/settings/billing/usage': httpError(403),
+      },
+    );
+    assert.ok(view.notes.some((note) => /Administration/.test(note)));
+  });
+
+  test('a forced refresh right after a build reuses it (5s); later it reads again', async () => {
+    const calls: Call[] = [];
+    let now = NOW;
+    const svc = new ObservabilityService({
+      env: { GITHUB_TOKEN: 'x' },
+      http: fakeHttp(githubRoutes, calls),
+      now: () => now,
+      system: null,
+    });
+    await svc.getOverview(true);
+    const count = calls.length;
+    now += 2_000;
+    assert.equal((await svc.getOverview(true)).cached, true);
+    assert.equal(calls.length, count);
+    now += 4_000;
+    assert.equal((await svc.getOverview(true)).cached, false);
+    assert.equal(calls.length, count * 2);
+  });
+
+  test('metrics at 80% or more of a quota are listed in alerts and summarized on the card', async () => {
+    const overview = await service(fullEnv, { ...neonRoutes }).getOverview();
+    const neon = overview.providers.find((item) => item.id === 'neon');
+    assert.deepEqual(
+      overview.alerts.map((alert) => [alert.provider, alert.metric, alert.status]),
+      [['neon', 'compute_projection', 'critical']],
+    );
+    assert.match(overview.alerts[0].message, /^Neon: Compute projetado \(mês\) em 137% do limite\.$/);
+    assert.match(neon.notes[0], /^Atenção: Compute projetado \(mês\) em 137% do limite\.$/);
+  });
+
+  test('connected instances (higher is better) never become an alert', async () => {
+    const { deps } = systemDeps();
+    const overview = await new ObservabilityService({
+      env: {},
+      http: fakeHttp({}),
+      now: () => NOW,
+      system: new SystemProbe(deps),
+    }).getOverview();
+    const system = overview.providers.find((item) => item.id === 'system');
+    assert.equal(metric(system, 'instances').percent, 100);
+    assert.equal(metric(system, 'instances').higherIsBetter, true);
+    assert.deepEqual(overview.alerts, []);
+  });
+});
+
+describe('observability: Neon CU-hour projection', () => {
+  const withPeriod = (computeSeconds: number, start: string, end: string) => {
+    const project = structuredClone(fx.neonProject);
+    Object.assign(project.project, {
+      compute_time_seconds: computeSeconds,
+      consumption_period_start: start,
+      consumption_period_end: end,
+    });
+    return { ...neonRoutes, 'console.neon.tech/api/v2/projects/spring-boat-14626479': project };
+  };
+
+  test('a first, shorter period is projected to a full Neon month (744 h) and warns when the compute stops', async () => {
+    const view = await provider('neon', fullEnv, neonRoutes);
+    const projection = metric(view, 'compute_projection');
+    // 33.68 CU-h in 183.3 h since 22/10 21:23 = 4.41 CU-h/day -> 136.7 CU-h in 744 h
+    assert.equal(Math.round(projection.used), 137);
+    assert.equal(projection.limit, 100);
+    assert.equal(projection.status, 'critical');
+    assert.match(projection.detail, /Ritmo de 4,4 CU-h\/dia · estimativa para um mês completo/);
+    assert.ok(view.notes.some((note) => /acabariam por volta do dia 23 .*suspenso/.test(note)));
+  });
+
+  test('a full period at a safe pace has no warning; at a fast pace it says the date the limit is reached', async () => {
+    // 10 days of 31 at 1 CU-h/day
+    const safe = await provider('neon', fullEnv, withPeriod(10 * 3600, '2026-10-20T12:40:00Z', '2026-11-20T12:40:00Z'));
+    assert.equal(Math.round(metric(safe, 'compute_projection').used), 31);
+    assert.equal(metric(safe, 'compute_projection').status, 'ok');
+    assert.ok(!safe.notes.some((note) => /No ritmo atual/.test(note)));
+    assert.equal(safe.status, 'ok');
+
+    // 50 CU-h in the first 10 days -> 100 CU-h on day 20 (09/11 12:40 UTC = 09:40 in São Paulo)
+    const fast = await provider('neon', fullEnv, withPeriod(50 * 3600, '2026-10-20T12:40:00Z', '2026-11-20T12:40:00Z'));
+    assert.equal(Math.round(metric(fast, 'compute_projection').used), 155);
+    assert.ok(
+      fast.notes.some((note) => /acabam por volta de 09\/11, 09:40/.test(note)),
+      fast.notes.join(' | '),
+    );
+  });
+
+  test('no projection without a consumption period or in its first hours', async () => {
+    const young = await provider('neon', fullEnv, withPeriod(3600, '2026-10-30T10:40:00Z', '2026-11-30T00:00:00Z'));
+    assert.equal(metric(young, 'compute_projection'), undefined);
+    const unknown = await provider('neon', fullEnv, withPeriod(3600, '', ''));
+    assert.equal(metric(unknown, 'compute_projection'), undefined);
+  });
+});
+
+describe('observability: cgroup of a nested process and the 24h message count', () => {
+  test('without a cgroup namespace the limits are read from the process cgroup (and its ancestors)', () => {
+    const read = (files: Record<string, string>) => (path: string) => files[path] ?? null;
+    // cgroup v1 with the controllers nested (the root reports "unlimited" and the usage of the whole machine)
+    const v1 = read({
+      '/proc/self/cgroup': '4:memory:/kubepods/pod1/abc\n2:cpu,cpuacct:/kubepods/pod1/abc\n0::/',
+      '/sys/fs/cgroup/memory/memory.limit_in_bytes': '9223372036854771712',
+      '/sys/fs/cgroup/memory/memory.usage_in_bytes': '15000000000',
+      '/sys/fs/cgroup/memory/kubepods/pod1/memory.limit_in_bytes': '1073741824',
+      '/sys/fs/cgroup/memory/kubepods/pod1/abc/memory.limit_in_bytes': '9223372036854771712',
+      '/sys/fs/cgroup/memory/kubepods/pod1/abc/memory.usage_in_bytes': '104857600',
+      '/sys/fs/cgroup/cpu,cpuacct/kubepods/pod1/abc/cpu.cfs_quota_us': '15000',
+      '/sys/fs/cgroup/cpu,cpuacct/kubepods/pod1/abc/cpu.cfs_period_us': '100000',
+    });
+    assert.deepEqual(readCgroupMemory(v1), { limit: 1073741824, current: 104857600 });
+    assert.equal(readCgroupCpuLimit(v1), 0.15);
+
+    // cgroup v2 without namespace: the root has no memory.max, the service cgroup does
+    const v2 = read({
+      '/proc/self/cgroup': '0::/system.slice/app.service',
+      '/sys/fs/cgroup/system.slice/app.service/memory.max': '536870912',
+      '/sys/fs/cgroup/system.slice/app.service/memory.current': '201326592',
+      '/sys/fs/cgroup/system.slice/app.service/cpu.max': '15000 100000',
+    });
+    assert.deepEqual(readCgroupMemory(v2), { limit: 536870912, current: 201326592 });
+    assert.equal(readCgroupCpuLimit(v2), 0.15);
+  });
+
+  test('the 24h count is bounded by the cuid of 24h ago (primary key range) and the message timestamp', async () => {
+    const counted: any[] = [];
+    const { deps } = systemDeps();
+    deps.prisma.message.count = async (args: any) => {
+      counted.push(args);
+      return 3;
+    };
+    await new SystemProbe(deps).collect();
+    // the fake clock moves 250 ms while the CPU is sampled
+    const since = NOW - 24 * 3600 * 1000;
+    const { id, messageTimestamp } = counted[0].where;
+    assert.deepEqual(Object.keys(counted[0].where), ['id', 'messageTimestamp']);
+    assert.ok(id.gte >= cuidFloor(since) && id.gte <= cuidFloor(since + 1000), id.gte);
+    assert.equal(id.gte.length, 9);
+    assert.ok(Math.abs(messageTimestamp.gte - Math.floor(since / 1000)) <= 1);
+    // Prisma's cuid(): "c" + 8 base36 chars of the creation time in ms (id below created on 30/10 ~14:42 UTC)
+    assert.equal(cuidFloor(1793371350000), `c${(1793371350000).toString(36)}`);
+    assert.ok('cmvv352j200007db8fqo7zmvx' > cuidFloor(Date.parse('2026-10-30T14:00:00Z')));
+    assert.ok('cmvv352j200007db8fqo7zmvx' < cuidFloor(Date.parse('2026-10-30T16:00:00Z')));
+  });
+});
+
+describe('observability: WhatsApp card (connection per instance)', () => {
+  const rows = [
+    { id: 'c1', name: 'cliente-padaria', connectionStatus: 'open', integration: 'WHATSAPP-BAILEYS' },
+    {
+      id: 'c2',
+      name: 'cliente-clinica',
+      connectionStatus: 'close',
+      integration: 'WHATSAPP-BAILEYS',
+      disconnectionReasonCode: 401,
+      disconnectionAt: new Date('2026-10-30T09:00:00Z'),
+    },
+    { id: 'c3', name: 'cliente-advocacia', connectionStatus: 'open', integration: 'WHATSAPP-BUSINESS' },
+    { id: 'c4', name: 'cliente-oficina', connectionStatus: 'connecting', integration: 'WHATSAPP-BAILEYS' },
+  ];
+
+  const probe = (live: Record<string, any>, findMany?: () => Promise<any[]>) => {
+    const { deps } = systemDeps({ live });
+    deps.prisma.instance.findMany = findMany ?? (async () => structuredClone(rows));
+    return new SystemProbe(deps);
+  };
+
+  test('disconnected first, live state over the stored one, reasons in plain words, no phone numbers', async () => {
+    const view = await probe({
+      'cliente-padaria': { connectionStatus: { state: 'close', statusReason: 440 }, number: '5511999990000' },
+      'cliente-advocacia': { connectionStatus: { state: 'open' } },
+    }).collectWhatsapp();
+
+    assert.equal(view.id, 'whatsapp');
+    assert.equal(view.status, 'partial');
+    assert.deepEqual(
+      view.resources.map((item) => [item.name, item.status]),
+      [
+        ['cliente-clinica', 'desconectada'],
+        ['cliente-padaria', 'desconectada'],
+        ['cliente-oficina', 'conectando'],
+        ['cliente-advocacia', 'conectada'],
+      ],
+    );
+    const byName = Object.fromEntries(view.resources.map((item) => [item.name, item]));
+    assert.match(byName['cliente-clinica'].detail, /desde 30\/10, 06:00 · sessão encerrada no celular/);
+    assert.match(byName['cliente-clinica'].detail, /não carregada neste servidor/);
+    assert.match(byName['cliente-padaria'].detail, /aberta em outro lugar/);
+    assert.equal(byName['cliente-advocacia'].type, 'Cloud API (Meta)');
+    assert.equal(byName['cliente-padaria'].url, '/manager/instance/c1/dashboard');
+
+    const connected = metric(view, 'connected');
+    assert.deepEqual([connected.used, connected.limit, connected.status], [1, 4, 'warning']);
+    assert.ok(view.notes.some((note) => /3 instância\(s\) sem conexão/.test(note)));
+    assert.doesNotMatch(JSON.stringify(view), /5511/);
+  });
+
+  test('all connected is ok; a database failure falls back to the loaded instances', async () => {
+    const ok = await probe({}, async () => rows.filter((row) => row.connectionStatus === 'open')).collectWhatsapp();
+    assert.equal(ok.status, 'ok');
+
+    const failed = await probe({ 'loja-1': { connectionStatus: { state: 'open' } } }, () =>
+      Promise.reject(new Error('db down')),
+    ).collectWhatsapp();
+    assert.equal(failed.status, 'partial');
+    assert.deepEqual(
+      failed.resources.map((item) => item.name),
+      ['loja-1'],
+    );
+    assert.ok(failed.notes.some((note) => /Banco indisponível/.test(note)));
   });
 });

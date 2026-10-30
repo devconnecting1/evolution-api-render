@@ -5,6 +5,8 @@ import { Logger } from '@config/logger.config';
 import axios from 'axios';
 
 import {
+  Alert,
+  ALERT_PERCENT,
   buildMetric,
   finite,
   formatBytes,
@@ -18,11 +20,13 @@ import {
 } from './observability.shared';
 import { RedisState, SystemDeps, SystemProbe } from './observability.system';
 
-export type { Metric, ProviderView, Resource } from './observability.shared';
+export type { Alert, Metric, ProviderView, Resource } from './observability.shared';
 
 const logger = new Logger('ObservabilityService');
 
 const CACHE_TTL_MS = 60_000;
+/** A forced refresh within this window reuses the overview just built (double clicks, several tabs). */
+const FORCE_MIN_INTERVAL_MS = 5_000;
 const HTTP_TIMEOUT_MS = 8_000;
 const PROVIDER_TIMEOUT_MS = 10_000;
 const NEON_API_URL = 'https://console.neon.tech/api/v2';
@@ -34,8 +38,14 @@ const GB = 1024 * 1024 * 1024;
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
-/** Neon Free (https://neon.com/docs/introduction/plans): per project, compute and egress reset monthly. */
-const NEON_FREE = { computeCuHours: 100, storageBytes: GB, egressBytes: 5 * GB, branches: 10 };
+/**
+ * Neon Free (https://neon.com/docs/introduction/plans): per project; compute and egress reset each period.
+ * Neon bills in decimal GB (10^9 bytes); the storage cap comes from the project (branch_logical_size_limit_bytes)
+ * when the API reports it. Running out of CU-hours or egress suspends the compute until the next period.
+ */
+const NEON_FREE = { computeCuHours: 100, storageBytes: GB, egressBytes: 5 * 1e9, branches: 10 };
+/** Neon's billing month is a fixed 744 h (31 x 24). */
+const NEON_MONTH_HOURS = 744;
 /** Render: 750 Free instance hours per workspace per calendar month (https://render.com/docs/free). */
 const RENDER_FREE_INSTANCE_HOURS = 750;
 /** Vercel Hobby (https://vercel.com/docs/limits): deployments per day; build time per deployment (all plans). */
@@ -50,6 +60,8 @@ type Overview = {
   generatedAt: string;
   cached: boolean;
   cacheTtlSeconds: number;
+  /** Every metric at or above 80% of its limit, worst first (also written as a note on its card). */
+  alerts: Alert[];
   providers: ProviderView[];
 };
 
@@ -72,12 +84,13 @@ type RenderSeries = {
   values?: { timestamp?: string; value?: number }[];
 };
 
-type SetupHelp = { description: string; note: string; links: ProviderLink[] };
+type SetupHelp = { description: string; note: string; links: ProviderLink[]; env: string[] };
 
 /** What each provider needs and where the key is created (shown on the "Não configurado" cards). */
 const SETUP: Record<string, SetupHelp> = {
   neon: {
     description: 'Postgres gerenciado',
+    env: ['NEON_API_KEY', 'NEON_PROJECT_ID'],
     note: 'Crie uma API key no Neon (Account settings > API keys, ou uma chave da organização com escopo do projeto) e salve no Environment do serviço no Render.',
     links: [
       { label: 'Criar API key', url: 'https://console.neon.tech/app/settings/api-keys' },
@@ -86,6 +99,7 @@ const SETUP: Record<string, SetupHelp> = {
   },
   render: {
     description: 'Hospedagem da API',
+    env: ['RENDER_API_KEY', 'RENDER_SERVICE_IDS', 'RENDER_OWNER_ID'],
     note: 'Crie uma API key no Render (Account Settings > API Keys) e salve no Environment do serviço. Ela lê serviços, deploys e métricas.',
     links: [
       { label: 'Criar API key', url: 'https://dashboard.render.com/u/settings#api-keys' },
@@ -94,14 +108,16 @@ const SETUP: Record<string, SetupHelp> = {
   },
   vercel: {
     description: 'Hospedagem do painel',
+    env: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
     note: 'Crie um token na Vercel (Account Settings > Tokens) com escopo apenas do team do painel e salve no Environment do serviço no Render.',
     links: [
       { label: 'Criar token', url: 'https://vercel.com/account/settings/tokens' },
-      { label: 'Como criar', url: 'https://vercel.com/docs/rest-api/reference/welcome#creating-an-access-token' },
+      { label: 'Como criar', url: 'https://vercel.com/docs/accounts/access-tokens' },
     ],
   },
   github: {
     description: 'CI/CD e Actions',
+    env: ['GITHUB_TOKEN', 'GITHUB_OWNER', 'GITHUB_REPO'],
     note: 'Opcional. Crie um fine-grained token só deste repositório com Actions: read (e a permissão de conta Plan: read para ver os minutos) e salve no Environment do serviço no Render.',
     links: [
       { label: 'Criar token', url: 'https://github.com/settings/personal-access-tokens/new' },
@@ -178,7 +194,8 @@ export class ObservabilityService {
   }
 
   public async getOverview(force = false): Promise<Overview> {
-    if (!force && this.cache && this.now() - this.cache.at < CACHE_TTL_MS) {
+    const age = this.cache ? this.now() - this.cache.at : Infinity;
+    if (this.cache && age < (force ? FORCE_MIN_INTERVAL_MS : CACHE_TTL_MS)) {
       return { ...this.cache.data, cached: true };
     }
 
@@ -197,7 +214,12 @@ export class ObservabilityService {
     const system = this.getSystemProbe();
     const providers = await Promise.all([
       ...(system
-        ? [this.loadProvider('system', 'Sistema', 'Servidor da API, banco e instâncias', () => system.collect())]
+        ? [
+            this.loadProvider('system', 'Sistema', 'Servidor da API, banco e instâncias', () => system.collect()),
+            this.loadProvider('whatsapp', 'WhatsApp', 'Conexão de cada instância (número)', () =>
+              system.collectWhatsapp(),
+            ),
+          ]
         : []),
       this.loadProvider('neon', 'Neon', SETUP.neon.description, () => this.getNeon()),
       this.loadProvider('render', 'Render', SETUP.render.description, () => this.getRender()),
@@ -205,10 +227,13 @@ export class ObservabilityService {
       this.loadProvider('github', 'GitHub', SETUP.github.description, () => this.getGithub()),
     ]);
 
+    const alerts = this.collectAlerts(providers);
+
     const data: Overview = {
       generatedAt: new Date(this.now()).toISOString(),
       cached: false,
       cacheTtlSeconds: CACHE_TTL_MS / 1000,
+      alerts,
       providers,
     };
 
@@ -232,7 +257,7 @@ export class ObservabilityService {
     } catch (error) {
       const message = this.describeError(error);
       logger.error(`${name}: ${message}`);
-      return this.errorView(id, name, description, message);
+      return this.errorView(id, name, description, message, httpStatus(error));
     }
   }
 
@@ -310,18 +335,25 @@ export class ObservabilityService {
       notes.push('Não foi possível ler as branches; o armazenamento pode estar incompleto.');
     }
 
-    // Child branches share the parent's data (copy-on-write): the primary branch is the closest number to the
-    // project storage; the sum of all branches overstates it
+    // Neon documents the Free storage cap as the logical_size summed across the branches of the project
+    // (https://neon.com/docs/introduction/usage-calculations#branch-storage); the primary branch is in the detail
     const primary = branches.find((branch) => branch.default || branch.primary) ?? branches[0];
-    const storageUsed = primary ? (finite(primary.logical_size) ?? 0) : null;
     const storageSum = branches.reduce((total, branch) => total + (finite(branch.logical_size) ?? 0), 0);
-    const storageLimit = isFree
-      ? NEON_FREE.storageBytes
-      : (finite(project.branch_logical_size_limit_bytes) ??
-        (finite(project.branch_logical_size_limit) ? finite(project.branch_logical_size_limit) * 1024 * 1024 : null));
+    const storageUsed = branchesResult.status === 'fulfilled' && branches.length ? storageSum : null;
+    const reportedLimit =
+      finite(project.branch_logical_size_limit_bytes) ??
+      (finite(project.branch_logical_size_limit) ? finite(project.branch_logical_size_limit) * 1024 * 1024 : null);
+    const storageLimit = reportedLimit ?? (isFree ? NEON_FREE.storageBytes : null);
 
     // compute_time_seconds is in CU-seconds (active time x compute size), so / 3600 = CU-hours
     const computeSeconds = finite(project.compute_time_seconds) ?? 0;
+    const computeLimit = isFree ? NEON_FREE.computeCuHours : null;
+    const projection = this.neonProjection(
+      computeSeconds / 3600,
+      computeLimit,
+      project.consumption_period_start,
+      project.consumption_period_end,
+    );
     const activeSeconds = finite(project.active_time_seconds) ?? 0;
     const egressBytes = finite(project.data_transfer_bytes) ?? 0;
     const branchesLimit = finite(project.owner?.branches_limit) ?? (isFree ? NEON_FREE.branches : null);
@@ -334,12 +366,26 @@ export class ObservabilityService {
     const metrics = [
       buildMetric('storage', 'Armazenamento', storageUsed, storageLimit, 'bytes', {
         detail: primary
-          ? `Branch ${primary.name}${branches.length > 1 ? ` · ${branches.length} branches somam ${formatBytes(storageSum)}` : ''}`
+          ? `${branches.length} branch(es) somadas · ${primary.name} ${formatBytes(finite(primary.logical_size) ?? 0)}`
           : undefined,
       }),
-      buildMetric('compute', 'Compute', computeSeconds / 3600, isFree ? NEON_FREE.computeCuHours : null, 'cu_hours', {
+      buildMetric('compute', 'Compute', computeSeconds / 3600, computeLimit, 'cu_hours', {
         detail: 'CU-horas no período (tempo ativo x tamanho do compute)',
       }),
+      ...(projection
+        ? [
+            buildMetric(
+              'compute_projection',
+              'Compute projetado (mês)',
+              projection.projected,
+              computeLimit,
+              'cu_hours',
+              {
+                detail: projection.detail,
+              },
+            ),
+          ]
+        : []),
       buildMetric('egress', 'Egress', egressBytes, isFree ? NEON_FREE.egressBytes : null, 'bytes', {
         detail: 'Transferência pública de saída no período',
       }),
@@ -358,10 +404,15 @@ export class ObservabilityService {
       ),
     ];
 
+    if (projection?.exhaustion) notes.push(projection.exhaustion);
     const periodEnd = formatDate(project.consumption_period_end);
     notes.push('Compute e egress reiniciam a cada período de consumo; os números podem ter alguns minutos de atraso.');
     if (periodEnd) notes.push(`O período atual termina em ${periodEnd}.`);
-    if (isFree) notes.push('Limites do Neon Free: 100 CU-horas/mês, 1 GB de storage e 5 GB de egress/mês por projeto.');
+    if (isFree) {
+      notes.push(
+        'Limites do Neon Free: 100 CU-horas/mês, 1 GB de storage e 5 GB de egress/mês por projeto. Se o compute ou o egress acabar, o banco fica suspenso até o próximo período.',
+      );
+    }
 
     const lastActive = formatDate(project.compute_last_active_at);
 
@@ -398,6 +449,44 @@ export class ObservabilityService {
         { label: 'Ver branches', url: `https://console.neon.tech/app/projects/${projectId}/branches` },
       ],
     };
+  }
+
+  /**
+   * Linear projection of the Neon CU-hours from the pace of the current consumption period. A first period
+   * shorter than a month (project created mid-month) is projected to a full Neon month (744 h) instead, so the
+   * real monthly pace is not hidden. Null when the period is unknown or too young (< 6 h) to extrapolate.
+   */
+  private neonProjection(usedCuHours: number, limit: number | null, startRaw: unknown, endRaw: unknown) {
+    const start = Date.parse(String(startRaw ?? ''));
+    const end = Date.parse(String(endRaw ?? ''));
+    const now = Math.min(this.now(), end);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+    const elapsedHours = (now - start) / HOUR_MS;
+    if (elapsedHours < 6) return null;
+
+    const rate = usedCuHours / elapsedHours;
+    const periodHours = (end - start) / HOUR_MS;
+    const fullMonth = periodHours < 27 * 24;
+    const projected = rate * (fullMonth ? NEON_MONTH_HOURS : periodHours);
+    const detail = `Ritmo de ${formatNumber(rate * 24, 1)} CU-h/dia · ${
+      fullMonth ? 'estimativa para um mês completo' : 'estimativa até o fim do período'
+    }`;
+
+    let exhaustion: string | null = null;
+    if (limit && rate > 0 && projected >= (limit * ALERT_PERCENT) / 100) {
+      const hoursToLimit = limit / rate;
+      const advice =
+        'Para economizar, evite conexões constantes ao banco (o compute só dorme após 5 min sem atividade) ou mude para o plano Launch.';
+      if (projected < limit) {
+        exhaustion = `No ritmo atual o compute fica perto do limite: ~${formatNumber(projected, 0)} de ${limit} CU-h no mês. ${advice}`;
+      } else if (fullMonth) {
+        exhaustion = `No ritmo atual um mês completo usaria ~${formatNumber(projected, 0)} CU-h: as ${limit} CU-h acabariam por volta do dia ${Math.ceil(hoursToLimit / 24)} e o banco ficaria suspenso (a API para) até o próximo período. ${advice}`;
+      } else {
+        exhaustion = `No ritmo atual as ${limit} CU-h acabam por volta de ${formatDate(start + hoursToLimit * HOUR_MS)}; depois disso o banco fica suspenso (a API para) até ${formatDate(end)}. ${advice}`;
+      }
+    }
+
+    return { projected, detail, exhaustion };
   }
 
   // -------------------------------------------------------------------------------------------- Render
@@ -820,12 +909,9 @@ export class ObservabilityService {
       }),
     ]);
 
-    // An invalid token (or GitHub unreachable) fails everything: show an error instead of a half-empty card
-    if (
-      repoResult.status === 'rejected' &&
-      runsResult.status === 'rejected' &&
-      [401, undefined].includes(httpStatus(repoResult.reason))
-    ) {
+    // An invalid token, a token without access to the repository (403/404), a wrong GITHUB_OWNER/GITHUB_REPO
+    // or GitHub unreachable fails both reads: show an error instead of a half-empty card
+    if (repoResult.status === 'rejected' && runsResult.status === 'rejected') {
       throw repoResult.reason;
     }
 
@@ -858,8 +944,12 @@ export class ObservabilityService {
       partial = true;
       const status = httpStatus(error);
       if (status === 401 || status === 403) {
+        // GET /users/{u}/settings/billing/usage needs the user permission "Plan" (read); the organization report
+        // needs the organization permission "Administration" (read) and an organization admin
         notes.push(
-          'O token não pode ler o billing: adicione a permissão de conta "Plan" (read) ao fine-grained token.',
+          ownerIsOrg
+            ? 'O token não pode ler o billing da organização: use um token de um admin com a permissão de organização "Administration" (read).'
+            : 'O token não pode ler o billing: adicione a permissão de conta "Plan" (read) ao fine-grained token.',
         );
       } else if (status === 404 || status === 410) {
         notes.push('O relatório de uso de billing não está disponível para esta conta (HTTP ' + status + ').');
@@ -898,7 +988,7 @@ export class ObservabilityService {
           // "count" shows "156 de 2.000" (the "minutes" unit would render 2h 36min of 33h 20min)
           'count',
           {
-            detail: cost ? `Custo líquido US$ ${formatNumber(cost, 2)}` : 'Sem custo no mês',
+            detail: `${cost ? `Custo líquido US$ ${formatNumber(cost, 2)}` : 'Sem custo no mês'} · todos os repositórios da conta`,
           },
         ),
       );
@@ -953,8 +1043,45 @@ export class ObservabilityService {
 
   // ------------------------------------------------------------------------------------------- helpers
 
+  /**
+   * Every provider answers JSON objects or arrays. Anything else (an HTML error page of a proxy, an empty
+   * body, plain text) is an error instead of being read as "zero deploys / public repository".
+   */
   private http(baseURL: string, headers: Record<string, string>): HttpClient {
-    return (this.options.http ?? defaultHttp)(baseURL, headers);
+    const client = (this.options.http ?? defaultHttp)(baseURL, headers);
+    return {
+      get: async (path, config) => {
+        const response = await client.get(path, config);
+        if (response?.data === null || typeof response?.data !== 'object') {
+          throw new Error('Resposta inválida do provedor (não é JSON).');
+        }
+        return response;
+      },
+    };
+  }
+
+  /** Metrics at or above ALERT_PERCENT of a quota: listed in the overview and summarized on their card. */
+  private collectAlerts(providers: ProviderView[]): Alert[] {
+    const alerts: Alert[] = [];
+    for (const provider of providers) {
+      const own = provider.metrics
+        .filter((metric) => !metric.higherIsBetter && metric.percent !== null && metric.percent >= ALERT_PERCENT)
+        .map((metric) => ({
+          provider: provider.id,
+          metric: metric.id,
+          label: metric.label,
+          percent: metric.percent as number,
+          status: metric.status,
+          message: `${provider.name}: ${metric.label} em ${formatNumber(metric.percent as number, 0)}% do limite.`,
+        }));
+      if (own.length) {
+        provider.notes.unshift(
+          `Atenção: ${own.map((alert) => `${alert.label} em ${formatNumber(alert.percent, 0)}%`).join(', ')} do limite.`,
+        );
+      }
+      alerts.push(...own);
+    }
+    return alerts.sort((a, b) => b.percent - a.percent);
   }
 
   private baseView(id: string, name: string, description: string): ProviderView {
@@ -985,8 +1112,24 @@ export class ObservabilityService {
     };
   }
 
-  private errorView(id: string, name: string, description: string, message: string): ProviderView {
-    return { ...this.baseView(id, name, description), status: 'error', error: message };
+  /** Error card with what to do next: check the keys (401/403/404) or retry later, plus where to create a key. */
+  private errorView(id: string, name: string, description: string, message: string, status?: number): ProviderView {
+    const help = SETUP[id];
+    const notes: string[] = [];
+    if (help && [401, 403, 404].includes(status as number)) {
+      notes.push(
+        `Confira ${help.env.join(', ')} no Environment do serviço no Render. Se a chave foi apagada ou expirou, crie outra.`,
+      );
+    } else if (help) {
+      notes.push('O provedor pode estar instável: os outros cards continuam valendo. Use Atualizar em alguns minutos.');
+    }
+    return {
+      ...this.baseView(id, name, description),
+      status: 'error',
+      error: message,
+      notes,
+      links: help ? help.links : [],
+    };
   }
 
   /** Short, safe message: never includes headers, URLs or response bodies (tokens stay out of the UI/logs). */
