@@ -435,6 +435,13 @@ model OpenaiBot {
   maxTokens         Int?             @db.Integer
   tokenParam         String?          @db.VarChar(30)
   humanResumeMinutes Int?             @db.Integer
+  transcribeAudio    Boolean? @db.Boolean
+  transcriptionModel String?          @db.VarChar(100)
+  maxAudioSeconds    Int?             @db.Integer
+  readImages         Boolean? @db.Boolean
+  readDocuments      Boolean? @db.Boolean
+  maxDocumentMB      Int?             @db.Integer
+  historyMessages    Int?             @db.Integer
   expire            Int?             @default(0) @db.Integer
   keywordFinish     String?          @db.VarChar(100)
   delayMessage      Int?             @db.Integer
@@ -493,6 +500,13 @@ model OpenaiSetting {
   speechToText     Boolean?     @default(false) @db.Boolean
   tokenParam         String?      @default("auto") @db.VarChar(30)
   humanResumeMinutes Int?         @default(0) @db.Integer
+  transcribeAudio    Boolean?     @default(true) @db.Boolean
+  transcriptionModel String?      @default("gpt-transcribe") @db.VarChar(100)
+  maxAudioSeconds    Int?         @default(300) @db.Integer
+  readImages         Boolean?     @default(true) @db.Boolean
+  readDocuments      Boolean?     @default(true) @db.Boolean
+  maxDocumentMB      Int?         @default(10) @db.Integer
+  historyMessages    Int?         @default(10) @db.Integer
   createdAt        DateTime?    @default(now()) @db.Timestamp
   updatedAt        DateTime     @updatedAt @db.Timestamp
   OpenaiCreds      OpenaiCreds? @relation(fields: [openaiCredsId], references: [id])

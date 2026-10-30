@@ -8,7 +8,9 @@ import { configService, Openai } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { BadRequestException } from '@exceptions';
 import { IntegrationSession, OpenaiBot } from '@prisma/client';
+import { getConversationMessage } from '@utils/getConversationMessage';
 import { describeHumanPause, resolveHumanResumeMinutes } from '@utils/humanPause';
+import { describeOpenaiMessage, OPENAI_MEDIA_DEFAULTS, resolveOpenaiMediaOptions } from '@utils/openaiMedia';
 import OpenAI from 'openai';
 
 import { BaseChatbotController } from '../../base-chatbot.controller';
@@ -64,7 +66,13 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
   protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
     return {
       tokenParam: bot?.tokenParam ?? settings?.tokenParam ?? 'auto',
+      ...resolveOpenaiMediaOptions(bot, settings),
     };
+  }
+
+  // Video, sticker, location and shared contact reach the model as a clear sentence (other bots keep the raw text)
+  protected getConversationContent(msg: any): string {
+    return describeOpenaiMessage(msg) ?? getConversationMessage(msg);
   }
 
   protected getAdditionalBotData(data: OpenaiDto): Record<string, any> {
@@ -80,6 +88,13 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       maxTokens: data.maxTokens,
       tokenParam: data.tokenParam,
       humanResumeMinutes: data.humanResumeMinutes,
+      transcribeAudio: data.transcribeAudio,
+      transcriptionModel: data.transcriptionModel,
+      maxAudioSeconds: data.maxAudioSeconds,
+      readImages: data.readImages,
+      readDocuments: data.readDocuments,
+      maxDocumentMB: data.maxDocumentMB,
+      historyMessages: data.historyMessages,
     };
   }
 
@@ -97,6 +112,13 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       maxTokens: data.maxTokens,
       tokenParam: data.tokenParam,
       humanResumeMinutes: data.humanResumeMinutes,
+      transcribeAudio: data.transcribeAudio,
+      transcriptionModel: data.transcriptionModel,
+      maxAudioSeconds: data.maxAudioSeconds,
+      readImages: data.readImages,
+      readDocuments: data.readDocuments,
+      maxDocumentMB: data.maxDocumentMB,
+      historyMessages: data.historyMessages,
     };
   }
 
@@ -210,6 +232,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         speechToText: false,
         tokenParam: 'auto',
         humanResumeMinutes: 0,
+        ...OPENAI_MEDIA_DEFAULTS,
       });
     } else if (!existingSettings.openaiCredsId && data.openaiCredsId) {
       // Update settings with OpenAI credentials if they're missing
@@ -407,6 +430,13 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         speechToText: data.speechToText,
         tokenParam: data.tokenParam,
         humanResumeMinutes: data.humanResumeMinutes,
+        transcribeAudio: data.transcribeAudio,
+        transcriptionModel: data.transcriptionModel,
+        maxAudioSeconds: data.maxAudioSeconds,
+        readImages: data.readImages,
+        readDocuments: data.readDocuments,
+        maxDocumentMB: data.maxDocumentMB,
+        historyMessages: data.historyMessages,
       };
 
       if (existingSettings) {
@@ -454,6 +484,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       ...settings,
       tokenParam: settings?.tokenParam ?? 'auto',
       humanResumeMinutes: settings?.humanResumeMinutes ?? 0,
+      ...resolveOpenaiMediaOptions(null, settings),
     };
   }
 
