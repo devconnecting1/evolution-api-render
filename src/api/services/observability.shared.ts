@@ -15,6 +15,8 @@ export type Metric = {
   percent: number | null;
   status: MetricStatus;
   detail?: string;
+  /** The limit is a target, not a quota (e.g. connected instances): never listed as an alert. */
+  higherIsBetter?: boolean;
 };
 
 export type Resource = {
@@ -47,14 +49,28 @@ export type ProviderView = {
   error?: string;
 };
 
+/** From this percent of a limit a metric is listed in the overview `alerts` and in the card notes. */
+export const ALERT_PERCENT = 80;
+
+export type Alert = {
+  provider: string;
+  metric: string;
+  label: string;
+  percent: number;
+  status: MetricStatus;
+  message: string;
+};
+
 export type MetricOptions = {
   detail?: string;
-  /** Percent of the limit from which the metric is `warning` (default 75). */
+  /** Percent of the limit from which the metric is `warning` (default 80, the alert threshold of the page). */
   warnAt?: number;
   /** Percent of the limit from which the metric is `critical` (default 95). */
   criticalAt?: number;
   /** Forces the status (e.g. when "more is better", like connected instances). */
   status?: MetricStatus;
+  /** See `Metric.higherIsBetter`. */
+  higherIsBetter?: boolean;
 };
 
 export const round = (value: number, digits: number): number => {
@@ -86,7 +102,7 @@ export function buildMetric(
   if (safeUsed !== null) {
     status = 'ok';
     if (percent !== null && percent >= (opts.criticalAt ?? 95)) status = 'critical';
-    else if (percent !== null && percent >= (opts.warnAt ?? 75)) status = 'warning';
+    else if (percent !== null && percent >= (opts.warnAt ?? ALERT_PERCENT)) status = 'warning';
   }
   if (opts.status) status = opts.status;
 
@@ -99,6 +115,7 @@ export function buildMetric(
     percent: percent === null ? null : round(percent, 2),
     status,
     ...(opts.detail ? { detail: opts.detail } : {}),
+    ...(opts.higherIsBetter ? { higherIsBetter: true } : {}),
   };
 }
 

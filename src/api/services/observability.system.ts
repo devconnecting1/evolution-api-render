@@ -31,7 +31,7 @@ export type RedisState = { state: 'ready' | 'connecting' | 'down' | 'absent'; la
 
 export type PrismaLike = {
   $queryRawUnsafe: (query: string) => Promise<any>;
-  instance: { groupBy: (args: any) => Promise<any[]> };
+  instance: { groupBy: (args: any) => Promise<any[]>; findMany?: (args: any) => Promise<any[]> };
   message: { count: (args: any) => Promise<number> };
   integrationSession: { groupBy: (args: any) => Promise<any[]> };
 };
@@ -76,42 +76,120 @@ const defaultPackageVersion = (): string | null => {
   }
 };
 
+type ReadFile = (path: string) => string | null;
+
+/**
+ * Paths of this process in each cgroup hierarchy, from /proc/self/cgroup ("0::/path" for v2,
+ * "4:memory:/path" or "1:cpu,cpuacct:/path" for v1). Without a cgroup namespace the limits live in that
+ * nested directory, not at the root of /sys/fs/cgroup.
+ */
+function procCgroupPaths(readFile: ReadFile): { v2: string | null; v1: Record<string, string> } {
+  const v1: Record<string, string> = {};
+  let v2: string | null = null;
+  for (const line of (readFile('/proc/self/cgroup') ?? '').split('\n')) {
+    const match = line.trim().match(/^(\d+):([^:]*):(\/.*)$/);
+    if (!match) continue;
+    if (match[1] === '0' && match[2] === '') v2 = match[3];
+    else for (const controller of match[2].split(',')) v1[controller] = match[3];
+  }
+  return { v2, v1 };
+}
+
+/** The process cgroup directory and its ancestors up to `base` (leaf first). */
+function cgroupDirs(base: string, path: string | null | undefined): string[] {
+  const parts = (path ?? '/').split('/').filter((part) => part && part !== '..');
+  const dirs: string[] = [];
+  for (let i = parts.length; i > 0; i--) dirs.push(`${base}/${parts.slice(0, i).join('/')}`);
+  dirs.push(base);
+  return dirs;
+}
+
+/**
+ * Walks the cgroup chain: the effective limit is the smallest one set on the process cgroup or any ancestor,
+ * and the usage is the one of the closest directory that reports it. `found` tells whether the hierarchy exists.
+ */
+function cgroupChain(
+  readFile: ReadFile,
+  dirs: string[],
+  limitFile: string,
+  usageFile: string | null,
+  parseLimit: (raw: string, dir: string) => number | null,
+) {
+  let found = false;
+  let limit: number | null = null;
+  let current: number | null = null;
+  for (const dir of dirs) {
+    const raw = readFile(`${dir}/${limitFile}`);
+    if (raw !== null) {
+      found = true;
+      const value = parseLimit(raw, dir);
+      if (value !== null && (limit === null || value < limit)) limit = value;
+    }
+    if (current === null && usageFile) current = parseBytes(readFile(`${dir}/${usageFile}`));
+  }
+  return { found, limit, current };
+}
+
+function parseBytes(value: string | null): number | null {
+  if (!value || value === 'max') return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 && n < UNLIMITED_BYTES ? n : null;
+}
+
 /** Container memory limit/usage from cgroup v2 or v1; null when not running under a limited cgroup. */
-export function readCgroupMemory(readFile: (path: string) => string | null): {
+export function readCgroupMemory(readFile: ReadFile): {
   limit: number | null;
   current: number | null;
 } {
-  const parse = (value: string | null): number | null => {
-    if (!value || value === 'max') return null;
-    const n = Number(value);
-    return Number.isFinite(n) && n > 0 && n < UNLIMITED_BYTES ? n : null;
-  };
+  const paths = procCgroupPaths(readFile);
 
-  const v2Limit = readFile('/sys/fs/cgroup/memory.max');
-  if (v2Limit !== null) {
-    return { limit: parse(v2Limit), current: parse(readFile('/sys/fs/cgroup/memory.current')) };
-  }
+  const v2 = cgroupChain(readFile, cgroupDirs('/sys/fs/cgroup', paths.v2), 'memory.max', 'memory.current', (raw) =>
+    parseBytes(raw),
+  );
+  if (v2.found) return { limit: v2.limit, current: v2.current };
 
-  return {
-    limit: parse(readFile('/sys/fs/cgroup/memory/memory.limit_in_bytes')),
-    current: parse(readFile('/sys/fs/cgroup/memory/memory.usage_in_bytes')),
-  };
+  const v1 = cgroupChain(
+    readFile,
+    cgroupDirs('/sys/fs/cgroup/memory', paths.v1.memory),
+    'memory.limit_in_bytes',
+    'memory.usage_in_bytes',
+    (raw) => parseBytes(raw),
+  );
+  return { limit: v1.limit, current: v1.current };
 }
 
 /** CPU cores available to the container from cgroup v2 (`cpu.max`) or v1 (CFS quota); null when unlimited. */
-export function readCgroupCpuLimit(readFile: (path: string) => string | null): number | null {
-  const v2 = readFile('/sys/fs/cgroup/cpu.max');
-  if (v2) {
-    const [quota, period] = v2.split(/\s+/);
-    if (quota === 'max') return null;
+export function readCgroupCpuLimit(readFile: ReadFile): number | null {
+  const paths = procCgroupPaths(readFile);
+
+  const v2 = cgroupChain(readFile, cgroupDirs('/sys/fs/cgroup', paths.v2), 'cpu.max', null, (raw) => {
+    const [quota, period] = raw.split(/\s+/);
+    if (!quota || quota === 'max') return null;
     const cores = Number(quota) / Number(period || 100000);
     return Number.isFinite(cores) && cores > 0 ? cores : null;
-  }
+  });
+  if (v2.found) return v2.limit;
 
-  const quota = Number(readFile('/sys/fs/cgroup/cpu/cpu.cfs_quota_us'));
-  const period = Number(readFile('/sys/fs/cgroup/cpu/cpu.cfs_period_us'));
-  if (!Number.isFinite(quota) || quota <= 0 || !Number.isFinite(period) || period <= 0) return null;
-  return quota / period;
+  const v1Quota = (raw: string, dir: string) => {
+    const quota = Number(raw);
+    const period = Number(readFile(`${dir}/cpu.cfs_period_us`));
+    if (!Number.isFinite(quota) || quota <= 0 || !Number.isFinite(period) || period <= 0) return null;
+    return quota / period;
+  };
+  for (const base of ['/sys/fs/cgroup/cpu', '/sys/fs/cgroup/cpu,cpuacct']) {
+    const v1 = cgroupChain(readFile, cgroupDirs(base, paths.v1.cpu), 'cpu.cfs_quota_us', null, v1Quota);
+    if (v1.found) return v1.limit;
+  }
+  return null;
+}
+
+/**
+ * Smallest Prisma cuid (v1: "c" + 8 base36 chars of epoch ms + random) created at `ms`. Every id generated by
+ * `@default(cuid())` after `ms` sorts after it, so `id >= floor` is a range scan on the primary key index:
+ * the 24h message count never scans the whole Message table (messageTimestamp has no index).
+ */
+export function cuidFloor(ms: number): string {
+  return `c${Math.max(0, Math.floor(ms)).toString(36).padStart(8, '0')}`;
 }
 
 const toNumber = (value: unknown): number => {
@@ -184,7 +262,7 @@ export class SystemProbe {
       instances.total === null ? null : instances.open,
       instances.total,
       'count',
-      { detail: instances.detail, status: instanceStatus },
+      { detail: instances.detail, status: instanceStatus, higherIsBetter: true },
     );
 
     const metrics: Metric[] = [
@@ -192,7 +270,7 @@ export class SystemProbe {
       cpuMetric,
       instancesMetric,
       buildMetric('messages_24h', 'Mensagens (24h)', database.messages24h, null, 'count', {
-        detail: 'Mensagens salvas no banco nas últimas 24 horas',
+        detail: 'Mensagens enviadas e recebidas nas últimas 24 horas (salvas no banco)',
       }),
       buildMetric('chatbot_sessions', 'Sessões de chatbot ativas', sessions.active, null, 'count', {
         detail: sessions.detail,
@@ -334,7 +412,8 @@ export class SystemProbe {
       provider === 'mysql'
         ? 'SELECT SUM(data_length + index_length) AS size FROM information_schema.TABLES WHERE table_schema = DATABASE()'
         : 'SELECT pg_database_size(current_database())::bigint AS size';
-    const since = Math.floor(now() / 1000) - 24 * 60 * 60;
+    const sinceMs = now() - 24 * 60 * 60 * 1000;
+    const since = Math.floor(sinceMs / 1000);
 
     const [size, instances, messages] = await Promise.allSettled([
       withTimeout(prisma.$queryRawUnsafe(sizeQuery), DB_TIMEOUT_MS, 'timeout'),
@@ -343,7 +422,13 @@ export class SystemProbe {
         DB_TIMEOUT_MS,
         'timeout',
       ),
-      withTimeout(prisma.message.count({ where: { messageTimestamp: { gte: since } } }), DB_TIMEOUT_MS, 'timeout'),
+      // `id >= cuidFloor` bounds the scan to the rows stored in the last 24h (primary key index); the
+      // timestamp filter then drops history imports of old messages
+      withTimeout(
+        prisma.message.count({ where: { id: { gte: cuidFloor(sinceMs) }, messageTimestamp: { gte: since } } }),
+        DB_TIMEOUT_MS,
+        'timeout',
+      ),
     ]);
 
     if (size.status === 'fulfilled') {
@@ -405,7 +490,9 @@ export class SystemProbe {
     const pauseQuery =
       provider === 'mysql'
         ? "SELECT SUM(JSON_EXTRACT(parameters, '$.humanLastMessageAt') IS NOT NULL) AS human, " +
-          "SUM(status = 'paused' AND JSON_EXTRACT(parameters, '$.manualPause') = true) AS manual " +
+          // JSON_UNQUOTE gives 'true' for the JSON boolean (comparing JSON true with the SQL TRUE literal,
+          // an integer, is not reliable across MySQL versions); same semantics as ->> 'true' on Postgres
+          "SUM(status = 'paused' AND JSON_UNQUOTE(JSON_EXTRACT(parameters, '$.manualPause')) = 'true') AS manual " +
           "FROM IntegrationSession WHERE status IN ('paused', 'opened')"
         : 'SELECT COUNT(*) FILTER (WHERE "parameters"->>\'humanLastMessageAt\' IS NOT NULL)::int AS human, ' +
           "COUNT(*) FILTER (WHERE \"status\" = 'paused' AND \"parameters\"->>'manualPause' = 'true')::int AS manual " +
@@ -479,4 +566,164 @@ export class SystemProbe {
       },
     };
   }
+
+  /**
+   * "WhatsApp" card: the connection of each instance (live state of this server, or the stored one), the
+   * disconnected ones first. Shows only the instance name, the channel and the state: never the phone number,
+   * the profile name or the token (the page already requires the global API key, which lists the instances).
+   */
+  public async collectWhatsapp(): Promise<ProviderView> {
+    const d = this.deps;
+    const now = d.now ?? Date.now;
+    const findMany = d.prisma?.instance?.findMany;
+    const view: ProviderView = {
+      id: 'whatsapp',
+      name: 'WhatsApp',
+      description: 'Conexão de cada instância (número)',
+      configured: true,
+      plan: null,
+      status: 'ok',
+      updatedAt: new Date(now()).toISOString(),
+      metrics: [],
+      resources: [],
+      notes: [],
+      links: [],
+    };
+
+    let stored: any[] | null = null;
+    if (findMany) {
+      try {
+        stored = await withTimeout(
+          findMany({
+            select: {
+              id: true,
+              name: true,
+              connectionStatus: true,
+              integration: true,
+              disconnectionReasonCode: true,
+              disconnectionAt: true,
+            },
+            orderBy: { name: 'asc' },
+            take: WHATSAPP_MAX_INSTANCES,
+          }),
+          DB_TIMEOUT_MS,
+          'timeout',
+        );
+      } catch {
+        stored = null;
+      }
+    }
+
+    let live: Record<string, any> = {};
+    try {
+      live = d.waInstances?.() ?? {};
+    } catch {
+      live = {};
+    }
+    const liveNames = Object.keys(live);
+
+    const byName = new Map<string, any>();
+    for (const row of stored ?? []) if (row?.name) byName.set(row.name, { ...row });
+    for (const name of liveNames) if (!byName.has(name)) byName.set(name, { name });
+
+    if (stored === null && liveNames.length === 0) {
+      return {
+        ...view,
+        status: 'partial',
+        notes: ['Não foi possível ler as instâncias agora.'],
+      };
+    }
+
+    const order: Record<string, number> = { close: 0, connecting: 1, open: 2 };
+    const items = [...byName.values()].map((row) => {
+      const instance = live[row.name];
+      const state = String(instance?.connectionStatus?.state ?? row.connectionStatus ?? 'close');
+      const reason = finite(instance?.connectionStatus?.statusReason) ?? finite(row.disconnectionReasonCode);
+      return { row, state: state in order ? state : 'close', reason, loaded: Boolean(instance) };
+    });
+    items.sort((a, b) => order[a.state] - order[b.state] || String(a.row.name).localeCompare(String(b.row.name)));
+
+    const open = items.filter((item) => item.state === 'open').length;
+    const notOpen = items.length - open;
+
+    view.metrics.push(
+      buildMetric('connected', 'Instâncias conectadas', open, items.length || null, 'count', {
+        detail: items.length
+          ? `${notOpen} sem conexão · ${liveNames.length} carregada(s) neste servidor`
+          : 'Nenhuma instância criada',
+        status: notOpen ? 'warning' : 'ok',
+        higherIsBetter: true,
+      }),
+    );
+
+    view.resources = items.slice(0, WHATSAPP_MAX_RESOURCES).map(({ row, state, reason, loaded }) => ({
+      id: String(row.id ?? row.name),
+      name: String(row.name),
+      type: channelLabel(row.integration ?? live[row.name]?.integration),
+      status: state === 'open' ? 'conectada' : state === 'connecting' ? 'conectando' : 'desconectada',
+      ...(row.id ? { url: `/manager/instance/${encodeURIComponent(row.id)}/dashboard` } : {}),
+      detail: [
+        state === 'close' && row.disconnectionAt ? `desde ${formatShortDate(row.disconnectionAt)}` : null,
+        state === 'close' && reason !== null ? disconnectReason(reason) : null,
+        state === 'connecting' ? 'aguardando QR code ou reconexão' : null,
+        liveNames.length && !loaded ? 'não carregada neste servidor (estado salvo)' : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    }));
+
+    if (notOpen) {
+      view.status = 'partial';
+      view.notes.push(
+        `${notOpen} instância(s) sem conexão: abra a instância no painel e leia o QR code de novo se a sessão foi encerrada.`,
+      );
+    }
+    if (items.length > WHATSAPP_MAX_RESOURCES) {
+      view.notes.push(`Mostrando ${WHATSAPP_MAX_RESOURCES} de ${items.length} instâncias (as sem conexão primeiro).`);
+    }
+    if (stored === null) {
+      view.status = 'partial';
+      view.notes.push('Banco indisponível: mostrando só as instâncias carregadas neste servidor.');
+    }
+
+    return view;
+  }
+}
+
+const WHATSAPP_MAX_INSTANCES = 500;
+const WHATSAPP_MAX_RESOURCES = 50;
+
+function channelLabel(integration: unknown): string {
+  const value = String(integration ?? '').toUpperCase();
+  if (value === 'WHATSAPP-BUSINESS') return 'Cloud API (Meta)';
+  if (value === 'EVOLUTION') return 'Evolution';
+  return 'WhatsApp Web';
+}
+
+/** Baileys DisconnectReason codes in words an operator understands. */
+function disconnectReason(code: number): string {
+  const reasons: Record<number, string> = {
+    401: 'sessão encerrada no celular: leia o QR code de novo',
+    403: 'número bloqueado ou banido pelo WhatsApp',
+    408: 'conexão perdida (tempo esgotado)',
+    411: 'aparelho incompatível com multi-dispositivo',
+    428: 'conexão encerrada pelo WhatsApp',
+    440: 'aberta em outro lugar (sessão substituída)',
+    500: 'sessão inválida: leia o QR code de novo',
+    503: 'WhatsApp indisponível no momento',
+    515: 'reinício necessário',
+  };
+  return reasons[code] ?? `código ${code}`;
+}
+
+function formatShortDate(value: unknown): string {
+  const time = value instanceof Date ? value.getTime() : Date.parse(String(value ?? ''));
+  if (!Number.isFinite(time)) return '—';
+  return new Date(time).toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }

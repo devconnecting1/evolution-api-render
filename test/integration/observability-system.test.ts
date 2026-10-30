@@ -100,5 +100,17 @@ describe('observability: Sistema on a real database (integration)', { skip: SKIP
     assert.equal(instances.status, 'warning');
     assert.equal(afterView.status, 'partial');
     assert.match(afterView.metrics.find((item) => item.id === 'human_paused').detail, /pausa\(s\) manual/);
+
+    // WhatsApp card: the select/orderBy of the per-instance list run on the real schema
+    await tx.instance.update({
+      where: { id: instanceId },
+      data: { disconnectionReasonCode: 401, disconnectionAt: new Date() },
+    });
+    const whatsapp = await probe(tx).collectWhatsapp();
+    const row = whatsapp.resources.find((item) => item.name === instance.name);
+    assert.equal(row.status, 'desconectada');
+    assert.equal(row.url, `/manager/instance/${instanceId}/dashboard`);
+    assert.match(row.detail, /sessão encerrada no celular/);
+    assert.equal(whatsapp.status, 'partial');
   }
 });
