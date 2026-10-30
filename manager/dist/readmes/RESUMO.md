@@ -1,30 +1,31 @@
-## Planos oficiais
+## Preços (implementação + mensalidade)
 
-| Plano | Setup | Base/mês | + OpenAI/mês |
-|---|---:|---:|---:|
-| Start | R$ 1.997 | R$ 447 | R$ 497 |
-| Pro | R$ 2.997 | R$ 897 | R$ 997 |
-| Premium | R$ 5.497 | R$ 1.597 | R$ 1.797 |
+**Implementação (única)**
 
-- **Meta:** sempre paga pelo cliente, direto na WABA; não entra na mensalidade.
-- **OpenAI Base:** o cliente usa a própria conta/key e paga direto.
-- **OpenAI add-on:** +R$ 50/100/200 (Start/Pro/Premium); a WhatsAI paga dentro do budget US$ 10/25/60; excedente à parte ou bot pausa.
-- **Franquia:** 1.000 / 3.000 / 8.000 conversas/mês; excedente R$ 297/+1.000 (serviço).
-- **Meta:** 1.000 mensagens de serviço grátis/número/mês; excedente ~R$ 0,037.
+| Pacote | Preço |
+|---|---:|
+| Essencial | R$ 1.500 – 2.500 |
+| Profissional | R$ 3.000 – 6.000 |
+| Oficial / Enterprise | R$ 6.000+ |
 
-## Quem paga o quê
+**Mensalidade**
 
-| Modelo | Cliente | WhatsAI |
-|---|---|---|
-| Oficial Base | mensalidade + Meta + OpenAI | infraestrutura |
-| Oficial + OpenAI | mensalidade + Meta | OpenAI + infraestrutura |
+| Plano | Franquia | Preço |
+|---|---|---:|
+| Essencial | ~1.000 respostas/mês | R$ 297 – 397 |
+| Profissional | ~3.000 respostas/mês | R$ 597 – 797 |
+| Premium | volume alto, integrações, SLA, Cloud API | R$ 1.200+ |
+| Excedente | por resposta acima da franquia | R$ 0,10 – 0,20 |
+
+- **Contrato mínimo 6 meses**; 12 meses = 30–50% de desconto na implementação.
+- **Custo direto por cliente:** ~R$ 20–60/mês (margem 85–90%). Detalhes no Guia comercial.
 
 ## Onboarding em 6 passos
 
-1. Fechar plano e modalidade da OpenAI (Base ou add-on).
+1. Fechar pacote de implementação, plano mensal e quem paga a OpenAI (chave sua embutida ou chave do cliente).
 2. Meta Business verificado, WABA, número dedicado e **cartão do cliente**.
 3. Criar a instância oficial no painel (Cloud API).
-4. Configurar OpenAI: chave do cliente (Base) ou project/key + budget (add-on).
+4. Configurar OpenAI: sua chave (embutida no preço) ou a chave do cliente.
 5. Subir prompt, testar fluxo, handoff e templates.
 6. Treinar, entregar e acompanhar uso/custos.
 
