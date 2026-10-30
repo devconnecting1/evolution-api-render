@@ -162,6 +162,7 @@ export class EventController {
     'CALL',
     'TYPEBOT_START',
     'TYPEBOT_CHANGE_STATUS',
+    'OPENAI_CHANGE_STATUS',
     'REMOVE_INSTANCE',
     'LOGOUT_INSTANCE',
     'INSTANCE_CREATE',

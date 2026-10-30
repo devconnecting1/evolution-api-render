@@ -61,6 +61,22 @@ export const isHumanPaused = (session: SessionLike): boolean =>
   session?.status === 'paused' || (session?.status === 'opened' && getHumanLastMessageAt(session) !== null);
 
 /**
+ * The moment a human pause counts from: the last human message or, for a legacy paused session (paused by a
+ * human before `humanLastMessageAt` existed), `updatedAt`, which is when it was paused. Null when unknown.
+ */
+const getHumanPauseReference = (session: SessionLike): number | null => {
+  const last = getHumanLastMessageAt(session);
+  if (last !== null) return last;
+
+  if (session?.status === 'paused' && session?.updatedAt) {
+    const updatedAt = new Date(session.updatedAt).getTime();
+    return Number.isFinite(updatedAt) ? updatedAt : null;
+  }
+
+  return null;
+};
+
+/**
  * True when a human pause can be lifted automatically: `minutes` > 0 and at least `minutes` have passed since
  * the last human message. A manual pause (changeStatus 'paused') is never lifted automatically. A legacy paused
  * session (paused by a human before `humanLastMessageAt` existed) uses `updatedAt`, which is when it was paused.
@@ -69,14 +85,67 @@ export const isHumanPauseExpired = (session: SessionLike, minutes: number, now =
   if (!minutes || minutes <= 0) return false;
   if (isManualPause(session)) return false;
 
-  let last = getHumanLastMessageAt(session);
-  if (last === null && session?.status === 'paused' && session?.updatedAt) {
-    const updatedAt = new Date(session.updatedAt).getTime();
-    last = Number.isFinite(updatedAt) ? updatedAt : null;
-  }
+  const last = getHumanPauseReference(session);
   if (last === null) return false;
 
   return now - last >= minutes * 60 * 1000;
+};
+
+export type HumanPauseReason = 'human' | 'manual' | 'legacy';
+
+export type HumanPauseInfo = {
+  /** human: paused by a message of the owner; manual: changeStatus 'paused'; legacy: paused before the timestamp existed */
+  reason: HumanPauseReason;
+  /** ISO. When the pause counts from: the last human message, or `updatedAt` for manual/legacy */
+  since: string | null;
+  /** ISO of the last message the owner wrote, null when there is none on record */
+  lastHumanMessageAt: string | null;
+  /** Effective minutes (bot, then settings, then 0 = only manual resume) */
+  resumeMinutes: number;
+  /** ISO. When the pause expires; null for a manual pause or when `resumeMinutes` is 0 */
+  resumesAt: string | null;
+  /** Seconds left (>= 0); 0 once expired, the bot then resumes on the next message of the contact. Null as `resumesAt` */
+  remainingSeconds: number | null;
+  /** True when the pause lifts by itself (an expiry time exists) */
+  autoResume: boolean;
+};
+
+const toIso = (time: number | null): string | null => (time === null ? null : new Date(time).toISOString());
+
+/**
+ * Describes the human pause of a session for API consumers, or null when it is not paused. Follows the same rules
+ * as `isHumanPaused` and `isHumanPauseExpired`, so `remainingSeconds` is 0 exactly when the pause is expired.
+ */
+export const describeHumanPause = (
+  session: SessionLike,
+  resumeMinutes: number,
+  now = Date.now(),
+): HumanPauseInfo | null => {
+  if (!isHumanPaused(session)) return null;
+
+  const lastHuman = getHumanLastMessageAt(session);
+  const manual = isManualPause(session);
+  const reason: HumanPauseReason = manual ? 'manual' : lastHuman !== null ? 'human' : 'legacy';
+
+  let since = getHumanPauseReference(session);
+  if (reason === 'manual') {
+    const updatedAt = session?.updatedAt ? new Date(session.updatedAt).getTime() : NaN;
+    since = Number.isFinite(updatedAt) ? updatedAt : null;
+  }
+
+  const minutes = Number.isFinite(Number(resumeMinutes)) && Number(resumeMinutes) > 0 ? Number(resumeMinutes) : 0;
+  const reference = getHumanPauseReference(session);
+  const resumesAtTime = !manual && minutes > 0 && reference !== null ? reference + minutes * 60 * 1000 : null;
+
+  return {
+    reason,
+    since: toIso(since),
+    lastHumanMessageAt: toIso(lastHuman),
+    resumeMinutes: minutes,
+    resumesAt: toIso(resumesAtTime),
+    remainingSeconds: resumesAtTime === null ? null : Math.max(0, Math.ceil((resumesAtTime - now) / 1000)),
+    autoResume: resumesAtTime !== null,
+  };
 };
 
 /** True when `current` records a human message newer than the one known in `snapshot`. */

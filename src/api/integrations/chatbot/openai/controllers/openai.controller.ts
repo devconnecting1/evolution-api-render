@@ -3,10 +3,12 @@ import { OpenaiCredsDto, OpenaiDto } from '@api/integrations/chatbot/openai/dto/
 import { OpenaiService } from '@api/integrations/chatbot/openai/services/openai.service';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { WAMonitoringService } from '@api/services/monitor.service';
+import { Events } from '@api/types/wa.types';
 import { configService, Openai } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { BadRequestException } from '@exceptions';
 import { IntegrationSession, OpenaiBot } from '@prisma/client';
+import { describeHumanPause, resolveHumanResumeMinutes } from '@utils/humanPause';
 import OpenAI from 'openai';
 
 import { BaseChatbotController } from '../../base-chatbot.controller';
@@ -51,6 +53,11 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
   // Human takeover (pause on human fromMe, paused session creation, resume after humanResumeMinutes)
   protected supportsHumanPause(): boolean {
     return true;
+  }
+
+  // Webhook `openai.change_status` on pause (human or manual) and resume
+  protected getChangeStatusEvent(): Events | null {
+    return Events.OPENAI_CHANGE_STATUS;
   }
 
   // Bot value, then settings value, then default
@@ -448,6 +455,38 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       tokenParam: settings?.tokenParam ?? 'auto',
       humanResumeMinutes: settings?.humanResumeMinutes ?? 0,
     };
+  }
+
+  // Sessions plus `humanPause`: the state of the human takeover pause of each one (null when not paused)
+  public async fetchSessions(instance: InstanceDto, botId: string, remoteJid?: string) {
+    const sessions = await super.fetchSessions(instance, botId, remoteJid);
+
+    if (!Array.isArray(sessions) || sessions.length === 0) return sessions;
+
+    try {
+      const botIds = [...new Set<string>(sessions.map((session) => session.botId).filter(Boolean))];
+
+      // Bots and settings are read once for the whole list, not once per session
+      const [bots, settings] = await Promise.all([
+        this.botRepository.findMany({
+          where: { id: { in: botIds } },
+          select: { id: true, humanResumeMinutes: true },
+        }),
+        this.settingsRepository.findFirst({ where: { instanceId: sessions[0].instanceId } }),
+      ]);
+
+      const botsById = new Map<string, any>(bots.map((bot: any) => [bot.id, bot]));
+      const now = Date.now();
+
+      return sessions.map((session) => ({
+        ...session,
+        humanPause: describeHumanPause(session, resolveHumanResumeMinutes(botsById.get(session.botId), settings), now),
+      }));
+    } catch (error) {
+      // The extra field is informative: never fail the listing because of it
+      this.logger.error(error);
+      return sessions;
+    }
   }
 
   // Models - OpenAI specific functionality
