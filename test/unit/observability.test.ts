@@ -3,7 +3,7 @@ import '../helpers/setup';
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { HttpFactory, ObservabilityService, renderActiveHours } from '@api/services/observability.service';
+import { defaultHttp, HttpFactory, ObservabilityService, renderActiveHours } from '@api/services/observability.service';
 import {
   cuidFloor,
   readCgroupCpuLimit,
@@ -973,5 +973,93 @@ describe('observability: WhatsApp card (connection per instance)', () => {
       ['loja-1'],
     );
     assert.ok(failed.notes.some((note) => /Banco indisponível/.test(note)));
+  });
+});
+
+describe('observability: network errors and pasted keys', () => {
+  test('a request that loses its connection is retried once and then answers', async () => {
+    const http = await import('node:http');
+    let hits = 0;
+    const server = http.createServer((req, res) => {
+      hits++;
+      if (hits === 1) {
+        req.socket.destroy();
+        return;
+      }
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ ok: true }));
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const { port } = server.address() as any;
+
+    try {
+      const response = await defaultHttp(`http://127.0.0.1:${port}`, {}).get('/ping');
+      assert.deepEqual(response.data, { ok: true });
+      assert.equal(hits, 2);
+    } finally {
+      server.close();
+    }
+  });
+
+  test('an HTTP error is an answer and is not retried', async () => {
+    const http = await import('node:http');
+    let hits = 0;
+    const server = http.createServer((_req, res) => {
+      hits++;
+      res.statusCode = 401;
+      res.end('{}');
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const { port } = server.address() as any;
+
+    try {
+      await assert.rejects(defaultHttp(`http://127.0.0.1:${port}`, {}).get('/ping'));
+      assert.equal(hits, 1);
+    } finally {
+      server.close();
+    }
+  });
+
+  test('a key with an invalid header character says to paste it again, and timeouts are named', async () => {
+    const invalidChar = Object.assign(new TypeError('Invalid character in header content ["Authorization"]'), {
+      code: 'ERR_INVALID_CHAR',
+    });
+    const view = await provider(
+      'neon',
+      { NEON_API_KEY: 'k', NEON_PROJECT_ID: 'p' },
+      {
+        'console.neon.tech/api/v2/projects/p': invalidChar,
+        'console.neon.tech/api/v2/projects/p/branches': invalidChar,
+        'console.neon.tech/api/v2/projects/p/endpoints': invalidChar,
+      },
+    );
+    assert.equal(view.status, 'error');
+    assert.match(view.error, /caractere inválido/);
+
+    const timeout = Object.assign(new Error('timeout of 7000ms exceeded'), {
+      isAxiosError: true,
+      code: 'ECONNABORTED',
+    });
+    const slow = await provider(
+      'neon',
+      { NEON_API_KEY: 'k', NEON_PROJECT_ID: 'p' },
+      {
+        'console.neon.tech/api/v2/projects/p': timeout,
+      },
+    );
+    assert.match(slow.error, /não respondeu a tempo/);
+  });
+
+  test('quotes and invisible characters around a pasted key are removed before it is sent', async () => {
+    const calls: Call[] = [];
+    await provider(
+      'neon',
+      { NEON_API_KEY: '\u200B"napi_abc"\uFEFF ', NEON_PROJECT_ID: "'p'" },
+      { 'console.neon.tech/api/v2/projects/p': httpError(401) },
+      calls,
+    );
+    assert.ok(calls.length > 0);
+    assert.ok(calls.every((call) => call.url.startsWith('console.neon.tech/api/v2/projects/p')));
+    assert.equal(calls[0].headers.Authorization, 'Bearer napi_abc');
   });
 });

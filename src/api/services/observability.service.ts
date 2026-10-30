@@ -27,8 +27,9 @@ const logger = new Logger('ObservabilityService');
 const CACHE_TTL_MS = 60_000;
 /** A forced refresh within this window reuses the overview just built (double clicks, several tabs). */
 const FORCE_MIN_INTERVAL_MS = 5_000;
-const HTTP_TIMEOUT_MS = 8_000;
-const PROVIDER_TIMEOUT_MS = 10_000;
+const HTTP_TIMEOUT_MS = 7_000;
+// Room for one retry of a request that got no response (see defaultHttp)
+const PROVIDER_TIMEOUT_MS = 16_000;
 const NEON_API_URL = 'https://console.neon.tech/api/v2';
 const RENDER_API_URL = 'https://api.render.com/v1';
 const VERCEL_API_URL = 'https://api.vercel.com';
@@ -129,7 +130,31 @@ const SETUP: Record<string, SetupHelp> = {
   },
 };
 
-const defaultHttp: HttpFactory = (baseURL, headers) => axios.create({ baseURL, headers, timeout: HTTP_TIMEOUT_MS });
+/** Network errors worth one more try (the 0.15 vCPU free instance can lose a TLS handshake under load). */
+const TRANSIENT_NETWORK_CODES = new Set([
+  'ECONNABORTED',
+  'ETIMEDOUT',
+  'ECONNRESET',
+  'EAI_AGAIN',
+  'EPIPE',
+  'ERR_NETWORK',
+]);
+
+export const defaultHttp: HttpFactory = (baseURL, headers) => {
+  const client = axios.create({ baseURL, headers, timeout: HTTP_TIMEOUT_MS });
+
+  // GETs without any response are retried once; HTTP errors (401, 404, 5xx) are answers and are not retried
+  client.interceptors.response.use(undefined, (error) => {
+    const config = error?.config;
+    if (!config || config.__retried || error?.response || !TRANSIENT_NETWORK_CODES.has(error?.code)) {
+      return Promise.reject(error);
+    }
+    config.__retried = true;
+    return client.request(config);
+  });
+
+  return client;
+};
 
 const unwrapList = (data: any, key: string): any[] =>
   (Array.isArray(data) ? data : Array.isArray(data?.[`${key}s`]) ? data[`${key}s`] : [])
@@ -1139,7 +1164,20 @@ export class ObservabilityService {
     if (status === 404) return 'Recurso não encontrado: confira os IDs configurados.';
     if (status === 429) return 'Limite de consultas do provedor atingido.';
     if (status) return `Falha na API do provedor (HTTP ${status}).`;
-    if (axios.isAxiosError(error)) return 'Sem resposta do provedor (rede indisponível ou tempo esgotado).';
+
+    // Node refuses to send a header with a line break or an invisible character (a key pasted with them)
+    const code = String((error as any)?.code ?? '');
+    const raw = error instanceof Error ? error.message : '';
+    if (code === 'ERR_INVALID_CHAR' || /invalid character in header/i.test(raw)) {
+      return 'A chave configurada tem um caractere inválido (quebra de linha ou caractere invisível): apague a variável e cole a chave de novo no Render.';
+    }
+    if (code === 'ECONNABORTED' || code === 'ETIMEDOUT') {
+      return 'O provedor não respondeu a tempo (tentado 2 vezes). Clique em Atualizar em alguns minutos.';
+    }
+    if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') return 'Endereço do provedor não encontrado (DNS).';
+    if (axios.isAxiosError(error) || (error as any)?.isAxiosError) {
+      return `Sem resposta do provedor (rede indisponível ou tempo esgotado${code ? `; ${code}` : ''}).`;
+    }
 
     const message = error instanceof Error ? error.message : '';
     return message && message.length <= 160 && !/bearer|token|key=/i.test(message)
@@ -1152,7 +1190,12 @@ export class ObservabilityService {
   }
 
   private env(name: string): string | undefined {
-    const value = (this.options.env ?? process.env)[name]?.trim();
+    // Pasted keys may carry quotes or invisible characters (zero-width space, BOM) that break the HTTP header
+    const value = (this.options.env ?? process.env)[name]
+      ?.replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+      .trim()
+      .replace(/^(["'])(.*)\1$/, '$2')
+      .trim();
     return value || undefined;
   }
 
