@@ -7,6 +7,8 @@ import './unit/humanPause.test';
 import './unit/botMessageRegistry.test';
 import './unit/openai.service.test';
 import './unit/cloudapi-webhook.test';
+import './unit/observability.test';
 import './integration/openai-human-pause.test';
 import './integration/openai-status.test';
 import './integration/cloudapi-human-pause.test';
+import './integration/observability-system.test';
