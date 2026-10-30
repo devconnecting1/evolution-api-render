@@ -11,6 +11,8 @@ on:
       - "tsconfig.json"
       - "tsup.config.ts"
       - "runWithProvider.js"
+      - "test/**"
+      - ".eslintrc.js"
       - ".github/workflows/check_code_quality.yml"
   push:
     branches: [main, develop]
@@ -22,6 +24,8 @@ on:
       - "tsconfig.json"
       - "tsup.config.ts"
       - "runWithProvider.js"
+      - "test/**"
+      - ".eslintrc.js"
       - ".github/workflows/check_code_quality.yml"
   workflow_dispatch:
 
@@ -58,3 +62,49 @@ jobs:
 
       - name: Check build
         run: npm run build
+
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: evolution_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d evolution_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_PROVIDER: postgresql
+      # Disposable database of the job: the integration tests apply the migrations and use only this database
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/evolution_test?schema=public
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install packages
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Type-check tests
+        run: npm run test:types
+
+      - name: Run tests (unit + integration)
+        run: npm run test:run
