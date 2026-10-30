@@ -9,6 +9,7 @@ Groups (each one is applied once and leaves a marker comment at the top of the b
   tokens  - tokenParam and humanResumeMinutes in the OpenAI bot form (create/edit) and in the default settings;
             FormInput gets an optional `helper` (description) prop; fixes the bot query/form cache that was not
             keyed by bot id (editing bot B could show bot A data).
+  help    - short descriptions under the relevant OpenAI fields (bot form and default settings).
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: groups whose marker is present are skipped.
@@ -362,7 +363,147 @@ def patch_tokens(s):
     return insert_in_form(s, texts, 'tokens translations')
 
 
-GROUPS = [('tokens', patch_tokens)]
+# ---------------------------------------------------------------------------------------------------------------
+# Group "help"
+# ---------------------------------------------------------------------------------------------------------------
+HELP_TEXT = {
+    'pt': {
+        'stopBotFromMe': 'Quando alguém da equipe envia mensagem ao contato pelo próprio número (celular, WhatsApp Web '
+                         'ou Desktop), a IA pausa nesse chat para não atrapalhar o atendimento humano. Veja "Retomar a '
+                         'IA após".',
+        'listeningFromMe': 'A IA também processa as mensagens enviadas pelo próprio número, como se fossem do contato. '
+                           'Normalmente fica desligado.',
+        'expire': 'Não tem efeito no bot OpenAI. Para a IA voltar depois que a equipe assume a conversa, use "Retomar '
+                  'a IA após (minutos)".',
+        'keywordFinish': 'Se o contato enviar exatamente esta palavra (ex.: #sair), a conversa com a IA é encerrada. '
+                         'Vazio = desativado.',
+        'delayMessage': 'Tempo, em milissegundos, mostrando "digitando..." antes de enviar cada resposta (1000 = 1 '
+                        'segundo).',
+        'unknownMessage': 'Única mensagem enviada ao contato quando a OpenAI falha; deixe vazio para não enviar nada.',
+        'debounceTime': 'Junta mensagens enviadas em sequência antes de responder: espera este tempo (em segundos) sem '
+                        'novas mensagens e responde tudo de uma vez. 0 = responde cada mensagem na hora.',
+        'splitMessages': 'Divide respostas longas em várias mensagens, uma por parágrafo, como uma pessoa digitando.',
+        'timePerChar': 'Espera antes de cada mensagem, em milissegundos por caractere (mínimo 1 s, máximo 20 s), para '
+                       'simular digitação.',
+        'keepOpen': 'Ao encerrar a conversa (palavra de finalização ou ação "Encerrar"), o contato fica como "Encerrada" '
+                    'e a IA não volta a responder até ser reativada. Desligado: a sessão é apagada e a próxima mensagem '
+                    'do contato começa uma conversa nova.',
+        'maxTokens': 'Tamanho máximo da resposta (0 = 500). Modelos de raciocínio (gpt-5/o-series) gastam tokens '
+                     'pensando: use 2000+.',
+        'model': 'Modelo da OpenAI que gera as respostas. Escolha a credencial e clique em "Carregar Modelos" para ver '
+                 'a lista.',
+        'triggerType': 'Quando a IA começa a atender um contato: Todos = qualquer mensagem; Palavra-chave = só quando a '
+                       'mensagem casa com o gatilho; Avançado = condições combinadas. Atenção: "Nenhum" hoje se '
+                       'comporta como "Todos".',
+    },
+    'en': {
+        'stopBotFromMe': 'When someone on the team messages the contact from the number itself (phone, WhatsApp Web or '
+                         'Desktop), the AI pauses in that chat so it does not get in the way of the human. See "Resume '
+                         'AI after".',
+        'listeningFromMe': 'The AI also processes messages sent from the number itself, as if they came from the '
+                           'contact. Usually off.',
+        'expire': 'Has no effect on the OpenAI bot. To bring the AI back after the team takes over, use "Resume AI '
+                  'after (minutes)".',
+        'keywordFinish': 'If the contact sends exactly this word (e.g. #exit), the conversation with the AI is closed. '
+                         'Empty = disabled.',
+        'delayMessage': 'Time, in milliseconds, showing "typing..." before each reply is sent (1000 = 1 second).',
+        'unknownMessage': 'The only message sent to the contact when OpenAI fails; leave empty to send nothing.',
+        'debounceTime': 'Groups messages sent in a row before replying: waits this long (in seconds) without new '
+                        'messages and answers them all at once. 0 = replies to each message right away.',
+        'splitMessages': 'Splits long replies into several messages, one per paragraph, like a person typing.',
+        'timePerChar': 'Wait before each message, in milliseconds per character (minimum 1 s, maximum 20 s), to '
+                       'simulate typing.',
+        'keepOpen': 'When the conversation is closed (finish keyword or "Close" action), the contact stays as "Closed" '
+                    'and the AI does not reply again until it is resumed. Off: the session is deleted and the next '
+                    'message from the contact starts a new conversation.',
+        'maxTokens': 'Maximum reply size (0 = 500). Reasoning models (gpt-5/o-series) spend tokens thinking: use 2000+.',
+        'model': 'OpenAI model that writes the replies. Choose the credential and click "Load Models" to see the list.',
+        'triggerType': 'When the AI starts serving a contact: All = any message; Keyword = only when the message '
+                       'matches the trigger; Advanced = combined conditions. Note: "None" currently behaves like "All".',
+    },
+    'es': {
+        'stopBotFromMe': 'Cuando alguien del equipo envía un mensaje al contacto desde el propio número (celular, '
+                         'WhatsApp Web o Desktop), la IA se pausa en ese chat para no interferir en la atención humana. '
+                         'Ver "Reanudar la IA después de".',
+        'listeningFromMe': 'La IA también procesa los mensajes enviados desde el propio número, como si fueran del '
+                           'contacto. Normalmente desactivado.',
+        'expire': 'No tiene efecto en el bot OpenAI. Para que la IA vuelva después de que el equipo asuma la '
+                  'conversación, usa "Reanudar la IA después de (minutos)".',
+        'keywordFinish': 'Si el contacto envía exactamente esta palabra (ej.: #salir), la conversación con la IA se '
+                         'cierra. Vacío = desactivado.',
+        'delayMessage': 'Tiempo, en milisegundos, mostrando "escribiendo..." antes de enviar cada respuesta (1000 = 1 '
+                        'segundo).',
+        'unknownMessage': 'Único mensaje enviado al contacto cuando OpenAI falla; déjalo vacío para no enviar nada.',
+        'debounceTime': 'Junta los mensajes enviados seguidos antes de responder: espera este tiempo (en segundos) sin '
+                        'mensajes nuevos y responde todo de una vez. 0 = responde cada mensaje al instante.',
+        'splitMessages': 'Divide las respuestas largas en varios mensajes, uno por párrafo, como una persona escribiendo.',
+        'timePerChar': 'Espera antes de cada mensaje, en milisegundos por carácter (mínimo 1 s, máximo 20 s), para '
+                       'simular escritura.',
+        'keepOpen': 'Al cerrar la conversación (palabra de finalización o acción "Cerrar"), el contacto queda como '
+                    '"Cerrada" y la IA no vuelve a responder hasta que se reactive. Desactivado: la sesión se borra y '
+                    'el próximo mensaje del contacto inicia una conversación nueva.',
+        'maxTokens': 'Tamaño máximo de la respuesta (0 = 500). Los modelos de razonamiento (gpt-5/o-series) gastan '
+                     'tokens pensando: usa 2000+.',
+        'model': 'Modelo de OpenAI que genera las respuestas. Elige la credencial y haz clic en "Cargar Modelos" para '
+                 'ver la lista.',
+        'triggerType': 'Cuándo la IA empieza a atender a un contacto: Todos = cualquier mensaje; Palabra clave = solo '
+                       'cuando el mensaje coincide con el disparador; Avanzado = condiciones combinadas. Atención: '
+                       '"Ninguno" hoy se comporta como "Todos".',
+    },
+    'fr': {
+        'stopBotFromMe': "Quand quelqu'un de l'équipe écrit au contact depuis le numéro lui-même (téléphone, WhatsApp "
+                         "Web ou Desktop), l'IA se met en pause dans cette conversation pour ne pas gêner l'humain. "
+                         "Voir « Reprendre l'IA après ».",
+        'listeningFromMe': "L'IA traite aussi les messages envoyés depuis le numéro lui-même, comme s'ils venaient du "
+                           'contact. Généralement désactivé.',
+        'expire': "Sans effet sur le bot OpenAI. Pour que l'IA revienne après la prise en main par l'équipe, utilisez "
+                  "« Reprendre l'IA après (minutes) ».",
+        'keywordFinish': "Si le contact envoie exactement ce mot (ex. : #fin), la conversation avec l'IA est fermée. "
+                         'Vide = désactivé.',
+        'delayMessage': 'Durée, en millisecondes, d\'affichage de « en train d\'écrire... » avant chaque réponse '
+                        '(1000 = 1 seconde).',
+        'unknownMessage': "Seul message envoyé au contact quand OpenAI échoue ; laissez vide pour ne rien envoyer.",
+        'debounceTime': 'Regroupe les messages envoyés à la suite avant de répondre : attend cette durée (en secondes) '
+                        'sans nouveau message puis répond à tout en une fois. 0 = répond à chaque message tout de suite.',
+        'splitMessages': 'Découpe les longues réponses en plusieurs messages, un par paragraphe, comme une personne qui '
+                         'écrit.',
+        'timePerChar': 'Attente avant chaque message, en millisecondes par caractère (minimum 1 s, maximum 20 s), pour '
+                       'simuler la frappe.',
+        'keepOpen': "À la fermeture (mot de fin ou action « Fermer »), le contact reste « Fermée » et l'IA ne répond "
+                    "plus tant qu'elle n'est pas réactivée. Désactivé : la session est supprimée et le prochain message "
+                    'du contact démarre une nouvelle conversation.',
+        'maxTokens': 'Taille maximale de la réponse (0 = 500). Les modèles de raisonnement (gpt-5/o-series) consomment '
+                     'des tokens pour réfléchir : utilisez 2000+.',
+        'model': 'Modèle OpenAI qui rédige les réponses. Choisissez les identifiants et cliquez sur « Charger les '
+                 'Modèles » pour voir la liste.',
+        'triggerType': "Quand l'IA commence à servir un contact : Tous = n'importe quel message ; Mot-clé = seulement si "
+                       'le message correspond au déclencheur ; Avancé = conditions combinées. Attention : « Aucun » se '
+                       'comporte aujourd\'hui comme « Tous ».',
+    },
+}
+
+# (component, field, t function) -> description key. Bot form uses `f`, default settings use `e`.
+HELP_FIELDS = [
+    ('Pe', 'stopBotFromMe', 'f'), ('Pe', 'listeningFromMe', 'f'), ('le', 'expire', 'f'),
+    ('le', 'keywordFinish', 'f'), ('le', 'delayMessage', 'f'), ('le', 'unknownMessage', 'f'),
+    ('le', 'debounceTime', 'f'), ('Pe', 'splitMessages', 'f'), ('le', 'timePerChar', 'f'), ('Pe', 'keepOpen', 'f'),
+    ('le', 'maxTokens', 'f'), ('Jt', 'model', 'f'), ('Jt', 'triggerType', 'f'),
+    ('Pe', 'stopBotFromMe', 'e'), ('Pe', 'listeningFromMe', 'e'), ('le', 'expire', 'e'),
+    ('le', 'keywordFinish', 'e'), ('le', 'delayMessage', 'e'), ('le', 'unknownMessage', 'e'),
+    ('le', 'debounceTime', 'e'), ('Pe', 'splitMessages', 'e'), ('le', 'timePerChar', 'e'), ('Pe', 'keepOpen', 'e'),
+]
+
+
+def patch_help(s):
+    for comp, field, fn in HELP_FIELDS:
+        old = f'i.jsx({comp},{{name:"{field}",label:{fn}("openai.form.{field}.label"),'
+        new = old + f'helper:{fn}("openai.form.help.{field}"),'
+        s = rep(s, old, new, f'help {field} ({fn})')
+    texts = {k: 'help:' + js(v) + ',' for k, v in HELP_TEXT.items()}
+    return insert_in_form(s, texts, 'help translations')
+
+
+GROUPS = [('tokens', patch_tokens), ('help', patch_help)]
 
 
 def bump_index(html):
