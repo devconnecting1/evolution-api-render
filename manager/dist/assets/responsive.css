@@ -12,8 +12,26 @@
 
 /* ---------------------------------------------------------------- all sizes */
 .wa-menu-toggle,
+.wa-chat-back,
 .wa-overlay {
   display: none;
+}
+
+/* Dialogs taller than the screen (sessions) were centered and their top could not be reached:
+   keep every dialog inside the viewport and scroll its content. :where() keeps this at zero
+   specificity, so a dialog's own max-h-* class (e.g. sm:max-h-[600px]) still wins. */
+.fixed.inset-0.grid.place-items-center.overflow-y-auto {
+  place-items: safe center;
+}
+:where(.place-items-center.overflow-y-auto) > :where([role="dialog"]) {
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@supports (height: 100dvh) {
+  :where(.place-items-center.overflow-y-auto) > :where([role="dialog"]) {
+    max-height: calc(100dvh - 2rem);
+  }
 }
 
 #root {
@@ -108,6 +126,202 @@
   #whatsai-readme.wr-inline {
     left: 0 !important;
     border-left: 0;
+  }
+
+  /* Instances list: cards may shrink (the masked token used to push them past the screen) */
+  main.grid > * {
+    min-width: 0;
+  }
+
+  /* Chat list beside the conversation (768-1023px): wide enough for the Contatos/Grupos tabs */
+  [data-wa-chat] > [data-panel-group][data-panel-group-direction="horizontal"] > [data-panel]:first-child {
+    min-width: 220px;
+  }
+
+  /* Bot list of the integrations: long descriptions wrap inside the card */
+  button.flex.h-auto.flex-col.items-start {
+    white-space: normal;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  /* Page headers with several buttons (integrations) wrap instead of overflowing */
+  .mb-1.flex.items-center.justify-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Dialogs never wider than the screen either */
+  .place-items-center.overflow-y-auto > [role="dialog"] {
+    max-width: calc(100vw - 2rem);
+  }
+  /* The dialog is a grid: its children may shrink so wide tables scroll in their own container */
+  .place-items-center.overflow-y-auto > [role="dialog"] > * {
+    min-width: 0;
+  }
+}
+
+/* ----------------------------------------------------------- phones (< 768px) */
+@media (max-width: 767px) {
+  /* Stacked list + form (integrations): upstream kept the resizable panels with a fixed height,
+     so the form was cut to a few pixels. Let them take their natural height. */
+  [data-panel-group][data-panel-group-direction="vertical"]:not([data-wa-chat] > *) {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  [data-panel-group][data-panel-group-direction="vertical"]:not([data-wa-chat] > *) > [data-panel] {
+    flex: 0 0 auto !important;
+    overflow: visible !important;
+    padding-right: 0;
+  }
+  [data-panel-group][data-panel-group-direction="vertical"]:not([data-wa-chat] > *) > [data-panel] + [data-resize-handle] {
+    display: none;
+  }
+  [data-panel-group][data-panel-group-direction="vertical"]:not([data-wa-chat] > *) > [data-panel] ~ [data-panel] {
+    margin-top: 1rem;
+  }
+
+  /* Chat: list or conversation, one at a time, filling the screen below the header (the footer is
+     hidden there: with it the page scrolled when a new message called scrollIntoView) */
+  [data-wa-chat] {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  @supports (height: 100dvh) {
+    [data-wa-chat] {
+      height: calc(100dvh - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    }
+  }
+  [data-wa-layout]:has([data-wa-chat]) footer {
+    display: none;
+  }
+  [data-wa-chat] > [data-panel-group] {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+  }
+  [data-wa-chat] > [data-panel-group] > [data-resize-handle] {
+    display: none;
+  }
+  [data-wa-chat="list"] > [data-panel-group] > [data-panel]:first-child,
+  [data-wa-chat="conversation"] > [data-panel-group] > [data-panel]:last-child {
+    flex: 1 1 auto !important;
+  }
+  [data-wa-chat="list"] > [data-panel-group] > [data-panel]:first-child > .hidden {
+    display: flex;
+  }
+  [data-wa-chat="list"] > [data-panel-group] > [data-panel]:last-child,
+  [data-wa-chat="conversation"] > [data-panel-group] > [data-panel]:first-child {
+    display: none;
+  }
+  [data-wa-chat] .wa-chat-back {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 44px;
+    padding: 0 0.75rem 0 0.25rem;
+    border: 0;
+    border-radius: calc(var(--radius) - 2px);
+    background: transparent;
+    color: hsl(var(--foreground));
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  [data-wa-chat] .wa-chat-back:hover {
+    background: hsl(var(--accent));
+  }
+  [data-wa-chat] .chat-item {
+    min-height: 52px;
+  }
+
+  /* Dialogs: card that fits the phone, rounded, with safe-area margins */
+  .place-items-center.overflow-y-auto > [role="dialog"] {
+    width: calc(100% - 1rem);
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    margin: calc(0.5rem + env(safe-area-inset-top)) auto calc(0.5rem + env(safe-area-inset-bottom));
+    border-radius: var(--radius);
+    padding: 1.25rem 1rem;
+  }
+  .place-items-center.overflow-y-auto > [role="dialog"] > .flex.flex-col.text-center {
+    padding-left: 2rem; /* centered title stays centered next to the close button */
+  }
+}
+
+/* --------------------------- touch screens (phones, and tablets of any size with a touch pointer) */
+@media (max-width: 767px), (pointer: coarse) {
+  /* 16px text in fields: iOS zooms the page when a smaller field gets focus */
+  /* (:root raises textarea/select above Tailwind's .text-sm) */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  :root textarea,
+  :root select {
+    font-size: 16px;
+  }
+
+  /* Touch targets of at least 44px */
+  button:not([role="switch"]):not([role="checkbox"]):not([role="radio"]):not([data-testid="remove"]),
+  [role="combobox"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="menuitemcheckbox"],
+  [role="menuitemradio"],
+  [role="option"],
+  a.inline-flex,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]) {
+    min-height: 44px;
+  }
+  button.inline-flex.w-10,
+  button.inline-flex.w-8,
+  button.inline-flex.w-9 {
+    min-width: 44px;
+  }
+  [role="tablist"] {
+    height: auto;
+  }
+  [data-wa-header] > a {
+    height: 44px;
+  }
+  [data-wa-header] > a img {
+    height: 32px;
+  }
+  [data-wa-sidebar] ul ul button {
+    width: 100%;
+    text-align: left;
+  }
+  /* Dialog close (X): 16px icon with a 44px hit area */
+  .place-items-center.overflow-y-auto > [role="dialog"] > button.absolute.right-4.top-4 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    right: 0.25rem;
+    top: 0.25rem;
+  }
+  /* ...and the dialog title does not run under it */
+  .place-items-center.overflow-y-auto > [role="dialog"] > .flex.flex-col.text-center {
+    padding-right: 2rem;
+  }
+  /* Switches, checkboxes and the x of tags keep their look, the hit area grows around them */
+  button[role="switch"],
+  button[role="checkbox"],
+  button[role="radio"],
+  button[data-testid="remove"] {
+    position: relative;
+  }
+  button[role="switch"]::after,
+  button[role="checkbox"]::after,
+  button[role="radio"]::after,
+  button[data-testid="remove"]::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: 44px;
+    transform: translate(-50%, -50%);
   }
 }
 

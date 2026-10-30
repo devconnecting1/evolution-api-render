@@ -9,6 +9,9 @@ Groups (each one is applied once and leaves a marker comment at the top of the b
   drawer - instance layout: the sidebar becomes an off-canvas drawer below 1024px (state in the layout,
            closes on navigation, on a link click, on Escape, on the overlay and when the screen grows);
            the shared header gets a menu button (only rendered when the layout passes onMenu).
+  chat   - chat page on phones: the list and the conversation take the whole screen one at a time
+           (upstream hid the list below 768px) and the conversation gets a "Conversas" back button.
+  titles - screen-reader-only titles in the logout and QR code dialogs (Radix logged a console error).
 index.html groups (marker: an HTML comment in <head>):
   html   - responsive.css link and viewport-fit=cover (zoom stays allowed).
 Applying also bumps the bundle ?v= in index.html so browsers fetch the patched bundle.
@@ -107,7 +110,41 @@ def patch_drawer(s):
     return s
 
 
-GROUPS = [('drawer', patch_drawer)]
+# ------------------------------------------------------------------------------------------------- chat
+# In the chat component: e = isMD, m = remoteJid, h = instanceId, g = navigate, $o = PanelGroup, Hn = Panel.
+def patch_chat(s):
+    s = rep(s,
+            'return i.jsx("div",{className:"h-[calc(100vh-160px)] overflow-hidden",children:'
+            'i.jsxs($o,{direction:e?"horizontal":"vertical",className:"h-full",children:[',
+            'return i.jsxs("div",{className:"h-[calc(100vh-160px)] overflow-hidden",'
+            '"data-wa-chat":m?"conversation":"list",children:['
+            'm&&i.jsxs("button",{type:"button",className:"wa-chat-back",'
+            'onClick:()=>g(`/manager/instance/${h}/chat`),children:[' + SVG % '"m15 18-6-6 6-6"' + ',"Conversas"]}),'
+            'i.jsxs($o,{direction:e?"horizontal":"vertical",className:"h-full",children:[',
+            'chat root')
+    s = rep(s, 'scrollToBottom:x})})]})})}const fX=', 'scrollToBottom:x})})]})]})}const fX=', 'chat root end')
+    return s
+
+
+# --------------------------------------------------------------------------------------- dialog titles
+# The logout and QR code dialogs had no DialogTitle (zt), so Radix logged an accessibility error on every
+# open. A screen-reader-only title fixes it without changing the look (sr-only is absolutely positioned,
+# it takes no cell of the dialog grid).
+def patch_titles(s):
+    s = rep(s,
+            'i.jsxs(Nt,{children:[i.jsx($M,{}),i.jsx(Mt,{children:"Deseja realmente sair?"})',
+            'i.jsxs(Nt,{children:[i.jsx($M,{}),i.jsx(zt,{className:"sr-only",children:"Sair"}),'
+            'i.jsx(Mt,{children:"Deseja realmente sair?"})',
+            'logout dialog title')
+    s = rep(s,
+            'i.jsxs(Nt,{onCloseAutoFocus:j,children:[i.jsx(Mt,{children:e("instance.dashboard.button.qrcode.title")}),',
+            'i.jsxs(Nt,{onCloseAutoFocus:j,children:[i.jsx(zt,{className:"sr-only",children:'
+            'e("instance.dashboard.button.qrcode.title")}),i.jsx(Mt,{children:e("instance.dashboard.button.qrcode.title")}),',
+            'qrcode dialog title')
+    return s
+
+
+GROUPS = [('drawer', patch_drawer), ('chat', patch_chat), ('titles', patch_titles)]
 
 
 # ------------------------------------------------------------------------------------------------- html
