@@ -1315,7 +1315,11 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
 
       // Process with debounce if needed
       if (debounceTime && debounceTime > 0) {
-        this.processDebounce(this.userMessageDebounce, content, remoteJid, debounceTime, async (debouncedContent) => {
+        // One window per chat of each instance: the controller is shared by every instance, and the same contact
+        // writing to two instances must not have its messages merged and answered by only one of them
+        const debounceKey = `${instance.instanceId}:${remoteJid}`;
+
+        this.processDebounce(this.userMessageDebounce, content, debounceKey, debounceTime, async (debouncedContent) => {
           const reloaded = await this.reloadSessionAfterDebounce(instance, remoteJid, sessionJids, session);
 
           if (reloaded.skip) {
