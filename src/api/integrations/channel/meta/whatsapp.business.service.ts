@@ -22,7 +22,7 @@ import { ChannelStartupService } from '@api/services/channel.service';
 import { Events, wa } from '@api/types/wa.types';
 import { AudioConverter, Chatwoot, ConfigService, Database, Openai, S3, WaBusiness } from '@config/env.config';
 import { BadRequestException, InternalServerErrorException } from '@exceptions';
-import { registerBotMessageId } from '@utils/botMessageRegistry';
+import { isBotMessageId, registerBotMessageId } from '@utils/botMessageRegistry';
 import { createJid } from '@utils/createJid';
 import { status } from '@utils/renderStatus';
 import { sendTelemetry } from '@utils/sendTelemetry';
@@ -424,7 +424,9 @@ export class BusinessStartupService extends ChannelStartupService {
 
         const key = {
           id: message.id,
-          remoteJid: this.phoneNumber,
+          // From the message itself: this.phoneNumber is shared by every change of the webhook and may already
+          // belong to another contact when several changes arrive together
+          remoteJid: createJid(String(message.from)),
           fromMe: message.from === received.metadata.phone_number_id,
         };
 
@@ -774,7 +776,7 @@ export class BusinessStartupService extends ChannelStartupService {
         for await (const item of received.statuses) {
           const key = {
             id: item.id,
-            remoteJid: this.phoneNumber,
+            remoteJid: item.recipient_id ? createJid(String(item.recipient_id)) : this.phoneNumber,
             fromMe: this.phoneNumber === received.metadata.phone_number_id,
           };
           if (settings?.groups_ignore && key.remoteJid.includes('@g.us')) {
@@ -949,6 +951,23 @@ export class BusinessStartupService extends ChannelStartupService {
   private async messageEchoHandle(echo: any) {
     if (!echo?.id || !echo?.to) {
       this.logger.verbose('Message echo without id or recipient ignored');
+      return;
+    }
+
+    if (await isBotMessageId(this.instanceId, echo.id)) {
+      // Defensive: a send of the API itself echoed back is not a human message
+      this.logger.verbose(`Message echo ${echo.id} sent by a chatbot ignored`);
+      return;
+    }
+
+    const existing = await this.prismaRepository.message.findFirst({
+      where: { instanceId: this.instanceId, key: { path: ['id'], equals: echo.id } },
+      select: { id: true },
+    });
+
+    if (existing) {
+      // Meta redelivered the same echo
+      this.logger.verbose(`Message echo ${echo.id} already handled`);
       return;
     }
 
