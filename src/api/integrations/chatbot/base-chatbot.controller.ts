@@ -460,7 +460,8 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
 
       const remoteJid = data.remoteJid;
       const status = data.status;
-      const session = await this.getSession(remoteJid, instance);
+      // The route only carries instanceName: scope the session to this instance
+      const session = await this.getSession(remoteJid, { ...instance, instanceId });
 
       if (this.integrationName === 'Typebot') {
         const typebotData = {
@@ -474,6 +475,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
       if (status === 'delete') {
         await this.sessionRepository.deleteMany({
           where: {
+            instanceId: instanceId,
             remoteJid: remoteJid,
             botId: { not: null },
           },
@@ -494,6 +496,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         if (defaultSettingCheck?.keepOpen) {
           await this.sessionRepository.updateMany({
             where: {
+              instanceId: instanceId,
               remoteJid: remoteJid,
               botId: { not: null },
             },
@@ -504,6 +507,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         } else {
           await this.sessionRepository.deleteMany({
             where: {
+              instanceId: instanceId,
               remoteJid: remoteJid,
               botId: { not: null },
             },
