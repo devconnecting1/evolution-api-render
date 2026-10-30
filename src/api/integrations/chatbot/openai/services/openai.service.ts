@@ -43,8 +43,6 @@ const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
  * Handles both Assistant API and ChatCompletion API
  */
 export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> {
-  protected client: OpenAI;
-
   constructor(waMonitor: WAMonitoringService, prismaRepository: PrismaRepository, configService: ConfigService) {
     super(waMonitor, prismaRepository, 'OpenaiService', configService);
   }
@@ -57,11 +55,12 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
   }
 
   /**
-   * Initialize the OpenAI client with the provided API key
+   * OpenAI client for the provided API key. Each request uses its own client: this service is shared by every
+   * instance, so a client kept on the service could be replaced by a concurrent request of another instance
+   * (answering with the credentials, and on the account, of the wrong customer).
    */
-  protected initClient(apiKey: string) {
-    this.client = new OpenAI({ apiKey });
-    return this.client;
+  protected initClient(apiKey: string): OpenAI {
+    return new OpenAI({ apiKey });
   }
 
   /**
@@ -94,9 +93,6 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
           return;
         }
 
-        // Initialize OpenAI client for transcription
-        this.initClient(creds.apiKey);
-
         // Transcribe the audio
         const transcription = await this.speechToText(msg, instance).catch((error) => {
           this.logOpenaiError('speechToText', error);
@@ -122,9 +118,6 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
           this.logger.error(`OpenAI credentials not found. CredsId: ${openaiBot.openaiCredsId}`);
           return;
         }
-
-        // Initialize OpenAI client
-        this.initClient(creds.apiKey);
       }
 
       // Handle keyword finish
@@ -213,19 +206,16 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
   ): Promise<void> {
     this.logger.log(`Sending message to bot for remoteJid: ${remoteJid}, bot type: ${openaiBot.botType}`);
 
-    if (!this.client) {
-      this.logger.log('Client not initialized, initializing now');
-      const creds = await this.prismaRepository.openaiCreds.findUnique({
-        where: { id: openaiBot.openaiCredsId },
-      });
+    const creds = await this.prismaRepository.openaiCreds.findUnique({
+      where: { id: openaiBot.openaiCredsId },
+    });
 
-      if (!creds) {
-        this.logger.error(`OpenAI credentials not found in sendMessageToBot. CredsId: ${openaiBot.openaiCredsId}`);
-        return;
-      }
-
-      this.initClient(creds.apiKey);
+    if (!creds) {
+      this.logger.error(`OpenAI credentials not found in sendMessageToBot. CredsId: ${openaiBot.openaiCredsId}`);
+      return;
     }
+
+    const client = this.initClient(creds.apiKey);
 
     try {
       let message: string;
@@ -234,6 +224,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       if (openaiBot.botType === 'assistant') {
         this.logger.log('Processing with Assistant API');
         message = await this.processAssistantMessage(
+          client,
           instance,
           session,
           openaiBot,
@@ -246,6 +237,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       } else {
         this.logger.log('Processing with ChatCompletion API');
         message = await this.processChatCompletionMessage(
+          client,
           instance,
           openaiBot,
           remoteJid,
@@ -314,6 +306,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
    * Process message using the OpenAI Assistant API
    */
   private async processAssistantMessage(
+    client: OpenAI,
     instance: any,
     session: IntegrationSession,
     openaiBot: OpenaiBot,
@@ -338,7 +331,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       if (image) {
         try {
           const extension = image.mimetype.split('/')[1] || 'jpg';
-          const file = await this.client.files.create({
+          const file = await client.files.create({
             file: await toFile(Buffer.from(image.base64, 'base64'), `image.${extension}`, { type: image.mimetype }),
             purpose: 'vision',
           });
@@ -362,7 +355,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     // Create a new thread if one doesn't exist or invalid format
     // A session created by the human takeover keeps the chat JID as sessionId (not a thread id)
     if (!threadId || threadId === remoteJid || threadId.includes('@')) {
-      const newThread = await this.client.beta.threads.create();
+      const newThread = await client.beta.threads.create();
       threadId = newThread.id;
 
       // Save the new thread ID to the session
@@ -378,7 +371,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     }
 
     // Add message to thread
-    await this.client.beta.threads.messages.create(threadId, messageData);
+    await client.beta.threads.messages.create(threadId, messageData);
 
     if (fromMe) {
       sendTelemetry('/message/sendText');
@@ -386,7 +379,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     }
 
     // Run the assistant
-    const runAssistant = await this.client.beta.threads.runs.create(threadId, {
+    const runAssistant = await client.beta.threads.runs.create(threadId, {
       assistant_id: openaiBot.assistantId,
     });
 
@@ -398,7 +391,14 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     // Wait for the assistant to complete
     let response: Awaited<ReturnType<typeof this.getAIResponse>>;
     try {
-      response = await this.getAIResponse(threadId, runAssistant.id, openaiBot.functionUrl, remoteJid, pushName);
+      response = await this.getAIResponse(
+        client,
+        threadId,
+        runAssistant.id,
+        openaiBot.functionUrl,
+        remoteJid,
+        pushName,
+      );
     } finally {
       if (instance.integration === Integration.WHATSAPP_BAILEYS) {
         await instance.client.sendPresenceUpdate('paused', remoteJid).catch(() => undefined);
@@ -444,6 +444,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
    * Process message using the OpenAI ChatCompletion API
    */
   private async processChatCompletionMessage(
+    client: OpenAI,
     instance: any,
     openaiBot: OpenaiBot,
     remoteJid: string,
@@ -453,20 +454,6 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     currentSession?: IntegrationSession,
   ): Promise<string> {
     this.logger.log('Starting processChatCompletionMessage');
-
-    // Check if client is initialized
-    if (!this.client) {
-      this.logger.log('Client not initialized in processChatCompletionMessage, initializing now');
-      const creds = await this.prismaRepository.openaiCreds.findUnique({
-        where: { id: openaiBot.openaiCredsId },
-      });
-
-      if (!creds) {
-        throw new Error(`OpenAI credentials not found. CredsId: ${openaiBot.openaiCredsId}`);
-      }
-
-      this.initClient(creds.apiKey);
-    }
 
     // Check if model is defined
     if (!openaiBot.model) {
@@ -582,7 +569,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     // Send the request to OpenAI
     try {
       this.logger.log('Sending request to OpenAI API');
-      const completions = await this.createChatCompletion(openaiBot, messages, tokenParam);
+      const completions = await this.createChatCompletion(client, openaiBot, messages, tokenParam);
 
       if (instance.integration === Integration.WHATSAPP_BAILEYS) {
         await instance.client.sendPresenceUpdate('paused', remoteJid);
@@ -642,13 +629,14 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
    * Wait for and retrieve the AI response
    */
   private async getAIResponse(
+    client: OpenAI,
     threadId: string,
     runId: string,
     functionUrl: string | null,
     remoteJid: string,
     pushName: string,
   ) {
-    let status = await this.client.beta.threads.runs.retrieve(threadId, runId);
+    let status = await client.beta.threads.runs.retrieve(threadId, runId);
 
     let maxRetries = 60; // 1 minute with 1s intervals
     const checkInterval = 1000; // 1 second
@@ -661,7 +649,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       maxRetries > 0
     ) {
       await new Promise((resolve) => setTimeout(resolve, checkInterval));
-      status = await this.client.beta.threads.runs.retrieve(threadId, runId);
+      status = await client.beta.threads.runs.retrieve(threadId, runId);
 
       // Handle tool calls
       if (status.status === 'requires_action' && status.required_action?.type === 'submit_tool_outputs') {
@@ -701,7 +689,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
           }
         }
 
-        await this.client.beta.threads.runs.submitToolOutputs(threadId, runId, {
+        await client.beta.threads.runs.submitToolOutputs(threadId, runId, {
           tool_outputs: toolOutputs,
         });
       }
@@ -710,7 +698,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     }
 
     if (status.status === 'completed') {
-      const messages = await this.client.beta.threads.messages.list(threadId);
+      const messages = await client.beta.threads.messages.list(threadId);
       return messages;
     } else {
       this.logger.error(
@@ -826,6 +814,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
    * In "auto" mode the working parameter is remembered per model; in forced mode it is not.
    */
   private async createChatCompletion(
+    client: OpenAI,
     openaiBot: OpenaiBot,
     messages: any[],
     tokenParam: { mode: TokenParamMode; param: TokenParamName },
@@ -838,7 +827,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     };
 
     try {
-      return await this.client.chat.completions.create(buildParams(tokenParam.param));
+      return await client.chat.completions.create(buildParams(tokenParam.param));
     } catch (error) {
       if (!this.isUnsupportedTokenParamError(error, tokenParam.param)) {
         throw error;
@@ -858,7 +847,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         );
       }
 
-      const completion = await this.client.chat.completions.create(buildParams(fallbackParam));
+      const completion = await client.chat.completions.create(buildParams(fallbackParam));
 
       if (tokenParam.mode === 'auto' && openaiBot.model) {
         learnedTokenParamByModel.set(openaiBot.model, fallbackParam);
