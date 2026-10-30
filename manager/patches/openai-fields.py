@@ -10,6 +10,8 @@ Groups (each one is applied once and leaves a marker comment at the top of the b
             FormInput gets an optional `helper` (description) prop; fixes the bot query/form cache that was not
             keyed by bot id (editing bot B could show bot A data).
   help    - short descriptions under the relevant OpenAI fields (bot form and default settings).
+  pause   - sessions dialog: human pause state per contact (badge, time to resume, last human message),
+            "Resume now"/"Pause" buttons, works from the OpenAI page header too (all bots, with a Bot column).
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: groups whose marker is present are skipped.
@@ -503,7 +505,136 @@ def patch_help(s):
     return insert_in_form(s, texts, 'help translations')
 
 
-GROUPS = [('tokens', patch_tokens), ('help', patch_help)]
+# ---------------------------------------------------------------------------------------------------------------
+# Group "pause"
+# ---------------------------------------------------------------------------------------------------------------
+PAUSE_TEXT = {
+    'pt': {
+        'active': 'IA ativa', 'human': 'Pausada por humano', 'manual': 'Pausada manualmente',
+        'legacy': 'Pausada (anterior à atualização)', 'paused': 'Pausada', 'closed': 'Encerrada',
+        'resumesIn': 'Volta em {{time}}', 'resumesNext': 'Volta na próxima mensagem do contato',
+        'manualOnly': 'Só volta quando reativada manualmente', 'lastHuman': 'Última mensagem humana: {{time}}',
+        'resumeNow': 'Reativar agora', 'pause': 'Pausar', 'bot': 'Bot',
+        'actionResume': 'Reativar IA', 'actionPause': 'Pausar IA', 'actionClose': 'Encerrar',
+        'actionDelete': 'Excluir sessão',
+    },
+    'en': {
+        'active': 'AI active', 'human': 'Paused by a human', 'manual': 'Paused manually',
+        'legacy': 'Paused (before the update)', 'paused': 'Paused', 'closed': 'Closed',
+        'resumesIn': 'Resumes in {{time}}', 'resumesNext': "Resumes on the contact's next message",
+        'manualOnly': 'Only resumes when reactivated manually', 'lastHuman': 'Last human message: {{time}}',
+        'resumeNow': 'Resume now', 'pause': 'Pause', 'bot': 'Bot',
+        'actionResume': 'Resume AI', 'actionPause': 'Pause AI', 'actionClose': 'Close', 'actionDelete': 'Delete session',
+    },
+    'es': {
+        'active': 'IA activa', 'human': 'Pausada por un humano', 'manual': 'Pausada manualmente',
+        'legacy': 'Pausada (anterior a la actualización)', 'paused': 'Pausada', 'closed': 'Cerrada',
+        'resumesIn': 'Vuelve en {{time}}', 'resumesNext': 'Vuelve con el próximo mensaje del contacto',
+        'manualOnly': 'Solo vuelve cuando se reactiva manualmente', 'lastHuman': 'Último mensaje humano: {{time}}',
+        'resumeNow': 'Reactivar ahora', 'pause': 'Pausar', 'bot': 'Bot',
+        'actionResume': 'Reactivar IA', 'actionPause': 'Pausar IA', 'actionClose': 'Cerrar',
+        'actionDelete': 'Eliminar sesión',
+    },
+    'fr': {
+        'active': 'IA active', 'human': 'En pause (humain)', 'manual': 'En pause (manuelle)',
+        'legacy': 'En pause (avant la mise à jour)', 'paused': 'En pause', 'closed': 'Fermée',
+        'resumesIn': 'Reprend dans {{time}}', 'resumesNext': 'Reprend au prochain message du contact',
+        'manualOnly': 'Ne reprend que si réactivée manuellement', 'lastHuman': 'Dernier message humain : {{time}}',
+        'resumeNow': 'Réactiver', 'pause': 'Mettre en pause', 'bot': 'Bot',
+        'actionResume': "Réactiver l'IA", 'actionPause': "Mettre l'IA en pause", 'actionClose': 'Fermer',
+        'actionDelete': 'Supprimer la session',
+    },
+}
+
+RJ_COL = ('{accessorKey:"remoteJid",header:()=>i.jsx("div",{className:"text-center",'
+          'children:t("openai.sessions.table.remoteJid")}),cell:({row:w})=>i.jsx("div",{children:w.getValue("remoteJid")})}')
+SID_COL = ('{accessorKey:"sessionId",header:()=>i.jsx("div",{className:"text-center",'
+           'children:t("openai.sessions.table.sessionId")}),cell:({row:w})=>i.jsx("div",{children:w.getValue("sessionId")})}')
+
+STATE_CELL = (
+    # time left as "1h 30min" / "45min" / "2d 3h"
+    'const __ofFmt=_sec=>{const _m=Math.max(1,Math.ceil(_sec/60)),_h=Math.floor(_m/60),_d=Math.floor(_h/24);'
+    'return _d>0?`${_d}d ${_h%24}h`:_h>0?(_m%60?`${_h}h ${_m%60}min`:`${_h}h`):`${_m}min`},'
+    # humanPause: null = not paused; undefined = old backend (falls back to the plain status)
+    '__ofCell=_c=>{const _p=_c.humanPause,_g="border-emerald-500/20 bg-emerald-50/50 text-emerald-900",'
+    '_a="border-amber-500/20 bg-amber-50/50 text-amber-900";let _k,_cl;'
+    'if(_c.status==="closed")_k="closed";'
+    'else if(_p){_k=_p.reason==="manual"?"manual":_p.reason==="legacy"?"legacy":"human";_cl=_a}'
+    'else if(_c.status==="paused"){_k="paused";_cl=_a}'
+    'else if(_c.status==="opened"){_k="active";_cl=_g}'
+    'const _isP=!!_p||_c.status==="paused",_l=[];'
+    'if(_p){if(_p.autoResume&&typeof _p.remainingSeconds==="number"){'
+    'const _r=Math.max(0,_p.remainingSeconds-Math.floor(Math.max(0,__ofNow-(__ofDU||__ofNow))/1e3));'
+    '_l.push(_r>0?t("openai.sessions.state.resumesIn",{time:__ofFmt(_r)}):t("openai.sessions.state.resumesNext"))}'
+    'else _l.push(t("openai.sessions.state.manualOnly"));'
+    'if(_p.lastHumanMessageAt){const _t=new Date(_p.lastHumanMessageAt);'
+    'isNaN(_t.getTime())||_l.push(t("openai.sessions.state.lastHuman",{time:_t.toLocaleString(void 0,'
+    '{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}))}}'
+    'return i.jsxs("div",{className:"flex min-w-[8rem] flex-col items-start gap-1","data-session-state":_k||_c.status,children:['
+    '_k?i.jsx(vu,{variant:_k==="closed"?"secondary":"outline",className:_cl,children:t("openai.sessions.state."+_k)})'
+    ':i.jsx("span",{children:_c.status}),'
+    '..._l.map((_z,_j)=>i.jsx("span",{className:"text-xs text-muted-foreground",children:_z},_j)),'
+    '_c.status!=="closed"&&i.jsx(se,{type:"button",size:"sm",variant:_isP?"default":"outline",className:"mt-1",'
+    'onClick:()=>x(_c.remoteJid,_isP?"opened":"paused"),'
+    'children:t(_isP?"openai.sessions.state.resumeNow":"openai.sessions.state.pause")})]})};'
+)
+
+
+def patch_pause(s):
+    # Columns: contact name and AI state first (what matters, and what fits a phone screen), then jid and session id
+    s = rep(s, SID_COL + ',', '', 'sessions: move sessionId column')
+    # Sessions query keyed by bot (it was shared by every bot of the instance)
+    s = rep(s, 'queryKey:yre({instanceName:t})', 'queryKey:yre({instanceName:t,openaiId:r})', 'sessions query key')
+    # Without a bot (header button of the OpenAI page) list every OpenAI session of the instance: the backend
+    # returns all of them when the bot id does not exist. Re-fetch every minute and tick the countdown every 30 s.
+    s = rep(s,
+            '{data:d,refetch:f}=xre({instanceName:n?.name,openaiId:e,enabled:l}),[h,m]=y.useState("");function g(){f()}',
+            '{data:d,refetch:f,dataUpdatedAt:__ofDU}=xre({instanceName:n?.name,openaiId:e??"all",enabled:l,'
+            'refetchInterval:6e4}),[h,m]=y.useState(""),[__ofNow,__ofSetNow]=y.useState(()=>Date.now()),'
+            '{data:__ofBots}=FI({instanceName:n?.name,enabled:l&&!e});'
+            'y.useEffect(()=>{if(!l)return;__ofSetNow(Date.now());const __ofI=setInterval(()=>__ofSetNow(Date.now()),3e4);'
+            'return()=>clearInterval(__ofI)},[l,__ofDU]);function g(){f()}',
+            'sessions query')
+    s = rep(s,
+            '{accessorKey:"status",header:()=>i.jsx("div",{className:"text-center",'
+            'children:t("openai.sessions.table.status")}),cell:({row:w})=>i.jsx("div",{children:w.getValue("status")})}',
+            '...(e?[]:[{accessorKey:"botId",header:()=>i.jsx("div",{className:"text-center",'
+            'children:t("openai.sessions.state.bot")}),cell:({row:w})=>i.jsx("div",{children:'
+            '__ofBots?.find?.(_b=>_b.id===w.original.botId)?.description||w.original.botId||""})}]),'
+            '{accessorKey:"status",header:()=>i.jsx("div",{className:"text-center",'
+            'children:t("openai.sessions.table.status")}),cell:({row:w})=>__ofCell(w.original)},' + RJ_COL + ',' + SID_COL,
+            'sessions status cell')
+    # The dialog is a grid: without min-w-0 the table stretches it past a phone screen instead of scrolling
+    s = rep(s,
+            'i.jsxs("div",{children:[i.jsxs("div",{className:"flex items-center justify-between gap-6 p-5",'
+            'children:[i.jsx(ne,{placeholder:t("openai.sessions.search")',
+            'i.jsxs("div",{className:"min-w-0",children:[i.jsxs("div",{className:"flex items-center justify-between '
+            'gap-6 p-5",children:[i.jsx(ne,{placeholder:t("openai.sessions.search")',
+            'sessions dialog width')
+    # helpers live inside $I (they use t, x and the clock state)
+    s = rep(s,
+            'const x=async(w,C)=>{try{if(!n)return;await r({instanceName:n.name,token:n.token,remoteJid:w,status:C}),'
+            'me.success(t("openai.toast.success.status")),g()}catch(k){console.error("Error:",k),'
+            'me.error(`Erro: ${k?.response?.data?.response?.message}`)}},b=[' + RJ_COL + ',',
+            'const x=async(w,C)=>{try{if(!n)return;await r({instanceName:n.name,token:n.token,remoteJid:w,status:C}),'
+            'me.success(t("openai.toast.success.status")),g()}catch(k){console.error("Error:",k),'
+            'me.error(`Erro: ${k?.response?.data?.response?.message}`)}};' + STATE_CELL + 'const b=[',
+            'sessions helpers')
+    # Dropdown: "resume" also for a session that is opened but still marked as human paused
+    s = rep(s,
+            'C.status!=="opened"&&i.jsxs(wt,{onClick:()=>x(C.remoteJid,"opened"),children:[i.jsx(Fi,'
+            '{className:"mr-2 h-4 w-4"}),t("openai.sessions.table.actions.open")]})',
+            '(C.status!=="opened"||!!C.humanPause)&&i.jsxs(wt,{onClick:()=>x(C.remoteJid,"opened"),children:[i.jsx(Fi,'
+            '{className:"mr-2 h-4 w-4"}),t("openai.sessions.state.actionResume")]})',
+            'dropdown resume')
+    s = rep(s, 't("openai.sessions.table.actions.pause")', 't("openai.sessions.state.actionPause")', 'dropdown pause')
+    s = rep(s, 't("openai.sessions.table.actions.close")', 't("openai.sessions.state.actionClose")', 'dropdown close')
+    s = rep(s, 't("openai.sessions.table.actions.delete")', 't("openai.sessions.state.actionDelete")', 'dropdown delete')
+    texts = {k: 'state:' + js(v) + ',' for k, v in PAUSE_TEXT.items()}
+    return insert_translations(s, 'sessions:{', texts, 'pause translations')
+
+
+GROUPS = [('tokens', patch_tokens), ('help', patch_help), ('pause', patch_pause)]
 
 
 def bump_index(html):
@@ -530,15 +661,17 @@ def main():
         print('ok: all groups applied' if ok else f'missing: {missing or ["index.html cache version"]}')
         return 0 if ok else 1
 
+    report = []
     for name, fn in GROUPS:
         if name not in missing:
-            print(f'{name}: already applied')
+            report.append(f'{name}: already applied')
             continue
         s = marker(name) + fn(s)
-        print(f'{name}: applied')
+        report.append(f'{name}: applied')
 
     new_html = bump_index(html)
     open(BUNDLE, 'w', encoding='utf-8').write(s)
+    print('\n'.join(report))
     if new_html != html:
         open(INDEX, 'w', encoding='utf-8').write(new_html)
         print(f'index.html: bundle ?v={CACHE_VERSION}')
