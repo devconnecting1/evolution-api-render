@@ -12,6 +12,11 @@ class Redis {
     this.conf = configService.get<CacheConf>('CACHE')?.REDIS;
   }
 
+  /** The client created by `getConnection`, if any, without connecting (for health checks). */
+  peek(): RedisClientType | null {
+    return this.client;
+  }
+
   getConnection(): RedisClientType {
     if (this.connected) {
       return this.client;
