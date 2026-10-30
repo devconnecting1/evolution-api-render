@@ -1,0 +1,531 @@
+/*
+ * WhatsAI Manager: entry screens (login, "/" and instance list). Written by hand, linked by
+ * manager/patches/home-redesign.py. Everything is scoped to [data-wa-home] (set by that patch), so the
+ * other screens keep their look. Light theme only.
+ */
+
+[data-wa-home] {
+  --wa-ink: #0d0d0d;
+  --wa-ink-soft: #3a3d3d;
+  --wa-line: hsl(178 10% 87%);
+  --wa-line-strong: hsl(178 8% 74%);
+  --wa-paper: #ffffff;
+  --wa-accent-from: #0b5d4b;
+  --wa-accent-to: #1fae74;
+  --wa-ok: #12805a;
+  --wa-ok-bg: #e6f5ee;
+  --wa-warn: #9a5b00;
+  --wa-warn-bg: #fff4dc;
+  --wa-bad: #b42318;
+  --wa-bad-bg: #fdecea;
+  --wa-radius: 6px;
+  --wa-gutter: 32px;
+  color: var(--wa-ink);
+}
+
+/* ------------------------------------------------------------------------------- shared pieces */
+.wa-eyebrow,
+.wa-home-tag,
+.wa-feature-label,
+.wa-section-title {
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+[data-wa-home] .wa-btn-ink {
+  background: var(--wa-ink);
+  color: #fff;
+  border-radius: var(--wa-radius);
+}
+[data-wa-home] .wa-btn-ink:hover {
+  background: #262626;
+}
+[data-wa-home] .wa-btn-line {
+  border-color: var(--wa-ink);
+  border-radius: var(--wa-radius);
+  background: transparent;
+  color: var(--wa-ink);
+}
+[data-wa-home] .wa-btn-line:hover {
+  background: hsl(var(--muted) / 0.6);
+}
+[data-wa-home] input {
+  border-radius: var(--wa-radius);
+  border-color: var(--wa-line-strong);
+  background: var(--wa-paper);
+}
+[data-wa-home] :is(button, a):focus-visible,
+[data-wa-home] input:focus-visible {
+  outline: 2px solid var(--wa-ink);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------- top bar of login and "/" */
+[data-wa-home="login"],
+[data-wa-home="landing"] {
+  background: var(--wa-paper);
+}
+.wa-home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  /* content lines up with the hero text (1280px column, 56px inside it) */
+  padding: env(safe-area-inset-top) max(var(--wa-gutter), calc((100% - 1280px) / 2 + 56px)) 0;
+  border-bottom: 1px solid var(--wa-line);
+}
+.wa-home-brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  /* the logo SVG centers its text in a wide box (~28px empty on each side at this height) */
+  margin-left: -26px;
+}
+.wa-home-logo {
+  display: block;
+  height: 28px;
+  width: auto;
+}
+.wa-home-top-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.wa-home-main {
+  flex: 1;
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------------------------------ hero */
+.wa-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  max-width: 1280px;
+  margin: 0 auto;
+  border-left: 1px solid var(--wa-line);
+  border-right: 1px solid var(--wa-line);
+}
+.wa-hero-solo {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr);
+  isolation: isolate;
+}
+/* "/" has no card beside the copy: the fine grid fills the right side */
+.wa-hero-solo::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 58%;
+  z-index: -1;
+  background-image:
+    linear-gradient(var(--wa-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--wa-line) 1px, transparent 1px);
+  background-size: 84px 84px;
+  background-position: -1px -1px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
+  mask-image: linear-gradient(90deg, transparent, #000 45%);
+}
+.wa-hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  padding: 96px var(--wa-gutter) 88px 56px;
+}
+.wa-hero-solo .wa-hero-copy {
+  max-width: 980px;
+}
+.wa-hero-title {
+  margin: 0;
+  font-size: clamp(2.5rem, 5.4vw, 4.75rem);
+  font-weight: 560;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  color: var(--wa-ink);
+  text-wrap: balance;
+}
+.wa-accent {
+  background: linear-gradient(90deg, var(--wa-accent-from), var(--wa-accent-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.wa-hero-sub {
+  max-width: 34rem;
+  margin: 0;
+  font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
+  line-height: 1.55;
+  color: var(--wa-ink-soft);
+}
+.wa-hero-note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+.wa-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.wa-hero-actions > * {
+  min-height: 48px;
+}
+
+/* Login card beside the copy, on a fine grid that fades out */
+.wa-hero-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 48px;
+  border-left: 1px solid var(--wa-line);
+  overflow: hidden;
+  isolation: isolate;
+}
+.wa-hero-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(var(--wa-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--wa-line) 1px, transparent 1px);
+  background-size: 84px 84px;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(ellipse at 60% 50%, #000 35%, transparent 80%);
+  mask-image: radial-gradient(ellipse at 60% 50%, #000 35%, transparent 80%);
+}
+[data-wa-home] .wa-login-card {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--wa-line-strong);
+  border-radius: var(--wa-radius);
+  background: var(--wa-paper);
+  color: var(--wa-ink);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 24px 48px -24px rgb(0 0 0 / 0.18);
+}
+[data-wa-home] .wa-login-head {
+  padding-bottom: 8px;
+}
+[data-wa-home] .wa-login-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+[data-wa-home] .wa-login-card button[type="submit"] {
+  min-height: 44px;
+}
+
+/* ------------------------------------------------------------------------------ highlights strip */
+.wa-features {
+  border-top: 1px solid var(--wa-line);
+  border-bottom: 1px solid var(--wa-line);
+}
+.wa-section-title {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 56px;
+  border-left: 1px solid var(--wa-line);
+  border-right: 1px solid var(--wa-line);
+  border-bottom: 1px solid var(--wa-line);
+}
+.wa-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  border-left: 1px solid var(--wa-line);
+}
+.wa-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 32px 28px 36px;
+  border-right: 1px solid var(--wa-line);
+}
+.wa-feature-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--wa-ink);
+}
+.wa-feature-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--wa-ink-soft);
+}
+
+/* "/" : the resource cards below the hero */
+[data-wa-home="landing"] .wa-landing-more .rounded-lg.border {
+  border-color: var(--wa-line-strong);
+  border-radius: var(--wa-radius);
+  background: var(--wa-paper);
+  box-shadow: none;
+}
+[data-wa-home="landing"] .wa-landing-more a.rounded-lg.border:hover {
+  border-color: var(--wa-ink);
+  background: var(--wa-paper);
+}
+/* the "Acessar o painel" card repeats the hero button */
+[data-wa-home="landing"] .wa-landing-more > div > .rounded-lg.border.mb-8 {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------------- instance list */
+div:has(> main > [data-wa-home="instances"]) > [data-wa-header] {
+  border-bottom: 1px solid hsl(178 10% 87%);
+}
+[data-wa-home="instances"] {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--wa-gutter);
+  padding-right: var(--wa-gutter);
+}
+[data-wa-home="instances"] .wa-list-head {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 32px 0 24px;
+  border-bottom: 1px solid var(--wa-line);
+}
+.wa-list-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.wa-list-title {
+  margin: 0;
+  font-size: clamp(2.25rem, 4.2vw, 3.25rem);
+  font-weight: 560;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  color: var(--wa-ink);
+}
+.wa-list-sub {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--wa-ink-soft);
+}
+[data-wa-home="instances"] .wa-list-actions > * {
+  border-radius: var(--wa-radius);
+}
+[data-wa-home="instances"] .wa-list-actions .bg-primary {
+  background: var(--wa-ink);
+  color: #fff;
+}
+[data-wa-home="instances"] .wa-list-actions .bg-primary:hover {
+  background: #262626;
+}
+[data-wa-home="instances"] .wa-list-tools {
+  margin: 20px 0 24px;
+  padding-left: 0;
+  padding-right: 0;
+}
+[data-wa-home="instances"] .wa-list-tools button {
+  border: 1px solid var(--wa-line-strong);
+  border-radius: var(--wa-radius);
+  background: var(--wa-paper);
+}
+
+/* Cards may shrink (same rule responsive.css had for the former main.grid) */
+[data-wa-instances] > * {
+  min-width: 0;
+}
+[data-wa-home] .wa-instance-card {
+  position: relative;
+  border: 1px solid var(--wa-line-strong);
+  border-radius: var(--wa-radius);
+  background: var(--wa-paper);
+  color: var(--wa-ink);
+  box-shadow: none;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+[data-wa-home] .wa-instance-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--wa-line-strong);
+}
+[data-wa-home] .wa-instance-card[data-status="open"]::before {
+  background: linear-gradient(90deg, var(--wa-accent-from), var(--wa-accent-to));
+}
+[data-wa-home] .wa-instance-card[data-status="connecting"]::before {
+  background: #e0a100;
+}
+[data-wa-home] .wa-instance-card[data-status="close"]::before,
+[data-wa-home] .wa-instance-card[data-status="closed"]::before {
+  background: var(--wa-bad);
+}
+[data-wa-home] .wa-instance-card:hover {
+  border-color: var(--wa-ink);
+  box-shadow: 0 16px 32px -24px rgb(0 0 0 / 0.35);
+}
+[data-wa-home] .wa-instance-card h3 {
+  font-size: 1.125rem;
+  letter-spacing: -0.015em;
+}
+/* masked token: neutral mono strip instead of the teal block */
+[data-wa-home] .wa-instance-card .bg-primary\/20 {
+  border: 1px solid var(--wa-line);
+  border-radius: 4px;
+  background: hsl(178 12% 97%);
+}
+/* avatar without a profile picture rendered as an empty 40px gap */
+[data-wa-home] .wa-instance-card span.rounded-full:empty {
+  display: none;
+}
+[data-wa-home] .wa-instance-card pre {
+  font-family: "Geist Mono", ui-monospace, monospace;
+}
+/* status badge: tinted, with a dot */
+[data-wa-home] .wa-card-foot > .rounded-full:first-child {
+  gap: 6px;
+  border: 1px solid transparent;
+  background: hsl(var(--muted));
+  color: var(--wa-ink-soft);
+}
+[data-wa-home] .wa-card-foot > .rounded-full:first-child::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+[data-wa-home] [data-status="open"] .wa-card-foot > .rounded-full:first-child {
+  background: var(--wa-ok-bg);
+  border-color: rgb(18 128 90 / 0.25);
+  color: var(--wa-ok);
+}
+[data-wa-home] [data-status="connecting"] .wa-card-foot > .rounded-full:first-child {
+  background: var(--wa-warn-bg);
+  border-color: rgb(154 91 0 / 0.25);
+  color: var(--wa-warn);
+}
+[data-wa-home] :is([data-status="close"], [data-status="closed"]) .wa-card-foot > .rounded-full:first-child {
+  background: var(--wa-bad-bg);
+  border-color: rgb(180 35 24 / 0.25);
+  color: var(--wa-bad);
+}
+/* "Excluir": outlined until hover (it was the loudest element of every card) */
+[data-wa-home] .wa-card-foot > button.bg-destructive {
+  border: 1px solid rgb(180 35 24 / 0.45);
+  border-radius: var(--wa-radius);
+  background: transparent;
+  color: var(--wa-bad);
+}
+[data-wa-home] .wa-card-foot > button.bg-destructive:hover {
+  background: var(--wa-bad);
+  color: #fff;
+}
+.wa-empty {
+  padding: 48px 24px;
+  border: 1px dashed var(--wa-line-strong);
+  border-radius: var(--wa-radius);
+  color: var(--wa-ink-soft);
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+/* ------------------------------------------------------------------------------------- tablets */
+@media (max-width: 1023px) {
+  [data-wa-home] {
+    --wa-gutter: 24px;
+  }
+  .wa-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wa-home-top {
+    padding-left: var(--wa-gutter);
+    padding-right: var(--wa-gutter);
+  }
+  .wa-hero-copy {
+    padding: 64px var(--wa-gutter) 40px;
+  }
+  .wa-hero-solo::before {
+    display: none;
+  }
+  .wa-hero-panel {
+    padding: 40px var(--wa-gutter) 64px;
+    border-left: 0;
+    border-top: 1px solid var(--wa-line);
+  }
+  .wa-section-title {
+    padding: 16px var(--wa-gutter);
+  }
+  .wa-feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .wa-feature:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--wa-line);
+  }
+}
+
+/* -------------------------------------------------------------------------------------- phones */
+@media (max-width: 640px) {
+  [data-wa-home] {
+    --wa-gutter: 16px;
+  }
+  .wa-hero {
+    border-left: 0;
+    border-right: 0;
+  }
+  .wa-hero-copy {
+    gap: 18px;
+    padding: 44px var(--wa-gutter) 32px;
+  }
+  .wa-hero-title {
+    font-size: clamp(2.25rem, 10.5vw, 2.75rem);
+    line-height: 1.04;
+  }
+  .wa-hero-panel {
+    padding: 32px var(--wa-gutter) 44px;
+  }
+  .wa-hero-actions > * {
+    flex: 1 1 100%;
+  }
+  .wa-section-title {
+    border-left: 0;
+    border-right: 0;
+  }
+  .wa-feature-grid {
+    grid-template-columns: minmax(0, 1fr);
+    border-left: 0;
+  }
+  .wa-feature {
+    padding: 24px var(--wa-gutter);
+    border-right: 0;
+    border-bottom: 1px solid var(--wa-line);
+  }
+  .wa-feature:last-child {
+    border-bottom: 0;
+  }
+  [data-wa-home="instances"] .wa-list-head {
+    padding: 24px 0 20px;
+  }
+  .wa-list-title {
+    font-size: 2.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-wa-home] .wa-instance-card {
+    transition: none;
+  }
+}
