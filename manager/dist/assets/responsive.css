@@ -1,0 +1,136 @@
+/*
+ * WhatsAI Manager - phones and tablets.
+ * Loaded after the Tailwind build (index-*.css). Rules live inside max-width (or touch pointer) media
+ * queries so the desktop (>= 1024px with a mouse) keeps its look; the only global rules hide the new
+ * mobile-only elements and keep tall dialogs inside the screen (their top was cut off by the centered
+ * overlay, also on desktop).
+ * Hooks: Tailwind utility classes already in the bundle, role/aria and data-* attributes
+ * (data-wa-* come from manager/patches/responsive.py; data-panel-* from react-resizable-panels).
+ * !important is used only against inline styles set by libraries (resizable panels, Radix ScrollArea,
+ * readme panel).
+ */
+
+/* ---------------------------------------------------------------- all sizes */
+.wa-menu-toggle,
+.wa-overlay {
+  display: none;
+}
+
+#root {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ------------------------------------------------- tablets and phones (< 1024px) */
+@media (max-width: 1023px) {
+  /* Instance layout fills the visible screen (100vh is taller than the screen on mobile browsers) */
+  [data-wa-layout] {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  @supports (height: 100dvh) {
+    [data-wa-layout] {
+      height: 100dvh;
+    }
+  }
+
+  /* Fixed header height so the drawer and its overlay can start right below it */
+  [data-wa-header] {
+    gap: 0.5rem;
+    height: calc(60px + env(safe-area-inset-top));
+    padding-left: 0.5rem;
+    padding-top: calc(0.5rem + env(safe-area-inset-top));
+    padding-bottom: 0.5rem;
+  }
+  [data-wa-header] > .wa-menu-toggle + a {
+    margin-right: auto;
+  }
+  .wa-menu-toggle {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: calc(var(--radius) - 2px);
+    background: transparent;
+    color: hsl(var(--foreground));
+    cursor: pointer;
+  }
+  .wa-menu-toggle:hover {
+    background: hsl(var(--accent));
+  }
+  .wa-menu-toggle:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Sidebar as an off-canvas drawer below the header (the header keeps the close button reachable) */
+  [data-wa-layout] [data-wa-sidebar] {
+    position: fixed !important; /* Radix ScrollArea sets an inline position: relative */
+    top: calc(60px + env(safe-area-inset-top));
+    bottom: 0;
+    left: 0;
+    z-index: 60;
+    width: min(85vw, 300px);
+    margin: 0;
+    padding: 0.75rem 0 max(1rem, env(safe-area-inset-bottom)) env(safe-area-inset-left);
+    border-top: 1px solid hsl(var(--border));
+    border-right: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    box-shadow: 0 10px 40px rgb(0 0 0 / 0.18);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.22s ease, visibility 0s linear 0.22s;
+  }
+  [data-wa-layout] [data-wa-sidebar][data-wa-open="true"] {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.22s ease;
+  }
+  [data-wa-sidebar] ul {
+    border-right: 0;
+  }
+  [data-wa-sidebar] ul ul button {
+    min-height: 40px;
+    width: 100%;
+    text-align: left;
+  }
+  .wa-overlay {
+    display: block;
+    position: fixed;
+    inset: calc(60px + env(safe-area-inset-top)) 0 0 0;
+    z-index: 59;
+    background: rgb(0 0 0 / 0.4);
+  }
+
+  /* Manual panel: it measured the sidebar to sit beside it; the drawer is not beside the content */
+  #whatsai-readme.wr-inline {
+    left: 0 !important;
+    border-left: 0;
+  }
+}
+
+/* --------------------------------------------------------- small phones (< 481px) */
+@media (max-width: 480px) {
+  [data-wa-header] {
+    padding-right: 0.5rem;
+  }
+  [data-wa-header] > a img {
+    height: 28px;
+  }
+  [data-wa-header] > div {
+    gap: 0.375rem;
+  }
+  /* The instance avatar is repeated on the dashboard; on small phones the header needs the room */
+  [data-wa-header] > div > .rounded-full.h-8.w-8 {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-wa-layout] [data-wa-sidebar],
+  [data-wa-layout] [data-wa-sidebar][data-wa-open="true"] {
+    transition: none;
+  }
+}
