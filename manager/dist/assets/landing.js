@@ -93,25 +93,4 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
       { rootMargin: '-80px 0px 0px 0px' },
     ).observe(hero.querySelector('.hero-copy') || hero);
   }
-
-  // ------------------------------------------------------------------ reveal on scroll
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const items = document.querySelectorAll('.reveal');
-  if (!reduce && 'IntersectionObserver' in window && items.length) {
-    root.classList.add('reveal-on');
-    const io = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-in');
-            io.unobserve(entry.target);
-          }
-        });
-      },
-      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
-    );
-    items.forEach(function (el) {
-      io.observe(el);
-    });
-  }
 })();

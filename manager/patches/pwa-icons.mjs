@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// Generates the web app icons of the Manager from manager/dist/assets/images/favicon.svg.
-// Rendered with headless Chromium (Playwright), so the PNGs match how browsers draw the SVG.
+// Generates the web app icons of the Manager from manager/dist/assets/images/favicon.svg (black square with
+// "WA" in Geist, written by favicon-wa.py). Rendered with headless Chromium (Playwright), so the PNGs match how
+// browsers draw the SVG. The square fills the whole icon (the letters stay inside the 80% safe zone of
+// maskable icons; iOS rounds the corners of the apple-touch-icon itself).
 // Usage (from the repository root, with playwright available to node):
 //   node manager/patches/pwa-icons.mjs
 // Output (manager/dist/assets/images/): icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png
@@ -16,14 +18,14 @@ try { pw = require('playwright'); } catch { pw = require('playwright-core'); }
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const images = path.join(root, 'manager', 'dist', 'assets', 'images');
 const svg = fs.readFileSync(path.join(images, 'favicon.svg'), 'utf8');
-const BACKGROUND = '#f6ffff'; // --background of the light theme (hsl 178 98.4% 98.22%)
+const BACKGROUND = '#000000'; // same as the square of favicon.svg
 
-// size: output px; logo: share of the side used by the logo (maskable icons keep it inside the 80% safe zone)
+// size: output px; logo: share of the side used by the SVG (1 = full bleed)
 const ICONS = [
-  { file: 'icon-192.png', size: 192, logo: 0.78 },
-  { file: 'icon-512.png', size: 512, logo: 0.78 },
-  { file: 'icon-maskable-512.png', size: 512, logo: 0.6 },
-  { file: 'apple-touch-icon.png', size: 180, logo: 0.72 },
+  { file: 'icon-192.png', size: 192, logo: 1 },
+  { file: 'icon-512.png', size: 512, logo: 1 },
+  { file: 'icon-maskable-512.png', size: 512, logo: 1 },
+  { file: 'apple-touch-icon.png', size: 180, logo: 1 },
 ];
 
 const browser = await pw.chromium.launch();
