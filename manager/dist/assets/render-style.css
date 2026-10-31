@@ -69,6 +69,13 @@
 .wa-home-wordmark {
   font-size: 22px;
 }
+/* phones and tablets: responsive.css gives the header an 8px left padding (room for the menu button); without
+   that button the wordmark lines up with the 16px page gutter instead */
+@media (max-width: 1023px) {
+  [data-wa-header] > a:first-child .wa-wordmark {
+    padding-left: 8px;
+  }
+}
 .wa-avatar-fallback {
   display: flex;
   width: 100%;
