@@ -1,147 +1,757 @@
+/*
+ * WhatsAI Manager: manual (readme-tab.js). Documentation layout, light theme, Geist only.
+ * #whatsai-readme is a fixed panel (page at /readme, or inline beside the instance menu) and the size container:
+ * the columns react to the panel width (@container), not to the window, so the inline panel behaves too.
+ */
 #whatsai-readme {
+  --wr-ink: #0d0d0d;
+  --wr-text: #1f2524;
+  --wr-ink-2: #3a4241;
+  --wr-muted: #566060;
+  --wr-line: #e2e6e5;
+  --wr-line-2: #cfd6d4;
+  --wr-paper: #ffffff;
+  --wr-soft: #f6f8f8;
+  --wr-hover: #eef1f0;
+  --wr-active: #e6ebea;
+  --wr-accent: #0b6b4f;
+  --wr-accent-bg: #edf7f2;
+  --wr-warn: #7f4a00;
+  --wr-warn-bg: #fff6e3;
+  --wr-bad: #ac2117;
+  --wr-bad-bg: #fdeceb;
   position: fixed;
   inset: 0;
   z-index: 2147483000;
-  overflow: auto;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  container-type: inline-size;
+  background: var(--wr-paper);
+  color: var(--wr-text);
   font-family: "Geist", sans-serif;
   -webkit-font-smoothing: antialiased;
   color-scheme: light;
 }
-#whatsai-readme * { box-sizing: border-box; }
+#whatsai-readme *,
+#whatsai-readme *::before,
+#whatsai-readme *::after {
+  box-sizing: border-box;
+}
 #whatsai-readme.wr-inline {
   top: 56px;
-  border-left: 1px solid hsl(var(--border));
+  border-left: 1px solid var(--wr-line);
 }
-#whatsai-readme .wr-wrap {
-  width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 24px 24px 56px;
+#whatsai-readme .wr-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
+#whatsai-readme :is(a, button, input, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--wr-ink);
+  outline-offset: 2px;
+}
+#whatsai-readme :is(h2, h3, h4, .wr-title)[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* ------------------------------------------------------------------------------------ buttons */
+#whatsai-readme .wr-btn {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--wr-line-2);
+  border-radius: 6px;
+  background: var(--wr-paper);
+  color: var(--wr-ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+#whatsai-readme .wr-btn:hover {
+  border-color: var(--wr-ink);
+  background: var(--wr-soft);
+}
+#whatsai-readme .wr-btn-ink {
+  border-color: var(--wr-ink);
+  background: var(--wr-ink);
+  color: #fff;
+}
+#whatsai-readme .wr-btn-ink:hover {
+  background: #2b2f2e;
+}
+#whatsai-readme .wr-menu-btn {
+  display: none;
+  min-height: 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--wr-line-2);
+  border-radius: 6px;
+  background: var(--wr-paper);
+  color: var(--wr-ink);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* -------------------------------------------------------------------------------------- top bar */
 #whatsai-readme .wr-top {
-  position: sticky; top: 0; z-index: 5;
-  background: hsl(var(--background) / .95);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid hsl(var(--border));
+  display: flex;
+  min-height: 60px;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--wr-line);
+  background: var(--wr-paper);
 }
-#whatsai-readme .wr-top-in {
-  max-width: 1120px; min-height: 56px; margin: 0 auto;
-  padding: 8px 24px;
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+#whatsai-readme .wr-top-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
 }
-#whatsai-readme .wr-brand {
-  display: flex; align-items: center; gap: 8px;
-  min-width: 0; color: hsl(var(--foreground));
+#whatsai-readme .wr-wordmark {
+  color: var(--wr-ink);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  text-decoration: none;
 }
-#whatsai-readme .wr-actions {
-  margin-left: auto; display: flex; align-items: center;
-  gap: 8px; flex-wrap: wrap;
+#whatsai-readme .wr-top-sep {
+  color: var(--wr-line-2);
 }
-#whatsai-readme .wr-top-links { display: flex; align-items: center; gap: 8px; }
-#whatsai-readme .wr-status { margin: 16px 4px; }
-#whatsai-readme .wr-card { overflow: hidden; }
-#whatsai-readme .wr-head-copy { min-width: 0; }
-#whatsai-readme .wr-chips { max-width: 360px; justify-content: flex-end; }
-#whatsai-readme .wr-chip { white-space: nowrap; }
-#whatsai-readme .wr-body {
-  font-size: 14px; line-height: 1.65;
-  color: hsl(var(--card-foreground));
+#whatsai-readme .wr-top-name {
+  color: var(--wr-ink-2);
+  font-size: 15px;
 }
-#whatsai-readme .wr-body > :first-child { margin-top: 0; }
-#whatsai-readme .wr-body > :last-child { margin-bottom: 0; }
-#whatsai-readme .wr-body h1,
-#whatsai-readme .wr-body h2,
-#whatsai-readme .wr-body h3,
-#whatsai-readme .wr-body h4 {
-  color: hsl(var(--foreground)); line-height: 1.3;
+#whatsai-readme .wr-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-#whatsai-readme .wr-body h1 {
-  margin: 28px 0 12px; font-size: 22px;
-  font-weight: 600; letter-spacing: -.02em;
+
+/* ----------------------------------------------------------------------------------------- shell */
+#whatsai-readme .wr-shell {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 264px minmax(0, 1fr);
 }
-#whatsai-readme .wr-body h2 {
-  margin: 28px 0 12px; font-size: 18px;
-  font-weight: 600; letter-spacing: -.01em;
+#whatsai-readme .wr-side {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 14px 32px;
+  border-right: 1px solid var(--wr-line);
+  background: var(--wr-soft);
 }
-#whatsai-readme .wr-body h3 {
-  margin: 20px 0 8px; font-size: 15px; font-weight: 600;
+#whatsai-readme .wr-search {
+  position: relative;
+  margin-bottom: 18px;
 }
-#whatsai-readme .wr-body h4 {
-  margin: 16px 0 6px; font-size: 14px; font-weight: 600;
+#whatsai-readme .wr-search svg {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  color: var(--wr-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
 }
-#whatsai-readme .wr-body p { margin: 12px 0; }
-#whatsai-readme .wr-body ul,
-#whatsai-readme .wr-body ol { margin: 12px 0; padding-left: 22px; }
-#whatsai-readme .wr-body li { margin: 5px 0; }
-#whatsai-readme .wr-body a {
-  color: hsl(var(--primary)); text-decoration: none;
+#whatsai-readme .wr-search input {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px 0 34px;
+  border: 1px solid var(--wr-line-2);
+  border-radius: 6px;
+  background: var(--wr-paper);
+  color: var(--wr-ink);
+  font-size: 14px;
+}
+#whatsai-readme .wr-search input::placeholder {
+  color: var(--wr-muted);
+  opacity: 1;
+}
+#whatsai-readme .wr-search input:focus-visible {
+  outline-offset: 0;
+}
+#whatsai-readme .wr-side-h {
+  margin: 18px 10px 6px;
+  color: var(--wr-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+#whatsai-readme .wr-doc-groups > .wr-side-h:first-child {
+  margin-top: 0;
+}
+#whatsai-readme .wr-docs,
+#whatsai-readme .wr-results {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#whatsai-readme .wr-doc-link {
+  display: block;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--wr-ink-2);
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: none;
+}
+#whatsai-readme .wr-doc-link:hover {
+  background: var(--wr-hover);
+  color: var(--wr-ink);
+}
+#whatsai-readme .wr-doc-link[aria-current="page"] {
+  background: var(--wr-active);
+  color: var(--wr-ink);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--wr-accent);
+}
+#whatsai-readme .wr-file {
+  color: var(--wr-muted);
+  font-size: 13px;
+}
+#whatsai-readme .wr-side-foot {
+  margin-top: 22px;
+  padding-top: 4px;
+  border-top: 1px solid var(--wr-line);
+}
+#whatsai-readme.wr-searching .wr-doc-groups,
+#whatsai-readme.wr-searching .wr-side-foot {
+  display: none;
+}
+#whatsai-readme .wr-result {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+#whatsai-readme .wr-result:hover {
+  background: var(--wr-hover);
+}
+#whatsai-readme .wr-result-t {
+  color: var(--wr-ink);
+  font-size: 14px;
+  line-height: 1.35;
+}
+#whatsai-readme .wr-result-d {
+  color: var(--wr-muted);
+  font-size: 12px;
+}
+#whatsai-readme .wr-result-none {
+  padding: 8px 10px;
+  color: var(--wr-muted);
+  font-size: 14px;
+}
+#whatsai-readme .wr-backdrop {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------------- content area */
+#whatsai-readme .wr-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-top: 24px;
+}
+#whatsai-readme .wr-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 720px) 220px;
+  justify-content: center;
+  gap: 56px;
+  padding: 40px 40px 72px;
+}
+#whatsai-readme .wr-main {
+  min-width: 0;
+}
+#whatsai-readme .wr-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: -16px 0 20px;
+}
+#whatsai-readme .wr-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--wr-muted);
+  font-size: 13px;
+}
+#whatsai-readme .wr-crumbs li + li::before {
+  content: "/";
+  margin-right: 6px;
+  color: var(--wr-line-2);
+}
+#whatsai-readme .wr-crumbs a {
+  color: var(--wr-muted);
+  text-decoration: none;
+}
+#whatsai-readme .wr-crumbs a:hover {
+  color: var(--wr-ink);
+  text-decoration: underline;
+}
+#whatsai-readme .wr-crumbs [aria-current] {
+  color: var(--wr-ink);
+}
+#whatsai-readme .wr-title {
+  margin: 14px 0 0;
+  color: var(--wr-ink);
+  font-size: clamp(32px, 1.6rem + 1.8vw, 48px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+#whatsai-readme .wr-lead {
+  margin: 14px 0 0;
+  color: var(--wr-muted);
+  font-size: 19px;
+  line-height: 1.45;
+}
+
+/* "Nesta página" */
+#whatsai-readme .wr-toc {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding-top: 8px;
+}
+#whatsai-readme .wr-toc-h {
+  margin: 0 0 10px;
+  color: var(--wr-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+#whatsai-readme .wr-toc-list {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--wr-line);
+  list-style: none;
+}
+#whatsai-readme .wr-toc-link {
+  display: block;
+  margin-left: -1px;
+  padding: 5px 0 5px 12px;
+  border-left: 2px solid transparent;
+  color: var(--wr-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+#whatsai-readme .wr-toc-sub .wr-toc-link {
+  padding-left: 24px;
+  font-size: 12.5px;
+}
+#whatsai-readme .wr-toc-link:hover {
+  color: var(--wr-ink);
+}
+#whatsai-readme .wr-toc-link.is-active {
+  border-left-color: var(--wr-accent);
+  color: var(--wr-ink);
+  font-weight: 600;
+}
+#whatsai-readme .wr-toc-m {
+  display: none;
+  margin-top: 24px;
+  border: 1px solid var(--wr-line);
+  border-radius: 6px;
+}
+#whatsai-readme .wr-toc-m summary {
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#whatsai-readme .wr-toc-m .wr-toc-list {
+  margin: 0 14px 12px;
+}
+
+/* ------------------------------------------------------------------------------------- prose */
+#whatsai-readme .wr-prose {
+  margin-top: 36px;
+  padding-top: 8px;
+  border-top: 1px solid var(--wr-line);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+#whatsai-readme .wr-prose > :first-child {
+  margin-top: 24px;
+}
+#whatsai-readme .wr-prose :is(h2, h3, h4) {
+  color: var(--wr-ink);
+  scroll-margin-top: 24px;
+}
+#whatsai-readme .wr-prose h2 {
+  margin: 56px 0 14px;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+#whatsai-readme .wr-prose h3 {
+  margin: 36px 0 10px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+#whatsai-readme .wr-prose h4 {
+  margin: 28px 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+#whatsai-readme .wr-prose p {
+  margin: 16px 0;
+}
+#whatsai-readme .wr-prose :is(ul, ol) {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+#whatsai-readme .wr-prose li {
+  margin: 6px 0;
+}
+#whatsai-readme .wr-prose li::marker {
+  color: var(--wr-muted);
+}
+#whatsai-readme .wr-prose a {
+  color: var(--wr-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--wr-line-2);
+  text-underline-offset: 3px;
   overflow-wrap: anywhere;
 }
-#whatsai-readme .wr-body a:hover { text-decoration: underline; }
-#whatsai-readme .wr-body strong { color: hsl(var(--foreground)); font-weight: 600; }
-#whatsai-readme .wr-body code {
-  font-family: "Geist Mono", monospace;
-  font-size: 12.5px; background: hsl(var(--muted)); color: hsl(var(--foreground));
-  padding: 2px 6px; border-radius: calc(var(--radius) - 4px);
+#whatsai-readme .wr-prose a:hover {
+  text-decoration-color: var(--wr-ink);
+}
+#whatsai-readme .wr-prose strong {
+  color: var(--wr-ink);
+  font-weight: 600;
+}
+#whatsai-readme .wr-prose code {
+  padding: 1px 6px;
+  border: 1px solid var(--wr-line);
+  border-radius: 4px;
+  background: var(--wr-soft);
+  color: var(--wr-ink);
+  font-size: 0.88em;
   overflow-wrap: anywhere;
 }
-#whatsai-readme .wr-body pre {
-  background: hsl(var(--muted)); border: 1px solid hsl(var(--border));
-  border-radius: calc(var(--radius) - 2px); padding: 14px 16px;
-  overflow: auto; margin: 14px 0; font-size: 12.5px;
+#whatsai-readme .wr-code {
+  position: relative;
+  margin: 20px 0;
 }
-#whatsai-readme .wr-body pre code { background: none; padding: 0; }
-#whatsai-readme .wr-body blockquote {
-  margin: 16px 0; padding: 12px 16px;
-  border-left: 2px solid hsl(var(--primary));
-  background: hsl(var(--muted) / .5);
-  border-radius: 0 calc(var(--radius) - 2px) calc(var(--radius) - 2px) 0;
-  color: hsl(var(--muted-foreground));
+#whatsai-readme .wr-prose pre {
+  margin: 0;
+  padding: 16px 18px;
+  padding-right: 88px;
+  overflow: auto;
+  border: 1px solid var(--wr-line);
+  border-radius: 6px;
+  background: var(--wr-soft);
+  font-size: 13.5px;
+  line-height: 1.65;
+  tab-size: 2;
 }
-#whatsai-readme .wr-body blockquote p { margin: 0; }
-#whatsai-readme .wr-body hr {
-  border: 0; border-top: 1px solid hsl(var(--border)); margin: 20px 0;
+#whatsai-readme .wr-prose pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  white-space: pre;
+  overflow-wrap: normal;
 }
-#whatsai-readme .wr-body img {
-  max-width: 100%; height: auto;
-  border-radius: calc(var(--radius) - 2px);
+#whatsai-readme .wr-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--wr-line-2);
+  border-radius: 4px;
+  background: var(--wr-paper);
+  color: var(--wr-ink-2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+#whatsai-readme .wr-copy:hover {
+  border-color: var(--wr-ink);
+  color: var(--wr-ink);
+}
+#whatsai-readme .wr-callout,
+#whatsai-readme .wr-prose blockquote {
+  margin: 20px 0;
+  padding: 14px 18px;
+  border: 1px solid #cfe5da;
+  border-left: 3px solid var(--wr-accent);
+  border-radius: 0 6px 6px 0;
+  background: var(--wr-accent-bg);
+  color: var(--wr-text);
+  font-size: 15px;
+  line-height: 1.6;
+}
+#whatsai-readme .wr-callout[data-tone="warn"] {
+  border-color: #efd29a;
+  border-left-color: var(--wr-warn);
+  background: var(--wr-warn-bg);
+}
+#whatsai-readme .wr-callout[data-tone="bad"] {
+  border-color: #efb4ae;
+  border-left-color: var(--wr-bad);
+  background: var(--wr-bad-bg);
+}
+#whatsai-readme .wr-callout > :first-child {
+  margin-top: 0;
+}
+#whatsai-readme .wr-callout > :last-child {
+  margin-bottom: 0;
+}
+#whatsai-readme .wr-callout p {
+  margin: 8px 0;
+}
+#whatsai-readme .wr-callout .wr-btn {
+  margin-top: 10px;
+}
+#whatsai-readme .wr-prose hr {
+  margin: 40px 0;
+  border: 0;
+  border-top: 1px solid var(--wr-line);
+}
+#whatsai-readme .wr-prose img {
+  max-width: 100%;
+  height: auto;
 }
 #whatsai-readme .wr-table {
-  overflow-x: auto; margin: 14px 0; overscroll-behavior-x: contain;
-  border: 1px solid hsl(var(--border));
-  border-radius: calc(var(--radius) - 2px);
+  margin: 20px 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--wr-line);
+  border-radius: 6px;
 }
-#whatsai-readme .wr-body table {
-  width: 100%; min-width: 620px; border-collapse: collapse;
-  font-size: 13px; font-variant-numeric: tabular-nums;
+#whatsai-readme .wr-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
 }
-#whatsai-readme .wr-body th {
-  padding: 10px 12px; text-align: left; vertical-align: middle;
-  background: hsl(var(--muted) / .7); color: hsl(var(--muted-foreground));
-  font-weight: 500; white-space: nowrap;
-  border-bottom: 1px solid hsl(var(--border));
+#whatsai-readme .wr-prose th {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--wr-line);
+  background: var(--wr-soft);
+  color: var(--wr-ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
 }
-#whatsai-readme .wr-body td {
-  padding: 10px 12px; text-align: left; vertical-align: top;
-  border-bottom: 1px solid hsl(var(--border));
+#whatsai-readme .wr-prose td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--wr-line);
+  vertical-align: top;
 }
-#whatsai-readme .wr-body tbody tr:last-child td { border-bottom: 0; }
-#whatsai-readme .wr-body tbody tr:hover { background: hsl(var(--muted) / .45); }
-#whatsai-readme .wr-body td:first-child { font-weight: 500; color: hsl(var(--foreground)); }
-#whatsai-readme .wr-foot-links { display: flex; gap: 8px; flex-wrap: wrap; }
-@media (max-width: 720px) {
-  #whatsai-readme .wr-card-head { flex-direction: column; }
-  #whatsai-readme .wr-chips { justify-content: flex-start; max-width: none; }
-  #whatsai-readme .wr-body h1 { font-size: 20px; }
-  #whatsai-readme .wr-body h2 { font-size: 17px; }
-  #whatsai-readme .wr-body table { min-width: 560px; }
+#whatsai-readme .wr-prose :is(th, td) + :is(th, td) {
+  border-left: 1px solid var(--wr-line);
 }
-@media (max-width: 640px) {
-  #whatsai-readme .wr-top-in { padding: 8px 16px; }
-  #whatsai-readme .wr-wrap { padding: 16px 16px 40px; }
-  #whatsai-readme .wr-sub { display: none; }
-  #whatsai-readme .wr-top-links { display: none; }
-  #whatsai-readme .wr-foot { align-items: flex-start; flex-direction: column; }
+#whatsai-readme .wr-prose tbody tr:last-child td {
+  border-bottom: 0;
+}
+#whatsai-readme .wr-prose th[align="right"],
+#whatsai-readme .wr-prose td[align="right"] {
+  text-align: right;
+}
+
+/* pager + footer */
+#whatsai-readme .wr-pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 56px;
+}
+#whatsai-readme .wr-pager-link {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--wr-line);
+  border-radius: 6px;
+  text-decoration: none;
+}
+#whatsai-readme .wr-pager-link:hover {
+  border-color: var(--wr-ink);
+}
+#whatsai-readme .wr-pager-next {
+  text-align: right;
+}
+#whatsai-readme .wr-pager-k {
+  color: var(--wr-muted);
+  font-size: 12px;
+}
+#whatsai-readme .wr-pager-t {
+  color: var(--wr-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+#whatsai-readme .wr-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--wr-line);
+  color: var(--wr-muted);
+  font-size: 13px;
+}
+#whatsai-readme .wr-foot a {
+  color: var(--wr-ink-2);
+}
+
+/* loading */
+#whatsai-readme .wr-loading {
+  display: grid;
+  gap: 14px;
+}
+#whatsai-readme .wr-sk {
+  display: block;
+  border-radius: 4px;
+  background: #e9eded;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #whatsai-readme .wr-sk {
+    background: linear-gradient(90deg, #e9eded 0%, #f3f6f5 45%, #e9eded 90%) 0 0 / 300% 100%;
+    animation: wr-shimmer 1.6s ease-in-out infinite;
+  }
+}
+@keyframes wr-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+#whatsai-readme .wr-sk-t { width: 140px; height: 12px; }
+#whatsai-readme .wr-sk-l { width: 60%; height: 40px; }
+#whatsai-readme .wr-sk-p { width: 100%; height: 14px; }
+#whatsai-readme .wr-sk-s { width: 72%; height: 14px; }
+
+/* ------------------------------------------------------------------------------- responsive */
+/* no room for "Nesta página" beside the text: it becomes an accordion above it */
+@container (max-width: 1180px) {
+  #whatsai-readme .wr-cols {
+    grid-template-columns: minmax(0, 720px);
+    padding: 32px 32px 64px;
+  }
+  #whatsai-readme .wr-toc {
+    display: none;
+  }
+  #whatsai-readme .wr-toc-m {
+    display: block;
+  }
+}
+/* the document list becomes a drawer */
+@container (max-width: 860px) {
+  #whatsai-readme .wr-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #whatsai-readme .wr-menu-btn {
+    display: inline-flex;
+  }
+  #whatsai-readme .wr-side {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 3;
+    width: min(86%, 300px);
+    box-shadow: 0 10px 40px rgb(0 0 0 / 0.16);
+    transform: translateX(-100%);
+    visibility: hidden;
+  }
+  #whatsai-readme.wr-drawer-open .wr-side {
+    transform: none;
+    visibility: visible;
+  }
+  #whatsai-readme.wr-drawer-open .wr-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: block;
+    background: rgb(0 0 0 / 0.35);
+  }
+  #whatsai-readme .wr-bar {
+    justify-content: space-between;
+    margin-top: -8px;
+  }
+}
+@container (max-width: 560px) {
+  #whatsai-readme .wr-top {
+    padding: 10px 16px;
+  }
+  #whatsai-readme .wr-top-sep,
+  #whatsai-readme .wr-top-name {
+    display: none;
+  }
+  #whatsai-readme .wr-menu-btn span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  #whatsai-readme .wr-menu-btn {
+    width: 40px;
+    justify-content: center;
+    padding: 0;
+  }
+  #whatsai-readme .wr-cols {
+    padding: 24px 16px 48px;
+  }
+  #whatsai-readme .wr-lead {
+    font-size: 17px;
+  }
+  #whatsai-readme .wr-prose h2 {
+    margin-top: 44px;
+    font-size: 24px;
+  }
+  #whatsai-readme .wr-prose h3 {
+    font-size: 18px;
+  }
+  #whatsai-readme .wr-prose pre {
+    padding-right: 18px;
+    padding-top: 44px;
+  }
+  #whatsai-readme .wr-pager {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
