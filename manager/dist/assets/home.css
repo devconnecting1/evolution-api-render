@@ -84,8 +84,9 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  /* the logo SVG centers its text in a wide box (~28px empty on each side at this height) */
-  margin-left: -26px;
+  /* the brand is a text wordmark now (render-style.py); the old -26px offset made for the logo SVG
+     cut the "W" off on phones */
+  margin-left: 0;
 }
 .wa-home-logo {
   display: block;
@@ -202,25 +203,193 @@
   -webkit-mask-image: radial-gradient(ellipse at 60% 50%, #000 35%, transparent 80%);
   mask-image: radial-gradient(ellipse at 60% 50%, #000 35%, transparent 80%);
 }
-[data-wa-home] .wa-login-card {
+/* --------------------------------------------------------------------------------------- login
+   /manager/login (manager/patches/login-clean.py): only the sign-in panel. Wordmark on top, one centered
+   400px card with a 1px border, a discreet link back to the site. Plain light background with a very
+   faint grid that fades out around the card. */
+[data-wa-home="login"].wa-login-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  background: #fafbfb;
+  isolation: isolate;
+}
+[data-wa-home="login"].wa-login-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(hsl(178 10% 90%) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(178 10% 90%) 1px, transparent 1px);
+  background-size: 72px 72px;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 42%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 42%, #000 0%, transparent 75%);
+  pointer-events: none;
+}
+.wa-login-top {
+  display: flex;
+  justify-content: center;
+  padding: clamp(40px, 10vh, 96px) 0 28px;
+}
+.wa-login-brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--wa-ink);
+  text-decoration: none;
+}
+.wa-login-brand .wa-wordmark {
+  font-size: 26px;
+}
+.wa-login-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  max-width: 420px;
-  border: 1px solid var(--wa-line-strong);
-  border-radius: var(--wa-radius);
+  padding-bottom: 48px;
+}
+[data-wa-home="login"] .wa-login-card {
+  width: 100%;
+  max-width: 400px;
+  border: 1px solid hsl(178 8% 82%);
+  border-radius: 4px;
   background: var(--wa-paper);
   color: var(--wa-ink);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 24px 48px -24px rgb(0 0 0 / 0.18);
+  box-shadow: 0 1px 2px rgb(13 40 35 / 0.04);
 }
-[data-wa-home] .wa-login-head {
-  padding-bottom: 8px;
+[data-wa-home="login"] .wa-login-head {
+  padding: 28px 28px 4px;
 }
-[data-wa-home] .wa-login-title {
+[data-wa-home="login"] .wa-login-title {
+  margin: 0;
   font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
 }
-[data-wa-home] .wa-login-card button[type="submit"] {
+[data-wa-home="login"] .wa-login-body {
+  padding: 20px 28px 0;
+}
+[data-wa-home="login"] .wa-login-fields {
+  display: grid;
+  gap: 18px;
+}
+[data-wa-home="login"] .wa-login-fields label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--wa-ink);
+}
+[data-wa-home="login"] .wa-login-fields label > span {
+  margin-left: 4px;
+  color: var(--wa-bad);
+}
+[data-wa-home="login"] input {
+  height: 44px;
+  border: 1px solid hsl(178 8% 76%);
+  border-radius: 4px;
+  font-size: 0.9375rem;
+}
+[data-wa-home="login"] input::placeholder {
+  color: #6b7473;
+}
+[data-wa-home="login"] input:hover {
+  border-color: hsl(178 8% 60%);
+}
+/* focus: dark ring outside the field (the Tailwind ring is replaced, never removed) */
+[data-wa-home="login"] input:focus-visible {
+  border-color: var(--wa-ink);
+  outline: 2px solid var(--wa-ink);
+  outline-offset: 1px;
+  box-shadow: none;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
+}
+[data-wa-home="login"] input[aria-invalid="true"] {
+  border-color: var(--wa-bad);
+  background: #fffafa;
+}
+[data-wa-home="login"] input[aria-invalid="true"]:focus-visible {
+  outline-color: var(--wa-bad);
+}
+/* error message under the field: red text with an alert icon */
+[data-wa-home="login"] .wa-login-fields p.text-rose-600 {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--wa-bad);
+}
+[data-wa-home="login"] .wa-login-fields p.text-rose-600::before {
+  content: "";
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9.5'/%3E%3Cpath d='M12 7.5v5.5M12 16.5h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9.5'/%3E%3Cpath d='M12 7.5v5.5M12 16.5h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+[data-wa-home="login"] .wa-login-foot {
+  padding: 24px 28px 28px;
+}
+[data-wa-home="login"] .wa-login-submit {
   min-height: 44px;
+  border-radius: 4px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+[data-wa-home="login"] .wa-login-submit:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+[data-wa-home="login"] :is(.wa-login-submit, .wa-login-brand, .wa-login-back a):focus-visible {
+  outline: 2px solid var(--wa-ink);
+  outline-offset: 2px;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
+}
+.wa-login-back {
+  margin: 20px 0 0;
+}
+.wa-login-back a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 6px;
+  font-size: 0.875rem;
+  color: #4d5655;
+  text-decoration: none;
+}
+.wa-login-back a:hover {
+  color: var(--wa-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (max-width: 480px) {
+  .wa-login-top {
+    padding-top: 32px;
+    padding-bottom: 20px;
+  }
+  [data-wa-home="login"] .wa-login-head {
+    padding: 24px 20px 0;
+  }
+  [data-wa-home="login"] .wa-login-body {
+    padding: 18px 20px 0;
+  }
+  [data-wa-home="login"] .wa-login-foot {
+    padding: 22px 20px 24px;
+  }
 }
 
 /* ------------------------------------------------------------------------------ highlights strip */
