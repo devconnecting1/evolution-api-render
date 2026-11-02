@@ -1,0 +1,633 @@
+/*
+ * WhatsAI Manager: Render-style instance dashboard and one look for buttons, cards, fields, badges, dialogs and
+ * toasts across the panel. Loaded after render-style.css (it reuses its --wo-* colours). Written by hand; the markup
+ * hooks come from manager/patches/dashboard-ui.py:
+ *   .wa-dash*, .wa-metric*   instance dashboard (card of the instance + three metric cards)
+ *   .wa-token                token field (shared with the instance list, styled here only on the dashboard)
+ *   .wa-status               status pill (data-wa-status = ok / warn / bad)
+ *   .wa-hd-btn, .wa-hd-logout  icon buttons of the header (language, logout)
+ *   .wa-confirm              confirmation dialogs (logout, disconnect)
+ *   .wa-page-title           <h1> of the settings / events / integrations pages
+ * Also: the instance layout no longer is 4px taller than the screen below 1024px ([data-wa-layout]).
+ * Out of scope: the Conversas screen. Nothing here targets the chat markup; the colour tokens below are only
+ * replaced while no chat ([data-wa-chat]) is on screen, and the component rules skip anything inside it.
+ * Buttons: primary = black, secondary = outlined, destructive = red outline (filled only inside a dialog, where it
+ * confirms the action). No upper-case labels anywhere.
+ */
+
+/* ---------------------------------------------------------------------------------------- tokens */
+/* The upstream light theme painted cards and popovers mint grey (178 36% 91%) and the primary dark teal.
+   Cards are white with a 1px border now; primary is the same ink as the rest of the panel; destructive is a
+   red that passes AA as text on white (the old #ef4444 was 3.8:1). */
+:root:not(:has([data-wa-chat])) {
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 5%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 5%;
+  --primary: 0 0% 5%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 0 0% 5%;
+  --destructive: 4 76% 38%;
+  --destructive-foreground: 0 0% 100%;
+}
+
+/* ---------------------------------------------------------------------------------------- buttons */
+:where(button, a).ring-offset-background.whitespace-nowrap:not([data-wa-chat] *, [data-wa-nav] *, [data-wa-home] *) {
+  border-radius: var(--wo-radius);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* primary */
+:where(button, a).ring-offset-background.bg-primary:not([data-wa-chat] *, [data-wa-home] *) {
+  background: var(--wo-ink);
+  color: #fff;
+}
+:where(button, a).ring-offset-background.bg-primary:not([data-wa-chat] *, [data-wa-home] *):hover {
+  background: #2b2b2b;
+}
+/* outline and secondary: one outlined look (secondary used to be a grey fill that read as disabled) */
+:where(button, a).ring-offset-background:is(.border-input.bg-background, .bg-secondary):not(.h-auto):not([data-wa-chat] *, [data-wa-nav] *, [data-wa-home] *) {
+  border: 1px solid var(--wo-line-2);
+  background: var(--wo-paper);
+  color: var(--wo-ink);
+}
+:where(button, a).ring-offset-background:is(.border-input.bg-background, .bg-secondary):not(.h-auto):not([data-wa-chat] *, [data-wa-nav] *, [data-wa-home] *):hover {
+  border-color: var(--wo-ink);
+  background: var(--wo-soft);
+}
+/* destructive: red outline on pages, filled only as the confirming button of a dialog */
+:where(button, a).ring-offset-background.bg-destructive:not([data-wa-chat] *, [data-wa-home] *) {
+  border: 1px solid rgb(172 33 23 / 0.45);
+  background: var(--wo-paper);
+  color: var(--wo-bad);
+}
+:where(button, a).ring-offset-background.bg-destructive:not([data-wa-chat] *, [data-wa-home] *):hover {
+  border-color: var(--wo-bad);
+  background: var(--wo-bad-bg);
+}
+[role="dialog"] :where(button, a).ring-offset-background.bg-destructive:not([data-wa-chat] *) {
+  border-color: var(--wo-bad);
+  background: var(--wo-bad);
+  color: #fff;
+}
+[role="dialog"] :where(button, a).ring-offset-background.bg-destructive:not([data-wa-chat] *):hover {
+  border-color: #8a1a12;
+  background: #8a1a12;
+}
+/* list items rendered as buttons (bots of an integration): selected = ink border on a soft background */
+button.ring-offset-background.h-auto:is(.bg-secondary, .border-input):not([data-wa-chat] *) {
+  border: 1px solid var(--wo-line);
+  border-radius: 8px;
+  background: var(--wo-paper);
+  color: var(--wo-ink);
+}
+button.ring-offset-background.h-auto.bg-secondary:not([data-wa-chat] *) {
+  border-color: var(--wo-ink);
+  background: var(--wo-soft);
+  box-shadow: inset 3px 0 0 var(--wo-ink);
+}
+button.ring-offset-background.h-auto.border-input:not([data-wa-chat] *):hover {
+  border-color: var(--wo-line-2);
+  background: var(--wo-soft);
+}
+/* icon-only buttons on narrow screens: the text is hidden with `hidden md:inline` / `hidden sm:inline`, which
+   also removed it from screen readers (unlabeled buttons). Keep it for them, visually hidden. */
+@media (max-width: 767px) {
+  :is(button, a) > span.hidden.md\:inline:not([data-wa-chat] *) {
+    display: inline !important;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+@media (max-width: 639px) {
+  :is(button, a) > span.hidden.sm\:inline:not([data-wa-chat] *, [data-wa-header] *) {
+    display: inline !important;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* ------------------------------------------------------------------------------- cards and fields */
+.rounded-lg.border.bg-card:not([data-wa-chat] *, [data-wa-home] *) {
+  border-color: var(--wo-line);
+  border-radius: 8px;
+  box-shadow: none;
+}
+:is(input, textarea).border-input:not([data-wa-chat] *, [data-wa-home] *),
+button[role="combobox"].border-input:not([data-wa-chat] *, [data-wa-home] *) {
+  border-color: var(--wo-line-2);
+  border-radius: var(--wo-radius);
+  background-color: var(--wo-paper);
+  color: var(--wo-ink);
+}
+:is(input, textarea).border-input:not([data-wa-chat] *, [data-wa-home] *):hover,
+button[role="combobox"].border-input:not([data-wa-chat] *, [data-wa-home] *):hover {
+  border-color: #aab4b1;
+}
+:is(input, textarea).border-input::placeholder {
+  color: #6b7573;
+}
+
+/* switches: the unchecked track was slate blue (#94a3b8, 2.6:1 on white); neutral grey with 3:1 */
+button[role="switch"][data-state="unchecked"]:not([data-wa-chat] *) {
+  background-color: #848d8b;
+}
+
+/* ------------------------------------------------------------------------------------ page titles */
+h1.wa-page-title {
+  margin: 0;
+  color: var(--wo-ink);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+/* pages whose title row had no top spacing (settings, events, proxy, chatwoot) */
+h1.wa-page-title.mb-1 {
+  margin-top: 12px;
+}
+@media (max-width: 767px) {
+  h1.wa-page-title {
+    font-size: 20px;
+  }
+}
+/* section titles inside the integration forms ("Configurações do OpenAI", ...) */
+form h3.text-lg.font-medium:not([data-wa-chat] *) {
+  color: var(--wo-ink);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* OpenAI form: on phones the model select and "Carregar Modelos" were squeezed side by side */
+@media (max-width: 639px) {
+  .flex.items-end.gap-2:has(> .flex-1 + button.mb-2) {
+    flex-wrap: wrap;
+  }
+  .flex.items-end.gap-2:has(> .flex-1 + button.mb-2) > .flex-1 {
+    flex-basis: 100%;
+  }
+}
+
+/* --------------------------------------------------------------------------------------- layout */
+/* Below 1024px the header is 60px tall (responsive.css) but the wrapper under it kept the upstream
+   min-height of 100vh - 56px, so every instance page was 4px taller than the screen and the whole page
+   scrolled (a small jump) on top of the inner scroll area. The wrapper is flex: 1 inside a column of fixed
+   height, so it needs no minimum. */
+@media (max-width: 1023px) {
+  [data-wa-layout] > div.flex-1 {
+    min-height: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------------------- header */
+[data-wa-header] > div:last-child {
+  gap: 8px;
+}
+[data-wa-header] button.wa-hd-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--wo-line-2);
+  border-radius: var(--wo-radius);
+  background: var(--wo-paper);
+  color: var(--wo-ink-2);
+}
+[data-wa-header] button.wa-hd-btn:hover {
+  border-color: var(--wo-ink);
+  background: var(--wo-soft);
+  color: var(--wo-ink);
+}
+[data-wa-header] button.wa-hd-logout:hover {
+  border-color: rgb(172 33 23 / 0.45);
+  background: var(--wo-bad-bg);
+  color: var(--wo-bad);
+}
+[data-wa-header] button.wa-hd-btn svg {
+  width: 18px;
+  height: 18px;
+}
+@media (max-width: 767px), (pointer: coarse) {
+  /* same 44px touch target as the menu button on the left */
+  [data-wa-header] button.wa-hd-btn {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+  .wa-menu-toggle {
+    border-radius: var(--wo-radius);
+  }
+}
+
+/* ------------------------------------------------------------------------------------- status pill */
+:is(.wa-status, .wa-status:hover) {
+  gap: 6px;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--wo-line);
+  border-radius: 999px;
+  background: var(--wo-neutral-bg);
+  color: var(--wo-neutral);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.wa-status::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+:is(.wa-status, .wa-status:hover)[data-wa-status="ok"] {
+  border-color: rgb(11 110 73 / 0.22);
+  background: var(--wo-ok-bg);
+  color: var(--wo-ok);
+}
+:is(.wa-status, .wa-status:hover)[data-wa-status="warn"] {
+  border-color: rgb(127 74 0 / 0.22);
+  background: var(--wo-warn-bg);
+  color: var(--wo-warn);
+}
+:is(.wa-status, .wa-status:hover)[data-wa-status="bad"] {
+  border-color: rgb(172 33 23 / 0.22);
+  background: var(--wo-bad-bg);
+  color: var(--wo-bad);
+}
+
+/* ------------------------------------------------------------------------------------- dashboard */
+.wa-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 8px 0 24px;
+}
+.wa-dash-card {
+  min-width: 0;
+  border: 1px solid var(--wo-line);
+  border-radius: 8px;
+  background: var(--wo-paper);
+}
+.wa-dash-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+}
+.wa-dash-avatar {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--wo-line);
+}
+.wa-dash-avatar .wa-avatar-fallback {
+  font-size: 18px;
+}
+.wa-dash-id {
+  flex: 1;
+  min-width: 0;
+}
+.wa-dash-titlerow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.wa-dash-title {
+  margin: 0;
+  min-width: 0;
+  color: var(--wo-ink);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.wa-dash-profile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin: 4px 0 0;
+  color: var(--wo-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.wa-dash-pname {
+  min-width: 0;
+  color: var(--wo-ink-2);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.wa-dash-pname + .wa-dash-phone::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--wo-muted);
+}
+.wa-dash-phone {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.wa-dash-field {
+  display: grid;
+  gap: 6px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--wo-line);
+}
+.wa-dash-label {
+  color: var(--wo-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wa-dash .wa-token {
+  display: flex;
+  width: 100%;
+  max-width: 560px;
+  height: 40px;
+  align-items: center;
+  gap: 2px;
+  padding: 0 3px 0 12px;
+  border: 1px solid var(--wo-line-2);
+  border-radius: var(--wo-radius);
+  background: var(--wo-soft);
+}
+.wa-dash .wa-token pre {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--wo-ink-2);
+  font-family: "Geist", sans-serif;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.wa-dash .wa-token button {
+  flex: none;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  color: var(--wo-muted);
+}
+.wa-dash .wa-token button:hover {
+  background: var(--wo-active);
+  color: var(--wo-ink);
+}
+@media (max-width: 767px), (pointer: coarse) {
+  .wa-dash .wa-token {
+    height: 46px;
+  }
+  .wa-dash .wa-token button {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+  }
+}
+.wa-dash-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 0 20px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--wo-warn-line);
+  border-radius: var(--wo-radius);
+  background: var(--wo-warn-bg);
+}
+.wa-dash-alert-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  color: var(--wo-ink-2);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.wa-dash-alert-text strong {
+  color: var(--wo-warn);
+  font-weight: 600;
+}
+.wa-dash-alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wa-dash-alert-actions button {
+  height: 36px;
+}
+.wa-dash-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--wo-line);
+  border-radius: 0 0 8px 8px;
+  background: var(--wo-soft);
+}
+.wa-dash-actions-main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.wa-dash-actions button {
+  height: 36px;
+}
+.wa-dash-actions button.wa-icon-btn {
+  width: 36px;
+  min-width: 36px;
+}
+@media (max-width: 767px), (pointer: coarse) {
+  .wa-dash-actions button,
+  .wa-dash-alert-actions button {
+    height: 44px;
+  }
+  .wa-dash-actions button.wa-icon-btn {
+    width: 44px;
+    min-width: 44px;
+  }
+}
+@media (max-width: 480px) {
+  .wa-dash-head,
+  .wa-dash-field {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .wa-dash-head {
+    align-items: flex-start;
+  }
+  .wa-dash-title {
+    font-size: 20px;
+  }
+  /* name and number on their own lines: a wrapped "·" would start the second line */
+  .wa-dash-profile {
+    flex-direction: column;
+  }
+  .wa-dash-pname + .wa-dash-phone::before {
+    content: none;
+  }
+  .wa-dash-alert {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+  .wa-dash-alert-actions,
+  .wa-dash-alert-actions > button {
+    width: 100%;
+  }
+  .wa-dash-alert-actions > button {
+    flex: 1 1 100%;
+  }
+  .wa-dash-actions {
+    padding: 12px 16px;
+  }
+}
+
+/* metrics: small label on top, large number below */
+.wa-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+.wa-metric {
+  min-width: 0;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--wo-line);
+  border-radius: 8px;
+  background: var(--wo-paper);
+}
+.wa-metric-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--wo-muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.wa-metric-icon {
+  flex: none;
+  color: var(--wo-muted);
+}
+.wa-metric-value {
+  margin: 10px 0 0;
+  color: var(--wo-ink);
+  font-size: 32px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 559px) {
+  .wa-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .wa-metric:last-child {
+    grid-column: 1 / -1;
+  }
+  .wa-metric {
+    padding: 14px 16px 16px;
+  }
+  .wa-metric-value {
+    font-size: 28px;
+  }
+}
+@media (max-width: 339px) {
+  .wa-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------------------------------- dialogs */
+[role="dialog"].fixed,
+.place-items-center.overflow-y-auto > [role="dialog"] {
+  border-color: var(--wo-line);
+  border-radius: 8px;
+  box-shadow: 0 24px 48px -16px rgb(0 0 0 / 0.28);
+}
+[role="dialog"] h2.text-lg.font-semibold {
+  color: var(--wo-ink);
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.wa-confirm {
+  max-width: 440px;
+}
+.wa-confirm [id$="-description"],
+.wa-qr-dialog [id$="-description"] {
+  line-height: 1.5;
+}
+.wa-confirm-foot {
+  gap: 8px;
+}
+.wa-confirm-foot > * {
+  margin: 0 !important;
+}
+@media (max-width: 639px) {
+  .wa-confirm-foot > button {
+    width: 100%;
+    height: 44px;
+  }
+}
+.wa-qr-box {
+  display: flex;
+  min-height: 256px;
+  align-items: center;
+  justify-content: center;
+}
+.wa-qr-box svg {
+  max-width: 100%;
+  height: auto;
+}
+.wa-pairing-code {
+  margin: 8px 0;
+  color: var(--wo-ink);
+  font-size: 32px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+.wa-dialog-wait {
+  margin: 16px 0;
+  color: var(--wo-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ----------------------------------------------------------------------------------------- toasts */
+:root {
+  --toastify-color-success: #0b6e49;
+  --toastify-color-error: #ac2117;
+  --toastify-color-warning: #9a5b00;
+  --toastify-color-info: #2f3534;
+  --toastify-text-color-light: #2f3534;
+  --toastify-color-progress-light: #9aa3a1;
+}
+.Toastify__toast {
+  border: 1px solid var(--wo-line);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px -16px rgb(0 0 0 / 0.35);
+  font-size: 14px;
+  line-height: 1.45;
+}
