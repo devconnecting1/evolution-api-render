@@ -1,67 +1,108 @@
-# Guia comercial — WhatsAI
+# Planos e preços — WhatsAI
 
-Recomendação: cobrar uma **implementação de R$ 1.500 a 3.000** e uma **mensalidade de R$ 297 a 797**, conforme o porte do cliente. A conta usa o custo real do projeto mais o mercado brasileiro em 2026; com essa faixa a margem fica entre 85% e 90%.
+Uma implantação, cobrada uma vez, e uma mensalidade fixa que cobre a operação, a inteligência artificial e o suporte. Valores de 02/11/2026, válidos por 30 dias a partir do envio da proposta.
 
-### Quanto cada cliente custa
+## Resumo dos planos
 
-| Item | Custo estimado por cliente/mês |
+| | Essencial | Profissional | Premium (API oficial) |
+|---|---|---|---|
+| **Mensalidade** | **R$ 397** | **R$ 697** | **R$ 1.297** |
+| Implantação, contrato de 6 meses | R$ 1.500 | R$ 2.900 | a partir de R$ 4.900 |
+| Implantação, contrato de 12 meses | R$ 990 | R$ 1.900 | a partir de R$ 3.500 |
+| Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
+| Números de WhatsApp | 1 | até 2 | 1 (adicionais sob consulta) |
+| Conexão | WhatsApp Web (QR code) | WhatsApp Web (QR code) | API oficial da Meta (Cloud API) |
+| Áudio, foto e PDF | Sim | Sim | Sim |
+| Ajustes nas instruções por mês | até 2 | até 4 | até 8 |
+| Integração (agenda, planilha ou CRM), feita sob medida | – | 1 incluída | 2 incluídas |
+| Relatório de uso, preparado pela nossa equipe | – | mensal | mensal + revisão trimestral |
+| Primeira resposta do suporte | até 1 dia útil | até 4 horas úteis | até 2 horas úteis |
+| Prazo de implantação | até 5 dias úteis | até 10 dias úteis | 15 a 20 dias úteis + prazo da Meta |
+
+- **Uma resposta** é cada vez que a IA responde uma mensagem (ou uma sequência de mensagens seguidas) do seu cliente. Uma conversa típica tem de 5 a 10 respostas: 2.000 respostas equivalem a algo entre 200 e 400 conversas por mês.
+- **Excedente:** se o mês passar da franquia, a IA continua respondendo. O excedente custa **R$ 49 por bloco de 1.000 respostas**, na fatura seguinte. No primeiro mês em que isso acontecer, avisamos e não cobramos. Respostas não usadas não acumulam.
+- **Piloto assistido de 14 dias:** R$ 490 (1 número, até 500 respostas), abatido da implantação se você contratar em até 7 dias após o piloto.
+
+## O que a IA faz sozinha e o que é serviço da nossa equipe
+
+| Automático (o sistema faz) | Serviço (feito por pessoas da nossa equipe) |
 |---|---|
-| Servidor + banco (Render Standard + Neon Launch divididos por ~20 clientes) | ~R$ 10–20 |
-| OpenAI com **gpt-4o-mini** (~1.000 respostas/mês) | ~R$ 3–5 |
-| OpenAI com **gpt-4o** (~1.000 respostas/mês) | ~R$ 40–50 |
-| WhatsApp **Baileys** | R$ 0 |
-| WhatsApp **Cloud API**: respostas dentro de 24 h | gratuitas (há fontes dizendo que isso pode mudar a partir de out/2026) |
-| WhatsApp **Cloud API**: mensagens de marketing | ~R$ 0,32 por mensagem |
-| Tempo de suporte (1–3 h/mês) | é o maior custo real |
+| Responde as mensagens 24 horas por dia, seguindo as instruções escritas para o seu negócio | Escrever, testar e ajustar as instruções com você |
+| Lembra das mensagens anteriores do mesmo contato (configurável de 2 a 100 mensagens) | Integrações com agenda, planilha ou CRM: projeto sob medida, incluído no Profissional e no Premium |
+| Transcreve áudios (até 5 minutos por padrão), lê fotos e PDFs (até 10 MB e 20 páginas) | Relatório de uso mensal (Profissional e Premium) |
+| Identifica vídeos, figurinhas, localizações e contatos compartilhados | Monitoramento do servidor, do banco e das conexões, e ação quando algo sai do normal |
+| Junta mensagens seguidas do cliente e responde de uma vez | Pausar ou reativar a IA em uma conversa específica, a pedido da sua equipe |
+| WhatsApp Web: pausa naquela conversa quando alguém da equipe responde pelo celular, WhatsApp Web ou Desktop, e volta depois do tempo combinado | Treinamento da equipe e acompanhamento dos primeiros dias |
+| Ignora grupos: responde só conversas individuais | Suporte pelo WhatsApp, de segunda a sexta, das 9h às 18h |
 
-Considerado: ~2.000 tokens de entrada e 200 de saída por resposta, com prompt e histórico. Com o **gpt-4o-mini**, o custo de IA fica quase zero; use o gpt-4o só para quem precisa de mais qualidade.
+**Tempo de resposta:** normalmente entre 20 e 40 segundos. A IA espera alguns segundos para juntar mensagens seguidas do cliente e responder tudo de uma vez.
 
-### Preço sugerido
+**Quando o cliente pede uma pessoa:** a IA avisa que a equipe vai continuar o atendimento. A sua equipe vê a conversa no WhatsApp e assume respondendo; a partir daí a IA fica pausada naquela conversa. Hoje não há aviso automático para a equipe (por exemplo, uma mensagem para o celular do gerente); isso pode ser feito como integração.
 
-**Implementação (cobrança única)**
+**Como a IA decide o que responder:** ela responde com base nas informações que você aprovou e é orientada a não informar preços, prazos ou condições que não estejam nas instruções e a dizer que a equipe vai retornar quando não souber. Como toda IA, pode errar; por isso a implantação inclui testes com perguntas reais e o acompanhamento dos primeiros dias.
 
-| Pacote | O que inclui | Preço |
+## Implantação (cobrada uma vez)
+
+| Etapa | Essencial | Profissional | Premium |
+|---|---|---|---|
+| Conversa de diagnóstico (perguntas frequentes, horários, regras, quando passar para a equipe) | Sim | Sim | Sim |
+| Instruções da IA escritas e revisadas com você | Sim | Sim | Sim |
+| Conexão do número por QR code (WhatsApp Web) | Sim | Sim, até 2 | – |
+| Verificação da empresa na Meta, conta oficial (WABA), número e modelos de mensagem | – | – | Sim |
+| Configuração de memória, áudio, foto, PDF e tempo de pausa | Sim | Sim | Sim |
+| Roteiro de testes com perguntas reais do seu negócio | Sim | Sim | Sim |
+| Integração com agenda, planilha ou CRM | – | 1 | 2 |
+| Treinamento da equipe (online) | 1 hora | 2 horas | 3 horas |
+| Acompanhamento intensivo após entrar no ar | 7 dias | 14 dias | 30 dias |
+| **Valor, contrato de 6 meses** | **R$ 1.500** | **R$ 2.900** | **a partir de R$ 4.900** |
+| **Valor, contrato de 12 meses** | **R$ 990** | **R$ 1.900** | **a partir de R$ 3.500** |
+
+No Premium, o valor final depende das integrações e dos modelos de mensagem necessários e é fechado na proposta, depois do diagnóstico.
+
+## Adicionais
+
+| Item | Implantação | Mensalidade |
 |---|---|---|
-| Essencial | 1 número, prompt personalizado, base de perguntas frequentes, pausa humana, testes, treinamento de 1 h | **R$ 1.500 – 2.500** |
-| Profissional | Essencial + integrações (agenda, planilha, CRM, n8n), transcrição de áudio, imagens | **R$ 3.000 – 6.000** |
-| Oficial / Enterprise | Cloud API com verificação Meta, Coexistence, templates, fluxos sob medida | **R$ 6.000+** |
+| Número adicional (mesma empresa; inclui +1.000 respostas) | R$ 600 | R$ 197 |
+| Integração adicional (agenda, planilha, CRM, sistema próprio) | a partir de R$ 800, após diagnóstico | incluída no suporte |
+| Bloco de 1.000 respostas acima da franquia | – | R$ 49 |
+| Treinamento extra ou ajuste fora da franquia (novo fluxo, novo setor) | R$ 150 por hora | – |
+| Modelo de IA mais avançado, para casos que exigem raciocínio maior | – | a partir de R$ 197 |
 
-**Mensalidade**
+## WhatsApp Web ou API oficial da Meta
 
-| Plano | Franquia | Preço |
+| | WhatsApp Web (Essencial e Profissional) | API oficial da Meta (Premium) |
 |---|---|---|
-| Essencial | até ~1.000 respostas da IA/mês, 1 número, 1 ajuste de prompt/mês | **R$ 297 – 397** |
-| Profissional | até ~3.000 respostas, relatório mensal, ajustes ilimitados, suporte em horário comercial | **R$ 597 – 797** |
-| Premium | volume alto, integrações, SLA, Cloud API oficial | **R$ 1.200+** |
-| Excedente | resposta acima da franquia | R$ 0,10 – 0,20 cada |
+| Como conecta | QR code no celular do número que você já usa | Conta oficial da Meta (WABA) com empresa verificada |
+| Custo da Meta | Não há cobrança da Meta por mensagem | A Meta cobra algumas mensagens pela tabela vigente, direto no cartão da sua empresa |
+| Risco de bloqueio | Existe: o WhatsApp Web não é um canal oficial para automação. É maior com disparos em massa, que o WhatsAI não faz | Menor, mas a Meta pode limitar números que violem as políticas ou tenham baixa qualidade |
+| Quando a equipe responde | A IA pausa sozinha naquela conversa | Com Coexistence (app WhatsApp Business e API no mesmo número), a IA pausa quando a equipe responde pelo app. Esse recurso é novo e é testado na implantação. A Coexistence depende de aprovação da Meta para o número |
+| Celular | Abra o WhatsApp no celular pelo menos a cada 14 dias para a conexão não expirar | Não depende do celular |
 
-**Como estruturar a cobrança**
-- **Contrato mínimo de 6 meses.** Com contrato de 12 meses, dê 30 a 50% de desconto na implementação, porque isso aumenta muito o fechamento.
-- **Chave OpenAI:** use a sua chave, embutida no preço, ou peça a do cliente, cobrando menos e repassando o custo. Para clientes pequenos, embutir é mais simples. Para volume alto, use a chave do cliente.
-- **Margem:** no plano Essencial a R$ 397, o custo direto fica entre R$ 20 e 60, o que dá **85–90% de margem** antes do seu tempo.
+## Pagamento e contrato
 
-### Cuidados que entram no preço e no contrato
-1. **Baileys não é oficial.** O WhatsApp pode banir o número, principalmente se o cliente fizer disparos em massa. Coloque isso no contrato e ofereça a Cloud API como opção "segura", mais cara.
-2. **Regras da Meta para IA em 2026 estão mudando.** Há notícias de restrição a "assistentes de IA de uso geral" e de cobrança por mensagens a chatbots de IA, inclusive no Brasil, com disputa judicial. Bots de atendimento da própria empresa costumam ser permitidos, mas acompanhe e deixe uma cláusula de reajuste caso a Meta passe a cobrar.
-3. **LGPD:** inclua um termo de tratamento de dados, avise o contato de que ele fala com uma IA e não guarde mais do que precisa.
-4. **Escritórios de advocacia:** o Provimento 205/2021 da OAB limita a publicidade. A IA não deve prometer resultado nem captar clientes ativamente, só fazer triagem e agendamento.
+- **Implantação:** 50% na assinatura e 50% quando a IA entra no ar.
+- **Mensalidade:** começa no dia em que a IA entra no ar. Pagamento anual antecipado tem 10% de desconto.
+- **Prazo mínimo:** 6 meses. Com 12 meses, a implantação tem o desconto da tabela. Depois do prazo mínimo, o contrato segue mês a mês.
+- **Cancelamento:** aviso de 30 dias. Antes do prazo mínimo, multa de 50% das mensalidades que faltam para completar o prazo.
+- **Reajuste:** anual, pelo IPCA. Se a OpenAI, a Meta ou os provedores de hospedagem aumentarem os preços de forma relevante, os valores podem ser revistos com aviso de 30 dias; se você não concordar, pode cancelar sem multa.
 
-**Exemplo (escritório de advocacia):** implementação de R$ 2.000 (ou R$ 1.000 com contrato de 12 meses), mensalidade de R$ 497 no Profissional com gpt-4o-mini e franquia de 2.000 respostas.
+## O que não está incluído
 
-Os preços de mercado vêm de fontes de terceiros e mudam rápido. Confirme os valores atuais da OpenAI e da Meta antes de fechar contrato.
+- Cobranças da Meta na API oficial (pagas pela sua empresa diretamente à Meta).
+- Chip, número, aparelho celular e internet.
+- Disparos em massa, listas de contatos e campanhas de marketing.
+- Lembretes automáticos de consulta ou cobrança (exigem integração e, na API oficial, modelos de mensagem pagos à Meta).
+- Atendimento humano: a IA apoia a sua equipe, não a substitui.
+- Integrações e fluxos não previstos na proposta, e mudanças em sistemas de terceiros.
+- Validação jurídica, médica ou regulatória do conteúdo: a sua empresa aprova as informações que a IA usa.
 
-**Fontes**
-- [Digisac — quanto custa um chatbot para WhatsApp](https://digisac.com.br/blog/quanto-custa-um-chatbot-para-whatsapp-e-como-calcular-o-retorno)
-- [Eesel — Chatbot de IA para WhatsApp em 2026: custos e regras da Meta](https://www.eesel.ai/es/blog/whatsapp-ai-chatbot)
-- [Olhar Digital — Meta vai cobrar por mensagens enviadas para IAs no WhatsApp](https://olhardigital.com.br/2026/03/09/pro/meta-vai-cobrar-por-mensagens-enviadas-para-ias-no-whatsapp-entenda/)
-- [Tecnoblog — Meta vai cobrar chatbots de IA por uso do WhatsApp](https://tecnoblog.net/noticias/meta-vai-cobrar-chatbots-de-ia-por-uso-do-whatsapp/)
-- [Tecnoblog — WhatsApp proíbe presença do ChatGPT e outras IAs](https://tecnoblog.net/noticias/whatsapp-proibe-presenca-do-chatgpt-e-outras-ias/)
-- [TI Inside — custos para conversas no WhatsApp Business](https://tiinside.com.br/13/07/2026/custos-para-conversas-no-whatsapp-business-podem-chegar-a-us-500/)
-- [SendPulse — WhatsApp muda regras de cobrança (out/2026)](https://sendpulse.com/br/blog/whatsapp-muda-regras-de-cobranca-para-empresas-outubro-2026)
-- [Meta — Pricing on the WhatsApp Business Platform](https://developers.facebook.com/docs/whatsapp/pricing)
-- [ChatMaxima — WhatsApp API pricing Brazil (jul/2026)](https://chatmaxima.com/whatsapp-api-pricing/brazil/)
-- [AgentDeals — WhatsApp API pricing 2026](https://agentdeals.dev/whatsapp-business-api-pricing-2026)
-- [Kommo — updated pricing rules for WhatsApp Business](https://support.kommo.com/docs/updated-pricing-rules-for-whatsapp-business.md)
-- [MorphLLM — OpenAI API pricing 2026](https://morphllm.com/openai-api-pricing)
-- [AnotherWrapper — GPT-4o mini pricing](https://anotherwrapper.com/tools/llm-pricing/gpt-4o-mini-2024-07-18)
-- [Curlscape — OpenAI API pricing guide 2026](https://curlscape.com/blog/openai-api-pricing-guide-2026)
+## Privacidade e LGPD
+
+- Termo de tratamento de dados assinado com a sua empresa.
+- A IA é orientada a se apresentar como assistente virtual e a não pedir senhas, dados de cartão ou documentos sensíveis.
+- O conteúdo de transcrições e PDFs não vai para os registros técnicos, e imagens e documentos não ficam no histórico que a IA usa.
+- As mensagens passam por fornecedores de tecnologia (OpenAI, provedores de hospedagem e, na API oficial, a Meta), alguns com servidores fora do Brasil.
+- O histórico das conversas é mantido por até 90 dias, prazo que pode ser ajustado no contrato.
+
+Contato: WhatsApp (21) 97469-9723.
