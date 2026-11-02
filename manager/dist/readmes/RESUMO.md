@@ -33,8 +33,8 @@
 ## Links rápidos
 
 - Painel: `/`
-- API: `https://evolution-api-x93o.onrender.com`
-- Webhook Meta: `https://evolution-api-x93o.onrender.com/webhook/meta`
+- API: URL do serviço web, configurada no painel do Render
+- Webhook Meta: `<URL da API>/webhook/meta`
 - OpenAI billing: `https://platform.openai.com/settings/organization/billing/overview`
 - Meta billing: `https://business.facebook.com/billing_hub/payment_settings`
 

@@ -22,17 +22,17 @@ Evolution API 2.3.7 — Render (Ohio)          Manager WhatsAI — Vercel
 
 | Recurso | Endereço |
 |---|---|
-| API | `https://evolution-api-x93o.onrender.com` |
+| API | URL do serviço web, configurada no painel do Render |
 | Manager | `https://whatsaibr.vercel.app` |
-| Neon (direct) | `ep-patient-band-b5qn7dx2.c-7.us-east-2.aws.neon.tech` / db `neondb` |
-| Keep-alive | cron-job.org job `8703746` (GET `/` a cada 5 min) |
-| Repo | `github.com/devconnecting1/evolution-api-render` (remote `render`) |
+| Banco Postgres | host e banco configurados no painel do provedor (Neon hoje) |
+| Keep-alive | job no cron-job.org, configurado no painel do provedor (GET `/` a cada 5 min) |
+| Repo | repositório privado do projeto no GitHub (remote `render`) |
 
 ## 2. Segredos e acessos
 
-- **API key global** (`AUTHENTICATION_API_KEY`): definida somente no dashboard do Render (`sync: false`), fora do Git. É super-admin — **nunca** compartilhar com cliente. A chave antiga ficou no histórico do repositório; rotacione-a.
-- **Neon**: URI direct configurada no Render (`DATABASE_CONNECTION_URI`, `sync: false`). Não commitar.
-- **Tokens de deploy** (efêmeros, Cloud Shell): `/tmp/opencode/vercel-token`, `/tmp/opencode/cron-job-token`. Se sumirem, gerar novos. No GitHub, o secret `VERCEL_TOKEN` alimenta o workflow de deploy do manager.
+- **API key global** (`AUTHENTICATION_API_KEY`): definida somente no painel do Render (`sync: false`), fora do Git. É super-admin — **nunca** compartilhar com cliente. Se houver suspeita de exposição, rotacione-a.
+- **Banco**: URI de conexão configurada no painel do Render (`DATABASE_CONNECTION_URI`, `sync: false`). Não commitar.
+- **Tokens de deploy** (Vercel, cron-job.org): guardados fora do repositório, com o operador. Se sumirem, gerar novos no painel do provedor. No GitHub, o secret `VERCEL_TOKEN` alimenta o workflow de deploy do manager.
 - **Manager**: acesso somente do operador (você). Cliente usa apenas o WhatsApp.
 
 ## 3. Deploy
@@ -45,7 +45,7 @@ git push render main          # dispara deploy automático no Render
 # Fallback manual:
 ./scripts/sync-readmes.sh     # copia os READMEs para o manager
 cd manager/dist
-VERCEL_TOKEN=$(cat /tmp/opencode/vercel-token) \
+VERCEL_TOKEN="<token da Vercel>" \
   npx -y vercel@65.2.0 deploy --prod --yes --archive=tgz
 ```
 
@@ -156,7 +156,7 @@ Preços fixos aprovados em 02/11/2026. A versão para o cliente (com o que inclu
 
 ## 8. Manutenção
 
-- **Keep-alive**: cron-job.org `8703746` (5 min). Sem ele, o free dorme em 15 min.
+- **Keep-alive**: job no cron-job.org, configurado no painel do provedor (5 min). Sem ele, o free dorme em 15 min.
 - **Atualizações**: `git push render main` (revisar changelog do upstream antes).
 - **Backup**: snapshots do Neon + `pg_dump` mensal para storage externo.
 - **Monitorar**: uso de tokens OpenAI, sessões travadas, instâncias `close`, erros no log do Render; no oficial, qualidade/limites e billing da Meta.
@@ -185,18 +185,18 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 | Variável | Uso | Como obter |
 |---|---|---|
 | `NEON_API_KEY` | Consultar projeto, branches e consumo | Neon Console > Account settings > API keys (org key) |
-| `NEON_PROJECT_ID` | Projeto `spring-boat-14626479` | Neon Console > Project settings |
-| `NEON_ORG_ID` | Organização `org-soft-mouse-21767293` | Neon Console > Organization settings |
+| `NEON_PROJECT_ID` | ID do projeto (configurado no painel do provedor) | Neon Console > Project settings |
+| `NEON_ORG_ID` | ID da organização (configurado no painel do provedor) | Neon Console > Organization settings |
 | `RENDER_API_KEY` | Consultar serviços, deploys e métricas | Render > Account settings > API keys |
 | `RENDER_OWNER_ID` | Opcional; se vazio, descobre via `/owners` | Render > Workspace settings |
 | `RENDER_SERVICE_IDS` | Opcional; lista separada por vírgula | Render > serviço > ID |
 | `VERCEL_TOKEN` | Consultar team, projeto e deploys | Vercel > Account settings > Tokens |
-| `VERCEL_TEAM_ID` | Team `team_L4ydLNVlb1XnoQd49WIvXRfw` | Vercel > Team settings |
-| `VERCEL_PROJECT_ID` | Projeto `prj_1qlhQq1PuLn20KRs2FK0fsD0GIvU` | Vercel > Project settings |
+| `VERCEL_TEAM_ID` | ID do team (configurado no painel do provedor) | Vercel > Team settings |
+| `VERCEL_PROJECT_ID` | ID do projeto (configurado no painel do provedor) | Vercel > Project settings |
 | `GITHUB_TOKEN` | Opcional; billing de Actions e repositório | GitHub > Developer settings > PAT |
-| `GITHUB_OWNER` / `GITHUB_REPO` | Default `devconnecting1/evolution-api-render` | — |
+| `GITHUB_OWNER` / `GITHUB_REPO` | Default: o repositório deste projeto | — |
 
-- No `render.yaml`, os IDs ficam versionados e os tokens usam `sync: false`; preencha os valores no dashboard do Render (Service > Environment) e faça o deploy. Não commite tokens.
+- No `render.yaml`, os IDs ficam versionados e os tokens usam `sync: false`; preencha os valores no painel do Render (Service > Environment) e faça o deploy. Não commite tokens.
 - **Neon:** storage soma o `logical_size` das branches contra 1 GB do Free; compute em CU-horas contra 100; egress estimado contra 5 GB; branches contra 10. Ajuste os limites se o plano mudar.
 - **Render:** mostra serviços, último deploy, CPU/memória/rede e uma **estimativa** de instance hours contra 750 h. O consumo oficial de bandwidth/build minutes só existe no dashboard.
 - **Vercel:** plano Hobby; builds são inferidos dos deploys. O endpoint oficial `/v1/usage` exige Pro/Enterprise, então alguns números ficam parciais.
@@ -208,7 +208,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 
 - Plano Render free por opção de custo; upgrade para Starter quando houver clientes pagantes.
 - Manager sem fonte: patches aplicados direto no bundle (documentados na seção 4).
-- Integrações habilitadas em `render.yaml` (commit `13f1bb28`).
+- Integrações habilitadas em `render.yaml`.
 - Marca WhatsAI aplicada ao manager (título, logos, textos).
 - ~~Conexão oficial (Cloud API) é a única oferta a clientes.~~ Substituído em 02/11/2026: Essencial e Profissional usam WhatsApp Web (Baileys), com aviso de risco no contrato; o Premium usa a Cloud API.
 - 29/10/2026: bot OpenAI ganhou `tokenParam` (compatibilidade com modelos de raciocínio) e `humanResumeMinutes` (pausa/retomada quando o dono escreve). `expire` continua sem efeito no OpenAI. Detalhes, curls, limitações e deploy na seção 12.
@@ -223,7 +223,7 @@ Vale para o bot OpenAI (`/openai/*`) em instâncias **Baileys**. Os exemplos seg
 Variáveis usadas nos exemplos:
 
 ```bash
-SERVER_URL="https://evolution-api-x93o.onrender.com"
+SERVER_URL="https://<url-da-api>"   # URL do serviço web, no painel do Render
 APIKEY="<chave global ou token da instância>"
 INSTANCE="escritorio-silva"
 ```
