@@ -112,6 +112,8 @@ model Instance {
   N8nSetting              N8nSetting[]
   Evoai                   Evoai[]
   EvoaiSetting            EvoaiSetting?
+  InstanceLimits          InstanceLimits?
+  UsageCounter            UsageCounter[]
 }
 
 model Session {
@@ -778,4 +780,36 @@ model EvoaiSetting {
   evoaiIdFallback String?   @db.VarChar(100)
   Instance        Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId      String    @unique
+}
+
+model InstanceLimits {
+  id                       String    @id @default(cuid())
+  planName                 String?   @db.VarChar(30)
+  monthlyResponses         Int?      @db.Integer
+  dailyResponses           Int?      @db.Integer
+  perContactDailyResponses Int?      @db.Integer
+  overLimitAction          String    @default("continue") @db.VarChar(10)
+  overLimitMessage         String?   @db.Text
+  alertPercent             Int       @default(80) @db.Integer
+  businessHours            Json?     @db.JsonB
+  outsideHoursMessage      String?   @db.Text
+  createdAt                DateTime? @default(now()) @db.Timestamp
+  updatedAt                DateTime  @updatedAt @db.Timestamp
+  Instance                 Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId               String    @unique
+}
+
+/// AI answers per instance: type "month" (period 2026-11), "day" (2026-11-03) and "contact" (day + remoteJid).
+model UsageCounter {
+  instanceId  String
+  type        String   @db.VarChar(10)
+  period      String   @db.VarChar(10)
+  remoteJid   String   @default("") @db.VarChar(100)
+  responses   Int      @default(0) @db.Integer
+  limitNotice Boolean  @default(false) @db.Boolean
+  hoursNotice Boolean  @default(false) @db.Boolean
+  updatedAt   DateTime @updatedAt @db.Timestamp
+  Instance    Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@id([instanceId, type, period, remoteJid])
 }

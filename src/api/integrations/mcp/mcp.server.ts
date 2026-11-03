@@ -12,8 +12,8 @@ export const MCP_SERVER_VERSION = '1.0.0';
 
 const INSTRUCTIONS = [
   'Servidor MCP do WhatsAI (Evolution API + bot OpenAI por instância).',
-  'Comece por list_instances. Leitura: list_chats, get_messages, search_messages, get_media, get_bot_config, list_paused_contacts, get_instance_status, get_webhook_and_settings, get_observability.',
-  'Escrita: send_text_message envia de verdade para o cliente; pause_bot_for_contact/resume_bot_for_contact; update_bot_settings substitui valores do bot.',
+  'Comece por list_instances. Leitura: list_chats, get_messages, search_messages, get_media, get_bot_config, list_paused_contacts, get_instance_status, get_webhook_and_settings, get_observability, get_usage.',
+  'Escrita: send_text_message envia de verdade para o cliente; pause_bot_for_contact/resume_bot_for_contact; update_bot_settings substitui valores do bot; update_limits altera o plano e os limites de respostas da IA.',
   'Antes de qualquer escrita, confirme com o usuário. Os manuais estão nos recursos whatsai://docs/*.',
 ].join(' ');
 

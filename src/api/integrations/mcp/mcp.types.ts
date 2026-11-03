@@ -33,6 +33,12 @@ export interface McpDeps {
   openaiController: any;
   sendMessageController: { sendText: (instance: { instanceName: string }, data: any) => Promise<any> };
   observability: { getOverview: (force?: boolean) => Promise<any> };
+  /** "Plano e limites" (UsageService): the same instance the REST routes and the bot use. */
+  usage: {
+    getLimits: (instanceId: string) => Promise<any>;
+    getSummary: (instanceId: string) => Promise<any>;
+    saveLimits: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; limits: any }>;
+  };
   isBotMessageId: (instanceId: string, messageId: string) => Promise<boolean>;
   config: McpConfig;
   logger: McpLogger;

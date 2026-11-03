@@ -10,10 +10,13 @@ import { createMcpRouter } from '@api/integrations/mcp/mcp.router';
 import { McpDeps } from '@api/integrations/mcp/mcp.types';
 import { maskSecret, maskUrl, normalizeRecipient, scrubSecrets } from '@api/integrations/mcp/mcp.util';
 import { TOOL_NAMES } from '@api/integrations/mcp/tools';
+import { UsageService } from '@api/services/usage.service';
 import { Prisma } from '@prisma/client';
 import express from 'express';
 import { Server } from 'http';
 import path from 'path';
+
+import { createUsageTables } from '../helpers/usage-mock';
 
 const GLOBAL_KEY = 'global-key-for-tests-only-0123456789';
 const PATH_TOKEN = 'p'.repeat(40);
@@ -34,6 +37,8 @@ const EXPECTED_TOOLS = [
   'pause_bot_for_contact',
   'resume_bot_for_contact',
   'update_bot_settings',
+  'get_usage',
+  'update_limits',
 ];
 
 // --------------------------------------------------------------------------------------------- fakes
@@ -169,8 +174,12 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     },
   };
 
+  const usageTables = createUsageTables(instances);
+  const usage = new UsageService({ ...prisma, ...usageTables, instance: prisma.instance });
+
   const deps: McpDeps = {
     prisma,
+    usage,
     waMonitor: { waInstances: { escritorio: channelA } },
     openaiController: {
       integrationEnabled: true,
@@ -214,15 +223,21 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     },
   };
 
-  return { deps, calls, sessions };
+  return { deps, calls, sessions, usageTables };
 }
 
 // --------------------------------------------------------------------------------------------- http helpers
 
-type Harness = { url: string; server: Server; calls: Calls; sessions: any[] };
+type Harness = {
+  url: string;
+  server: Server;
+  calls: Calls;
+  sessions: any[];
+  usageTables: ReturnType<typeof createUsageTables>;
+};
 
 async function startServer(overrides: Partial<McpDeps['config']> = {}, limiter?: FailedAuthLimiter): Promise<Harness> {
-  const { deps, calls, sessions } = fakeDeps(overrides);
+  const { deps, calls, sessions, usageTables } = fakeDeps(overrides);
   const app = express();
   app.use(express.json());
   app.use(
@@ -235,7 +250,7 @@ async function startServer(overrides: Partial<McpDeps['config']> = {}, limiter?:
   });
   const { port } = server.address() as AddressInfo;
 
-  return { url: `http://127.0.0.1:${port}/mcp`, server, calls, sessions };
+  return { url: `http://127.0.0.1:${port}/mcp`, server, calls, sessions, usageTables };
 }
 
 let nextRpcId = 1;
@@ -583,6 +598,61 @@ describe('MCP: tools', () => {
 
     const empty = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio' });
     assert.equal(empty.result.isError, true);
+  });
+
+  test('get_usage: no plan configured still shows the counted answers', async () => {
+    const { json, result } = await callTool(h.url, 'get_usage', { instance: 'escritorio' });
+    assert.ok(!result.isError, JSON.stringify(result));
+    assert.equal(json.instance, 'escritorio');
+    assert.equal(json.configured, false);
+    assert.match(json.note, /sem limite/);
+    assert.equal(json.month.limit, null);
+    assert.equal(json.last30Days.length, 30);
+  });
+
+  test('update_limits is destructive, saves a partial change and returns the previous values', async () => {
+    const { body } = await rpc(h.url, 'tools/list', {}, bearer(GLOBAL_KEY));
+    const tool = body.result.tools.find((item: any) => item.name === 'update_limits');
+    assert.equal(tool.annotations.destructiveHint, true);
+    assert.equal(tool.annotations.readOnlyHint, false);
+
+    const first = await callTool(h.url, 'update_limits', { instance: 'escritorio', plan: 'Essencial' });
+    assert.ok(!first.result.isError, first.text);
+    assert.equal(first.json.previous, null);
+    assert.equal(first.json.limits.monthlyResponses, 2000);
+    assert.equal(first.json.limits.overLimitAction, 'continue');
+
+    const second = await callTool(h.url, 'update_limits', {
+      instance: 'escritorio',
+      daily_responses: 300,
+      business_hours: { enabled: true, mode: 'inside', week: { sat: [['09:00', '13:00']] } },
+    });
+    assert.equal(second.json.previous.monthlyResponses, 2000);
+    assert.equal(second.json.previous.dailyResponses, null);
+    assert.equal(second.json.limits.monthlyResponses, 2000, 'absent fields keep their value');
+    assert.equal(second.json.limits.dailyResponses, 300);
+    assert.deepEqual(second.json.limits.businessHours.week.sat, [['09:00', '13:00']]);
+    assert.deepEqual(second.json.limits.businessHours.week.mon, [['09:00', '18:00']]);
+
+    const invalid = await callTool(h.url, 'update_limits', { instance: 'escritorio', over_limit_action: 'message' });
+    assert.equal(invalid.result.isError, true);
+    assert.match(invalid.text, /mensagem/);
+
+    const empty = await callTool(h.url, 'update_limits', { instance: 'escritorio' });
+    assert.equal(empty.result.isError, true);
+
+    const usage = await callTool(h.url, 'get_usage', { instance: 'escritorio' });
+    assert.equal(usage.json.configured, true);
+    assert.equal(usage.json.month.limit, 2000);
+    assert.equal(h.usageTables.limits.get('inst-a').dailyResponses, 300);
+
+    const other = await callTool(
+      h.url,
+      'update_limits',
+      { instance: 'clinica', plan: 'Premium' },
+      bearer('token-of-escritorio-0123456789'),
+    );
+    assert.equal(other.result.isError, true);
   });
 
   test('secrets never leave: OpenAI key, webhook header/url, wavoip and observability tokens', async () => {

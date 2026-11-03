@@ -18,6 +18,7 @@ import {
   withTimeout,
   worstStatus,
 } from './observability.shared';
+import type { UsageSnapshotItem } from './usage.service';
 
 const DB_TIMEOUT_MS = 5_000;
 const CACHE_TIMEOUT_MS = 2_000;
@@ -40,6 +41,8 @@ export type SystemDeps = {
   prisma?: PrismaLike | null;
   /** In-memory instances of the WAMonitoringService (live connection state). */
   waInstances?: () => Record<string, any> | null | undefined;
+  /** "Plano e limites": month usage per instance (UsageService.snapshot). Without it there is no usage card. */
+  usage?: () => Promise<UsageSnapshotItem[]>;
   databaseProvider?: string;
   cache?: {
     redisEnabled: boolean;
@@ -688,7 +691,64 @@ export class SystemProbe {
 
     return view;
   }
+
+  public hasUsage(): boolean {
+    return typeof this.deps.usage === 'function';
+  }
+
+  /**
+   * "Plano e uso" card: AI answers of the month per instance against its franchise. A metric reaches the overview
+   * alerts at the alertPercent of the instance and turns critical at 100% (then the excedente is in the notes).
+   */
+  public async collectUsage(): Promise<ProviderView> {
+    const now = this.deps.now ?? Date.now;
+    const items = await withTimeout(this.deps.usage?.() ?? Promise.resolve([]), DB_TIMEOUT_MS, 'timeout');
+    const view: ProviderView = {
+      id: 'usage',
+      name: 'Plano e uso',
+      description: 'Respostas da IA no mês, por instância',
+      configured: true,
+      plan: null,
+      status: 'ok',
+      updatedAt: new Date(now()).toISOString(),
+      metrics: [],
+      resources: [],
+      notes: [],
+      links: [],
+    };
+
+    view.metrics = items.slice(0, USAGE_MAX_METRICS).map((item) =>
+      buildMetric(`usage:${item.name}`, `Respostas da IA · ${item.name}`, item.responses, item.limit, 'count', {
+        warnAt: item.alertPercent,
+        criticalAt: 100,
+        alertAt: item.limit ? item.alertPercent : undefined,
+        detail: item.limit
+          ? `${item.planName ? `Plano ${item.planName} · ` : ''}${formatNumber(item.responses, 0)} de ${formatNumber(
+              item.limit,
+              0,
+            )} em ${item.period}${item.excedente ? ` · excedente ${formatNumber(item.excedente, 0)}` : ''}`
+          : `Sem limite configurado · ${formatNumber(item.responses, 0)} em ${item.period}`,
+      }),
+    );
+
+    for (const item of items) {
+      if (item.limit && item.excedente > 0) {
+        view.notes.push(
+          `${item.name}: franquia esgotada, ${formatNumber(item.excedente, 0)} respostas de excedente ` +
+            `(${item.blocks1000} bloco(s) de 1.000).`,
+        );
+      }
+    }
+    if (!items.length) view.notes.push('Nenhuma resposta da IA neste mês e nenhum plano configurado.');
+    if (items.length > USAGE_MAX_METRICS)
+      view.notes.push(`Mostrando ${USAGE_MAX_METRICS} de ${items.length} instâncias.`);
+    if (worstStatus(view.metrics) === 'critical') view.status = 'partial';
+
+    return view;
+  }
 }
+
+export const USAGE_MAX_METRICS = 50;
 
 const WHATSAPP_MAX_INSTANCES = 500;
 const WHATSAPP_MAX_RESOURCES = 50;

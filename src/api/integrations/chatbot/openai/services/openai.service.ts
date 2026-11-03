@@ -1,5 +1,6 @@
 import { PrismaRepository } from '@api/repository/repository.service';
 import { WAMonitoringService } from '@api/services/monitor.service';
+import { UsageGate, UsageService } from '@api/services/usage.service';
 import { Integration } from '@api/types/wa.types';
 import { ConfigService, Language, Openai as OpenaiConfig } from '@config/env.config';
 import { IntegrationSession, OpenaiBot, OpenaiSetting } from '@prisma/client';
@@ -79,8 +80,17 @@ type UserSegment =
  * Handles both Assistant API and ChatCompletion API
  */
 export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> {
-  constructor(waMonitor: WAMonitoringService, prismaRepository: PrismaRepository, configService: ConfigService) {
+  /** "Plano e limites": counts every answer and enforces business hours and caps (shared with the REST routes). */
+  protected readonly usage: UsageService;
+
+  constructor(
+    waMonitor: WAMonitoringService,
+    prismaRepository: PrismaRepository,
+    configService: ConfigService,
+    usage?: UsageService,
+  ) {
     super(waMonitor, prismaRepository, 'OpenaiService', configService);
+    this.usage = usage ?? new UsageService(prismaRepository);
   }
 
   /**
@@ -119,6 +129,17 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       if (typeof content !== 'string') {
         this.logger.log(`Message without text content for ${remoteJid}: not sent to OpenAI`);
         return;
+      }
+
+      // "Plano e limites": business hours and caps, before anything is sent to OpenAI (transcription included).
+      // The finish keyword still works while the AI is off.
+      const gate = await this.usage.checkBeforeAnswer(instance.instanceId, remoteJid);
+      if (!gate.allow && !this.isFinishKeyword(content, settings)) {
+        await this.handleBlockedAnswer(instance, remoteJid, session, settings, gate);
+        return;
+      }
+      if (gate.overage) {
+        this.logger.log(`Monthly franchise of instance ${instance.instanceName} exceeded: answering (excedente)`);
       }
 
       // Get the OpenAI credentials
@@ -300,10 +321,11 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         }
       }
 
-      // Send the response
+      // Send the response. One answer of the plan per reply (all its split parts), only when something went out
       if (message) {
         this.logger.log('Sending message to WhatsApp');
-        await this.sendMessageWhatsApp(instance, remoteJid, message, settings, true);
+        const sent = await this.sendMessageWhatsApp(instance, remoteJid, message, settings, true);
+        if (sent > 0) await this.usage.recordAnswer(instance.instanceId, remoteJid);
       } else {
         this.logger.error('No message to send to WhatsApp');
       }
@@ -323,6 +345,37 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       this.logOpenaiError('sendMessageToBot', error);
       await this.sendErrorFallback(instance, remoteJid, settings, session);
       return;
+    }
+  }
+
+  private isFinishKeyword(content: string, settings: OpenaiSetting): boolean {
+    const keywordFinish = settings?.keywordFinish || '';
+    return keywordFinish.length > 0 && content.toLowerCase().trim() === keywordFinish.toLowerCase();
+  }
+
+  /**
+   * The AI does not answer (outside business hours or over a cap). At most one notice per contact per day
+   * (outsideHoursMessage / overLimitMessage), never while the team is talking to the contact. Not counted.
+   */
+  private async handleBlockedAnswer(
+    instance: any,
+    remoteJid: string,
+    session: IntegrationSession,
+    settings: OpenaiSetting,
+    gate: UsageGate,
+  ): Promise<void> {
+    this.logger.log(`Not answering ${remoteJid} (instance ${instance.instanceName}): ${gate.reason}`);
+    if (session && isHumanPaused(session)) return;
+    if (!gate.notice) return;
+
+    const text = gate.notice === 'hours' ? gate.limits?.outsideHoursMessage : gate.limits?.overLimitMessage;
+    if (!text) return;
+    if (!(await this.usage.claimNotice(instance.instanceId, remoteJid, gate.notice, gate.day))) return;
+
+    try {
+      await this.sendMessageWhatsApp(instance, remoteJid, text, settings, false);
+    } catch (error) {
+      this.logger.error(`Could not send the ${gate.notice} notice to ${remoteJid}: ${error?.message ?? error}`);
     }
   }
 
