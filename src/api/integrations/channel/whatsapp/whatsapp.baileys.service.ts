@@ -86,6 +86,7 @@ import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
 import { LidPnPair, toLidPnPair } from '@utils/lidJid';
 import { makeProxyAgent, makeProxyAgentUndici } from '@utils/makeProxyAgent';
 import { getOnWhatsappCache, saveOnWhatsappCache } from '@utils/onWhatsappCache';
+import { PlaceholderResendTracker } from '@utils/placeholderResendTracker';
 import { status } from '@utils/renderStatus';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import { unwrapMessageContent } from '@utils/unwrapMessageContent';
@@ -251,6 +252,7 @@ export class BaileysStartupService extends ChannelStartupService {
 
   private authStateProvider: AuthStateProvider;
   private readonly msgRetryCounterCache: CacheStore = new NodeCache();
+  private readonly placeholderResendTracker = new PlaceholderResendTracker();
   private readonly userDevicesCache: CacheStore = new NodeCache({ stdTTL: 300000, useClones: false });
   private endSession = false;
   private logBaileys = this.configService.get<Log>('LOG').BAILEYS;
@@ -682,6 +684,7 @@ export class BaileysStartupService extends ChannelStartupService {
         keys: makeCacheableSignalKeyStore(this.instance.authState.state.keys, P({ level: 'error' }) as any),
       },
       msgRetryCounterCache: this.msgRetryCounterCache,
+      placeholderResendCache: this.placeholderResendTracker.cache,
       generateHighQualityLinkPreview: true,
       getMessage: async (key) => (await this.getMessage(key)) as Promise<proto.IMessage>,
       ...browserOptions,
@@ -1141,26 +1144,39 @@ export class BaileysStartupService extends ChannelStartupService {
             continue;
           }
 
+          // GHSA-qvv5-jq5g-4cgg (Baileys < rc12): an upsert with requestId is the answer to a placeholder resend
+          // and its key/content come from the answer bytes, which a contact can forge. Accept it only for a
+          // message this socket really asked the phone to resend.
+          if (requestId) {
+            if (!this.placeholderResendTracker.consume(received?.key?.id)) {
+              this.logger.warn(
+                `messages.upsert with requestId ${requestId} ignored: message ${received?.key?.id} was never requested (possible forged placeholder resend)`,
+              );
+              continue;
+            }
+            this.logger.verbose(
+              `Placeholder resend received from the phone, requestId=${requestId}, id=${received.key.id}`,
+            );
+          }
+
           // Disappearing/view once/document with caption: work on the real content (#2773)
           if (received?.message) {
             received.message = unwrapMessageContent(received.message);
           }
 
-          if (received.message?.conversation || received.message?.extendedTextMessage?.text) {
-            const text = received.message?.conversation || received.message?.extendedTextMessage?.text;
+          // Debug triggers of Baileys, only for messages written by the owner of the number
+          const debugText = received?.key?.fromMe
+            ? received.message?.conversation || received.message?.extendedTextMessage?.text
+            : undefined;
 
-            if (text == 'requestPlaceholder' && !requestId) {
-              const messageId = await this.client.requestPlaceholderResend(received.key);
+          if (debugText === 'requestPlaceholder' && !requestId) {
+            const messageId = await this.client.requestPlaceholderResend(received.key);
+            this.logger.info(`requested placeholder resync, id=${messageId}`);
+          }
 
-              console.log('requested placeholder resync, id=', messageId);
-            } else if (requestId) {
-              console.log('Message received from phone, id=', requestId, received);
-            }
-
-            if (text == 'onDemandHistSync') {
-              const messageId = await this.client.fetchMessageHistory(50, received.key, received.messageTimestamp!);
-              console.log('requested on-demand sync, id=', messageId);
-            }
+          if (debugText === 'onDemandHistSync') {
+            const messageId = await this.client.fetchMessageHistory(50, received.key, received.messageTimestamp!);
+            this.logger.info(`requested on-demand sync, id=${messageId}`);
           }
 
           const editedMessage =
