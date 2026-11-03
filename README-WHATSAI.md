@@ -2,11 +2,11 @@
 
 > **Atribuição:** projeto inspirado no Evolution Foundation/Evolution API. Base licenciada sob Apache 2.0, com condições adicionais.
 
-Plataforma própria de atendimento automatizado: Evolution API (Cloud API oficial da Meta) + agente OpenAI por instância + painel WhatsAI. Cada cliente = 1 instância (1 número) com seu próprio agente.
+Plataforma própria de atendimento automatizado: Evolution API (WhatsApp Web via Baileys ou Cloud API oficial da Meta) + agente OpenAI por instância + painel WhatsAI. Cada número = 1 instância com seu próprio agente.
 
-> Este README é o manual operacional e comercial do projeto. Atualizado em 29/10/2026.
+> Este README é o manual operacional do projeto. Atualizado em 02/11/2026.
 >
-> **Canal do escritório atual:** o escritório de advocacia em produção usa **Baileys** (`WHATSAPP-BAILEYS`, conexão por QR code), não a Cloud API. A oferta comercial das seções 5 e 6 é a Cloud API oficial, mas a **pausa humana** e a detecção bot x humano (seção 12) funcionam **somente no Baileys**; na Cloud API ficam para uma versão futura (limitações na seção 12.7).
+> **Canais:** os planos Essencial e Profissional usam **WhatsApp Web** (`WHATSAPP-BAILEYS`, QR code); o Premium usa a **Cloud API** (`WHATSAPP-BUSINESS`). O escritório de advocacia em produção usa Baileys. A **pausa humana** está validada em produção no Baileys. Na Cloud API ela funciona pelos ecos da **Coexistence** (`smb_message_echoes`), já tratados no código, mas **ainda não validados com um número real** (seção 12.7).
 
 ## 1. Arquitetura
 
@@ -22,17 +22,17 @@ Evolution API 2.3.7 — Render (Ohio)          Manager WhatsAI — Vercel
 
 | Recurso | Endereço |
 |---|---|
-| API | `https://evolution-api-x93o.onrender.com` |
+| API | URL do serviço web, configurada no painel do Render |
 | Manager | `https://whatsaibr.vercel.app` |
-| Neon (direct) | `ep-patient-band-b5qn7dx2.c-7.us-east-2.aws.neon.tech` / db `neondb` |
-| Keep-alive | cron-job.org job `8703746` (GET `/` a cada 5 min) |
-| Repo | `github.com/devconnecting1/evolution-api-render` (remote `render`) |
+| Banco Postgres | host e banco configurados no painel do provedor (Neon hoje) |
+| Keep-alive | job no cron-job.org, configurado no painel do provedor (GET `/` a cada 5 min) |
+| Repo | repositório privado do projeto no GitHub (remote `render`) |
 
 ## 2. Segredos e acessos
 
-- **API key global** (`AUTHENTICATION_API_KEY`): definida somente no dashboard do Render (`sync: false`), fora do Git. É super-admin — **nunca** compartilhar com cliente. A chave antiga ficou no histórico do repositório; rotacione-a.
-- **Neon**: URI direct configurada no Render (`DATABASE_CONNECTION_URI`, `sync: false`). Não commitar.
-- **Tokens de deploy** (efêmeros, Cloud Shell): `/tmp/opencode/vercel-token`, `/tmp/opencode/cron-job-token`. Se sumirem, gerar novos. No GitHub, o secret `VERCEL_TOKEN` alimenta o workflow de deploy do manager.
+- **API key global** (`AUTHENTICATION_API_KEY`): definida somente no painel do Render (`sync: false`), fora do Git. É super-admin — **nunca** compartilhar com cliente. Se houver suspeita de exposição, rotacione-a.
+- **Banco**: URI de conexão configurada no painel do Render (`DATABASE_CONNECTION_URI`, `sync: false`). Não commitar.
+- **Tokens de deploy** (Vercel, cron-job.org): guardados fora do repositório, com o operador. Se sumirem, gerar novos no painel do provedor. No GitHub, o secret `VERCEL_TOKEN` alimenta o workflow de deploy do manager.
 - **Manager**: acesso somente do operador (você). Cliente usa apenas o WhatsApp.
 
 ## 3. Deploy
@@ -45,7 +45,7 @@ git push render main          # dispara deploy automático no Render
 # Fallback manual:
 ./scripts/sync-readmes.sh     # copia os READMEs para o manager
 cd manager/dist
-VERCEL_TOKEN=$(cat /tmp/opencode/vercel-token) \
+VERCEL_TOKEN="<token da Vercel>" \
   npx -y vercel@65.2.0 deploy --prod --yes --archive=tgz
 ```
 
@@ -111,85 +111,44 @@ Header de autenticação: `apikey: <chave>`.
 
 - [ ] Instância `open` e perfil correto
 - [ ] (Oficial) Meta Business verificado, WABA, Phone Number ID, token permanente e cartão cadastrados
-- [ ] (Oficial) Webhook `/webhook/meta` ativo e templates aprovados (se houver envio fora da janela de 24 h)
+- [ ] (Oficial) Webhook `/webhook/meta` ativo com os campos `messages` e `smb_message_echoes` (Coexistence) e templates aprovados (se houver envio fora da janela de 24 h)
 - [ ] Agente responde "oi" com o tom do cliente
 - [ ] Perguntas de preço/horário/endereço corretas
-- [ ] Handoff humano funcionando (`#sair` ou pedido explícito)
-- [ ] Áudio transcrito (se `speechToText`)
+- [ ] Pedido de pessoa: a IA avisa que a equipe vai continuar (é só instrução do prompt; não há aviso automático à equipe). A equipe responde e a IA pausa
+- [ ] Pausa e retomada testadas (teste com `humanResumeMinutes` = 2 e depois volte ao combinado)
+- [ ] Áudio transcrito (`transcribeAudio`), foto e PDF lidos com o modelo do bot (PDF no gpt-6-luna ainda não validado: se o modelo recusar, a IA recebe só a descrição do arquivo)
 - [ ] Cliente avisado sobre políticas/limites da Meta e fair use
 - [ ] Contrato + cobrança do setup
 
 ## 6. Planos e preços
 
-Recomendação: cobrar uma **implementação de R$ 1.500 a 3.000** e uma **mensalidade de R$ 297 a 797**, conforme o porte do cliente. A conta usa o custo real do projeto mais o mercado brasileiro em 2026; com essa faixa a margem fica entre 85% e 90%.
+Preços fixos aprovados em 02/11/2026. A versão para o cliente (com o que inclui, adicionais e contrato) está no **Guia comercial** (`readmes/README-COMERCIAL.md`). Custos internos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora do repositório: este manual é público em `/readme`.
 
-### Quanto cada cliente custa
+| | Essencial | Profissional | Premium (API oficial) |
+|---|---:|---:|---:|
+| Mensalidade | R$ 397 | R$ 697 | R$ 1.297 |
+| Implantação, contrato de 6 meses | R$ 1.500 | R$ 2.900 | a partir de R$ 4.900 |
+| Implantação, contrato de 12 meses | R$ 990 | R$ 1.900 | a partir de R$ 3.500 |
+| Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
+| Números | 1 | até 2 | 1 (+ sob consulta) |
+| Ajustes nas instruções por mês | 2 | 4 | 8 |
+| Integrações sob medida incluídas | – | 1 | 2 |
+| Áudio, foto e PDF | Sim | Sim | Sim |
 
-| Item | Custo estimado por cliente/mês |
-|---|---|
-| Servidor + banco (Render Standard + Neon Launch divididos por ~20 clientes) | ~R$ 10–20 |
-| OpenAI com **gpt-4o-mini** (~1.000 respostas/mês) | ~R$ 3–5 |
-| OpenAI com **gpt-4o** (~1.000 respostas/mês) | ~R$ 40–50 |
-| WhatsApp **Baileys** | R$ 0 |
-| WhatsApp **Cloud API**: respostas dentro de 24 h | gratuitas (há fontes dizendo que isso pode mudar a partir de out/2026) |
-| WhatsApp **Cloud API**: mensagens de marketing | ~R$ 0,32 por mensagem |
-| Tempo de suporte (1–3 h/mês) | é o maior custo real |
+- **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 490, abatido da implantação.
+- **Contrato mínimo de 6 meses**; depois, mês a mês.
+- **Franquia:** hoje não há contador automático de respostas da IA (seção 13). Meça pelo uso do project key da OpenAI de cada instância.
 
-Considerado: ~2.000 tokens de entrada e 200 de saída por resposta, com prompt e histórico. Com o **gpt-4o-mini**, o custo de IA fica quase zero; use o gpt-4o só para quem precisa de mais qualidade.
-
-### Preço sugerido
-
-**Implementação (cobrança única)**
-
-| Pacote | O que inclui | Preço |
-|---|---|---|
-| Essencial | 1 número, prompt personalizado, base de perguntas frequentes, pausa humana, testes, treinamento de 1 h | **R$ 1.500 – 2.500** |
-| Profissional | Essencial + integrações (agenda, planilha, CRM, n8n), transcrição de áudio, imagens | **R$ 3.000 – 6.000** |
-| Oficial / Enterprise | Cloud API com verificação Meta, Coexistence, templates, fluxos sob medida | **R$ 6.000+** |
-
-**Mensalidade**
-
-| Plano | Franquia | Preço |
-|---|---|---|
-| Essencial | até ~1.000 respostas da IA/mês, 1 número, 1 ajuste de prompt/mês | **R$ 297 – 397** |
-| Profissional | até ~3.000 respostas, relatório mensal, ajustes ilimitados, suporte em horário comercial | **R$ 597 – 797** |
-| Premium | volume alto, integrações, SLA, Cloud API oficial | **R$ 1.200+** |
-| Excedente | resposta acima da franquia | R$ 0,10 – 0,20 cada |
-
-**Como estruturar a cobrança**
-- **Contrato mínimo de 6 meses.** Com contrato de 12 meses, dê 30 a 50% de desconto na implementação, porque isso aumenta muito o fechamento.
-- **Chave OpenAI:** use a sua chave, embutida no preço, ou peça a do cliente, cobrando menos e repassando o custo. Para clientes pequenos, embutir é mais simples. Para volume alto, use a chave do cliente.
-- **Margem:** no plano Essencial a R$ 397, o custo direto fica entre R$ 20 e 60, o que dá **85–90% de margem** antes do seu tempo.
-
-### Cuidados que entram no preço e no contrato
-1. **Baileys não é oficial.** O WhatsApp pode banir o número, principalmente se o cliente fizer disparos em massa. Coloque isso no contrato e ofereça a Cloud API como opção "segura", mais cara.
-2. **Regras da Meta para IA em 2026 estão mudando.** Há notícias de restrição a "assistentes de IA de uso geral" e de cobrança por mensagens a chatbots de IA, inclusive no Brasil, com disputa judicial. Bots de atendimento da própria empresa costumam ser permitidos, mas acompanhe e deixe uma cláusula de reajuste caso a Meta passe a cobrar.
-3. **LGPD:** inclua um termo de tratamento de dados, avise o contato de que ele fala com uma IA e não guarde mais do que precisa.
-4. **Escritórios de advocacia:** o Provimento 205/2021 da OAB limita a publicidade. A IA não deve prometer resultado nem captar clientes ativamente, só fazer triagem e agendamento.
-
-**Exemplo (escritório de advocacia):** implementação de R$ 2.000 (ou R$ 1.000 com contrato de 12 meses), mensalidade de R$ 497 no Profissional com gpt-4o-mini e franquia de 2.000 respostas.
-
-Os preços de mercado vêm de fontes de terceiros e mudam rápido. Confirme os valores atuais da OpenAI e da Meta antes de fechar contrato.
-
-**Fontes**
-- [Digisac — quanto custa um chatbot para WhatsApp](https://digisac.com.br/blog/quanto-custa-um-chatbot-para-whatsapp-e-como-calcular-o-retorno)
-- [Eesel — Chatbot de IA para WhatsApp em 2026: custos e regras da Meta](https://www.eesel.ai/es/blog/whatsapp-ai-chatbot)
-- [Olhar Digital — Meta vai cobrar por mensagens enviadas para IAs no WhatsApp](https://olhardigital.com.br/2026/03/09/pro/meta-vai-cobrar-por-mensagens-enviadas-para-ias-no-whatsapp-entenda/)
-- [Tecnoblog — Meta vai cobrar chatbots de IA por uso do WhatsApp](https://tecnoblog.net/noticias/meta-vai-cobrar-chatbots-de-ia-por-uso-do-whatsapp/)
-- [Tecnoblog — WhatsApp proíbe presença do ChatGPT e outras IAs](https://tecnoblog.net/noticias/whatsapp-proibe-presenca-do-chatgpt-e-outras-ias/)
-- [TI Inside — custos para conversas no WhatsApp Business](https://tiinside.com.br/13/07/2026/custos-para-conversas-no-whatsapp-business-podem-chegar-a-us-500/)
-- [SendPulse — WhatsApp muda regras de cobrança (out/2026)](https://sendpulse.com/br/blog/whatsapp-muda-regras-de-cobranca-para-empresas-outubro-2026)
-- [Meta — Pricing on the WhatsApp Business Platform](https://developers.facebook.com/docs/whatsapp/pricing)
-- [ChatMaxima — WhatsApp API pricing Brazil (jul/2026)](https://chatmaxima.com/whatsapp-api-pricing/brazil/)
-- [AgentDeals — WhatsApp API pricing 2026](https://agentdeals.dev/whatsapp-business-api-pricing-2026)
-- [Kommo — updated pricing rules for WhatsApp Business](https://support.kommo.com/docs/updated-pricing-rules-for-whatsapp-business.md)
-- [MorphLLM — OpenAI API pricing 2026](https://morphllm.com/openai-api-pricing)
-- [AnotherWrapper — GPT-4o mini pricing](https://anotherwrapper.com/tools/llm-pricing/gpt-4o-mini-2024-07-18)
-- [Curlscape — OpenAI API pricing guide 2026](https://curlscape.com/blog/openai-api-pricing-guide-2026)
+### Cuidados que entram no contrato
+1. **WhatsApp Web (Baileys) não é oficial.** O número pode ser bloqueado, principalmente com disparos em massa. Aviso de risco por escrito; a API oficial é a alternativa.
+2. **Regras da Meta para IA mudaram em 2026** e podem mudar de novo: mantenha a cláusula de revisão de preço.
+3. **LGPD:** termo de tratamento de dados, aviso de que o contato fala com uma IA e retenção combinada (padrão 90 dias; a exclusão hoje é manual, seção 7).
+4. **Advocacia:** o Provimento 205/2021 da OAB limita a publicidade. A IA não promete resultado nem capta clientes ativamente; só faz triagem e agendamento.
+5. **Nada prometido que não exista** (seção 13): aviso automático para a equipe, relatório automático e lembretes ativos **não** são recursos atuais.
 
 ## 7. LGPD, segurança e riscos
 
-- Contrato de operador de dados; retenção padrão de 90 dias (configurável); backup no Neon.
+- Contrato de operador de dados; retenção padrão de 90 dias (configurável no contrato). **Não existe expurgo automático no código**: as mensagens ficam no banco até alguém apagar. Enquanto não houver rotina automática, faça a exclusão manualmente (mensal) e registre. Backup: snapshots do banco + `pg_dump` mensal (seção 8).
 - Advocacia: sigilo profissional — não solicitar documentos sensíveis pelo chat; usar link seguro.
 - **Cloud API oficial**: conexão via token permanente, WABA e Phone Number ID. A Meta pode limitar por qualidade/política, exige templates fora da janela de 24 h e cartão do cliente cadastrado; não prometa isenção de bloqueio por violação de política.
 - Manager e chave global são do operador. Cliente nunca recebe a chave global.
@@ -197,7 +156,7 @@ Os preços de mercado vêm de fontes de terceiros e mudam rápido. Confirme os v
 
 ## 8. Manutenção
 
-- **Keep-alive**: cron-job.org `8703746` (5 min). Sem ele, o free dorme em 15 min.
+- **Keep-alive**: job no cron-job.org, configurado no painel do provedor (5 min). Sem ele, o free dorme em 15 min.
 - **Atualizações**: `git push render main` (revisar changelog do upstream antes).
 - **Backup**: snapshots do Neon + `pg_dump` mensal para storage externo.
 - **Monitorar**: uso de tokens OpenAI, sessões travadas, instâncias `close`, erros no log do Render; no oficial, qualidade/limites e billing da Meta.
@@ -226,18 +185,18 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 | Variável | Uso | Como obter |
 |---|---|---|
 | `NEON_API_KEY` | Consultar projeto, branches e consumo | Neon Console > Account settings > API keys (org key) |
-| `NEON_PROJECT_ID` | Projeto `spring-boat-14626479` | Neon Console > Project settings |
-| `NEON_ORG_ID` | Organização `org-soft-mouse-21767293` | Neon Console > Organization settings |
+| `NEON_PROJECT_ID` | ID do projeto (configurado no painel do provedor) | Neon Console > Project settings |
+| `NEON_ORG_ID` | ID da organização (configurado no painel do provedor) | Neon Console > Organization settings |
 | `RENDER_API_KEY` | Consultar serviços, deploys e métricas | Render > Account settings > API keys |
 | `RENDER_OWNER_ID` | Opcional; se vazio, descobre via `/owners` | Render > Workspace settings |
 | `RENDER_SERVICE_IDS` | Opcional; lista separada por vírgula | Render > serviço > ID |
 | `VERCEL_TOKEN` | Consultar team, projeto e deploys | Vercel > Account settings > Tokens |
-| `VERCEL_TEAM_ID` | Team `team_L4ydLNVlb1XnoQd49WIvXRfw` | Vercel > Team settings |
-| `VERCEL_PROJECT_ID` | Projeto `prj_1qlhQq1PuLn20KRs2FK0fsD0GIvU` | Vercel > Project settings |
+| `VERCEL_TEAM_ID` | ID do team (configurado no painel do provedor) | Vercel > Team settings |
+| `VERCEL_PROJECT_ID` | ID do projeto (configurado no painel do provedor) | Vercel > Project settings |
 | `GITHUB_TOKEN` | Opcional; billing de Actions e repositório | GitHub > Developer settings > PAT |
-| `GITHUB_OWNER` / `GITHUB_REPO` | Default `devconnecting1/evolution-api-render` | — |
+| `GITHUB_OWNER` / `GITHUB_REPO` | Default: o repositório deste projeto | — |
 
-- No `render.yaml`, os IDs ficam versionados e os tokens usam `sync: false`; preencha os valores no dashboard do Render (Service > Environment) e faça o deploy. Não commite tokens.
+- No `render.yaml`, os IDs ficam versionados e os tokens usam `sync: false`; preencha os valores no painel do Render (Service > Environment) e faça o deploy. Não commite tokens.
 - **Neon:** storage soma o `logical_size` das branches contra 1 GB do Free; compute em CU-horas contra 100; egress estimado contra 5 GB; branches contra 10. Ajuste os limites se o plano mudar.
 - **Render:** mostra serviços, último deploy, CPU/memória/rede e uma **estimativa** de instance hours contra 750 h. O consumo oficial de bandwidth/build minutes só existe no dashboard.
 - **Vercel:** plano Hobby; builds são inferidos dos deploys. O endpoint oficial `/v1/usage` exige Pro/Enterprise, então alguns números ficam parciais.
@@ -249,10 +208,13 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 
 - Plano Render free por opção de custo; upgrade para Starter quando houver clientes pagantes.
 - Manager sem fonte: patches aplicados direto no bundle (documentados na seção 4).
-- Integrações habilitadas em `render.yaml` (commit `13f1bb28`).
+- Integrações habilitadas em `render.yaml`.
 - Marca WhatsAI aplicada ao manager (título, logos, textos).
-- Conexão oficial (Cloud API) é a única oferta a clientes; modos de teste internos não são vendidos. Exceção operacional: o escritório de advocacia já em produção roda em Baileys (seção 12).
-- 29/10/2026: bot OpenAI ganhou `tokenParam` (compatibilidade com modelos de raciocínio) e `humanResumeMinutes` (pausa/retomada quando o dono escreve), só Baileys. `expire` continua sem efeito no OpenAI. Detalhes, curls, limitações e deploy na seção 12.
+- ~~Conexão oficial (Cloud API) é a única oferta a clientes.~~ Substituído em 02/11/2026: Essencial e Profissional usam WhatsApp Web (Baileys), com aviso de risco no contrato; o Premium usa a Cloud API.
+- 29/10/2026: bot OpenAI ganhou `tokenParam` (compatibilidade com modelos de raciocínio) e `humanResumeMinutes` (pausa/retomada quando o dono escreve). `expire` continua sem efeito no OpenAI. Detalhes, curls, limitações e deploy na seção 12.
+- Cloud API: a pausa humana passou a funcionar pelos ecos da Coexistence (`smb_message_echoes`, PR #2). Falta validar com um número real.
+- 02/11/2026: preços fixos aprovados (seção 6) e auditoria do que a landing promete contra o código (seção 13).
+- Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
 
@@ -261,7 +223,7 @@ Vale para o bot OpenAI (`/openai/*`) em instâncias **Baileys**. Os exemplos seg
 Variáveis usadas nos exemplos:
 
 ```bash
-SERVER_URL="https://evolution-api-x93o.onrender.com"
+SERVER_URL="https://<url-da-api>"   # URL do serviço web, no painel do Render
 APIKEY="<chave global ou token da instância>"
 INSTANCE="escritorio-silva"
 ```
@@ -403,10 +365,11 @@ As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa
 ### 12.7 Limitações conhecidas
 
 - **Manager (bundle sem fonte):** não mostra nem edita `tokenParam` e `humanResumeMinutes`; só pela API. Salvar um bot/settings no Manager **não apaga** os valores definidos por API.
-- **Cloud API (WHATSAPP-BUSINESS):** a pausa humana **não funciona**.
-  - Sem Coexistence, o app do celular não envia mensagens pelo número (não existe eco).
-  - Com Coexistence, a Meta envia `smb_message_echoes`, que a API não trata.
-  - No app Meta assine só o campo `messages` (outros campos geram erro logado).
+- **Cloud API (WHATSAPP-BUSINESS):** a pausa humana depende da **Coexistence** e **ainda não foi validada com um número real**.
+  - Sem Coexistence, o número só existe na API: não há app para a equipe responder e, portanto, não há eco. A equipe precisaria de outro canal (ex.: Chatwoot, que conta como humano) ou da pausa manual (`changeStatus`).
+  - Com Coexistence, a Meta envia `smb_message_echoes` com as mensagens que o dono manda pelo app WhatsApp Business ou dispositivo vinculado; a API trata esses ecos como `fromMe` e pausa o bot como no Baileys. WhatsApp para Windows e WearOS **não** geram eco, e a Meta descreve o eco como "best-effort".
+  - Coexistence só é ativada pelo Embedded Signup de um parceiro da Meta (Solution Partner ou Tech Provider) e exige o app WhatsApp Business 2.24.17 ou mais novo.
+  - No app da Meta assine os campos `messages` e `smb_message_echoes`. `smb_app_state_sync`, `history` e `account_update` são ignorados com log verbose.
 - WhatsApp Web/Desktop do dono funciona igual ao celular (Baileys).
 - O registro de ids do bot e o mapa do `tokenParam` são **por processo**: valem para 1 réplica da API (Render atual). Com mais réplicas, pausa humana e memória do `tokenParam` ficam inconsistentes.
 - Envios pela API REST (n8n, CRM, painel próprio) **não** pausam o bot; só mensagens digitadas no WhatsApp (celular/Web/Desktop) ou respostas de atendente pelo Chatwoot. Para pausar a partir de um painel, use `changeStatus` `paused`.
@@ -575,3 +538,35 @@ curl -X PUT "$SERVER_URL/openai/update/<openaiBotId>/$INSTANCE" \
 ```
 
 Limitações: na Cloud API o WhatsApp não informa a duração do áudio (o limite de `maxAudioSeconds` não se aplica) nem sempre o tamanho do documento (a checagem é feita após o download); com `debounceTime`, só a **última** mensagem da rajada tem a mídia baixada (áudios/imagens anteriores da mesma rajada viram descrição); como nos outros campos, não dá para voltar um campo do bot a "herdar" depois de definido.
+
+## 13. O que é automático e o que é serviço (auditoria de 02/11/2026)
+
+Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`, `src/utils/humanPause.ts`, `src/utils/openaiMedia.ts`, `channel/meta/**`, `observability*`). Use esta lista para não prometer o que não existe.
+
+| Recurso | Situação | Observação |
+|---|---|---|
+| Resposta 24 h com as instruções do negócio | Automático | Chat Completions; o prompt é a mensagem de sistema do bot |
+| Memória da conversa | Automático | `historyMessages`, 2 a 100 (default 10; recomendado 30–40) |
+| Áudio | Automático | `gpt-transcribe`, com `whisper-1` como reserva; até `maxAudioSeconds` (300 s). Na Cloud API a duração não é informada e o limite não se aplica |
+| Foto | Automático | Vai como data URL. Depende de o modelo aceitar imagem: validar com o modelo do bot (gpt-6-luna) |
+| PDF | Automático, a validar | *File input* até 10 MB e 20 páginas. Se o modelo recusar (400), a IA recebe só a descrição do arquivo. **Leitura de PDF pelo gpt-6-luna ainda não confirmada em produção** |
+| Vídeo, figurinha, localização, contato | Automático | Viram descrição em texto para a IA |
+| Junção de mensagens seguidas | Automático | `debounceTime` (produção: ~10 s) |
+| Tempo de resposta | Medido | ~10 s de espera + ~18–26 s da OpenAI = **~30–40 s**. Não prometa "resposta na hora" nem "em 18 s" |
+| Pausa quando a equipe responde | Automático (WhatsApp Web); a validar (Cloud API) | Cloud API só com Coexistence (seção 12.7) |
+| Retomada após X minutos | Automático | `humanResumeMinutes`; a IA volta na **próxima** mensagem do cliente depois do prazo |
+| Pausa e reativação manual | Serviço | Pelo painel ou `changeStatus`. **O cliente não acessa o painel** (seção 2): é feito pela nossa equipe |
+| Ignorar grupos | Configuração | `groupsIgnore` da instância e/ou `ignoreJids: ["@g.us"]` |
+| Falha técnica | Automático | Erro cru nunca vai ao cliente; ele recebe o `unknownMessage` (configure em PT-BR) ou nada |
+| "Passa para uma pessoa quando o cliente pede" | **Só instrução do prompt** | Não há aviso para a equipe nem pausa automática no pedido. `#sair` (`keywordFinish`) com `keepOpen=false` apaga a sessão e a próxima mensagem abre outra, ou seja, a IA volta a responder |
+| "Não inventa preços" | **Orientação** | O prompt instrui; não é garantia técnica |
+| Se apresentar como assistente e não pedir dados sensíveis | **Orientação** | Depende do prompt de cada cliente |
+| Vários números, cada um com sua IA | Automático | 1 instância por número, bot e credencial próprios. A visão de todos num painel é do operador |
+| Integrações (agenda, planilha, CRM) | **Serviço sob medida** | Via webhook (`MESSAGES_UPSERT`, `OPENAI_CHANGE_STATUS`) e n8n. O modo Chat Completions não chama ferramentas; o `functionUrl` só existe no modo Assistants (que não lê PDF) |
+| Relatório mensal | **Serviço manual** | Não existe relatório automático. Fonte: uso do project key na OpenAI, sessões e Observabilidade |
+| Contagem da franquia de respostas | **Não existe** | As mensagens enviadas pela IA não são marcadas no banco (o registro de ids é só cache de 10 min) |
+| Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela; não envia aviso por e-mail ou WhatsApp |
+| Lembretes ativos de consulta | **Não existe** | Exigiria integração e, na Cloud API, templates pagos |
+| Retenção de 90 dias | **Processo manual** | Não há expurgo automático (seção 7) |
+
+Recomendações de produto, em ordem: (1) marcar no banco quais mensagens foram da IA e quais da equipe (contagem de franquia, relatório e auditoria); (2) quando o cliente pedir uma pessoa, pausar a sessão e avisar a equipe (mensagem para um número interno ou webhook); (3) relatório mensal gerado a partir dessa marcação; (4) expurgo automático pela retenção do contrato; (5) validar PDF e foto no gpt-6-luna e a pausa da Cloud API com um número em Coexistence.

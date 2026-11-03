@@ -9,29 +9,7 @@
  * Fonts: Geist only (assets/geist.css forces it on every element).
  */
 
-:root {
-  --wo-ink: #0d0d0d;
-  --wo-ink-2: #2f3534;
-  --wo-muted: #566060;
-  --wo-line: #e2e6e5;
-  --wo-line-2: #cfd6d4;
-  --wo-paper: #ffffff;
-  --wo-soft: #f5f7f7;
-  --wo-hover: #eef1f0;
-  --wo-active: #e6ebea;
-  --wo-accent: #0b6b4f;
-  --wo-ok: #0b6e49;
-  --wo-ok-bg: #e2f3ea;
-  --wo-warn: #7f4a00;
-  --wo-warn-bg: #fff3d9;
-  --wo-warn-line: #e9b65c;
-  --wo-bad: #ac2117;
-  --wo-bad-bg: #fdeceb;
-  --wo-bad-line: #ec9a92;
-  --wo-neutral: #47504e;
-  --wo-neutral-bg: #edf0ef;
-  --wo-radius: 6px;
-}
+/* colours and radius: --wo-* tokens in minimal.css */
 
 /* ------------------------------------------------------------------------------------ focus */
 /* Scroll containers became focusable in recent Chrome; on touch devices the browser drew its own
@@ -165,9 +143,7 @@
   color: var(--wo-muted);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
   line-height: 16px;
-  text-transform: uppercase;
 }
 
 /* ---------------------------------------------------------------------------------- skeleton */
@@ -515,9 +491,7 @@
   color: var(--wo-muted);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
   line-height: 16px;
-  text-transform: uppercase;
 }
 .wo-stat dd {
   margin-top: 4px;
@@ -698,9 +672,7 @@
   color: var(--wo-muted);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
   text-align: left;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 .wo-table td {
