@@ -17,6 +17,8 @@ export type Metric = {
   detail?: string;
   /** The limit is a target, not a quota (e.g. connected instances): never listed as an alert. */
   higherIsBetter?: boolean;
+  /** Percent from which the metric is listed in the alerts (default ALERT_PERCENT), e.g. the plan alertPercent. */
+  alertAt?: number;
 };
 
 export type Resource = {
@@ -71,6 +73,8 @@ export type MetricOptions = {
   status?: MetricStatus;
   /** See `Metric.higherIsBetter`. */
   higherIsBetter?: boolean;
+  /** See `Metric.alertAt`. */
+  alertAt?: number;
 };
 
 export const round = (value: number, digits: number): number => {
@@ -116,6 +120,7 @@ export function buildMetric(
     status,
     ...(opts.detail ? { detail: opts.detail } : {}),
     ...(opts.higherIsBetter ? { higherIsBetter: true } : {}),
+    ...(opts.alertAt !== undefined ? { alertAt: opts.alertAt } : {}),
   };
 }
 

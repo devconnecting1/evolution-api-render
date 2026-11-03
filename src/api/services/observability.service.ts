@@ -1,4 +1,4 @@
-import { prismaRepository, waMonitor } from '@api/server.module';
+import { prismaRepository, usageService, waMonitor } from '@api/server.module';
 import { redisClient } from '@cache/rediscache.client';
 import { CacheConf, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
@@ -244,6 +244,13 @@ export class ObservabilityService {
             this.loadProvider('whatsapp', 'WhatsApp', 'Conexão de cada instância (número)', () =>
               system.collectWhatsapp(),
             ),
+            ...(system.hasUsage()
+              ? [
+                  this.loadProvider('usage', 'Plano e uso', 'Respostas da IA no mês, por instância', () =>
+                    system.collectUsage(),
+                  ),
+                ]
+              : []),
           ]
         : []),
       this.loadProvider('neon', 'Neon', SETUP.neon.description, () => this.getNeon()),
@@ -294,6 +301,7 @@ export class ObservabilityService {
     const deps: SystemDeps = {
       prisma: prismaRepository as unknown as SystemDeps['prisma'],
       waInstances: () => waMonitor?.waInstances,
+      usage: () => usageService.snapshot(),
       databaseProvider: configService.get<Database>('DATABASE')?.PROVIDER,
       cache: {
         redisEnabled: Boolean(cacheConf?.REDIS?.ENABLED && cacheConf?.REDIS?.URI),
@@ -1090,14 +1098,19 @@ export class ObservabilityService {
     const alerts: Alert[] = [];
     for (const provider of providers) {
       const own = provider.metrics
-        .filter((metric) => !metric.higherIsBetter && metric.percent !== null && metric.percent >= ALERT_PERCENT)
+        .filter(
+          (metric) =>
+            !metric.higherIsBetter && metric.percent !== null && metric.percent >= (metric.alertAt ?? ALERT_PERCENT),
+        )
         .map((metric) => ({
           provider: provider.id,
           metric: metric.id,
           label: metric.label,
           percent: metric.percent as number,
           status: metric.status,
-          message: `${provider.name}: ${metric.label} em ${formatNumber(metric.percent as number, 0)}% do limite.`,
+          message:
+            `${provider.name}: ${metric.label} em ${formatNumber(metric.percent as number, 0)}% do limite` +
+            ((metric.percent as number) >= 100 && metric.alertAt !== undefined ? ' (franquia esgotada).' : '.'),
         }));
       if (own.length) {
         provider.notes.unshift(

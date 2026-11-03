@@ -1,3 +1,5 @@
+import { createUsageTables } from './usage-mock';
+
 /**
  * Small in-memory stand-in for the Prisma models the OpenAI service touches, for unit tests that do not need a
  * database. Records every write so tests can assert that nothing was written.
@@ -10,9 +12,15 @@ export function createPrismaMock(initialSessions: any[] = []) {
   const matches = (session: any, where: any = {}) =>
     Object.entries(where).every(([key, value]) => value === undefined || session[key] === value);
 
+  const usage = createUsageTables();
+
   const prisma: any = {
     sessions,
     writes,
+    /** "Plano e limites" tables (see usage-mock.ts). */
+    usage,
+    instanceLimits: usage.instanceLimits,
+    usageCounter: usage.usageCounter,
     openaiCreds: {
       findUnique: async ({ where }: any) => ({ id: where.id, apiKey: 'sk-test-not-real' }),
     },

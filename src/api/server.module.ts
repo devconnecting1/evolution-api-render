@@ -13,6 +13,7 @@ import { ProxyController } from './controllers/proxy.controller';
 import { SendMessageController } from './controllers/sendMessage.controller';
 import { SettingsController } from './controllers/settings.controller';
 import { TemplateController } from './controllers/template.controller';
+import { UsageController } from './controllers/usage.controller';
 import { ChannelController } from './integrations/channel/channel.controller';
 import { EvolutionController } from './integrations/channel/evolution/evolution.controller';
 import { MetaController } from './integrations/channel/meta/meta.controller';
@@ -44,6 +45,7 @@ import { WAMonitoringService } from './services/monitor.service';
 import { ProxyService } from './services/proxy.service';
 import { SettingsService } from './services/settings.service';
 import { TemplateService } from './services/template.service';
+import { UsageService } from './services/usage.service';
 
 const logger = new Logger('WA MODULE');
 
@@ -116,7 +118,11 @@ export const evolutionController = new EvolutionController(prismaRepository, waM
 export const metaController = new MetaController(prismaRepository, waMonitor);
 export const baileysController = new BaileysController(waMonitor);
 
-const openaiService = new OpenaiService(waMonitor, prismaRepository, configService);
+// "Plano e limites": one instance, so the limits cache invalidated by the REST routes is the one the bot reads
+export const usageService = new UsageService(prismaRepository);
+export const usageController = new UsageController(usageService, prismaRepository);
+
+const openaiService = new OpenaiService(waMonitor, prismaRepository, configService, usageService);
 export const openaiController = new OpenaiController(openaiService, prismaRepository, waMonitor);
 
 // chatbots
