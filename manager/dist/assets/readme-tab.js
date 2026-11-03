@@ -17,8 +17,8 @@
       lead: 'Planos, cobrança e onboarding em uma página.' },
     { id: 'README-WHATSAI', file: 'README-WHATSAI.md', title: 'Manual completo', group: 'Referência',
       lead: 'Arquitetura, deploy, onboarding, observabilidade, bot OpenAI e manutenção.' },
-    { id: 'README-COMERCIAL', file: 'README-COMERCIAL.md', title: 'Guia comercial', group: 'Referência',
-      lead: 'Custos por cliente, preço sugerido e cuidados de contrato.' },
+    { id: 'README-COMERCIAL', file: 'README-COMERCIAL.md', title: 'Planos e preços', group: 'Referência',
+      lead: 'Planos, o que cada um inclui e condições de contrato.' },
   ];
   var CACHE_PREFIX = 'whatsai-readme-v2:';
   var mdCache = {};
@@ -80,7 +80,7 @@
     s.setAttribute('height', '16');
     s.setAttribute('fill', 'none');
     s.setAttribute('stroke', 'currentColor');
-    s.setAttribute('stroke-width', '2');
+    s.setAttribute('stroke-width', '1.5');
     s.setAttribute('stroke-linecap', 'round');
     s.setAttribute('stroke-linejoin', 'round');
     s.setAttribute('aria-hidden', 'true');
