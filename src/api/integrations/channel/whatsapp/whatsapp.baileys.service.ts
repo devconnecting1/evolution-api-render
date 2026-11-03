@@ -1948,6 +1948,35 @@ export class BaileysStartupService extends ChannelStartupService {
     },
   };
 
+  /**
+   * Incoming call: rejected when `rejectCall` is on, and only then answered with `msgCall` (#2664: the text used
+   * to be sent even with `rejectCall` off, e.g. when the Manager saved a placeholder text).
+   */
+  private async callHandle(call: any, settings: any) {
+    const isOffer = call?.status == 'offer';
+
+    if (settings?.rejectCall && isOffer) {
+      this.client.rejectCall(call.id, call.from);
+
+      if (settings?.msgCall?.trim().length > 0) {
+        if (call.from.endsWith('@lid')) {
+          call.from = await this.client.signalRepository.lidMapping.getPNForLID(call.from as string);
+        }
+        // Automatic reply re-emitted below as a fromMe upsert: register its id so it is not
+        // taken for a human message by the chatbots.
+        const msg = await this.client.sendMessage(
+          call.from,
+          { text: settings.msgCall },
+          { messageId: await this.generateBotMessageId() },
+        );
+
+        this.client.ev.emit('messages.upsert', { messages: [msg], type: 'notify' });
+      }
+    }
+
+    this.sendDataWebhook(Events.CALL, call);
+  }
+
   private eventHandler() {
     this.client.ev.process(async (events) => {
       this.eventProcessingQueue = this.eventProcessingQueue.then(async () => {
@@ -1957,28 +1986,7 @@ export class BaileysStartupService extends ChannelStartupService {
             const settings = await this.findSettings();
 
             if (events.call) {
-              const call = events.call[0];
-
-              if (settings?.rejectCall && call.status == 'offer') {
-                this.client.rejectCall(call.id, call.from);
-              }
-
-              if (settings?.msgCall?.trim().length > 0 && call.status == 'offer') {
-                if (call.from.endsWith('@lid')) {
-                  call.from = await this.client.signalRepository.lidMapping.getPNForLID(call.from as string);
-                }
-                // Automatic reply re-emitted below as a fromMe upsert: register its id so it is not
-                // taken for a human message by the chatbots.
-                const msg = await this.client.sendMessage(
-                  call.from,
-                  { text: settings.msgCall },
-                  { messageId: await this.generateBotMessageId() },
-                );
-
-                this.client.ev.emit('messages.upsert', { messages: [msg], type: 'notify' });
-              }
-
-              this.sendDataWebhook(Events.CALL, call);
+              await this.callHandle(events.call[0], settings);
             }
 
             if (events['connection.update']) {

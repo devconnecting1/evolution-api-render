@@ -258,7 +258,7 @@ Problema resolvido: com `stopBotFromMe=true`, quando o dono escrevia (celular ou
 | Humano escreve durante o debounce do cliente | Nenhuma resposta (o debounce relê a sessão ao disparar) |
 | Atendente responde pelo **Chatwoot** (integração ligada) | Conta como humano e pausa o bot |
 | Envio pela API REST (`/message/sendText`, n8n, CRM) | **Não** pausa: a API não recebe de volta o que ela mesma envia (`emitOwnEvents: false`). Para pausar ao assumir por um painel próprio, chame `changeStatus` `paused` |
-| Auto-resposta de chamada (`msgCall`) | Não pausa |
+| Auto-resposta de chamada (`msgCall`) | Não pausa. Só é enviada quando `rejectCall` está ligado (a chamada é recusada) |
 
 ### 12.3 Sessões legadas e pausa manual
 
