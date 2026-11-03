@@ -9,11 +9,21 @@ import { TypebotService } from '@api/integrations/chatbot/typebot/services/typeb
 import { PrismaRepository, Query } from '@api/repository/repository.service';
 import { eventManager, waMonitor } from '@api/server.module';
 import { Events, wa } from '@api/types/wa.types';
-import { Auth, Chatwoot, ConfigService, HttpServer, Proxy } from '@config/env.config';
+import { Auth, Chatwoot, ConfigService, Database, HttpServer, Proxy } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { NotFoundException } from '@exceptions';
 import { Contact, Message, Prisma } from '@prisma/client';
 import { createJid } from '@utils/createJid';
+import {
+  equivalentJids,
+  isLidJid,
+  isPnJid,
+  LidPnPair,
+  mergeLidChats,
+  normalizeUserJid,
+  parseMergeLid,
+  toLidPnPair,
+} from '@utils/lidJid';
 import { WASocket } from 'baileys';
 import { isArray } from 'class-validator';
 import EventEmitter2 from 'eventemitter2';
@@ -597,6 +607,124 @@ export class ChannelStartupService {
     return cleanedMessage;
   }
 
+  private get isMysql(): boolean {
+    return this.configService.get<Database>('DATABASE')?.PROVIDER === 'mysql';
+  }
+
+  /** Prisma JSON path of a field of `Message.key`: a path array on PostgreSQL, a JSONPath string on MySQL. */
+  protected messageKeyPath(field: string): any {
+    return this.isMysql ? `$.${field}` : [field];
+  }
+
+  protected messageKeyEquals(field: string, value: unknown): Prisma.MessageWhereInput {
+    return { key: { path: this.messageKeyPath(field), equals: value as any } };
+  }
+
+  /** `key.remoteJid` equal to any of `jids`. */
+  protected messageRemoteJidFilter(jids: string[]): Prisma.MessageWhereInput {
+    if (jids.length === 1) return this.messageKeyEquals('remoteJid', jids[0]);
+
+    return { OR: jids.map((jid) => this.messageKeyEquals('remoteJid', jid)) };
+  }
+
+  /**
+   * LID/phone pairs of this instance, read from the stored message keys: an incoming `@lid` message carries the
+   * phone JID in `key.remoteJidAlt` (or `senderPn`), a phone addressed one may carry the LID. With `jids`, only
+   * the pairs of those addresses. One DISTINCT query per call, bounded by `limit`.
+   */
+  public async findLidPnPairs(jids?: string[], limit = 2000): Promise<LidPnPair[]> {
+    if (jids && !jids.length) return [];
+
+    const mysql = this.isMysql;
+    const field = (name: string) => (mysql ? `JSON_UNQUOTE(JSON_EXTRACT(\`key\`, '$.${name}'))` : `"key"->>'${name}'`);
+
+    const jidExpr = Prisma.raw(field('remoteJid'));
+    const altExpr = Prisma.raw(`COALESCE(${field('remoteJidAlt')}, ${field('senderPn')}, ${field('senderLid')})`);
+    const table = Prisma.raw(mysql ? '`Message`' : '"Message"');
+    const instanceColumn = Prisma.raw(mysql ? '`instanceId`' : '"instanceId"');
+    const jidFilter = jids
+      ? Prisma.sql`AND (${jidExpr} IN (${Prisma.join(jids)}) OR ${altExpr} IN (${Prisma.join(jids)}))`
+      : Prisma.empty;
+
+    const rows = await this.prismaRepository.$queryRaw<{ jid: string; alt: string }[]>`
+      SELECT DISTINCT ${jidExpr} AS jid, ${altExpr} AS alt
+      FROM ${table}
+      WHERE ${instanceColumn} = ${this.instanceId}
+        AND ${altExpr} IS NOT NULL
+        AND ${jidExpr} NOT LIKE '%@g.us'
+        ${jidFilter}
+      LIMIT ${limit}
+    `;
+
+    const seen = new Set<string>();
+    const pairs: LidPnPair[] = [];
+
+    for (const row of rows ?? []) {
+      const pair = toLidPnPair(row.jid, row.alt);
+      if (!pair || seen.has(`${pair.lid}|${pair.pn}`)) continue;
+      seen.add(`${pair.lid}|${pair.pn}`);
+      pairs.push(pair);
+    }
+
+    return pairs;
+  }
+
+  /**
+   * Phone JIDs of LIDs that no stored message pairs, from the channel itself (Baileys keeps a local LID mapping).
+   * Never goes to the network; channels without a mapping return nothing.
+   */
+  protected async lookupPnForLids(lids: string[]): Promise<LidPnPair[]> {
+    void lids;
+    return [];
+  }
+
+  /** Every address of the private chat of `remoteJid` (itself first); groups and unknown JIDs stay as they are. */
+  public async resolveEquivalentJids(remoteJid: string): Promise<string[]> {
+    const jid = normalizeUserJid(remoteJid);
+    if (!isLidJid(jid) && !isPnJid(jid)) return [remoteJid];
+
+    try {
+      let pairs = await this.findLidPnPairs([jid], 20);
+      if (!pairs.length && isLidJid(jid)) pairs = await this.lookupPnForLids([jid]);
+
+      return equivalentJids(remoteJid, pairs);
+    } catch (error) {
+      this.logger.warn(`Could not resolve the LID/phone pair of ${remoteJid}: ${error?.message || error}`);
+      return [remoteJid];
+    }
+  }
+
+  /** The `key.remoteJid` values to read for a findMessages filter: the chat's LID and phone JIDs unless disabled. */
+  protected async messageRemoteJids(remoteJid: string, query: Query<Message>): Promise<string[]> {
+    return parseMergeLid(query?.mergeLid) ? await this.resolveEquivalentJids(remoteJid) : [remoteJid];
+  }
+
+  /** Pairs for the LIDs of a chat list: stored message keys first, the channel's own mapping for the rest. */
+  protected async lidPnPairsForChats(remoteJids: string[]): Promise<LidPnPair[]> {
+    const lids = [...new Set(remoteJids.filter((jid) => isLidJid(jid)))];
+    if (!lids.length) return [];
+
+    let pairs: LidPnPair[] = [];
+    try {
+      pairs = await this.findLidPnPairs(lids);
+    } catch (error) {
+      this.logger.warn(`Could not read the LID/phone pairs of the chat list: ${error?.message || error}`);
+    }
+
+    const paired = new Set(pairs.map((pair) => pair.lid));
+    const missing = lids.filter((lid) => !paired.has(lid));
+
+    if (missing.length) {
+      try {
+        pairs.push(...(await this.lookupPnForLids(missing)));
+      } catch (error) {
+        this.logger.verbose(`LID mapping lookup failed: ${error?.message || error}`);
+      }
+    }
+
+    return pairs;
+  }
+
   public async fetchMessages(query: Query<Message>) {
     const keyFilters = query?.where?.key as {
       id?: string;
@@ -615,21 +743,24 @@ export class ChannelStartupService {
       }
     }
 
-    const count = await this.prismaRepository.message.count({
-      where: {
-        instanceId: this.instanceId,
-        id: query?.where?.id,
-        source: query?.where?.source,
-        messageType: query?.where?.messageType,
-        ...timestampFilter,
-        AND: [
-          keyFilters?.id ? { key: { path: ['id'], equals: keyFilters?.id } } : {},
-          keyFilters?.fromMe ? { key: { path: ['fromMe'], equals: keyFilters?.fromMe } } : {},
-          keyFilters?.remoteJid ? { key: { path: ['remoteJid'], equals: keyFilters?.remoteJid } } : {},
-          keyFilters?.participants ? { key: { path: ['participants'], equals: keyFilters?.participants } } : {},
-        ],
-      },
-    });
+    // The chat may be split between its LID and its phone JID: read both (mergeLid: false keeps the exact JID)
+    const remoteJids = keyFilters?.remoteJid ? await this.messageRemoteJids(keyFilters.remoteJid, query) : null;
+
+    const where: Prisma.MessageWhereInput = {
+      instanceId: this.instanceId,
+      id: query?.where?.id,
+      source: query?.where?.source,
+      messageType: query?.where?.messageType,
+      ...timestampFilter,
+      AND: [
+        keyFilters?.id ? this.messageKeyEquals('id', keyFilters?.id) : {},
+        keyFilters?.fromMe ? this.messageKeyEquals('fromMe', keyFilters?.fromMe) : {},
+        remoteJids ? this.messageRemoteJidFilter(remoteJids) : {},
+        keyFilters?.participants ? this.messageKeyEquals('participants', keyFilters?.participants) : {},
+      ],
+    };
+
+    const count = await this.prismaRepository.message.count({ where });
 
     if (!query?.offset) {
       query.offset = 50;
@@ -640,22 +771,9 @@ export class ChannelStartupService {
     }
 
     const messages = await this.prismaRepository.message.findMany({
-      where: {
-        instanceId: this.instanceId,
-        id: query?.where?.id,
-        source: query?.where?.source,
-        messageType: query?.where?.messageType,
-        ...timestampFilter,
-        AND: [
-          keyFilters?.id ? { key: { path: ['id'], equals: keyFilters?.id } } : {},
-          keyFilters?.fromMe ? { key: { path: ['fromMe'], equals: keyFilters?.fromMe } } : {},
-          keyFilters?.remoteJid ? { key: { path: ['remoteJid'], equals: keyFilters?.remoteJid } } : {},
-          keyFilters?.participants ? { key: { path: ['participants'], equals: keyFilters?.participants } } : {},
-        ],
-      },
-      orderBy: {
-        messageTimestamp: 'desc',
-      },
+      where,
+      // `id` breaks ties of the same second so consecutive pages never repeat or skip a message
+      orderBy: [{ messageTimestamp: 'desc' }, { id: 'desc' }],
       skip: query.offset * (query?.page === 1 ? 0 : (query?.page as number) - 1),
       take: query.offset,
       select: {
@@ -738,8 +856,13 @@ export class ChannelStartupService {
         AND "Message"."messageTimestamp" <= ${Math.floor(new Date(query.where.messageTimestamp.lte).getTime() / 1000)}`
         : Prisma.sql``;
 
-    const limit = query?.take ? Prisma.sql`LIMIT ${query.take}` : Prisma.sql``;
-    const offset = query?.skip ? Prisma.sql`OFFSET ${query.skip}` : Prisma.sql``;
+    const mergeLid = parseMergeLid(query?.mergeLid);
+    // A chat split between its LID and its phone JID is one entry: the filter reads both addresses, and the page
+    // (take/skip) is cut after the merge so the two halves of a contact never land on different pages
+    const remoteJids = remoteJid ? (mergeLid ? await this.resolveEquivalentJids(remoteJid) : [remoteJid]) : null;
+
+    const limit = query?.take && !mergeLid ? Prisma.sql`LIMIT ${query.take}` : Prisma.sql``;
+    const offset = query?.skip && !mergeLid ? Prisma.sql`OFFSET ${query.skip}` : Prisma.sql``;
 
     const results = await this.prismaRepository.$queryRaw`
       WITH rankedMessages AS (
@@ -779,7 +902,7 @@ export class ChannelStartupService {
         LEFT JOIN "Contact" ON "Contact"."remoteJid" = "Message"."key"->>'remoteJid' AND "Contact"."instanceId" = "Message"."instanceId"
         LEFT JOIN "Chat" ON "Chat"."remoteJid" = "Message"."key"->>'remoteJid' AND "Chat"."instanceId" = "Message"."instanceId"
         WHERE "Message"."instanceId" = ${this.instanceId}
-        ${remoteJid ? Prisma.sql`AND "Message"."key"->>'remoteJid' = ${remoteJid}` : Prisma.sql``}
+        ${remoteJids ? Prisma.sql`AND "Message"."key"->>'remoteJid' IN (${Prisma.join(remoteJids)})` : Prisma.sql``}
         ${timestampFilter}
         ORDER BY "Message"."key"->>'remoteJid', "Message"."messageTimestamp" DESC
       )
@@ -823,7 +946,15 @@ export class ChannelStartupService {
         };
       });
 
-      return mappedResults;
+      if (!mergeLid) return mappedResults;
+
+      const pairs = await this.lidPnPairsForChats(mappedResults.map((chat) => chat.remoteJid));
+      const merged = mergeLidChats(mappedResults, pairs);
+
+      const skip = Math.max(Number(query?.skip) || 0, 0);
+      const take = Number(query?.take) || 0;
+
+      return take > 0 ? merged.slice(skip, skip + take) : merged.slice(skip);
     }
 
     return [];

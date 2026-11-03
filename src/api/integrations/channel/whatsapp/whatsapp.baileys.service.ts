@@ -79,10 +79,11 @@ import { BadRequestException, InternalServerErrorException, NotFoundException } 
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import { Boom } from '@hapi/boom';
 import { createId as cuid } from '@paralleldrive/cuid2';
-import { Instance, Message } from '@prisma/client';
+import { Instance, Message, Prisma } from '@prisma/client';
 import { registerBotMessageId } from '@utils/botMessageRegistry';
 import { createJid } from '@utils/createJid';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
+import { LidPnPair, toLidPnPair } from '@utils/lidJid';
 import { makeProxyAgent, makeProxyAgentUndici } from '@utils/makeProxyAgent';
 import { getOnWhatsappCache, saveOnWhatsappCache } from '@utils/onWhatsappCache';
 import { status } from '@utils/renderStatus';
@@ -5062,6 +5063,37 @@ export class BaileysStartupService extends ChannelStartupService {
     }
   }
 
+  /**
+   * Phone JIDs of LIDs from Baileys' own LID mapping (memory cache, then the auth key store; no network call).
+   * Bounded in size and time: the lookups only help, they must never hold up the chat list.
+   */
+  protected async lookupPnForLids(lids: string[]): Promise<LidPnPair[]> {
+    const lidMapping = (this.client as any)?.signalRepository?.lidMapping;
+    if (!lids.length || typeof lidMapping?.getPNForLID !== 'function') return [];
+
+    const lookups = Promise.all(
+      lids.slice(0, 300).map(async (lid) => {
+        try {
+          return toLidPnPair(lid, await lidMapping.getPNForLID(lid));
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    let timer: NodeJS.Timeout;
+    const timeout = new Promise<null>((resolve) => {
+      timer = setTimeout(() => resolve(null), 1500);
+    });
+
+    try {
+      const pairs = await Promise.race([lookups, timeout]);
+      return (pairs ?? []).filter((pair): pair is LidPnPair => !!pair);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   public async fetchMessages(query: Query<Message>) {
     const keyFilters = query?.where?.key as ExtendedIMessageKey;
 
@@ -5075,26 +5107,29 @@ export class BaileysStartupService extends ChannelStartupService {
       }
     }
 
-    const count = await this.prismaRepository.message.count({
-      where: {
-        instanceId: this.instanceId,
-        id: query?.where?.id,
-        source: query?.where?.source,
-        messageType: query?.where?.messageType,
-        ...timestampFilter,
-        AND: [
-          keyFilters?.id ? { key: { path: ['id'], equals: keyFilters?.id } } : {},
-          keyFilters?.fromMe ? { key: { path: ['fromMe'], equals: keyFilters?.fromMe } } : {},
-          keyFilters?.participant ? { key: { path: ['participant'], equals: keyFilters?.participant } } : {},
-          {
-            OR: [
-              keyFilters?.remoteJid ? { key: { path: ['remoteJid'], equals: keyFilters?.remoteJid } } : {},
-              keyFilters?.remoteJidAlt ? { key: { path: ['remoteJidAlt'], equals: keyFilters?.remoteJidAlt } } : {},
-            ],
-          },
-        ],
-      },
-    });
+    // The chat may be split between its LID and its phone JID: read both (mergeLid: false keeps the exact JID)
+    const remoteJids = keyFilters?.remoteJid ? await this.messageRemoteJids(keyFilters.remoteJid, query) : null;
+
+    const jidFilters = [
+      remoteJids ? this.messageRemoteJidFilter(remoteJids) : null,
+      keyFilters?.remoteJidAlt ? this.messageKeyEquals('remoteJidAlt', keyFilters?.remoteJidAlt) : null,
+    ].filter(Boolean);
+
+    const where: Prisma.MessageWhereInput = {
+      instanceId: this.instanceId,
+      id: query?.where?.id,
+      source: query?.where?.source,
+      messageType: query?.where?.messageType,
+      ...timestampFilter,
+      AND: [
+        keyFilters?.id ? this.messageKeyEquals('id', keyFilters?.id) : {},
+        keyFilters?.fromMe ? this.messageKeyEquals('fromMe', keyFilters?.fromMe) : {},
+        keyFilters?.participant ? this.messageKeyEquals('participant', keyFilters?.participant) : {},
+        jidFilters.length ? { OR: jidFilters } : {},
+      ],
+    };
+
+    const count = await this.prismaRepository.message.count({ where });
 
     if (!query?.offset) {
       query.offset = 50;
@@ -5105,25 +5140,9 @@ export class BaileysStartupService extends ChannelStartupService {
     }
 
     const messages = await this.prismaRepository.message.findMany({
-      where: {
-        instanceId: this.instanceId,
-        id: query?.where?.id,
-        source: query?.where?.source,
-        messageType: query?.where?.messageType,
-        ...timestampFilter,
-        AND: [
-          keyFilters?.id ? { key: { path: ['id'], equals: keyFilters?.id } } : {},
-          keyFilters?.fromMe ? { key: { path: ['fromMe'], equals: keyFilters?.fromMe } } : {},
-          keyFilters?.participant ? { key: { path: ['participant'], equals: keyFilters?.participant } } : {},
-          {
-            OR: [
-              keyFilters?.remoteJid ? { key: { path: ['remoteJid'], equals: keyFilters?.remoteJid } } : {},
-              keyFilters?.remoteJidAlt ? { key: { path: ['remoteJidAlt'], equals: keyFilters?.remoteJidAlt } } : {},
-            ],
-          },
-        ],
-      },
-      orderBy: { messageTimestamp: 'desc' },
+      where,
+      // `id` breaks ties of the same second so consecutive pages never repeat or skip a message
+      orderBy: [{ messageTimestamp: 'desc' }, { id: 'desc' }],
       skip: query.offset * (query?.page === 1 ? 0 : (query?.page as number) - 1),
       take: query.offset,
       select: {

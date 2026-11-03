@@ -18,6 +18,17 @@ import { InstanceDto } from '@api/dto/instance.dto';
 import { Query } from '@api/repository/repository.service';
 import { WAMonitoringService } from '@api/services/monitor.service';
 import { Contact, Message, MessageUpdate } from '@prisma/client';
+import { parseMergeLid } from '@utils/lidJid';
+
+/** `mergeLid` from the body or, as `?mergeLid=false`, from the query string (copied onto the instance params). */
+function withMergeLid<T>(instance: InstanceDto, query: Query<T>): Query<T> {
+  const fromQueryString = (instance as InstanceDto & { mergeLid?: unknown })?.mergeLid;
+  const data = query ?? ({} as Query<T>);
+
+  data.mergeLid = parseMergeLid(data.mergeLid, fromQueryString);
+
+  return data;
+}
 
 export class ChatController {
   constructor(private readonly waMonitor: WAMonitoringService) {}
@@ -58,16 +69,16 @@ export class ChatController {
     return await this.waMonitor.waInstances[instanceName].getBase64FromMediaMessage(data);
   }
 
-  public async fetchMessages({ instanceName }: InstanceDto, query: Query<Message>) {
-    return await this.waMonitor.waInstances[instanceName].fetchMessages(query);
+  public async fetchMessages(instance: InstanceDto, query: Query<Message>) {
+    return await this.waMonitor.waInstances[instance.instanceName].fetchMessages(withMergeLid(instance, query));
   }
 
   public async fetchStatusMessage({ instanceName }: InstanceDto, query: Query<MessageUpdate>) {
     return await this.waMonitor.waInstances[instanceName].fetchStatusMessage(query);
   }
 
-  public async fetchChats({ instanceName }: InstanceDto, query: Query<Contact>) {
-    return await this.waMonitor.waInstances[instanceName].fetchChats(query);
+  public async fetchChats(instance: InstanceDto, query: Query<Contact>) {
+    return await this.waMonitor.waInstances[instance.instanceName].fetchChats(withMergeLid(instance, query));
   }
 
   public async findChatByRemoteJid({ instanceName }: InstanceDto, remoteJid: string) {
