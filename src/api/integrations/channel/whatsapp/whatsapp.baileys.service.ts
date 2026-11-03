@@ -88,6 +88,7 @@ import { makeProxyAgent, makeProxyAgentUndici } from '@utils/makeProxyAgent';
 import { getOnWhatsappCache, saveOnWhatsappCache } from '@utils/onWhatsappCache';
 import { status } from '@utils/renderStatus';
 import { sendTelemetry } from '@utils/sendTelemetry';
+import { unwrapMessageContent } from '@utils/unwrapMessageContent';
 import useMultiFileAuthStatePrisma from '@utils/use-multi-file-auth-state-prisma';
 import { AuthStateProvider } from '@utils/use-multi-file-auth-state-provider-files';
 import { useMultiFileAuthStateRedisDb } from '@utils/use-multi-file-auth-state-redis-db';
@@ -1119,8 +1120,9 @@ export class BaileysStartupService extends ChannelStartupService {
       { messages, type, requestId }: { messages: WAMessage[]; type: MessageUpsertType; requestId?: string },
       settings: any,
     ) => {
-      try {
-        for (const received of messages) {
+      // Each message has its own try/catch: one bad message must not drop the rest of the batch (#2773)
+      for (const received of messages) {
+        try {
           if (
             received?.messageStubParameters?.some?.((param) =>
               [
@@ -1138,6 +1140,12 @@ export class BaileysStartupService extends ChannelStartupService {
             this.logger.warn(`Message ignored with messageStubParameters: ${JSON.stringify(received, null, 2)}`);
             continue;
           }
+
+          // Disappearing/view once/document with caption: work on the real content (#2773)
+          if (received?.message) {
+            received.message = unwrapMessageContent(received.message);
+          }
+
           if (received.message?.conversation || received.message?.extendedTextMessage?.text) {
             const text = received.message?.conversation || received.message?.extendedTextMessage?.text;
 
@@ -1592,9 +1600,18 @@ export class BaileysStartupService extends ChannelStartupService {
               update: contactRaw,
               create: contactRaw,
             });
+        } catch (error) {
+          let messageType: string;
+          try {
+            messageType = getContentType(received?.message) ?? 'unknown';
+          } catch {
+            messageType = 'unknown';
+          }
+          this.logger.error(
+            `Error processing messages.upsert message ${received?.key?.id} (${messageType}): ${error?.message ?? error}`,
+          );
+          if (error?.stack) this.logger.error(error.stack);
         }
-      } catch (error) {
-        this.logger.error(error);
       }
     },
 
