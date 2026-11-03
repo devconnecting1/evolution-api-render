@@ -176,6 +176,7 @@ Preços fixos aprovados em 02/11/2026. A versão para o cliente (com o que inclu
 | Cloud API cobrando acima do esperado | Bot dividindo respostas em várias mensagens ou templates de marketing; revisar `splitMessages` e o rate card |
 | Bot parou de responder a um contato (Baileys) | Provável pausa humana: `GET /openai/fetchSessions/{openaiId}/{instancia}`, procurar `status: paused` (e `parameters.humanLastMessageAt`); reative com `POST /openai/changeStatus/{instancia}` (`opened`). O campo `humanPause` de cada sessão mostra o motivo e quanto falta para retomar (seção 12.9). Ver seção 12.2 |
 | Erro `400 Unsupported parameter: 'max_tokens'` | Modelo de raciocínio (gpt-5, o-series, gpt-6) exige `max_completion_tokens`; deixe `tokenParam: "auto"` (seção 12.1) |
+| Card Sistema com "Falhas ao salvar mensagens" ou log `not stored (P1001)` | Banco inacessível (Neon acordando do scale-to-zero). A mensagem ainda vai para o bot, mas não fica salva. Use o endpoint *pooled* do Neon com `connect_timeout=15&pool_timeout=20` na `DATABASE_CONNECTION_URI` |
 | Cliente não recebe nada quando a OpenAI falha | Esperado se `unknownMessage` estiver vazio; configure em PT-BR (seção 12.5) |
 
 ## 10. Observabilidade

@@ -111,6 +111,7 @@ type SystemOptions = {
   failDb?: boolean;
   provider?: string;
   redis?: SystemDeps['cache'];
+  storeFailures?: { count: number; lastAt: string | null; lastCode: string | null };
 };
 
 function systemDeps(options: SystemOptions = {}) {
@@ -188,6 +189,7 @@ function systemDeps(options: SystemOptions = {}) {
     },
     packageVersion: () => '2.3.7',
     nodeVersion: 'v20.0.0',
+    messageStoreFailures: () => options.storeFailures ?? { count: 0, lastAt: null, lastCode: null },
   };
 
   return { deps, queries };
@@ -216,7 +218,17 @@ describe('observability: Sistema provider', () => {
     assert.equal(system.plan, 'v2.3.7');
     assert.deepEqual(
       system.metrics.map((item) => item.id),
-      ['memory', 'cpu', 'instances', 'messages_24h', 'chatbot_sessions', 'human_paused', 'database_size', 'uptime'],
+      [
+        'memory',
+        'cpu',
+        'instances',
+        'messages_24h',
+        'message_store_failures',
+        'chatbot_sessions',
+        'human_paused',
+        'database_size',
+        'uptime',
+      ],
     );
 
     assert.equal(metric(system, 'memory').used, 200 * MB);
@@ -241,6 +253,28 @@ describe('observability: Sistema provider', () => {
     assert.deepEqual(system.links, [
       { label: 'Serviço no Render', url: 'https://dashboard.render.com/web/srv-dbd9qqi9lscs73aoe85g' },
     ]);
+  });
+
+  test('database errors while storing messages are counted; a recent one is a warning (#2714)', async () => {
+    const quiet = await new SystemProbe(systemDeps().deps).collect();
+    assert.equal(metric(quiet, 'message_store_failures').used, 0);
+    assert.equal(metric(quiet, 'message_store_failures').status, 'ok');
+
+    const recent = await new SystemProbe(
+      systemDeps({ storeFailures: { count: 3, lastAt: new Date(NOW - 60_000).toISOString(), lastCode: 'P1001' } }).deps,
+    ).collect();
+    assert.equal(metric(recent, 'message_store_failures').used, 3);
+    assert.equal(metric(recent, 'message_store_failures').status, 'warning');
+    assert.match(metric(recent, 'message_store_failures').detail, /P1001/);
+    assert.equal(recent.status, 'partial');
+    assert.ok(recent.notes.some((note) => /não foram salvas/.test(note)));
+
+    const old = await new SystemProbe(
+      systemDeps({
+        storeFailures: { count: 1, lastAt: new Date(NOW - 2 * 86_400_000).toISOString(), lastCode: 'P2024' },
+      }).deps,
+    ).collect();
+    assert.equal(metric(old, 'message_store_failures').status, 'ok', 'older than 24 h: only the count remains');
   });
 
   test('never exposes instance names or phone numbers', async () => {

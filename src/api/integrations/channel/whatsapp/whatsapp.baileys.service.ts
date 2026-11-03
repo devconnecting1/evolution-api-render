@@ -85,6 +85,7 @@ import { createJid } from '@utils/createJid';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
 import { LidPnPair, toLidPnPair } from '@utils/lidJid';
 import { makeProxyAgent, makeProxyAgentUndici } from '@utils/makeProxyAgent';
+import { databaseErrorCode, recordMessageStoreFailure } from '@utils/messageStoreFailures';
 import { getOnWhatsappCache, saveOnWhatsappCache } from '@utils/onWhatsappCache';
 import { PlaceholderResendTracker } from '@utils/placeholderResendTracker';
 import { status } from '@utils/renderStatus';
@@ -1243,10 +1244,16 @@ export class BaileysStartupService extends ChannelStartupService {
             continue;
           }
 
-          const existingChat = await this.prismaRepository.chat.findFirst({
-            where: { instanceId: this.instanceId, remoteJid: received.key.remoteJid },
-            select: { id: true, name: true },
-          });
+          // Only used to refresh the contact name: a database error here must not drop the message (#2714)
+          const existingChat = await this.prismaRepository.chat
+            .findFirst({
+              where: { instanceId: this.instanceId, remoteJid: received.key.remoteJid },
+              select: { id: true, name: true },
+            })
+            .catch((error) => {
+              this.logger.warn(`Chat lookup failed for ${received.key.id} (${databaseErrorCode(error)})`);
+              return null;
+            });
 
           if (
             existingChat &&
@@ -1428,91 +1435,100 @@ export class BaileysStartupService extends ChannelStartupService {
           }
 
           if (saveNewMessage && !alreadyStored) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { pollUpdates, ...messageData } = messageRaw;
-            const msg = await this.prismaRepository.message.create({ data: messageData });
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { pollUpdates, ...messageData } = messageRaw;
+              const msg = await this.prismaRepository.message.create({ data: messageData });
 
-            const { remoteJid } = received.key;
-            const timestamp = msg.messageTimestamp;
-            const fromMe = received.key.fromMe.toString();
-            const messageKey = `${remoteJid}_${timestamp}_${fromMe}`;
+              const { remoteJid } = received.key;
+              const timestamp = msg.messageTimestamp;
+              const fromMe = received.key.fromMe.toString();
+              const messageKey = `${remoteJid}_${timestamp}_${fromMe}`;
 
-            const cachedTimestamp = await this.baileysCache.get(messageKey);
+              const cachedTimestamp = await this.baileysCache.get(messageKey);
 
-            if (!cachedTimestamp) {
-              if (!received.key.fromMe) {
-                if (msg.status === status[3]) {
-                  this.logger.log(`Update not read messages ${remoteJid}`);
-                  await this.updateChatUnreadMessages(remoteJid);
-                } else if (msg.status === status[4]) {
+              if (!cachedTimestamp) {
+                if (!received.key.fromMe) {
+                  if (msg.status === status[3]) {
+                    this.logger.log(`Update not read messages ${remoteJid}`);
+                    await this.updateChatUnreadMessages(remoteJid);
+                  } else if (msg.status === status[4]) {
+                    this.logger.log(`Update readed messages ${remoteJid} - ${timestamp}`);
+                    await this.updateMessagesReadedByTimestamp(remoteJid, timestamp);
+                  }
+                } else {
+                  // is send message by me
                   this.logger.log(`Update readed messages ${remoteJid} - ${timestamp}`);
                   await this.updateMessagesReadedByTimestamp(remoteJid, timestamp);
                 }
+
+                await this.baileysCache.set(messageKey, true, this.MESSAGE_CACHE_TTL_SECONDS);
               } else {
-                // is send message by me
-                this.logger.log(`Update readed messages ${remoteJid} - ${timestamp}`);
-                await this.updateMessagesReadedByTimestamp(remoteJid, timestamp);
+                this.logger.info(`Update readed messages duplicated ignored [avoid deadlock]: ${messageKey}`);
               }
 
-              await this.baileysCache.set(messageKey, true, this.MESSAGE_CACHE_TTL_SECONDS);
-            } else {
-              this.logger.info(`Update readed messages duplicated ignored [avoid deadlock]: ${messageKey}`);
-            }
-
-            if (isMedia) {
-              if (this.configService.get<S3>('S3').ENABLE) {
-                try {
-                  if (isVideo && !this.configService.get<S3>('S3').SAVE_VIDEO) {
-                    this.logger.warn('Video upload is disabled. Skipping video upload.');
-                    // Skip video upload by returning early from this block
-                    return;
-                  }
-
-                  const message: any = received;
-
-                  // Verificação adicional para garantir que há conteúdo de mídia real
-                  const hasRealMedia = this.hasValidMediaContent(message);
-
-                  if (!hasRealMedia) {
-                    this.logger.warn('Message detected as media but contains no valid media content');
-                  } else {
-                    const media = await this.getBase64FromMediaMessage({ message }, true);
-
-                    if (!media) {
-                      this.logger.verbose('No valid media to upload (messageContextInfo only), skipping MinIO');
+              if (isMedia) {
+                if (this.configService.get<S3>('S3').ENABLE) {
+                  try {
+                    if (isVideo && !this.configService.get<S3>('S3').SAVE_VIDEO) {
+                      this.logger.warn('Video upload is disabled. Skipping video upload.');
+                      // Skip video upload by returning early from this block
                       return;
                     }
 
-                    const { buffer, mediaType, fileName, size } = media;
-                    const mimetype = mimeTypes.lookup(fileName).toString();
-                    const fullName = join(
-                      `${this.instance.id}`,
-                      received.key.remoteJid,
-                      mediaType,
-                      `${Date.now()}_${fileName}`,
-                    );
-                    await s3Service.uploadFile(fullName, buffer, size.fileLength?.low, { 'Content-Type': mimetype });
+                    const message: any = received;
 
-                    await this.prismaRepository.media.create({
-                      data: {
-                        messageId: msg.id,
-                        instanceId: this.instanceId,
-                        type: mediaType,
-                        fileName: fullName,
-                        mimetype,
-                      },
-                    });
+                    // Verificação adicional para garantir que há conteúdo de mídia real
+                    const hasRealMedia = this.hasValidMediaContent(message);
 
-                    const mediaUrl = await s3Service.getObjectUrl(fullName);
+                    if (!hasRealMedia) {
+                      this.logger.warn('Message detected as media but contains no valid media content');
+                    } else {
+                      const media = await this.getBase64FromMediaMessage({ message }, true);
 
-                    messageRaw.message.mediaUrl = mediaUrl;
+                      if (!media) {
+                        this.logger.verbose('No valid media to upload (messageContextInfo only), skipping MinIO');
+                        return;
+                      }
 
-                    await this.prismaRepository.message.update({ where: { id: msg.id }, data: messageRaw });
+                      const { buffer, mediaType, fileName, size } = media;
+                      const mimetype = mimeTypes.lookup(fileName).toString();
+                      const fullName = join(
+                        `${this.instance.id}`,
+                        received.key.remoteJid,
+                        mediaType,
+                        `${Date.now()}_${fileName}`,
+                      );
+                      await s3Service.uploadFile(fullName, buffer, size.fileLength?.low, { 'Content-Type': mimetype });
+
+                      await this.prismaRepository.media.create({
+                        data: {
+                          messageId: msg.id,
+                          instanceId: this.instanceId,
+                          type: mediaType,
+                          fileName: fullName,
+                          mimetype,
+                        },
+                      });
+
+                      const mediaUrl = await s3Service.getObjectUrl(fullName);
+
+                      messageRaw.message.mediaUrl = mediaUrl;
+
+                      await this.prismaRepository.message.update({ where: { id: msg.id }, data: messageRaw });
+                    }
+                  } catch (error) {
+                    this.logger.error(['Error on upload file to minio', error?.message, error?.stack]);
                   }
-                } catch (error) {
-                  this.logger.error(['Error on upload file to minio', error?.message, error?.stack]);
                 }
               }
+            } catch (error) {
+              // Not stored (database unreachable, pool timeout...): say it loudly and still hand the message to
+              // the webhook and the chatbots below, so the contact may get an answer (#2714)
+              recordMessageStoreFailure(error);
+              this.logger.error(
+                `Message ${received.key.id} (${messageRaw.messageType}) not stored (${databaseErrorCode(error)}): ${error?.message ?? error}`,
+              );
             }
           }
 
@@ -1631,6 +1647,8 @@ export class BaileysStartupService extends ChannelStartupService {
           } catch {
             messageType = 'unknown';
           }
+          // A Prisma error (P1001 unreachable, P2024 pool timeout...) also counts for the observability card
+          if (/^P\d{4}$/.test(databaseErrorCode(error))) recordMessageStoreFailure(error);
           this.logger.error(
             `Error processing messages.upsert message ${received?.key?.id} (${messageType}): ${error?.message ?? error}`,
           );
@@ -1991,7 +2009,17 @@ export class BaileysStartupService extends ChannelStartupService {
         try {
           if (!this.endSession) {
             const database = this.configService.get<Database>('DATABASE');
-            const settings = await this.findSettings();
+            let settings: any;
+            try {
+              settings = await this.findSettings();
+            } catch (error) {
+              // Database unreachable (#2714): keep handling the events with the settings loaded at startup
+              // instead of dropping the whole batch (messages included) in silence
+              this.logger.error(
+                `Settings not read from the database (${databaseErrorCode(error)}): using the cached settings. ${error?.message ?? ''}`,
+              );
+              settings = { ...this.localSettings };
+            }
 
             if (events.call) {
               await this.callHandle(events.call[0], settings);

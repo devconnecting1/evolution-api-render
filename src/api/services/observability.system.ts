@@ -7,6 +7,8 @@
 import fs from 'node:fs';
 import os from 'node:os';
 
+import { getMessageStoreFailures, MessageStoreFailures } from '@utils/messageStoreFailures';
+
 import {
   buildMetric,
   finite,
@@ -58,6 +60,8 @@ export type SystemDeps = {
   sleep?: (ms: number) => Promise<void>;
   packageVersion?: () => string | null;
   nodeVersion?: string;
+  /** Incoming messages not stored because of a database error since the process started (#2714). */
+  messageStoreFailures?: () => MessageStoreFailures;
 };
 
 const defaultReadFile = (path: string): string | null => {
@@ -265,6 +269,29 @@ export class SystemProbe {
       { detail: instances.detail, status: instanceStatus, higherIsBetter: true },
     );
 
+    // Database errors while storing incoming messages (#2714): warning while the last one is less than 24 h old
+    let failures: MessageStoreFailures = { count: 0, lastAt: null, lastCode: null };
+    try {
+      failures = (d.messageStoreFailures ?? getMessageStoreFailures)();
+    } catch {
+      // optional
+    }
+    const lastFailureAt = failures.lastAt ? Date.parse(failures.lastAt) : NaN;
+    const recentFailure = Number.isFinite(lastFailureAt) && now() - lastFailureAt < 24 * 60 * 60 * 1000;
+    const storeFailuresMetric = buildMetric(
+      'message_store_failures',
+      'Falhas ao salvar mensagens',
+      failures.count,
+      null,
+      'count',
+      {
+        detail: failures.count
+          ? `Última em ${formatShortDate(failures.lastAt)} (${failures.lastCode}) · desde o início do processo`
+          : 'Erros do banco ao salvar mensagens recebidas, desde o início do processo',
+        status: recentFailure ? 'warning' : 'ok',
+      },
+    );
+
     const metrics: Metric[] = [
       memoryMetric,
       cpuMetric,
@@ -272,6 +299,7 @@ export class SystemProbe {
       buildMetric('messages_24h', 'Mensagens (24h)', database.messages24h, null, 'count', {
         detail: 'Mensagens enviadas e recebidas nas últimas 24 horas (salvas no banco)',
       }),
+      storeFailuresMetric,
       buildMetric('chatbot_sessions', 'Sessões de chatbot ativas', sessions.active, null, 'count', {
         detail: sessions.detail,
       }),
@@ -299,6 +327,11 @@ export class SystemProbe {
       notes.push(`${instances.total - instances.open} instância(s) não conectada(s) ao WhatsApp.`);
     }
     if (database.errors.length) notes.push(`Não foi possível ler do banco: ${database.errors.join(', ')}.`);
+    if (recentFailure) {
+      notes.push(
+        'Mensagens recebidas não foram salvas por erro do banco nas últimas 24 h: confira o log (P1001 = banco inacessível).',
+      );
+    }
     if (sessions.error) notes.push('Não foi possível ler as sessões de chatbot.');
     if (cacheState.problem) notes.push(cacheState.problem);
 

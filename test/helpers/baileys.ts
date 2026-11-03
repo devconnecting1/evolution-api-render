@@ -20,6 +20,8 @@ export function createBaileysService() {
     rows,
     created: [] as any[],
     failCreateFor: new Set<string>(),
+    /** Prisma code of the create failure, e.g. P1001 (database unreachable). */
+    failCreateCode: undefined as string | undefined,
     failQuery: false,
     queries: 0,
     openaiSetting: null as any,
@@ -41,7 +43,9 @@ export function createBaileysService() {
         get: (_target, op: string) => async (args: any) => {
           if (name === 'message' && op === 'create') {
             const id = args?.data?.key?.id;
-            if (state.failCreateFor.has(id)) throw new Error(`create failed for ${id}`);
+            if (state.failCreateFor.has(id)) {
+              throw Object.assign(new Error(`create failed for ${id}`), { code: state.failCreateCode });
+            }
             const row = { id: `row-${nextId()}`, ...args.data };
             rows.push(row);
             state.created.push(args.data);
