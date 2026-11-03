@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generates the web app icons of the Manager from manager/dist/assets/images/favicon.svg (black square with
+// Generates the web app icons of the Manager from manager/dist/assets/images/favicon.svg (brand-green square with
 // "WA" in Geist, written by favicon-wa.py). Rendered with headless Chromium (Playwright), so the PNGs match how
 // browsers draw the SVG. The square fills the whole icon (the letters stay inside the 80% safe zone of
 // maskable icons; iOS rounds the corners of the apple-touch-icon itself).
@@ -18,7 +18,7 @@ try { pw = require('playwright'); } catch { pw = require('playwright-core'); }
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const images = path.join(root, 'manager', 'dist', 'assets', 'images');
 const svg = fs.readFileSync(path.join(images, 'favicon.svg'), 'utf8');
-const BACKGROUND = '#000000'; // same as the square of favicon.svg
+const BACKGROUND = '#0e7a4d'; // same as the square of favicon.svg (BACKGROUND in favicon-wa.py)
 
 // size: output px; logo: share of the side used by the SVG (1 = full bleed)
 const ICONS = [
