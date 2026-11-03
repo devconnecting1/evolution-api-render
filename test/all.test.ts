@@ -9,6 +9,7 @@ import './unit/openai.service.test';
 import './unit/cloudapi-webhook.test';
 import './unit/observability.test';
 import './unit/lidMerge.test';
+import './unit/mcp.test';
 import './integration/openai-human-pause.test';
 import './integration/openai-status.test';
 import './integration/cloudapi-human-pause.test';
