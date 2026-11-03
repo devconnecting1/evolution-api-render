@@ -216,6 +216,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - Cloud API: a pausa humana passou a funcionar pelos ecos da Coexistence (`smb_message_echoes`, PR #2). Falta validar com um número real.
 - 02/11/2026: preços fixos aprovados (seção 6) e auditoria do que a landing promete contra o código (seção 13).
 - 03/11/2026: servidor MCP embutido em `/mcp` para operar o projeto por assistentes de IA (seção 14).
+- 03/11/2026: correções de robustez vindas das issues do upstream (branch `fix/upstream-hardening`): o bot responde uma vez por mensagem mesmo quando o WhatsApp reentrega o mesmo id (cache de 24 h); mensagens temporárias, de visualização única e documentos com legenda são lidos pelo conteúdo real; uma mensagem com erro não derruba as outras do lote; edições, exclusões e o aviso de "mensagens temporárias" não viram mensagem nova para a IA; `msgCall` só sai com `rejectCall` ligado; o token de uma instância não acessa outra pela query (`?instanceName=`); com o banco fora do ar a mensagem ainda vai para o bot e a falha aparece na Observabilidade; o card WhatsApp mostra a última mensagem recebida por instância. Paliativo da CVE do Baileys (GHSA-qvv5-jq5g-4cgg) até o upgrade: respostas de "placeholder resend" só são aceitas para ids que a própria API pediu. Nova migration `20261103120000_message_key_id_index` (só um índice, aplicada no start do container). O upgrade do Baileys continua pendente: testar antes num número descartável.
 - Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
@@ -301,7 +302,8 @@ curl -X POST "$SERVER_URL/openai/settings/$INSTANCE" \
 # O fetchSettings devolve esse campo como "fallbackId".
 
 # 3. Criar bot chatCompletion. Obrigatórios: enabled, openaiCredsId, botType, triggerType
-#    (chatCompletion exige ainda model e maxTokens; assistant exige assistantId)
+#    (chatCompletion exige ainda model e maxTokens). Use sempre botType "chatCompletion": o modo "assistant"
+#    não funciona mais, porque a OpenAI desligou a Assistants API em 26/08/2026
 curl -X POST "$SERVER_URL/openai/create/$INSTANCE" \
   -H "apikey: $APIKEY" -H "Content-Type: application/json" \
   -d '{
@@ -362,7 +364,7 @@ curl "$SERVER_URL/openai/fetchSessions/<openaiBotId>/$INSTANCE" -H "apikey: $API
 
 ### 12.6 Imagens
 
-As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa pelo canal, usa o base64 da mensagem ou a URL pública (S3/MinIO). No modo Assistants a imagem sobe por upload `vision` e **os arquivos ficam na conta OpenAI** (considere na política de privacidade/LGPD). Se não conseguir obter a imagem, o fluxo segue só com texto e a nota `[imagem não pôde ser processada]` (no lugar do antigo erro `Failed to download file`).
+As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa pelo canal, usa o base64 da mensagem ou a URL pública (S3/MinIO). Se não conseguir obter a imagem, o fluxo segue só com texto e a nota `[imagem não pôde ser processada]` (no lugar do antigo erro `Failed to download file`).
 
 ### 12.7 Limitações conhecidas
 
@@ -377,6 +379,7 @@ As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa
 - Envios pela API REST (n8n, CRM, painel próprio) **não** pausam o bot; só mensagens digitadas no WhatsApp (celular/Web/Desktop) ou respostas de atendente pelo Chatwoot. Para pausar a partir de um painel, use `changeStatus` `paused`.
 - Mensagens do cliente durante a pausa não são guardadas para responder depois.
 - Só o bot OpenAI tem retomada por `humanResumeMinutes`; Typebot, Dify etc. mantêm o comportamento anterior.
+- **Modo `assistant` indisponível:** a OpenAI desligou a Assistants API em 26/08/2026. Bots com `botType: "assistant"` (e o `functionUrl`, que só existia nesse modo) não respondem mais; use `chatCompletion`. Integrações com agenda, planilha ou CRM são feitas como serviço sob medida (webhook/n8n), não pelo bot.
 
 ### 12.8 Deploy e atualização
 
@@ -516,7 +519,7 @@ O que a IA recebe em cada tipo de mensagem (só no bot OpenAI; Typebot, Dify etc
 | Documento que não é PDF (doc, docx, xls...) ou PDF acima do limite | `[o contato enviou o documento contrato.docx (DOCX)]` + legenda |
 | PDF com mais de 20 páginas | `[o contato enviou o documento autos.pdf (PDF, 35 páginas)]` |
 
-**PDF:** no `chatCompletion` o PDF vai como *file input* do Chat Completions (`{"type":"file","file":{"filename","file_data":"data:application/pdf;base64,..."}}`, suportado pelo SDK `openai` instalado), sem biblioteca de PDF no servidor. Antes de enviar a API confere o tamanho (declarado pelo WhatsApp e real, após o download), se o arquivo é mesmo um PDF e conta as páginas (limite fixo de 20, para controlar custo: a OpenAI lê cada página como texto **e** imagem). Se o modelo recusar o arquivo (400), a chamada é refeita uma vez com o documento descrito como texto e o cliente recebe resposta normalmente. No modo **Assistants** os PDFs são só descritos (a API de threads não aceita arquivo na mensagem).
+**PDF:** no `chatCompletion` o PDF vai como *file input* do Chat Completions (`{"type":"file","file":{"filename","file_data":"data:application/pdf;base64,..."}}`, suportado pelo SDK `openai` instalado), sem biblioteca de PDF no servidor. Antes de enviar a API confere o tamanho (declarado pelo WhatsApp e real, após o download), se o arquivo é mesmo um PDF e conta as páginas (limite fixo de 20, para controlar custo: a OpenAI lê cada página como texto **e** imagem). Se o modelo recusar o arquivo (400), a chamada é refeita uma vez com o documento descrito como texto e o cliente recebe resposta normalmente.
 
 **Privacidade e custo:**
 
@@ -564,7 +567,7 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | "Não inventa preços" | **Orientação** | O prompt instrui; não é garantia técnica |
 | Se apresentar como assistente e não pedir dados sensíveis | **Orientação** | Depende do prompt de cada cliente |
 | Vários números, cada um com sua IA | Automático | 1 instância por número, bot e credencial próprios. A visão de todos num painel é do operador |
-| Integrações (agenda, planilha, CRM) | **Serviço sob medida** | Via webhook (`MESSAGES_UPSERT`, `OPENAI_CHANGE_STATUS`) e n8n. O modo Chat Completions não chama ferramentas; o `functionUrl` só existe no modo Assistants (que não lê PDF) |
+| Integrações (agenda, planilha, CRM) | **Serviço sob medida** | Feitas como serviço próprio, via webhook (`MESSAGES_UPSERT`, `OPENAI_CHANGE_STATUS`) e n8n. O bot usa só Chat Completions, que não chama ferramentas. O `functionUrl` e o modo Assistants **não estão disponíveis**: a OpenAI desligou a Assistants API em 26/08/2026 |
 | Relatório mensal | **Serviço manual** | Não existe relatório automático. Fonte: uso do project key na OpenAI, sessões e Observabilidade |
 | Contagem da franquia de respostas | **Não existe** | As mensagens enviadas pela IA não são marcadas no banco (o registro de ids é só cache de 10 min) |
 | Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela; não envia aviso por e-mail ou WhatsApp |
