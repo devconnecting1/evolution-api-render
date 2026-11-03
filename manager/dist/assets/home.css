@@ -4,22 +4,8 @@
  * other screens keep their look. Light theme only.
  */
 
+/* colours, radius and gutter: --wa-* tokens in minimal.css */
 [data-wa-home] {
-  --wa-ink: #0d0d0d;
-  --wa-ink-soft: #3a3d3d;
-  --wa-line: hsl(178 10% 87%);
-  --wa-line-strong: hsl(178 8% 74%);
-  --wa-paper: #ffffff;
-  --wa-accent-from: #0b5d4b;
-  --wa-accent-to: #1fae74;
-  --wa-ok: #12805a;
-  --wa-ok-bg: #e6f5ee;
-  --wa-warn: #9a5b00;
-  --wa-warn-bg: #fff4dc;
-  --wa-bad: #b42318;
-  --wa-bad-bg: #fdecea;
-  --wa-radius: 6px;
-  --wa-gutter: 32px;
   color: var(--wa-ink);
 }
 
@@ -31,9 +17,7 @@
   font-family: "Geist", sans-serif;
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.08em;
   line-height: 1.4;
-  text-transform: uppercase;
   color: hsl(var(--muted-foreground));
 }
 
@@ -214,22 +198,8 @@
   min-height: 100vh;
   min-height: 100dvh;
   padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-  background: #fafbfb;
+  background: var(--wa-paper);
   isolation: isolate;
-}
-[data-wa-home="login"].wa-login-page::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image:
-    linear-gradient(hsl(178 10% 90%) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(178 10% 90%) 1px, transparent 1px);
-  background-size: 72px 72px;
-  background-position: center top;
-  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 42%, #000 0%, transparent 75%);
-  mask-image: radial-gradient(ellipse 60% 55% at 50% 42%, #000 0%, transparent 75%);
-  pointer-events: none;
 }
 .wa-login-top {
   display: flex;
@@ -522,25 +492,6 @@ div:has(> main > [data-wa-home="instances"]) > [data-wa-header] {
   box-shadow: none;
   overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-[data-wa-home] .wa-instance-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--wa-line-strong);
-}
-[data-wa-home] .wa-instance-card[data-status="open"]::before {
-  background: linear-gradient(90deg, var(--wa-accent-from), var(--wa-accent-to));
-}
-[data-wa-home] .wa-instance-card[data-status="connecting"]::before {
-  background: #e0a100;
-}
-[data-wa-home] .wa-instance-card[data-status="close"]::before,
-[data-wa-home] .wa-instance-card[data-status="closed"]::before {
-  background: var(--wa-bad);
 }
 [data-wa-home] .wa-instance-card:hover {
   border-color: var(--wa-ink);

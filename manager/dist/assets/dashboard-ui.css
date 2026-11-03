@@ -19,17 +19,7 @@
 /* The upstream light theme painted cards and popovers mint grey (178 36% 91%) and the primary dark teal.
    Cards are white with a 1px border now; primary is the same ink as the rest of the panel; destructive is a
    red that passes AA as text on white (the old #ef4444 was 3.8:1). */
-:root:not(:has([data-wa-chat])) {
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 5%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 5%;
-  --primary: 0 0% 5%;
-  --primary-foreground: 0 0% 100%;
-  --ring: 0 0% 5%;
-  --destructive: 4 76% 38%;
-  --destructive-foreground: 0 0% 100%;
-}
+/* shadcn colour tokens: minimal.css */
 
 /* ---------------------------------------------------------------------------------------- buttons */
 :where(button, a).ring-offset-background.whitespace-nowrap:not([data-wa-chat] *, [data-wa-nav] *, [data-wa-home] *) {
@@ -47,12 +37,12 @@
   background: #2b2b2b;
 }
 /* outline and secondary: one outlined look (secondary used to be a grey fill that read as disabled) */
-:where(button, a).ring-offset-background:is(.border-input.bg-background, .bg-secondary):not(.h-auto):not([data-wa-chat] *, [data-wa-nav] *, [data-wa-home] *) {
+:where(button, a).ring-offset-background:is(.border-input.bg-background, .bg-secondary):not(.h-auto):not([data-wa-chat] *, [data-wa-nav] *, [data-wa-home] *, [data-wa-header] *) {
   border: 1px solid var(--wo-line-2);
   background: var(--wo-paper);
   color: var(--wo-ink);
 }
-:where(button, a).ring-offset-background:is(.border-input.bg-background, .bg-secondary):not(.h-auto):not([data-wa-chat] *, [data-wa-nav] *, [data-wa-home] *):hover {
+:where(button, a).ring-offset-background:is(.border-input.bg-background, .bg-secondary):not(.h-auto):not([data-wa-chat] *, [data-wa-nav] *, [data-wa-home] *, [data-wa-header] *):hover {
   border-color: var(--wo-ink);
   background: var(--wo-soft);
 }
@@ -75,17 +65,16 @@
   border-color: #8a1a12;
   background: #8a1a12;
 }
-/* list items rendered as buttons (bots of an integration): selected = ink border on a soft background */
+/* list items rendered as buttons (bots of an integration): selected = the grey of a selected sidebar item */
 button.ring-offset-background.h-auto:is(.bg-secondary, .border-input):not([data-wa-chat] *) {
   border: 1px solid var(--wo-line);
-  border-radius: 8px;
+  border-radius: var(--m-radius-card);
   background: var(--wo-paper);
   color: var(--wo-ink);
 }
 button.ring-offset-background.h-auto.bg-secondary:not([data-wa-chat] *) {
-  border-color: var(--wo-ink);
-  background: var(--wo-soft);
-  box-shadow: inset 3px 0 0 var(--wo-ink);
+  border-color: var(--wo-active);
+  background: var(--wo-active);
 }
 button.ring-offset-background.h-auto.border-input:not([data-wa-chat] *):hover {
   border-color: var(--wo-line-2);
@@ -201,19 +190,17 @@ form h3.text-lg.font-medium:not([data-wa-chat] *) {
 [data-wa-header] button.wa-hd-btn {
   width: 36px;
   height: 36px;
-  border: 1px solid var(--wo-line-2);
-  border-radius: var(--wo-radius);
-  background: var(--wo-paper);
-  color: var(--wo-ink-2);
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--wo-muted);
 }
 [data-wa-header] button.wa-hd-btn:hover {
-  border-color: var(--wo-ink);
-  background: var(--wo-soft);
+  background: var(--wo-hover);
   color: var(--wo-ink);
 }
 [data-wa-header] button.wa-hd-logout:hover {
-  border-color: rgb(172 33 23 / 0.45);
-  background: var(--wo-bad-bg);
+  background: var(--wo-hover);
   color: var(--wo-bad);
 }
 [data-wa-header] button.wa-hd-btn svg {
@@ -226,9 +213,6 @@ form h3.text-lg.font-medium:not([data-wa-chat] *) {
     width: 44px;
     min-width: 44px;
     height: 44px;
-  }
-  .wa-menu-toggle {
-    border-radius: var(--wo-radius);
   }
 }
 
@@ -616,14 +600,6 @@ form h3.text-lg.font-medium:not([data-wa-chat] *) {
 }
 
 /* ----------------------------------------------------------------------------------------- toasts */
-:root {
-  --toastify-color-success: #0b6e49;
-  --toastify-color-error: #ac2117;
-  --toastify-color-warning: #9a5b00;
-  --toastify-color-info: #2f3534;
-  --toastify-text-color-light: #2f3534;
-  --toastify-color-progress-light: #9aa3a1;
-}
 .Toastify__toast {
   border: 1px solid var(--wo-line);
   border-radius: 8px;

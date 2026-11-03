@@ -13,22 +13,7 @@
  * Fonts: Geist only (assets/geist.css forces it on every element).
  */
 
-:root {
-  --wc-ink: #111b21;
-  --wc-ink-2: #2f3534;
-  --wc-muted: #4f5b58;
-  --wc-line: #e2e6e5;
-  --wc-line-2: #cfd6d4;
-  --wc-paper: #ffffff;
-  --wc-canvas: #f2f4f3;
-  --wc-hover: #f4f6f5;
-  --wc-active: #e5eeeb;
-  --wc-out: #d9fdd3;
-  --wc-out-line: #bfe6b8;
-  --wc-accent: #0b6b4f;
-  --wc-accent-hover: #08573f;
-  --wc-radius: 12px;
-}
+/* colours and radius: --wc-* tokens in minimal.css */
 
 /* ------------------------------------------------------------- old classes (cached bundle, embedded chat) */
 /* The compiled CSS paints these with fixed dark colours made for the dark theme (black text on black). */
@@ -219,16 +204,7 @@
   justify-content: center;
   padding: 2px 0;
 }
-/* thin separator from the text start to the edge (not under the avatar) */
-.wa-chat-items > li + li .wa-chat-item-main {
-  box-shadow: 0 -1px 0 var(--wc-line);
-}
-.wa-chat-items > li + li .wa-chat-item:hover .wa-chat-item-main,
-.wa-chat-items > li + li .wa-chat-item[aria-current="page"] .wa-chat-item-main,
-.wa-chat-items > li:hover + li .wa-chat-item-main,
-.wa-chat-items > li:has(> [aria-current="page"]) + li .wa-chat-item-main {
-  box-shadow: none;
-}
+/* no separators between rows: hover and selection are rounded grey rows (minimal.css) */
 .wa-chat-item-row {
   display: flex;
   align-items: baseline;
