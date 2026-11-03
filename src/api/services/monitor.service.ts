@@ -173,6 +173,8 @@ export class WAMonitoringService {
 
         instanceDbId = instance.id;
         await this.prismaRepository.session.deleteMany({ where: { sessionId: instance.id } });
+        // The Signal keys of these creds are worthless now: keeping them would mix them with the next pairing
+        await this.prismaRepository.authStateKey.deleteMany({ where: { sessionId: instance.id } });
       }
     }
 
@@ -181,6 +183,9 @@ export class WAMonitoringService {
       if (instanceDbId) {
         await this.cache.delete(instanceDbId);
       }
+    } else if (this.redis.REDIS.ENABLED && instanceDbId) {
+      // Signal keys of the Prisma auth state (its creds were deleted above)
+      await this.cache.delete(instanceDbId);
     }
 
     if (this.providerSession?.ENABLED) {
@@ -203,6 +208,7 @@ export class WAMonitoringService {
     rmSync(join(INSTANCE_DIR, instance.id), { recursive: true, force: true });
 
     await this.prismaRepository.session.deleteMany({ where: { sessionId: instance.id } });
+    await this.prismaRepository.authStateKey.deleteMany({ where: { sessionId: instance.id } });
 
     await this.prismaRepository.chat.deleteMany({ where: { instanceId: instance.id } });
     await this.prismaRepository.contact.deleteMany({ where: { instanceId: instance.id } });

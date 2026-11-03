@@ -3,9 +3,42 @@ import { CacheService } from '@api/services/cache.service';
 import { CacheConf, configService } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { INSTANCE_DIR } from '@config/path.config';
+import { PrismaClient } from '@prisma/client';
 import { AuthenticationState, BufferJSON, initAuthCreds, WAProto as proto } from 'baileys';
 import fs from 'fs/promises';
 import path from 'path';
+
+/**
+ * Auth state of a Baileys instance when DATABASE_SAVE_DATA_INSTANCE is on.
+ *
+ * - `creds` live in the `Session` table (unchanged).
+ * - Every other Signal key (pre-keys, sessions, sender-keys, app-state-sync-keys, lid-mappings...) is kept in a fast
+ *   layer, Redis (CACHE_REDIS_ENABLED) or local files, AND written through to the `AuthStateKey` table. Redis may lose
+ *   them (no persistence, LRU eviction, restart): a read that misses the fast layer falls back to the table and puts
+ *   the key back in the fast layer, so losing Redis no longer loses the WhatsApp session ("Bad MAC", "No session").
+ * - The table holds the exact `JSON.stringify(value, BufferJSON.replacer)` string, read back with
+ *   `BufferJSON.reviver`, so Buffers round-trip byte for byte.
+ * - A failing database never throws into Baileys: it is logged and the fast-layer write still happens. Writes for one
+ *   session go through a queue, so they reach the table in the order Baileys made them, even after a timeout.
+ */
+
+/** The Prisma models this auth state uses: the application's repository, or a fake in the tests. */
+export type AuthStatePrisma = Pick<PrismaClient, 'session' | 'authStateKey' | '$transaction'>;
+
+export interface AuthStatePrismaOptions {
+  prisma?: AuthStatePrisma;
+  /** Longest a key read/write waits for the database before Baileys carries on (a write keeps going behind). */
+  dbTimeoutMs?: number;
+}
+
+export const AUTH_KEYS_DB_TIMEOUT_MS = 8000;
+
+/** Rows per statement: well under the bind-parameter limits of PostgreSQL and MySQL. */
+const DB_CHUNK_SIZE = 500;
+
+const TIMED_OUT = Symbol('timed-out');
+
+const logger = new Logger('useMultiFileAuthStatePrisma');
 
 const fixFileName = (file: string): string | undefined => {
   if (!file) {
@@ -16,26 +49,30 @@ const fixFileName = (file: string): string | undefined => {
   return replacedColon;
 };
 
-export async function keyExists(sessionId: string): Promise<any> {
+export async function keyExists(sessionId: string, prisma: AuthStatePrisma = prismaRepository): Promise<any> {
   try {
-    const key = await prismaRepository.session.findUnique({ where: { sessionId: sessionId } });
+    const key = await prisma.session.findUnique({ where: { sessionId: sessionId } });
     return !!key;
   } catch {
     return false;
   }
 }
 
-export async function saveKey(sessionId: string, keyJson: any): Promise<any> {
-  const exists = await keyExists(sessionId);
+export async function saveKey(
+  sessionId: string,
+  keyJson: any,
+  prisma: AuthStatePrisma = prismaRepository,
+): Promise<any> {
+  const exists = await keyExists(sessionId, prisma);
   try {
     if (!exists)
-      return await prismaRepository.session.create({
+      return await prisma.session.create({
         data: {
           sessionId: sessionId,
           creds: JSON.stringify(keyJson),
         },
       });
-    await prismaRepository.session.update({
+    await prisma.session.update({
       where: { sessionId: sessionId },
       data: { creds: JSON.stringify(keyJson) },
     });
@@ -44,22 +81,22 @@ export async function saveKey(sessionId: string, keyJson: any): Promise<any> {
   }
 }
 
-export async function getAuthKey(sessionId: string): Promise<any> {
+export async function getAuthKey(sessionId: string, prisma: AuthStatePrisma = prismaRepository): Promise<any> {
   try {
-    const register = await keyExists(sessionId);
+    const register = await keyExists(sessionId, prisma);
     if (!register) return null;
-    const auth = await prismaRepository.session.findUnique({ where: { sessionId: sessionId } });
+    const auth = await prisma.session.findUnique({ where: { sessionId: sessionId } });
     return JSON.parse(auth?.creds);
   } catch {
     return null;
   }
 }
 
-async function deleteAuthKey(sessionId: string): Promise<any> {
+async function deleteAuthKey(sessionId: string, prisma: AuthStatePrisma): Promise<any> {
   try {
-    const register = await keyExists(sessionId);
+    const register = await keyExists(sessionId, prisma);
     if (!register) return;
-    await prismaRepository.session.delete({ where: { sessionId: sessionId } });
+    await prisma.session.delete({ where: { sessionId: sessionId } });
   } catch {
     return;
   }
@@ -74,79 +111,233 @@ async function fileExists(file: string): Promise<any> {
   }
 }
 
-const logger = new Logger('useMultiFileAuthStatePrisma');
+function chunk<T>(items: T[], size = DB_CHUNK_SIZE): T[][] {
+  const parts: T[][] = [];
+  for (let i = 0; i < items.length; i += size) parts.push(items.slice(i, i + size));
+  return parts;
+}
+
+const errorMessage = (error: any) => error?.message ?? String(error);
+
+/** Database work of each session, in order: a write that timed out still lands before the next one starts. */
+const dbQueues = new Map<string, Promise<unknown>>();
+
+function enqueue<T>(sessionId: string, task: () => Promise<T>): Promise<T> {
+  const previous = dbQueues.get(sessionId) ?? Promise.resolve();
+  const run = previous.then(task);
+  const tail = run.catch(() => undefined);
+  dbQueues.set(sessionId, tail);
+  tail.then(() => {
+    if (dbQueues.get(sessionId) === tail) dbQueues.delete(sessionId);
+  });
+  return run;
+}
+
+/** Resolves when every queued database write of the session has finished (tests, shutdown). */
+export async function flushAuthKeyWrites(sessionId: string): Promise<void> {
+  while (dbQueues.has(sessionId)) {
+    await dbQueues.get(sessionId);
+  }
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | typeof TIMED_OUT> {
+  let timer: NodeJS.Timeout;
+  const timeout = new Promise<typeof TIMED_OUT>((resolve) => {
+    timer = setTimeout(() => resolve(TIMED_OUT), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 export default async function useMultiFileAuthStatePrisma(
   sessionId: string,
   cache: CacheService,
+  options: AuthStatePrismaOptions = {},
 ): Promise<{
   state: AuthenticationState;
   saveCreds: () => Promise<void>;
   removeCreds: () => Promise<void>;
 }> {
+  const prisma = options.prisma ?? prismaRepository;
+  const dbTimeoutMs = options.dbTimeoutMs ?? AUTH_KEYS_DB_TIMEOUT_MS;
+
   const localFolder = path.join(INSTANCE_DIR, sessionId);
   const localFile = (key: string) => path.join(localFolder, fixFileName(key) + '.json');
   await fs.mkdir(localFolder, { recursive: true });
 
-  async function writeData(data: any, key: string): Promise<any> {
-    const dataString = JSON.stringify(data, BufferJSON.replacer);
-    const cacheConfig = configService.get<CacheConf>('CACHE');
+  const redisEnabled = () => !!configService.get<CacheConf>('CACHE')?.REDIS?.ENABLED;
 
-    if (key != 'creds') {
-      if (cacheConfig.REDIS.ENABLED) {
-        return await cache.hSet(sessionId, key, data);
-      } else {
-        await fs.writeFile(localFile(key), dataString);
-        return;
-      }
-    }
-    await saveKey(sessionId, dataString);
-    return;
-  }
+  // ---- Fast layer: Redis (or local files), as before ---------------------------------------------------------------
 
-  async function readData(key: string): Promise<any> {
+  async function fastRead(key: string): Promise<any> {
     try {
-      let rawData;
-      const cacheConfig = configService.get<CacheConf>('CACHE');
-
-      if (key != 'creds') {
-        if (cacheConfig.REDIS.ENABLED) {
-          return await cache.hGet(sessionId, key);
-        } else {
-          if (!(await fileExists(localFile(key)))) return null;
-          rawData = await fs.readFile(localFile(key), { encoding: 'utf-8' });
-          return JSON.parse(rawData, BufferJSON.reviver);
-        }
-      } else {
-        rawData = await getAuthKey(sessionId);
+      if (redisEnabled()) {
+        return (await cache.hGet(sessionId, key)) ?? null;
       }
-
-      const parsedData = JSON.parse(rawData, BufferJSON.reviver);
-      return parsedData;
+      if (!(await fileExists(localFile(key)))) return null;
+      const rawData = await fs.readFile(localFile(key), { encoding: 'utf-8' });
+      return JSON.parse(rawData, BufferJSON.reviver);
     } catch {
       return null;
     }
   }
 
-  async function removeData(key: string): Promise<any> {
-    try {
-      const cacheConfig = configService.get<CacheConf>('CACHE');
+  /** Same contract as before: Redis errors are swallowed by CacheService, a file error is thrown. */
+  async function fastWrite(key: string, value: any, dataString: string): Promise<void> {
+    if (redisEnabled()) {
+      await cache.hSet(sessionId, key, value);
+      return;
+    }
+    await fs.writeFile(localFile(key), dataString ?? JSON.stringify(value, BufferJSON.replacer));
+  }
 
-      if (key != 'creds') {
-        if (cacheConfig.REDIS.ENABLED) {
-          return await cache.hDelete(sessionId, key);
-        } else {
-          await fs.unlink(localFile(key));
-        }
+  async function fastRemove(key: string): Promise<void> {
+    try {
+      if (redisEnabled()) {
+        await cache.hDelete(sessionId, key);
       } else {
-        await deleteAuthKey(sessionId);
+        await fs.unlink(localFile(key));
       }
     } catch {
       return;
     }
   }
 
+  // ---- Durable layer: AuthStateKey table --------------------------------------------------------------------------
+
+  /** Upserts (value) and deletes (null) one batch atomically. Never throws. */
+  async function dbWrite(entries: { key: string; value: string | null }[]): Promise<void> {
+    if (!entries.length) return;
+
+    const keys = entries.map((entry) => entry.key);
+    const rows = entries
+      .filter((entry) => entry.value !== null)
+      .map((entry) => ({ sessionId, key: entry.key, value: entry.value }));
+
+    // delete + insert: two statements per chunk whatever the batch size, the same on PostgreSQL and MySQL
+    const run = enqueue(sessionId, () =>
+      prisma.$transaction([
+        ...chunk(keys).map((part) => prisma.authStateKey.deleteMany({ where: { sessionId, key: { in: part } } })),
+        ...chunk(rows).map((part) => prisma.authStateKey.createMany({ data: part })),
+      ]),
+    ).then(
+      () => true,
+      (error) => {
+        logger.error({
+          action: 'auth.keys.db.write',
+          sessionId,
+          keys: keys.length,
+          sample: keys.slice(0, 3),
+          error: errorMessage(error),
+        });
+        return false;
+      },
+    );
+
+    if ((await withTimeout(run, dbTimeoutMs)) === TIMED_OUT) {
+      logger.warn({ action: 'auth.keys.db.write.slow', sessionId, keys: keys.length, timeoutMs: dbTimeoutMs });
+    }
+  }
+
+  /** Decoded values of the keys found in the table. Never throws: an error or a timeout reads as "not found". */
+  async function dbRead(keys: string[]): Promise<Record<string, any>> {
+    const found: Record<string, any> = {};
+    for (const part of chunk(keys)) {
+      try {
+        const rows = await withTimeout(
+          prisma.authStateKey.findMany({
+            where: { sessionId, key: { in: part } },
+            select: { key: true, value: true },
+          }),
+          dbTimeoutMs,
+        );
+        if (rows === TIMED_OUT) {
+          logger.warn({ action: 'auth.keys.db.read.slow', sessionId, keys: part.length, timeoutMs: dbTimeoutMs });
+          continue;
+        }
+        for (const row of rows) {
+          try {
+            found[row.key] = JSON.parse(row.value, BufferJSON.reviver);
+          } catch (error) {
+            logger.error({ action: 'auth.keys.db.decode', sessionId, key: row.key, error: errorMessage(error) });
+          }
+        }
+      } catch (error) {
+        logger.error({ action: 'auth.keys.db.read', sessionId, keys: part.length, error: errorMessage(error) });
+      }
+    }
+    return found;
+  }
+
+  /**
+   * One-time copy of the Redis hash into the table, for a session paired before the table existed: runs when the
+   * table has no row for the session. Never throws.
+   */
+  async function backfillFromRedis(): Promise<void> {
+    if (!redisEnabled()) return;
+    try {
+      await enqueue(sessionId, async () => {
+        const existing = await prisma.authStateKey.count({ where: { sessionId } });
+        if (existing > 0) {
+          logger.info({ action: 'auth.keys.backfill', sessionId, status: 'skipped', dbKeys: existing });
+          return;
+        }
+
+        const hash = (await cache.hGetAll(sessionId)) ?? {};
+        const rows = [];
+        for (const [key, value] of Object.entries(hash)) {
+          if (key === 'creds' || value === null || value === undefined) continue;
+          try {
+            rows.push({ sessionId, key, value: JSON.stringify(value, BufferJSON.replacer) });
+          } catch (error) {
+            logger.error({ action: 'auth.keys.backfill.encode', sessionId, key, error: errorMessage(error) });
+          }
+        }
+
+        if (!rows.length) {
+          logger.warn({ action: 'auth.keys.backfill', sessionId, status: 'nothing-to-copy', redisKeys: 0 });
+          return;
+        }
+
+        let copied = 0;
+        for (const part of chunk(rows)) {
+          const result = await prisma.authStateKey.createMany({ data: part, skipDuplicates: true });
+          copied += result?.count ?? 0;
+        }
+
+        logger.info({ action: 'auth.keys.backfill', sessionId, status: 'done', redisKeys: rows.length, copied });
+      });
+    } catch (error) {
+      logger.error({ action: 'auth.keys.backfill', sessionId, status: 'failed', error: errorMessage(error) });
+    }
+  }
+
+  // ---- creds (Session table), unchanged ---------------------------------------------------------------------------
+
+  async function readCreds(): Promise<any> {
+    try {
+      const rawData = await getAuthKey(sessionId, prisma);
+      return JSON.parse(rawData, BufferJSON.reviver);
+    } catch {
+      return null;
+    }
+  }
+
+  async function writeCreds(data: any): Promise<void> {
+    await saveKey(sessionId, JSON.stringify(data, BufferJSON.replacer), prisma);
+  }
+
   async function removeCreds(): Promise<any> {
+    try {
+      await enqueue(sessionId, () => prisma.authStateKey.deleteMany({ where: { sessionId } }));
+      logger.info({ action: 'auth.keys.db.delete', sessionId });
+    } catch (err) {
+      logger.warn({ action: 'auth.keys.db.delete', sessionId, error: errorMessage(err) });
+    }
+
     const cacheConfig = configService.get<CacheConf>('CACHE');
 
     // Redis
@@ -163,13 +354,16 @@ export default async function useMultiFileAuthStatePrisma(
 
     logger.info({ action: 'auth.key.delete', sessionId });
 
-    await deleteAuthKey(sessionId);
+    await deleteAuthKey(sessionId, prisma);
   }
 
-  let creds = await readData('creds');
+  let creds = await readCreds();
   if (!creds) {
     creds = initAuthCreds();
-    await writeData(creds, 'creds');
+    await writeCreds(creds);
+  } else {
+    // Only an already paired session has keys worth keeping: new creds never reuse what is left in Redis
+    await backfillFromRedis();
   }
 
   return {
@@ -177,35 +371,82 @@ export default async function useMultiFileAuthStatePrisma(
       creds,
       keys: {
         get: async (type, ids) => {
-          const data = {};
+          const data: { [id: string]: any } = {};
+          const missing: string[] = [];
+
           await Promise.all(
             ids.map(async (id) => {
-              let value = await readData(`${type}-${id}`);
-              if (type === 'app-state-sync-key' && value) {
-                value = proto.Message.AppStateSyncKeyData.create(value);
+              const value = await fastRead(`${type}-${id}`);
+              if (value === null || value === undefined) {
+                missing.push(id);
               }
-
-              data[id] = value;
+              data[id] = value ?? null;
             }),
           );
+
+          if (missing.length) {
+            const found = await dbRead(missing.map((id) => `${type}-${id}`));
+            const restored = missing.filter((id) => found[`${type}-${id}`] !== undefined);
+
+            await Promise.all(
+              restored.map(async (id) => {
+                const key = `${type}-${id}`;
+                data[id] = found[key];
+                try {
+                  await fastWrite(key, found[key], null);
+                } catch (error) {
+                  logger.warn({ action: 'auth.keys.repopulate', sessionId, key, error: errorMessage(error) });
+                }
+              }),
+            );
+
+            if (restored.length) {
+              logger.warn({ action: 'auth.keys.restored-from-db', sessionId, type, count: restored.length });
+            }
+          }
+
+          if (type === 'app-state-sync-key') {
+            for (const id of ids) {
+              // fromObject, not create: the stored keyData is a base64 string (protobuf toJSON) and must become bytes
+              if (data[id]) data[id] = proto.Message.AppStateSyncKeyData.fromObject(data[id]);
+            }
+          }
+
           return data;
         },
         set: async (data) => {
-          const tasks = [];
+          const entries: { key: string; value: string | null }[] = [];
+          const fastTasks: Promise<void>[] = [];
+
           for (const category in data) {
             for (const id in data[category]) {
               const value = data[category][id];
               const key = `${category}-${id}`;
 
-              tasks.push(value ? writeData(value, key) : removeData(key));
+              if (value) {
+                let dataString: string = null;
+                try {
+                  dataString = JSON.stringify(value, BufferJSON.replacer);
+                  entries.push({ key, value: dataString });
+                } catch (error) {
+                  logger.error({ action: 'auth.keys.encode', sessionId, key, error: errorMessage(error) });
+                }
+                fastTasks.push(fastWrite(key, value, dataString));
+              } else {
+                entries.push({ key, value: null });
+                fastTasks.push(fastRemove(key));
+              }
             }
           }
-          await Promise.all(tasks);
+
+          const [fastResults] = await Promise.all([Promise.allSettled(fastTasks), dbWrite(entries)]);
+          const failed = fastResults.find((result) => result.status === 'rejected') as PromiseRejectedResult;
+          if (failed) throw failed.reason;
         },
       },
     },
     saveCreds: () => {
-      return writeData(creds, 'creds');
+      return writeCreds(creds);
     },
 
     removeCreds,
