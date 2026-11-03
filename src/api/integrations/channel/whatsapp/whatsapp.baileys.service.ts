@@ -523,37 +523,51 @@ export class BaileysStartupService extends ChannelStartupService {
     }
   }
 
+  /**
+   * Stored message of a key (`full`: the whole row). Returns `undefined` when it is not stored or the query
+   * fails: Baileys takes any truthy value from `getMessage` as "found" and would answer a retry request with an
+   * empty message, spending one of the retries and leaving "Waiting for this message" on the recipient (#2705).
+   */
   private async getMessage(key: proto.IMessageKey, full = false) {
+    if (!key?.id) return undefined;
+
+    let webMessageInfo: proto.IWebMessageInfo[];
     try {
       // Use raw SQL to avoid JSON path issues
-      const webMessageInfo = (await this.prismaRepository.$queryRaw`
+      webMessageInfo = (await this.prismaRepository.$queryRaw`
         SELECT * FROM "Message"
         WHERE "instanceId" = ${this.instanceId}
         AND "key"->>'id' = ${key.id}
+        LIMIT 1
       `) as proto.IWebMessageInfo[];
-
-      if (full) {
-        return webMessageInfo[0];
-      }
-      if (webMessageInfo[0].message?.pollCreationMessage) {
-        const messageSecretBase64 = webMessageInfo[0].message?.messageContextInfo?.messageSecret;
-
-        if (typeof messageSecretBase64 === 'string') {
-          const messageSecret = Buffer.from(messageSecretBase64, 'base64');
-
-          const msg = {
-            messageContextInfo: { messageSecret },
-            pollCreationMessage: webMessageInfo[0].message?.pollCreationMessage,
-          };
-
-          return msg;
-        }
-      }
-
-      return webMessageInfo[0].message;
-    } catch {
-      return { conversation: '' };
+    } catch (error) {
+      this.logger.warn(`getMessage failed for ${key.id}: ${error?.message}`);
+      return undefined;
     }
+
+    const row = webMessageInfo?.[0];
+    if (!row) return undefined;
+
+    if (full) {
+      return row;
+    }
+
+    if (row.message?.pollCreationMessage) {
+      const messageSecretBase64 = row.message?.messageContextInfo?.messageSecret;
+
+      if (typeof messageSecretBase64 === 'string') {
+        const messageSecret = Buffer.from(messageSecretBase64, 'base64');
+
+        const msg = {
+          messageContextInfo: { messageSecret },
+          pollCreationMessage: row.message?.pollCreationMessage,
+        };
+
+        return msg;
+      }
+    }
+
+    return row.message ?? undefined;
   }
 
   private async defineAuthState() {
