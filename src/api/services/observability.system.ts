@@ -34,7 +34,7 @@ export type RedisState = { state: 'ready' | 'connecting' | 'down' | 'absent'; la
 export type PrismaLike = {
   $queryRawUnsafe: (query: string) => Promise<any>;
   instance: { groupBy: (args: any) => Promise<any[]>; findMany?: (args: any) => Promise<any[]> };
-  message: { count: (args: any) => Promise<number> };
+  message: { count: (args: any) => Promise<number>; groupBy?: (args: any) => Promise<any[]> };
   integrationSession: { groupBy: (args: any) => Promise<any[]> };
 };
 
@@ -601,6 +601,40 @@ export class SystemProbe {
   }
 
   /**
+   * Time (ms) of the last message received (fromMe false) by each instance in the last 7 days, computed on
+   * request from the database; null when it cannot be read. Only timestamps per instance id.
+   */
+  private async collectLastReceived(): Promise<Map<string, number> | null> {
+    const d = this.deps;
+    const groupBy = d.prisma?.message?.groupBy;
+    if (!groupBy) return null;
+
+    const now = d.now ?? Date.now;
+    const sinceMs = now() - LAST_RECEIVED_WINDOW_MS;
+    const fromMePath = d.databaseProvider === 'mysql' ? '$.fromMe' : ['fromMe'];
+
+    try {
+      const rows = await withTimeout(
+        groupBy({
+          by: ['instanceId'],
+          where: { id: { gte: cuidFloor(sinceMs) }, key: { path: fromMePath, equals: false } },
+          _max: { messageTimestamp: true },
+        }),
+        DB_TIMEOUT_MS,
+        'timeout',
+      );
+      const result = new Map<string, number>();
+      for (const row of rows ?? []) {
+        const seconds = finite(row?._max?.messageTimestamp);
+        if (row?.instanceId && seconds) result.set(String(row.instanceId), seconds * 1000);
+      }
+      return result;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * "WhatsApp" card: the connection of each instance (live state of this server, or the stored one), the
    * disconnected ones first. Shows only the instance name, the channel and the state: never the phone number,
    * the profile name or the token (the page already requires the global API key, which lists the instances).
@@ -646,6 +680,8 @@ export class SystemProbe {
         stored = null;
       }
     }
+
+    const lastReceived = await this.collectLastReceived();
 
     let live: Record<string, any> = {};
     try {
@@ -700,6 +736,7 @@ export class SystemProbe {
         state === 'close' && reason !== null ? disconnectReason(reason) : null,
         state === 'connecting' ? 'aguardando QR code ou reconexão' : null,
         liveNames.length && !loaded ? 'não carregada neste servidor (estado salvo)' : null,
+        state === 'open' && lastReceived ? lastReceivedLabel(lastReceived.get(String(row.id)), now()) : null,
       ]
         .filter(Boolean)
         .join(' · '),
@@ -710,6 +747,19 @@ export class SystemProbe {
       view.notes.push(
         `${notOpen} instância(s) sem conexão: abra a instância no painel e leia o QR code de novo se a sessão foi encerrada.`,
       );
+    }
+    // #2647: an instance can stay "open" while WhatsApp stops delivering its messages; restarting it fixes it
+    if (lastReceived) {
+      const quiet = items.filter(({ row, state }) => {
+        if (state !== 'open' || !row.id) return false;
+        const at = lastReceived.get(String(row.id));
+        return !at || now() - at > QUIET_INSTANCE_MS;
+      }).length;
+      if (quiet) {
+        view.notes.push(
+          `${quiet} instância(s) conectada(s) sem mensagem recebida há mais de 24 h. Se clientes estão escrevendo, reinicie a instância (pode estar conectada mas sem receber eventos).`,
+        );
+      }
     }
     if (items.length > WHATSAPP_MAX_RESOURCES) {
       view.notes.push(`Mostrando ${WHATSAPP_MAX_RESOURCES} de ${items.length} instâncias (as sem conexão primeiro).`);
@@ -724,6 +774,18 @@ export class SystemProbe {
 }
 
 const WHATSAPP_MAX_INSTANCES = 500;
+/** Window of the "last message received" lookup (bounded by the cuid primary key, like the 24h count). */
+const LAST_RECEIVED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const QUIET_INSTANCE_MS = 24 * 60 * 60 * 1000;
+
+function lastReceivedLabel(at: number | undefined, now: number): string {
+  if (!at) return 'nenhuma mensagem recebida em 7 dias';
+  const minutes = Math.max(0, Math.floor((now - at) / 60_000));
+  if (minutes < 60) return `última mensagem recebida há ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `última mensagem recebida há ${hours} h`;
+  return `última mensagem recebida há ${Math.floor(hours / 24)} dias`;
+}
 const WHATSAPP_MAX_RESOURCES = 50;
 
 function channelLabel(integration: unknown): string {

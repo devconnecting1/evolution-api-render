@@ -1008,6 +1008,42 @@ describe('observability: WhatsApp card (connection per instance)', () => {
     );
     assert.ok(failed.notes.some((note) => /Banco indisponível/.test(note)));
   });
+
+  test('connected instances show the last message received; a quiet one for 24 h gets a note (#2647)', async () => {
+    const { deps } = systemDeps({ live: {} });
+    deps.prisma.instance.findMany = async () => structuredClone(rows);
+    let groupByArgs: any;
+    deps.prisma.message.groupBy = async (args: any) => {
+      groupByArgs = args;
+      // c1 received 30 minutes ago; c3 (open) nothing in the window; c2 is closed
+      return [
+        { instanceId: 'c1', _max: { messageTimestamp: Math.floor((NOW - 30 * 60_000) / 1000) } },
+        { instanceId: 'c2', _max: { messageTimestamp: Math.floor((NOW - 3 * 86_400_000) / 1000) } },
+      ];
+    };
+
+    const view = await new SystemProbe(deps).collectWhatsapp();
+    const byName = Object.fromEntries(view.resources.map((item) => [item.name, item]));
+
+    assert.match(byName['cliente-padaria'].detail, /última mensagem recebida há 30 min/);
+    assert.match(byName['cliente-advocacia'].detail, /nenhuma mensagem recebida em 7 dias/);
+    assert.doesNotMatch(byName['cliente-clinica'].detail, /última mensagem/, 'only for connected instances');
+    assert.ok(view.notes.some((note) => /1 instância\(s\) conectada\(s\) sem mensagem recebida/.test(note)));
+
+    // Received messages only, bounded by the primary key (no full scan)
+    assert.deepEqual(groupByArgs.where.key, { path: ['fromMe'], equals: false });
+    assert.equal(groupByArgs.where.id.gte, cuidFloor(NOW - 7 * 86_400_000));
+  });
+
+  test('the last received lookup failing changes nothing else', async () => {
+    const { deps } = systemDeps({ live: {} });
+    deps.prisma.instance.findMany = async () => structuredClone(rows);
+    deps.prisma.message.groupBy = () => Promise.reject(new Error('timeout'));
+
+    const view = await new SystemProbe(deps).collectWhatsapp();
+    assert.ok(view.resources.every((item) => !/última mensagem|nenhuma mensagem/.test(item.detail ?? '')));
+    assert.ok(!view.notes.some((note) => /sem mensagem recebida/.test(note)));
+  });
 });
 
 describe('observability: network errors and pasted keys', () => {
