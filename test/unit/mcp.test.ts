@@ -162,7 +162,7 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     webhook: {
       findUnique: async () => ({
         enabled: true,
-        url: 'https://hooks.example.com/in?token=abcdef123456',
+        url: 'https://hooks.example.com/in?token=fake-query-value',
         events: ['MESSAGES_UPSERT'],
         headers: { authorization: 'Bearer very-secret-header-value' },
       }),
@@ -592,7 +592,7 @@ describe('MCP: tools', () => {
     assert.equal(bot.json.bots[0].credential.apiKey, '****WXYZ');
 
     const settings = await callTool(h.url, 'get_webhook_and_settings', { instance: 'escritorio' });
-    for (const secret of ['very-secret-header-value', 'abcdef123456', 'wavoip-secret-value-9876']) {
+    for (const secret of ['very-secret-header-value', 'fake-query-value', 'wavoip-secret-value-9876']) {
       assert.ok(!settings.text.includes(secret), secret);
     }
     assert.deepEqual(settings.json.webhook.events, ['MESSAGES_UPSERT']);
