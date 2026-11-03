@@ -1,14 +1,14 @@
 # Planos e preços — WhatsAI
 
-Uma implantação, cobrada uma vez, e uma mensalidade fixa que cobre a operação, a inteligência artificial e o suporte. Valores de 02/11/2026, válidos por 30 dias a partir do envio da proposta.
+Uma implantação, cobrada uma vez, e uma mensalidade fixa que cobre a operação, a inteligência artificial e o suporte. Valores de 03/11/2026, válidos por 30 dias a partir do envio da proposta. Contratos e propostas enviados antes desta data mantêm os preços vigentes na data do envio durante a sua validade.
 
 ## Resumo dos planos
 
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---|---|---|
 | **Mensalidade** | **R$ 397** | **R$ 697** | **R$ 1.297** |
-| Implantação, contrato de 6 meses | R$ 1.500 | R$ 2.900 | a partir de R$ 4.900 |
-| Implantação, contrato de 12 meses | R$ 990 | R$ 1.900 | a partir de R$ 3.500 |
+| Implantação, contrato de 6 meses | R$ 1.990 | R$ 4.390 | a partir de R$ 7.390 |
+| Implantação, contrato de 12 meses | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
 | Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
 | Números de WhatsApp | 1 | até 2 | 1 (adicionais sob consulta) |
 | Conexão | WhatsApp Web (QR code) | WhatsApp Web (QR code) | API oficial da Meta (Cloud API) |
@@ -21,7 +21,7 @@ Uma implantação, cobrada uma vez, e uma mensalidade fixa que cobre a operaçã
 
 - **Uma resposta** é cada vez que a IA responde uma mensagem (ou uma sequência de mensagens seguidas) do seu cliente. Uma conversa típica tem de 5 a 10 respostas: 2.000 respostas equivalem a algo entre 200 e 400 conversas por mês.
 - **Excedente:** se o mês passar da franquia, a IA continua respondendo. O excedente custa **R$ 49 por bloco de 1.000 respostas**, na fatura seguinte. No primeiro mês em que isso acontecer, avisamos e não cobramos. Respostas não usadas não acumulam.
-- **Piloto assistido de 14 dias:** R$ 490 (1 número, até 500 respostas), abatido da implantação se você contratar em até 7 dias após o piloto.
+- **Piloto assistido de 14 dias:** R$ 690 (1 número, até 500 respostas), abatido da implantação se você contratar em até 7 dias após o piloto.
 
 ## O que a IA faz sozinha e o que é serviço da nossa equipe
 
@@ -54,8 +54,8 @@ Uma implantação, cobrada uma vez, e uma mensalidade fixa que cobre a operaçã
 | Integração com agenda, planilha ou CRM | – | 1 | 2 |
 | Treinamento da equipe (online) | 1 hora | 2 horas | 3 horas |
 | Acompanhamento intensivo após entrar no ar | 7 dias | 14 dias | 30 dias |
-| **Valor, contrato de 6 meses** | **R$ 1.500** | **R$ 2.900** | **a partir de R$ 4.900** |
-| **Valor, contrato de 12 meses** | **R$ 990** | **R$ 1.900** | **a partir de R$ 3.500** |
+| **Valor, contrato de 6 meses** | **R$ 1.990** | **R$ 4.390** | **a partir de R$ 7.390** |
+| **Valor, contrato de 12 meses** | **R$ 1.490** | **R$ 2.890** | **a partir de R$ 5.290** |
 
 No Premium, o valor final depende das integrações e dos modelos de mensagem necessários e é fechado na proposta, depois do diagnóstico.
 
@@ -63,10 +63,10 @@ No Premium, o valor final depende das integrações e dos modelos de mensagem ne
 
 | Item | Implantação | Mensalidade |
 |---|---|---|
-| Número adicional (mesma empresa; inclui +1.000 respostas) | R$ 600 | R$ 197 |
-| Integração adicional (agenda, planilha, CRM, sistema próprio) | a partir de R$ 800, após diagnóstico | incluída no suporte |
+| Número adicional (mesma empresa; inclui +1.000 respostas) | R$ 890 | R$ 247 |
+| Integração adicional (agenda, planilha, CRM, sistema próprio) | a partir de R$ 1.200, após diagnóstico | incluída no suporte |
 | Bloco de 1.000 respostas acima da franquia | – | R$ 49 |
-| Treinamento extra ou ajuste fora da franquia (novo fluxo, novo setor) | R$ 150 por hora | – |
+| Treinamento extra ou ajuste fora da franquia (novo fluxo, novo setor) | R$ 180 por hora | – |
 | Modelo de IA mais avançado, para casos que exigem raciocínio maior | – | a partir de R$ 197 |
 
 ## WhatsApp Web ou API oficial da Meta
