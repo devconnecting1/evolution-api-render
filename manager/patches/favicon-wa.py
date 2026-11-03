@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes manager/dist/assets/images/favicon.svg: a plain black square with the letters "WA" in Geist (white).
+"""Writes manager/dist/assets/images/favicon.svg: a square in the brand green with the letters "WA" in Geist (white).
 
 WhatsAI has no symbol of its own; browsers and the web app manifest still need an icon, so the icon is only the
 initials in the project typeface, nothing else (not a logo). The letters are converted to SVG paths from the local
@@ -33,6 +33,7 @@ WEIGHT = 600
 SIZE = 512          # viewBox side
 TEXT_WIDTH = 0.62   # share of the side used by the letters (inside the 80% safe zone of maskable icons)
 TRACKING = -0.02    # em
+BACKGROUND = '#0e7a4d'  # brand primary (white letters on it: 5.4:1); same value as BACKGROUND in pwa-icons.mjs
 
 
 def build():
@@ -65,7 +66,7 @@ def build():
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{SIZE}" height="{SIZE}" viewBox="0 0 {SIZE} {SIZE}">\n'
         f'<title>WhatsAI</title>\n'
-        f'<rect width="{SIZE}" height="{SIZE}" fill="#000"/>\n'
+        f'<rect width="{SIZE}" height="{SIZE}" fill="{BACKGROUND}"/>\n'
         f'<path fill="#fff" d="{pen.getCommands()}"/>\n'
         f'</svg>\n'
     )

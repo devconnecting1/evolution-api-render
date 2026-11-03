@@ -21,8 +21,8 @@
       content="O WhatsAI responde seus clientes no WhatsApp 24 horas por dia com as informações do seu negócio, entende áudio, foto e PDF e pausa sozinho quando a sua equipe assume a conversa."
     />
     <link rel="canonical" href="https://whatsaibr.vercel.app/" />
-    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg?v=2" />
-    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=2" />
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg?v=3" />
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=3" />
 
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="pt_BR" />
@@ -47,7 +47,7 @@
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=2" />
-    <link rel="stylesheet" href="/assets/landing.css?v=4" />
+    <link rel="stylesheet" href="/assets/landing.css?v=6" />
     <script src="/assets/landing.js?v=3" defer></script>
 
     <script type="application/ld+json">
@@ -127,6 +127,8 @@
         <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 103-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></symbol>
         <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z" /></symbol>
         <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></symbol>
+        <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 5 8 6 8 9s-8 4-8 9M16 3c0 5-8 6-8 9s8 4 8 9" /></symbol>
+        <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.8 2.8L16.5 9.5" /></symbol>
       </defs>
     </svg>
 
@@ -145,7 +147,7 @@
           </ul>
           <div class="nav-end">
             <a class="btn btn-quiet btn-sm" href="/manager/login">Entrar no painel</a>
-            <a class="btn btn-ink btn-sm" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
+            <a class="btn btn-primary btn-sm" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
           </div>
         </nav>
         <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" data-menu>
@@ -157,7 +159,7 @@
 
     <main id="conteudo">
       <!-- === hero -->
-      <section class="hero" aria-labelledby="hero-title">
+      <section class="hero band" aria-labelledby="hero-title">
         <div class="wrap hero-copy">
           <a class="chip chip-link" href="#midia">
             <span class="chip-tag">Novo</span>
@@ -173,9 +175,14 @@
             PDFs e pausa sozinho quando alguém da equipe entra na conversa.
           </p>
           <div class="actions">
-            <a class="btn btn-ink btn-lg" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
-            <a class="btn btn-soft btn-lg" href="#como-funciona">Ver como funciona</a>
+            <a class="btn btn-lime btn-lg" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
+            <a class="btn btn-ghost-light btn-lg" href="#como-funciona">Ver como funciona</a>
           </div>
+          <a class="price-pill" href="#planos">
+            <span>Planos a partir de</span>
+            <strong>R$ 397<small>/mês</small></strong>
+            <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
+          </a>
           <ul class="hero-points">
             <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>Conexão por QR code ou API oficial da Meta</li>
             <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>Configurado com as informações da sua empresa</li>
@@ -184,17 +191,31 @@
 
         <figure class="wrap hero-visual">
           <div class="stage">
+            <!-- profundidade: cartões do painel ao fundo, desfocados (decorativos) -->
+            <div class="deck" aria-hidden="true">
+              <div class="deck-card deck-l">
+                <p class="deck-h">Instâncias · 3</p>
+                <p class="deck-row"><i class="dot dot-ok"></i>recepcao-clinica<span>Conectada</span></p>
+                <p class="deck-row"><i class="dot dot-ok"></i>loja-centro<span>Conectada</span></p>
+                <p class="deck-row"><i class="dot dot-warn"></i>comercial<span>Aguardando QR</span></p>
+              </div>
+              <div class="deck-card deck-r">
+                <p class="deck-h">Mensagens · 24 h</p>
+                <p class="deck-v">137</p>
+                <span class="deck-bars"><i style="height: 30%"></i><i style="height: 45%"></i><i style="height: 25%"></i><i style="height: 60%"></i><i style="height: 80%"></i><i style="height: 55%"></i><i style="height: 70%"></i><i style="height: 95%"></i><i style="height: 65%"></i><i style="height: 40%"></i></span>
+              </div>
+            </div>
             <div
               class="app"
               role="img"
-              aria-label="Exemplo do painel de conversas do WhatsAI. À esquerda, a lista de conversas da recepção, com Carla M. selecionada e a pausa humana configurada em 2 horas. No centro, a conversa: Carla pergunta se a clínica atende aos sábados, a IA responde com o horário, transcreve um áudio de 8 segundos com o nome e o horário e anota o pedido. Ana, da equipe, assume, a IA pausa e volta às 16:40. Embaixo, sugestões para a equipe e o campo de mensagem."
+              aria-label="Exemplo do painel de conversas do WhatsAI. À esquerda, a lista de conversas da recepção, com Carla M. selecionada e a pausa humana configurada em 2 horas. No centro, a conversa: Carla pergunta às 22:47 se a clínica atende aos sábados e a IA responde em 4 segundos com o horário, destacado por uma anotação à mão; depois transcreve um áudio de 8 segundos com o nome e o horário e anota o pedido. Ana, da equipe, assume, a IA pausa e volta às 16:40. Embaixo, sugestões para a equipe e o campo de mensagem. Em destaque, um cartão avisa que Ana respondeu pelo celular e a IA pausou só nessa conversa."
             >
               <div class="app-side">
                 <p class="app-name">WhatsAI</p>
                 <p class="app-desc">Recepção · Clínica Bem-Estar</p>
                 <p class="app-h">Conversas</p>
                 <ul class="app-list">
-                  <li class="is-on"><span class="av">CM</span><span class="app-li"><b>Carla M.</b><small>IA pausada · volta 16:40</small></span><i class="dot dot-warn"></i></li>
+                  <li class="is-on"><span class="av">CM</span><span class="app-li"><b>Carla M.</b><small>IA pausada · volta 16:40</small></span><i class="dot dot-warn"></i><svg class="cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L10 18.5z" /></svg></li>
                   <li><span class="av">RS</span><span class="app-li"><b>Roberto S.</b><small>Qual o valor da consulta?</small></span><i class="dot dot-ok"></i></li>
                   <li><span class="av">JP</span><span class="app-li"><b>Juliana P.</b><small>Precisa de jejum?</small></span><i class="dot dot-ok"></i></li>
                   <li><span class="av">LC</span><span class="app-li"><b>Loja Centro</b><small>Atendimento manual</small></span><i class="dot dot-mute"></i></li>
@@ -214,9 +235,13 @@
                 </div>
                 <ol class="thread">
                   <li class="b b-in">Oi! Vocês atendem sábado? Queria marcar uma limpeza.<time>22:47</time></li>
-                  <li class="b b-out"><span class="b-who">IA</span>Olá! Sou a assistente virtual da Clínica Bem-Estar. Atendemos aos sábados das 8h às 12h. Qual horário fica melhor?<time>22:47</time></li>
+                  <li class="b b-out b-ai b-noted"><span class="b-who">IA</span>Olá! Sou a assistente virtual da Clínica Bem-Estar. Atendemos aos sábados das 8h às 12h. Qual horário fica melhor?<time class="circled">22:47</time></li>
+                  <li class="note-hand" aria-hidden="true">
+                    <svg class="note-arrow" viewBox="0 0 64 40"><path d="M6 36c10-2 26-6 40-20 3-3 6-7 8-11" /><path d="M46 6l8-2 1 8" /></svg>
+                    <span>respondeu em 4 s, às 22:47</span>
+                  </li>
                   <li class="b b-in b-audio"><span class="b-kind"><svg class="ico" aria-hidden="true"><use href="#i-mic" /></svg>Áudio 0:08</span>“Pode ser às 9h. Meu nome é Carla.”<time>22:48</time></li>
-                  <li class="b b-out"><span class="b-who">IA</span>Perfeito, Carla! Anotei sábado às 9h. A equipe confirma pela manhã.<time>22:48</time></li>
+                  <li class="b b-out b-ai"><span class="b-who">IA</span>Perfeito, Carla! Anotei sábado às 9h. A equipe confirma pela manhã.<time>22:48</time></li>
                   <li class="b-sys"><i class="dot dot-warn"></i>Ana (equipe) assumiu · IA volta às 16:40</li>
                   <li class="b b-out b-team"><span class="b-who">Ana · equipe</span>Bom dia, Carla! Confirmado: sábado, 9h.<time>08:02</time></li>
                 </ol>
@@ -230,6 +255,11 @@
                   <div class="field"><span>Escreva para a Carla…</span><span class="send"><svg class="ico" aria-hidden="true"><use href="#i-arrow-up" /></svg></span></div>
                 </div>
               </div>
+            </div>
+            <!-- cartão em foco: a pausa humana acontecendo (decorativo, descrito no aria-label acima) -->
+            <div class="focus-card" aria-hidden="true">
+              <span class="focus-ico"><svg class="ico"><use href="#i-pause" /></svg></span>
+              <span class="focus-t"><b>Ana respondeu pelo celular</b><small>IA pausada só nesta conversa · volta às 16:40</small></span>
             </div>
           </div>
           <figcaption class="caption">Ilustrativo · dados de exemplo</figcaption>
@@ -246,6 +276,51 @@
             <li>WhatsApp Cloud API (Meta)</li>
             <li>Evolution API</li>
           </ul>
+        </div>
+      </section>
+
+      <!-- === sem x com -->
+      <section class="section" id="antes-depois" aria-labelledby="vs-title">
+        <div class="wrap">
+          <div class="section-head section-head-c">
+            <h2 id="vs-title" class="h2">Sem WhatsAI, o cliente espera. <span class="soft">Com WhatsAI, ele é atendido.</span></h2>
+          </div>
+          <div class="vs">
+            <article class="vs-col vs-without" aria-labelledby="vs-without-h">
+              <h3 id="vs-without-h" class="vs-h">Sem WhatsAI</h3>
+              <div class="mess">
+                <svg class="mess-lines" viewBox="0 0 400 420" preserveAspectRatio="none" aria-hidden="true">
+                  <g class="mess-knot">
+                    <ellipse cx="200" cy="34" rx="34" ry="20" transform="rotate(-18 200 34)" />
+                    <ellipse cx="200" cy="34" rx="30" ry="18" transform="rotate(32 200 34)" />
+                    <ellipse cx="200" cy="34" rx="26" ry="15" transform="rotate(78 200 34)" />
+                    <ellipse cx="202" cy="32" rx="18" ry="11" transform="rotate(-50 202 32)" />
+                  </g>
+                  <path class="mess-path" d="M200 56c-8 30-90 18-96 54s70 26 92 58-120 20-110 70 150 4 170 44-60 40-120 56 40 50 70 70" />
+                  <path class="mess-path" d="M214 58c40 20 110 30 96 70s-150 30-130 76 140 6 120 62-120 30-80 86" />
+                </svg>
+                <ul class="mess-boxes">
+                  <li style="--x: 8%; --y: 15%; --r: -3deg">Mensagem das 23h sem resposta</li>
+                  <li style="--x: 52%; --y: 24%; --r: 2deg">Cliente pergunta de novo</li>
+                  <li style="--x: 14%; --y: 40%; --r: 2deg">Áudio que ninguém ouviu</li>
+                  <li style="--x: 50%; --y: 52%; --r: -2deg">40 conversas abertas de manhã</li>
+                  <li style="--x: 4%; --y: 66%; --r: -1deg">“Qual o horário?” pela 10ª vez</li>
+                  <li style="--x: 54%; --y: 78%; --r: 3deg">Retorno esquecido</li>
+                  <li style="--x: 20%; --y: 88%; --r: -2deg">Cliente desiste</li>
+                </ul>
+              </div>
+            </article>
+            <article class="vs-col vs-with" aria-labelledby="vs-with-h">
+              <h3 id="vs-with-h" class="vs-h">Com WhatsAI</h3>
+              <ol class="flow">
+                <li><time>22:47</time><b>O cliente pergunta</b><span>“Vocês atendem sábado?”</span></li>
+                <li><time>22:47</time><b>A IA responde em segundos</b><span>com o horário e as regras do seu negócio</span></li>
+                <li><time>22:48</time><b>Triagem pronta</b><span>nome, horário e o que o cliente precisa</span></li>
+                <li><time>08:02</time><b>A equipe assume quando quiser</b><span>a IA pausa sozinha naquela conversa</span></li>
+              </ol>
+              <p class="flow-end"><svg class="ico" aria-hidden="true"><use href="#i-check-circle" /></svg>Cliente atendido, a qualquer hora</p>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -335,7 +410,7 @@
               <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-scissors" /></svg>Salões</li>
               <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-pet" /></svg>Pet shops</li>
             </ul>
-            <a class="btn btn-ink" href="#segmentos">Ver exemplos por segmento</a>
+            <a class="btn btn-primary" href="#segmentos">Ver exemplos por segmento</a>
           </div>
         </div>
       </section>
@@ -613,7 +688,7 @@
             <li class="card segment segment-cta">
               <h3 class="h3">O seu negócio não está na lista?</h3>
               <p>Se o seu cliente pergunta pelo WhatsApp, a IA pode responder. Vamos ver o seu caso.</p>
-              <a class="btn btn-ink" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero saber se funciona para o meu negócio.">Falar no WhatsApp</a>
+              <a class="btn btn-primary" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero saber se funciona para o meu negócio.">Falar no WhatsApp</a>
             </li>
           </ul>
         </div>
@@ -681,8 +756,8 @@
               <p class="price"><strong>R$ 397</strong><span>/mês</span></p>
               <p class="impl-h">Implantação, cobrada uma vez</p>
               <dl class="impl">
-                <div><dt>Contrato de 6 meses</dt><dd>R$ 1.500</dd></div>
-                <div><dt>Contrato de 12 meses</dt><dd>R$ 990</dd></div>
+                <div><dt>Contrato de 6 meses</dt><dd>R$ 1.990</dd></div>
+                <div><dt>Contrato de 12 meses</dt><dd>R$ 1.490</dd></div>
               </dl>
               <a class="btn btn-soft" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero saber mais sobre o plano Essencial.">Quero o Essencial</a>
               <ul class="checks">
@@ -701,10 +776,10 @@
               <p class="price"><strong>R$ 697</strong><span>/mês</span></p>
               <p class="impl-h">Implantação, cobrada uma vez</p>
               <dl class="impl">
-                <div><dt>Contrato de 6 meses</dt><dd>R$ 2.900</dd></div>
-                <div><dt>Contrato de 12 meses</dt><dd>R$ 1.900</dd></div>
+                <div><dt>Contrato de 6 meses</dt><dd>R$ 4.390</dd></div>
+                <div><dt>Contrato de 12 meses</dt><dd>R$ 2.890</dd></div>
               </dl>
-              <a class="btn btn-ink" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero saber mais sobre o plano Profissional.">Quero o Profissional</a>
+              <a class="btn btn-primary" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero saber mais sobre o plano Profissional.">Quero o Profissional</a>
               <ul class="checks">
                 <li>Tudo do Essencial</li>
                 <li>Até 2 números de WhatsApp</li>
@@ -721,8 +796,8 @@
               <p class="price"><strong>R$ 1.297</strong><span>/mês</span></p>
               <p class="impl-h">Implantação, cobrada uma vez</p>
               <dl class="impl">
-                <div><dt>Contrato de 6 meses</dt><dd>a partir de R$ 4.900</dd></div>
-                <div><dt>Contrato de 12 meses</dt><dd>a partir de R$ 3.500</dd></div>
+                <div><dt>Contrato de 6 meses</dt><dd>a partir de R$ 7.390</dd></div>
+                <div><dt>Contrato de 12 meses</dt><dd>a partir de R$ 5.290</dd></div>
               </dl>
               <a class="btn btn-soft" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero saber mais sobre o plano Premium.">Falar sobre o Premium</a>
               <ul class="checks">
@@ -738,7 +813,7 @@
           </ul>
           <ul class="plan-notes">
             <li>Respostas além da franquia: R$ 49 por bloco de 1.000 respostas.</li>
-            <li>Piloto de 14 dias por R$ 490, abatido da implantação.</li>
+            <li>Piloto de 14 dias por R$ 690, abatido da implantação.</li>
             <li>Contrato mínimo de 6 meses. Números adicionais sob consulta.</li>
           </ul>
         </div>
@@ -782,7 +857,7 @@
             </details>
             <details>
               <summary>Dá para testar antes de fechar?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>Sim. O piloto de 14 dias custa R$ 490, e esse valor é abatido da implantação se você seguir com um plano.</p>
+              <p>Sim. O piloto de 14 dias custa R$ 690, e esse valor é abatido da implantação se você seguir com um plano.</p>
             </details>
             <details>
               <summary>A IA entende áudio?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
@@ -799,15 +874,15 @@
       <!-- === contato / CTA final -->
       <section class="section cta" id="contato" aria-labelledby="cta-title">
         <div class="wrap">
-          <div class="card card-soft cta-in">
-            <h2 id="cta-title" class="h2">Veja o WhatsAI atendendo os clientes do seu negócio.</h2>
+          <div class="card card-soft cta-in band">
+            <h2 id="cta-title" class="h2">Veja o WhatsAI atendendo <span class="soft">os clientes do seu negócio.</span></h2>
             <p class="section-lead">
               Numa demonstração curta, mostramos a IA respondendo com as informações da sua empresa e a sua equipe assumindo a
               conversa.
             </p>
             <div class="actions">
-              <a class="btn btn-ink btn-lg" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
-              <a class="btn btn-white btn-lg" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero tirar algumas dúvidas.">Falar no WhatsApp</a>
+              <a class="btn btn-lime btn-lg" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
+              <a class="btn btn-ghost-light btn-lg" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero tirar algumas dúvidas.">Falar no WhatsApp</a>
             </div>
             <p class="cta-phone">
               <svg class="ico" aria-hidden="true"><use href="#i-chat" /></svg>

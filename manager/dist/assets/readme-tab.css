@@ -4,7 +4,9 @@
  * the columns react to the panel width (@container), not to the window, so the inline panel behaves too.
  * Shared tokens (same as the landing and the panel): bg #ffffff · surface #f9f9f9 · hover #f3f3f3 ·
  * selected #ececec · line #ececec (strong #e3e3e3) · text #0d0d0d · secondary #5d5d5d · tertiary #8f8f8f ·
- * state colours only on dots (#10a37f, #c27a00, #d93025) · radius 12px on blocks, 9999px on pills.
+ * state colours only on dots (#1a9e5c, #c27a00, #d93025) · radius 12px on blocks, 8px on controls.
+ * Brand green (same tokens as minimal.css / landing.css): primary #0e7a4d (links, focus, primary button, active
+ * TOC entry), tint #e9f6ef (current document, inline code), tint border #cfe8da, text on tint #095c39.
  * Contrast: small text never uses the tertiary grey (3.3:1); it is kept for separators, icons and rules.
  */
 #whatsai-readme {
@@ -17,7 +19,12 @@
   --wr-text: #0d0d0d;
   --wr-text-2: #5d5d5d;
   --wr-text-3: #8f8f8f;
-  --wr-ok: #10a37f;
+  --wr-ok: #1a9e5c;
+  --wr-primary: #0e7a4d;
+  --wr-primary-hover: #0b6b43;
+  --wr-tint: #e9f6ef;
+  --wr-tint-line: #cfe8da;
+  --wr-tint-text: #095c39;
   --wr-warn: #c27a00;
   --wr-bad: #d93025;
   --wr-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
@@ -761,4 +768,91 @@
   #whatsai-readme .wr-pager {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* ---------------------------------------------------------------------------------- brand green */
+#whatsai-readme :is(a, button, input, summary, [tabindex]):focus-visible {
+  outline-color: var(--wr-primary);
+}
+#whatsai-readme .wr-btn,
+#whatsai-readme .wr-menu-btn,
+#whatsai-readme .wr-copy {
+  border-radius: 8px;
+}
+#whatsai-readme .wr-btn {
+  min-height: 32px;
+  padding: 0 12px;
+}
+#whatsai-readme .wr-btn-ink {
+  background: var(--wr-primary);
+  color: #fff;
+}
+#whatsai-readme .wr-btn-ink:hover {
+  background: var(--wr-primary-hover);
+}
+#whatsai-readme .wr-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+#whatsai-readme .wr-wordmark::before {
+  content: "";
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--wr-primary) url("/assets/images/favicon.svg?v=3") center / cover no-repeat;
+}
+#whatsai-readme .wr-search input {
+  min-height: 32px;
+  border-radius: 8px;
+}
+#whatsai-readme .wr-search input:focus-visible {
+  border-color: var(--wr-primary);
+  outline: 0;
+  box-shadow: 0 0 0 1px var(--wr-primary), 0 0 0 4px rgba(14, 122, 77, 0.16);
+}
+#whatsai-readme .wr-doc-link {
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+#whatsai-readme .wr-doc-link[aria-current="page"] {
+  background: var(--wr-tint);
+  color: var(--wr-tint-text);
+}
+#whatsai-readme .wr-toc-link.is-active {
+  border-left-color: var(--wr-primary);
+  color: var(--wr-tint-text);
+}
+#whatsai-readme .wr-prose a {
+  color: var(--wr-primary);
+  text-decoration-color: var(--wr-tint-line);
+}
+#whatsai-readme .wr-prose a:hover {
+  text-decoration-color: var(--wr-primary);
+}
+#whatsai-readme .wr-prose code {
+  border-radius: 4px;
+  background: var(--wr-tint);
+  color: var(--wr-tint-text);
+}
+#whatsai-readme .wr-prose pre {
+  border: 1px solid var(--wr-line);
+  border-left: 2px solid var(--wr-primary);
+}
+#whatsai-readme .wr-prose pre code {
+  color: var(--wr-text);
+  background: none;
+}
+#whatsai-readme .wr-prose h2::before {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 3px;
+  margin-bottom: 16px;
+  border-radius: 2px;
+  background: var(--wr-primary);
+}
+#whatsai-readme .wr-prose li::marker {
+  color: var(--wr-primary);
 }

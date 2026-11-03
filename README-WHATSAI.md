@@ -4,7 +4,7 @@
 
 Plataforma própria de atendimento automatizado: Evolution API (WhatsApp Web via Baileys ou Cloud API oficial da Meta) + agente OpenAI por instância + painel WhatsAI. Cada número = 1 instância com seu próprio agente.
 
-> Este README é o manual operacional do projeto. Atualizado em 02/11/2026.
+> Este README é o manual operacional do projeto. Atualizado em 03/11/2026.
 >
 > **Canais:** os planos Essencial e Profissional usam **WhatsApp Web** (`WHATSAPP-BAILEYS`, QR code); o Premium usa a **Cloud API** (`WHATSAPP-BUSINESS`). O escritório de advocacia em produção usa Baileys. A **pausa humana** está validada em produção no Baileys. Na Cloud API ela funciona pelos ecos da **Coexistence** (`smb_message_echoes`), já tratados no código, mas **ainda não validados com um número real** (seção 12.7).
 
@@ -122,20 +122,20 @@ Header de autenticação: `apikey: <chave>`.
 
 ## 6. Planos e preços
 
-Preços fixos aprovados em 02/11/2026. A versão para o cliente (com o que inclui, adicionais e contrato) está no **Guia comercial** (`readmes/README-COMERCIAL.md`). Custos internos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora do repositório: este manual é público em `/readme`.
+Preços fixos aprovados em 03/11/2026 (reajuste da implantação; contratos e propostas enviados antes mantêm seus preços durante a validade). A versão para o cliente (com o que inclui, adicionais e contrato) está no **Guia comercial** (`readmes/README-COMERCIAL.md`). Custos internos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora do repositório: este manual é público em `/readme`.
 
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---:|---:|---:|
 | Mensalidade | R$ 397 | R$ 697 | R$ 1.297 |
-| Implantação, contrato de 6 meses | R$ 1.500 | R$ 2.900 | a partir de R$ 4.900 |
-| Implantação, contrato de 12 meses | R$ 990 | R$ 1.900 | a partir de R$ 3.500 |
+| Implantação, contrato de 6 meses | R$ 1.990 | R$ 4.390 | a partir de R$ 7.390 |
+| Implantação, contrato de 12 meses | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
 | Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
 | Números | 1 | até 2 | 1 (+ sob consulta) |
 | Ajustes nas instruções por mês | 2 | 4 | 8 |
 | Integrações sob medida incluídas | – | 1 | 2 |
 | Áudio, foto e PDF | Sim | Sim | Sim |
 
-- **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 490, abatido da implantação.
+- **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 690, abatido da implantação.
 - **Contrato mínimo de 6 meses**; depois, mês a mês.
 - **Franquia:** hoje não há contador automático de respostas da IA (seção 13). Meça pelo uso do project key da OpenAI de cada instância.
 
@@ -215,6 +215,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - Cloud API: a pausa humana passou a funcionar pelos ecos da Coexistence (`smb_message_echoes`, PR #2). Falta validar com um número real.
 - 02/11/2026: preços fixos aprovados (seção 6) e auditoria do que a landing promete contra o código (seção 13).
 - 03/11/2026: servidor MCP embutido em `/mcp` para operar o projeto por assistentes de IA (seção 14).
+- 03/11/2026: reajuste da implantação e dos adicionais (seção 6); mensalidades e excedente mantidos. Contratos e propostas enviados antes mantêm seus preços durante a validade.
 - Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
