@@ -30,6 +30,8 @@ export function createBaileysService() {
     transcribed: [] as any[],
     sent: [] as any[],
     rejected: [] as any[],
+    updates: [] as { model: string; args: any }[],
+    webhooks: [] as { event: string; data: any }[],
   };
 
   const model = (name: string) =>
@@ -45,6 +47,7 @@ export function createBaileysService() {
             state.created.push(args.data);
             return row;
           }
+          if (op === 'update') state.updates.push({ model: name, args });
           if (name === 'openaiSetting' && op === 'findFirst') return state.openaiSetting;
           if (op === 'count') return 0;
           return null;
@@ -89,7 +92,7 @@ export function createBaileysService() {
   Object.assign(service.localSettings, { readMessages: false, readStatus: false, groupsIgnore: false });
   service.localWebhook = { enabled: false };
   service.localChatwoot = { enabled: false };
-  service.sendDataWebhook = async () => undefined;
+  service.sendDataWebhook = async (event: string, data: any) => void state.webhooks.push({ event, data });
   service.logger.error = (value: any) => void state.errors.push(String(value));
   service.logger.warn = (value: any) => void state.warnings.push(String(value));
   service.openaiService = {

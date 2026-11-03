@@ -1159,6 +1159,9 @@ export class BaileysStartupService extends ChannelStartupService {
             );
           }
 
+          // An edit (editedMessage wrapper) is never a new message, whatever it unwraps to (#2672)
+          const isEditWrapper = !!received?.message?.editedMessage;
+
           // Disappearing/view once/document with caption: work on the real content (#2773)
           if (received?.message) {
             received.message = unwrapMessageContent(received.message);
@@ -1179,8 +1182,12 @@ export class BaileysStartupService extends ChannelStartupService {
             this.logger.info(`requested on-demand sync, id=${messageId}`);
           }
 
-          const editedMessage =
+          const protocolMessage =
             received?.message?.protocolMessage || received?.message?.editedMessage?.message?.protocolMessage;
+          // Only MESSAGE_EDIT is an edit: REVOKE, EPHEMERAL_SETTING, history/app state sync... are not (#2672);
+          // a revoke reaches messages.update (MESSAGES_DELETE) through Baileys
+          const editedMessage =
+            protocolMessage?.type === proto.Message.ProtocolMessage.Type.MESSAGE_EDIT ? protocolMessage : undefined;
 
           if (editedMessage) {
             if (this.configService.get<Chatwoot>('CHATWOOT').ENABLED && this.localChatwoot?.enabled)
@@ -1197,7 +1204,8 @@ export class BaileysStartupService extends ChannelStartupService {
             }
 
             const oldMessage = await this.getMessage(editedMessage.key, true);
-            if ((oldMessage as any)?.id) {
+            // An edit without readable content (e.g. still encrypted) must not wipe the stored message
+            if ((oldMessage as any)?.id && editedMessage.editedMessage) {
               const editedMessageTimestamp = Long.isLong(received?.messageTimestamp)
                 ? Math.floor(received?.messageTimestamp.toNumber())
                 : Math.floor(received?.messageTimestamp as number);
@@ -1223,7 +1231,7 @@ export class BaileysStartupService extends ChannelStartupService {
             }
           }
 
-          if ((type !== 'notify' && type !== 'append') || editedMessage || !received?.message) {
+          if ((type !== 'notify' && type !== 'append') || protocolMessage || isEditWrapper || !received?.message) {
             continue;
           }
 
