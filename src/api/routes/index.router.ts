@@ -4,9 +4,12 @@ import Telemetry from '@api/guards/telemetry.guard';
 import { ChannelRouter } from '@api/integrations/channel/channel.router';
 import { ChatbotRouter } from '@api/integrations/chatbot/chatbot.router';
 import { EventRouter } from '@api/integrations/event/event.router';
+import { defaultMcpDeps } from '@api/integrations/mcp/mcp.deps';
+import { createMcpRouter } from '@api/integrations/mcp/mcp.router';
 import { StorageRouter } from '@api/integrations/storage/storage.router';
 import { waMonitor } from '@api/server.module';
 import { configService, Database, Facebook } from '@config/env.config';
+import { Logger } from '@config/logger.config';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
@@ -190,6 +193,14 @@ router.get('/assets/*', (req, res) => {
     res.status(404).send('File not found');
   }
 });
+
+// MCP server for AI clients (Claude, ChatGPT, Cursor). Before the telemetry middleware so the optional URL token
+// is never sent anywhere; a failure here must never stop the API from starting.
+try {
+  router.use('/mcp', createMcpRouter(defaultMcpDeps));
+} catch (error) {
+  new Logger('MCP').error(`MCP server disabled: ${error?.message ?? error}`);
+}
 
 router
   .use((req, res, next) => telemetry.collectTelemetry(req, res, next))

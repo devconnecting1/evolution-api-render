@@ -214,6 +214,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 29/10/2026: bot OpenAI ganhou `tokenParam` (compatibilidade com modelos de raciocínio) e `humanResumeMinutes` (pausa/retomada quando o dono escreve). `expire` continua sem efeito no OpenAI. Detalhes, curls, limitações e deploy na seção 12.
 - Cloud API: a pausa humana passou a funcionar pelos ecos da Coexistence (`smb_message_echoes`, PR #2). Falta validar com um número real.
 - 02/11/2026: preços fixos aprovados (seção 6) e auditoria do que a landing promete contra o código (seção 13).
+- 03/11/2026: servidor MCP embutido em `/mcp` para operar o projeto por assistentes de IA (seção 14).
 - Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
@@ -570,3 +571,86 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | Retenção de 90 dias | **Processo manual** | Não há expurgo automático (seção 7) |
 
 Recomendações de produto, em ordem: (1) marcar no banco quais mensagens foram da IA e quais da equipe (contagem de franquia, relatório e auditoria); (2) quando o cliente pedir uma pessoa, pausar a sessão e avisar a equipe (mensagem para um número interno ou webhook); (3) relatório mensal gerado a partir dessa marcação; (4) expurgo automático pela retenção do contrato; (5) validar PDF e foto no gpt-6-luna e a pausa da Cloud API com um número em Coexistence.
+
+## 14. MCP (Claude, ChatGPT, Cursor)
+
+A API tem um **servidor MCP** (Model Context Protocol) embutido, no mesmo serviço web do Render: sem serviço novo, sem custo novo. Com ele, um assistente de IA (Claude Code, Claude Desktop, conector do claude.ai, ChatGPT em modo desenvolvedor, Cursor, Codex) consulta instâncias, conversas, mídias e o bot, e faz algumas ações limitadas.
+
+- **Endpoint:** `POST https://<url-da-api>/mcp` (a URL do serviço web, no painel do Render). Transporte *Streamable HTTP*, sem sessão (cada POST é independente); `GET` e `DELETE` respondem 405.
+- **Chave:** header `Authorization: Bearer <chave>` ou `apikey: <chave>`, as mesmas da API REST. A **chave global** (`AUTHENTICATION_API_KEY`) vê todas as instâncias; o **token de uma instância** vê só aquela instância (a observabilidade exige a chave global). Não precisa de nenhuma variável nova: funciona logo após o deploy.
+- **Render free dorme:** a primeira chamada depois de um tempo parado pode levar **~50 s** (o serviço está acordando). Se o cliente der timeout, repita.
+
+### 14.1 Como conectar
+
+Use sempre placeholders nos exemplos e guarde a chave fora do Git.
+
+**Claude Code**
+
+```bash
+claude mcp add --transport http whatsai https://<url-da-api>/mcp --header "apikey: SUA_CHAVE"
+```
+
+**Claude Desktop** (via `mcp-remote`, em `claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "whatsai": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://<url-da-api>/mcp", "--header", "apikey:${WHATSAI_KEY}"],
+      "env": { "WHATSAI_KEY": "SUA_CHAVE" }
+    }
+  }
+}
+```
+
+**Cursor** (`.cursor/mcp.json`; não commite este arquivo com a chave):
+
+```json
+{
+  "mcpServers": {
+    "whatsai": { "url": "https://<url-da-api>/mcp", "headers": { "apikey": "SUA_CHAVE" } }
+  }
+}
+```
+
+**Codex e outros clientes:** qualquer cliente com *Streamable HTTP* e header customizado funciona com a URL acima e o header `Authorization: Bearer SUA_CHAVE` (no Codex, o servidor HTTP com token por variável de ambiente; confira a documentação do cliente).
+
+**ChatGPT (modo desenvolvedor) e conector personalizado do claude.ai:** esses clientes não deixam mandar header. Para eles existe o **modo URL**, desligado por padrão:
+
+1. Gere um segredo longo e aleatório (mínimo 32 caracteres), por exemplo `openssl rand -hex 32`.
+2. No Render: serviço da API > **Environment** > adicione `MCP_PATH_TOKEN` com esse valor > **Save** (o serviço reinicia). Não coloque o valor no `render.yaml` nem no Git.
+3. No cliente, use a URL `https://<url-da-api>/mcp/<MCP_PATH_TOKEN>` com autenticação **nenhuma**.
+
+O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em logs de acesso do provedor). Para revogar, troque ou apague `MCP_PATH_TOKEN` no Render. Sem a variável (ou com menos de 32 caracteres), `/mcp/<qualquer coisa>` responde 404.
+
+### 14.2 Ferramentas
+
+| Ferramenta | Tipo | O que faz |
+|---|---|---|
+| `list_instances` | leitura | Instâncias, estado da conexão, número do dono, integração (contagens opcionais) |
+| `get_instance_status` | leitura | Conexão ao vivo, se está carregada, última desconexão |
+| `list_chats` | leitura | Conversas (LID e telefone juntos), filtros por texto, não lidas, sem grupos; paginação |
+| `get_messages` | leitura | Mensagens de um contato, página 1 = mais recentes; texto, remetente, tipo, mídia, `messageId` |
+| `search_messages` | leitura | Busca por texto, contato e datas; no máximo 50 resultados |
+| `get_media` | leitura | Mídia pelo `messageId`: imagem até 1,5 MB volta como imagem; áudio/vídeo/documento só metadados, base64 com `include_base64` até 2 MB |
+| `get_bot_config` | leitura | Bot(s) OpenAI e settings: modelo, prompt, gatilho, pausa humana etc. (chave OpenAI mascarada) |
+| `list_paused_contacts` | leitura | Contatos com o bot pausado (humano ou manual) e quando voltam |
+| `get_observability` | leitura | O mesmo resumo da página Observabilidade (só chave global) |
+| `get_webhook_and_settings` | leitura | Settings da instância e webhook (segredos, headers e query da URL mascarados) |
+| `send_text_message` | **envio** | Envia texto para um número (não envia para grupos) |
+| `pause_bot_for_contact` | escrita | Pausa manual do bot para um contato (cria a sessão pausada se não existir) |
+| `resume_bot_for_contact` | escrita | Reativa o bot para o contato |
+| `update_bot_settings` | escrita | Altera só: prompt, modelo, expire, minutos da pausa humana, palavra de encerramento, ativo. Devolve os valores anteriores |
+
+Na coluna de remetente, `bot` só é identificado nos últimos 10 minutos (o banco não marca a origem das mensagens, seção 13); depois aparece como `me` (número da instância).
+
+**Recursos:** os manuais (`README-WHATSAI.md` e `readmes/*.md`) como `whatsai://docs/<nome>`. **Prompts:** `resumo_do_dia` (resume as conversas de um dia) e `revisar_atendimento` (revisa a conversa de um contato e sugere uma resposta **sem enviar**).
+
+### 14.3 Segurança e custo
+
+- **Não existe no MCP:** apagar ou desconectar instância, reiniciar, apagar mensagens, SQL livre, variáveis de ambiente, criar ou ver chaves de API.
+- **Envio e alterações:** as ferramentas de escrita vêm marcadas para o cliente pedir confirmação; `send_text_message` sai para o cliente de verdade e `update_bot_settings` substitui valores. Confirme sempre antes de aprovar. Enviar pelo MCP não marca a mensagem como da IA: para assumir a conversa, pause o bot do contato antes.
+- **Chaves:** comparadas em tempo constante, nunca registradas em log nem devolvidas; a chave OpenAI, tokens, headers de webhook e senhas aparecem mascarados (`****1234`). Erros voltam como mensagem curta, sem detalhes internos.
+- **Tentativas erradas:** 10 falhas de autenticação em 15 min pelo mesmo IP bloqueiam esse IP por até 15 min (429), em memória.
+- **Custo zero de infraestrutura:** nenhuma tabela ou migração nova, nenhum cache de mídia ou mensagem em banco ou disco, nenhum job, timer ou ping (o Neon continua suspendendo sozinho). Cada chamada faz poucas consultas limitadas; resultados têm teto de tamanho; mídias acima do limite nem são baixadas. O SDK do MCP só é carregado na primeira chamada.
