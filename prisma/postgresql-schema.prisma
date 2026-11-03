@@ -92,6 +92,7 @@ model Instance {
   Websocket               Websocket?
   Typebot                 Typebot[]
   Session                 Session?
+  AuthStateKey            AuthStateKey[]
   MessageUpdate           MessageUpdate[]
   TypebotSetting          TypebotSetting?
   Media                   Media[]
@@ -119,6 +120,20 @@ model Session {
   creds     String?  @db.Text
   createdAt DateTime @default(now()) @db.Timestamp
   Instance  Instance @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+/// Every Signal key except `creds` (pre-keys, sessions, sender-keys, app-state-sync-keys, lid-mappings...), stored
+/// durably so that losing the Redis/file cache never loses a WhatsApp session. `value` is the exact
+/// `JSON.stringify(value, BufferJSON.replacer)` string, read back with `BufferJSON.reviver`.
+model AuthStateKey {
+  id        String   @id @default(cuid())
+  sessionId String
+  key       String   @db.Text
+  value     String   @db.Text
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp
+  Instance  Instance @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, key])
 }
 
 model Chat {

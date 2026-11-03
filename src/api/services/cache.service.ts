@@ -38,6 +38,37 @@ export class CacheService {
     }
   }
 
+  /**
+   * Every field of a hash written with `hSet`, decoded the same way as `hGet` (Buffers revived). Fields that cannot be
+   * decoded are skipped. null when the cache is off, the hash does not exist or it cannot be read.
+   */
+  public async hGetAll(key: string): Promise<Record<string, any> | null> {
+    if (!this.cache) {
+      return null;
+    }
+    try {
+      const hash = await this.cache.hGetAll(key);
+      if (!hash) {
+        return null;
+      }
+
+      const result: Record<string, any> = {};
+      for (const [field, data] of Object.entries(hash)) {
+        if (!data) continue;
+        try {
+          result[field] = typeof data === 'string' ? JSON.parse(data, BufferJSON.reviver) : data;
+        } catch (error) {
+          this.logger.error({ action: 'cache.hGetAll.decode', key, field, error: error?.message ?? error });
+        }
+      }
+
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+      return null;
+    }
+  }
+
   async set(key: string, value: any, ttl?: number) {
     if (!this.cache) {
       return;

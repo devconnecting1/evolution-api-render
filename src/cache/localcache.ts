@@ -65,6 +65,25 @@ export class LocalCache implements ICache {
     }
   }
 
+  async hGetAll(key: string) {
+    try {
+      const data = LocalCache.localCache.get(this.buildKey(key)) as Record<string, string>;
+      if (!data || Object.keys(data).length === 0) {
+        return null;
+      }
+
+      const result: Record<string, any> = {};
+      for (const [field, json] of Object.entries(data)) {
+        result[field] = json ? JSON.parse(json, BufferJSON.reviver) : null;
+      }
+
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+      return null;
+    }
+  }
+
   async hSet(key: string, field: string, value: any) {
     try {
       const json = JSON.stringify(value, BufferJSON.replacer);
