@@ -77,12 +77,12 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
         menuBtn.focus();
       }
     });
-    window.matchMedia('(min-width: 1180px)').addEventListener('change', function (mq) {
+    window.matchMedia('(min-width: 960px)').addEventListener('change', function (mq) {
       if (mq.matches) setOpen(false);
     });
   }
 
-  // ------------------------------------------------------------------ header shadow after scrolling
+  // ------------------------------------------------------------------ header hairline after scrolling
   const head = document.querySelector('[data-head]');
   const hero = document.querySelector('.hero');
   if (head && hero && 'IntersectionObserver' in window) {
