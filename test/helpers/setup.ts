@@ -8,7 +8,7 @@
  */
 import Module from 'module';
 
-import { recordChatbotEmit } from './chatbot-emit';
+import { recordChatbotEmit, serverModuleOverrides } from './chatbot-emit';
 
 // The environment is read once, when env.config is first loaded: too late if any src module came first
 if (Object.keys(require.cache).some((file) => /[\\/]src[\\/]config[\\/]env\.config\.[jt]s$/.test(file))) {
@@ -68,7 +68,14 @@ const serverModuleStub: Record<string | symbol, any> = new Proxy(
       emit: recordChatbotEmit,
     },
   } as Record<string | symbol, any>,
-  { get: (target, prop) => (prop in target ? target[prop] : deep()) },
+  {
+    get: (target, prop) =>
+      typeof prop === 'string' && prop in serverModuleOverrides
+        ? serverModuleOverrides[prop]
+        : prop in target
+          ? target[prop]
+          : deep(),
+  },
 );
 
 const loader = Module as unknown as { _load: (...args: any[]) => any };

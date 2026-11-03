@@ -26,6 +26,30 @@ export abstract class RouterBroker {
     return route;
   }
 
+  /**
+   * Query string of a request without `instanceName`/`instanceId` when the route names the instance in its
+   * path (#2435, CWE-639): the auth guard checks the instance token against the path parameter only, so
+   * `/chat/findMessages/A?instanceName=B` with the token of A used to operate B. Routes without the path
+   * parameter (e.g. `/instance/fetchInstances?instanceName=`) keep using the query as a filter.
+   */
+  public static queryWithoutInstance(request: Request): Record<string, any> {
+    const query = { ...((request?.query as Record<string, any>) ?? {}) };
+    const params = (request?.params ?? {}) as Record<string, any>;
+
+    if (params.instanceName !== undefined) {
+      if (
+        (query.instanceName !== undefined && query.instanceName !== params.instanceName) ||
+        query.instanceId !== undefined
+      ) {
+        logger.warn(`instanceName/instanceId in the query ignored for instance ${params.instanceName}`);
+      }
+      delete query.instanceName;
+      delete query.instanceId;
+    }
+
+    return query;
+  }
+
   public async dataValidate<T>(args: DataValidate<T>) {
     const { request, schema, ClassRef, execute } = args;
 
@@ -34,7 +58,7 @@ export abstract class RouterBroker {
     const instance = request.params as unknown as InstanceDto;
 
     if (request?.query && Object.keys(request.query).length > 0) {
-      Object.assign(instance, request.query);
+      Object.assign(instance, RouterBroker.queryWithoutInstance(request));
     }
 
     if (request.originalUrl.includes('/instance/create')) {

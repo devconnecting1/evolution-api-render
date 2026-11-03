@@ -22,6 +22,7 @@ import { ChannelStartupService } from '@api/services/channel.service';
 import { Events, wa } from '@api/types/wa.types';
 import { AudioConverter, Chatwoot, ConfigService, Database, Openai, S3, WaBusiness } from '@config/env.config';
 import { BadRequestException, InternalServerErrorException } from '@exceptions';
+import { detectAudioFormat, detectAudioFormatFromBase64 } from '@utils/audioFormat';
 import { isBotMessageId, registerBotMessageId } from '@utils/botMessageRegistry';
 import { createJid } from '@utils/createJid';
 import { status } from '@utils/renderStatus';
@@ -417,7 +418,8 @@ export class BusinessStartupService extends ChannelStartupService {
       let messageRaw: any;
       let pushName: any;
 
-      if (received.contacts) pushName = received.contacts[0].profile.name;
+      // Status webhooks bring `contacts` without `profile` (#2704/#2710): reading it must not abort the statuses
+      if (received.contacts) pushName = received.contacts?.[0]?.profile?.name;
 
       if (received.messages) {
         const message = received.messages[0]; // Añadir esta línea para definir message
@@ -730,8 +732,9 @@ export class BusinessStartupService extends ChannelStartupService {
           where: { instanceId: this.instanceId, remoteJid: key.remoteJid },
         });
 
+        // `profile.phone` does not exist in the Meta payload: the contact is the chat of the message
         const contactRaw: any = {
-          remoteJid: received.contacts[0].profile.phone,
+          remoteJid: key.remoteJid,
           pushName,
           // profilePicUrl: '',
           instanceId: this.instanceId,
@@ -743,7 +746,7 @@ export class BusinessStartupService extends ChannelStartupService {
 
         if (contact) {
           const contactRaw: any = {
-            remoteJid: received.contacts[0].profile.phone,
+            remoteJid: key.remoteJid,
             pushName,
             // profilePicUrl: '',
             instanceId: this.instanceId,
@@ -760,7 +763,7 @@ export class BusinessStartupService extends ChannelStartupService {
           }
 
           await this.prismaRepository.contact.updateMany({
-            where: { remoteJid: contact.remoteJid },
+            where: { remoteJid: contact.remoteJid, instanceId: this.instanceId },
             data: contactRaw,
           });
           return;
@@ -768,9 +771,9 @@ export class BusinessStartupService extends ChannelStartupService {
 
         this.sendDataWebhook(Events.CONTACTS_UPSERT, contactRaw);
 
-        this.prismaRepository.contact.create({
-          data: contactRaw,
-        });
+        await this.prismaRepository.contact
+          .create({ data: contactRaw })
+          .catch((error) => this.logger.warn(`Contact not created for ${key.id}: ${error?.message}`));
       }
       if (received.statuses) {
         for await (const item of received.statuses) {
@@ -779,8 +782,9 @@ export class BusinessStartupService extends ChannelStartupService {
             remoteJid: item.recipient_id ? createJid(String(item.recipient_id)) : this.phoneNumber,
             fromMe: this.phoneNumber === received.metadata.phone_number_id,
           };
+          // `continue`, not `return`: one status must not drop the rest of the batch (#2700)
           if (settings?.groups_ignore && key.remoteJid.includes('@g.us')) {
-            return;
+            continue;
           }
           if (key.remoteJid !== 'status@broadcast' && !key?.remoteJid?.match(/(:\d+)/)) {
             const findMessage = await this.prismaRepository.message.findFirst({
@@ -794,7 +798,7 @@ export class BusinessStartupService extends ChannelStartupService {
             });
 
             if (!findMessage) {
-              return;
+              continue;
             }
 
             if (item.message === null && item.status === undefined) {
@@ -822,7 +826,7 @@ export class BusinessStartupService extends ChannelStartupService {
                 );
               }
 
-              return;
+              continue;
             }
 
             const message: any = {
@@ -1243,6 +1247,9 @@ export class BusinessStartupService extends ChannelStartupService {
                 message['fileName'] &&
                 !isImage && { filename: message['fileName'] }),
               ...(message['mediaType'] !== 'audio' && message['caption'] && { caption: message['caption'] }),
+              // OGG/Opus audio goes as a voice note (#2719)
+              ...(message['mediaType'] === 'audio' &&
+                String(message['mimetype'] ?? '').startsWith('audio/ogg') && { voice: true }),
             },
           };
           quoted ? (content.context = { message_id: quoted.id }) : content;
@@ -1272,6 +1279,8 @@ export class BusinessStartupService extends ChannelStartupService {
               body: {
                 text: message['text'] || 'Select',
               },
+              // description/footer of /message/sendButtons used to be dropped (#2723)
+              ...(message['footer'] && { footer: { text: message['footer'] } }),
               action: {
                 buttons: message['buttons'],
               },
@@ -1594,7 +1603,11 @@ export class BusinessStartupService extends ChannelStartupService {
         prepareMedia.id = audio;
         prepareMedia.type = 'link';
       } else if (audio && !file) {
-        mimetype = mimeTypes.lookup(prepareMedia.fileName);
+        // The real format, not always ".mp3": Meta derives the type from the name (#2719)
+        const format = detectAudioFormatFromBase64(audio) ?? { mimetype: 'audio/mpeg', extension: 'mp3' };
+        prepareMedia.fileName = `${hash}.${format.extension}`;
+        prepareMedia.mimetype = format.mimetype;
+        mimetype = format.mimetype;
         const id = await this.getIdMedia(prepareMedia);
         prepareMedia.id = id;
         prepareMedia.type = 'id';
@@ -1603,7 +1616,7 @@ export class BusinessStartupService extends ChannelStartupService {
         const id = await this.getIdMedia(prepareMedia, true);
         prepareMedia.id = id;
         prepareMedia.type = 'id';
-        mimetype = file.mimetype;
+        mimetype = file.mimetype || detectAudioFormat(file.buffer)?.mimetype;
       }
 
       prepareMedia.mimetype = mimetype;
@@ -1648,7 +1661,8 @@ export class BusinessStartupService extends ChannelStartupService {
     return await this.sendMessageWithTyping(
       data.number,
       {
-        text: !embeddedMedia?.mediaKey ? data.title : undefined,
+        text: !embeddedMedia?.mediaKey ? [data.title, data.description].filter(Boolean).join('\n\n') : undefined,
+        footer: data?.footer || undefined,
         buttons: data.buttons.map((button) => {
           return {
             type: 'reply',
