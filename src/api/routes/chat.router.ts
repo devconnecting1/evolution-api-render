@@ -22,6 +22,7 @@ import { Contact, Message, MessageUpdate } from '@prisma/client';
 import {
   archiveChatSchema,
   blockUserSchema,
+  chatFindValidateSchema,
   contactValidateSchema,
   deleteMessageSchema,
   markChatUnreadSchema,
@@ -184,7 +185,7 @@ export class ChatRouter extends RouterBroker {
       .post(this.routerPath('findChats'), ...guards, async (req, res) => {
         const response = await this.dataValidate<Query<Contact>>({
           request: req,
-          schema: contactValidateSchema,
+          schema: chatFindValidateSchema,
           ClassRef: Query<Contact>,
           execute: (instance, data) => chatController.fetchChats(instance, data),
         });

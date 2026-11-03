@@ -7,6 +7,8 @@ export class Query<T> {
   sort?: 'asc' | 'desc';
   page?: number;
   offset?: number;
+  /** findMessages/findChats: join a chat split between its `@lid` and its phone JID (default true). */
+  mergeLid?: boolean;
 }
 
 export class PrismaRepository extends PrismaClient {

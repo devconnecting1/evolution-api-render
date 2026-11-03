@@ -185,6 +185,12 @@ export const blockUserSchema: JSONSchema7 = {
   ...isNotEmpty('number', 'status'),
 };
 
+/** findMessages/findChats: join a chat split between its `@lid` and its phone JID (default true). */
+const mergeLidProperty: JSONSchema7 = {
+  type: 'boolean',
+  description: 'mergeLid must be a boolean',
+};
+
 export const contactValidateSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
@@ -199,6 +205,16 @@ export const contactValidateSchema: JSONSchema7 = {
       },
       ...isNotEmpty('_id', 'id', 'pushName', 'remoteJid'),
     },
+  },
+};
+
+/** findChats: the findContacts filter plus the optional `mergeLid` switch. */
+export const chatFindValidateSchema: JSONSchema7 = {
+  ...contactValidateSchema,
+  $id: v4(),
+  properties: {
+    ...contactValidateSchema.properties,
+    mergeLid: mergeLidProperty,
   },
 };
 
@@ -238,6 +254,7 @@ export const messageValidateSchema: JSONSchema7 = {
       ...isNotEmpty('_id'),
     },
     limit: { type: 'integer' },
+    mergeLid: mergeLidProperty,
   },
 };
 
