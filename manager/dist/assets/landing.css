@@ -417,14 +417,6 @@ small {
   letter-spacing: -0.02em;
   text-decoration: none;
 }
-/* the green "WA" square of the favicon */
-.brand-mark {
-  width: 28px;
-  height: 28px;
-  flex: none;
-  border-radius: 8px;
-  background: var(--primary) url("/assets/images/favicon.svg?v=3") center / cover no-repeat;
-}
 .nav {
   display: flex;
   flex: 1;

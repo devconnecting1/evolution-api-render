@@ -239,15 +239,6 @@ body {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
-/* brand mark: the green "WA" square of the favicon, in front of every wordmark */
-.wa-wordmark::before {
-  content: "";
-  flex: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: var(--m-primary) url("/assets/images/favicon.svg?v=3") center / cover no-repeat;
-}
 /* header icon buttons and the "Observabilidade" link: quiet, round */
 [data-wa-header] > div:last-child {
   gap: 4px;
