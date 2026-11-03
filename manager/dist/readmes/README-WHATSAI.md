@@ -62,6 +62,7 @@ Só existe `manager/dist` (bundle Vite). Patches já aplicados:
 3. **Favicon local** (`assets/images/favicon.svg`).
 4. **Aba README**: item na sidebar (acima de Documentação) que abre um painel **dentro do dashboard** (mesma aba, sidebar visível) com um resumo operacional em um único card; `/readme` também funciona como acesso direto. Conteúdo: `readmes/RESUMO.md`, com links para o guia comercial e o manual interno. Arquivos: `assets/readme-tab.js`, `assets/readme-tab.css`, `assets/marked.min.js` e `readmes/` (gerado por `scripts/sync-readmes.sh`). Para atualizar o conteúdo, rode o sync antes do deploy.
 5. **Observabilidade**: item na sidebar e no cabeçalho do dashboard (`/manager/observability` e `/manager/instance/:instanceId/observability`), página React nativa usando os componentes do projeto (`Card`, `Button`, `Badge`, `Alert`). Consulta `GET /observability` com a chave global do localStorage. A rota antiga `/observability` redireciona para a página nativa.
+6. **Plano e limites**: item na sidebar da instância, logo abaixo de Conversas (`/manager/instance/:instanceId/usage`), e uma barra de uso no fim da Visão Geral. Patch `manager/patches/usage-limits.py` (aceita `--check`, roda depois de todos os outros) + `assets/usage-limits.css` (só tokens do `minimal.css`). Detalhes na seção 15.
 
 Campos do bot OpenAI no Manager: `manager/patches/openai-fields.py` (tokenParam, pausa humana, descrições), `manager/patches/responsive.py` (celular/tablet) e `manager/patches/openai-media.py` (seção Mídia e memória da conversa, seção 12.10), aplicados nessa ordem; cada um aceita `--check`.
 
@@ -137,7 +138,7 @@ Preços fixos aprovados em 03/11/2026 (reajuste da implantação; contratos e pr
 
 - **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 690, abatido da implantação.
 - **Contrato mínimo de 6 meses**; depois, mês a mês.
-- **Franquia:** hoje não há contador automático de respostas da IA (seção 13). Meça pelo uso do project key da OpenAI de cada instância.
+- **Franquia:** medida automaticamente por instância e visível no painel em **Plano e limites** (seção 15). Configure o plano de cada cliente na implantação.
 
 ### Cuidados que entram no contrato
 1. **WhatsApp Web (Baileys) não é oficial.** O número pode ser bloqueado, principalmente com disparos em massa. Aviso de risco por escrito; a API oficial é a alternativa.
@@ -216,6 +217,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 02/11/2026: preços fixos aprovados (seção 6) e auditoria do que a landing promete contra o código (seção 13).
 - 03/11/2026: servidor MCP embutido em `/mcp` para operar o projeto por assistentes de IA (seção 14).
 - 03/11/2026: reajuste da implantação e dos adicionais (seção 6); mensalidades e excedente mantidos. Contratos e propostas enviados antes mantêm seus preços durante a validade.
+- 03/11/2026: **Plano e limites** (seção 15): contagem automática das respostas da IA, franquia, limites diários e horário de atendimento por instância. Sem plano configurado, nada muda no atendimento.
 - Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
@@ -566,7 +568,7 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | Vários números, cada um com sua IA | Automático | 1 instância por número, bot e credencial próprios. A visão de todos num painel é do operador |
 | Integrações (agenda, planilha, CRM) | **Serviço sob medida** | Via webhook (`MESSAGES_UPSERT`, `OPENAI_CHANGE_STATUS`) e n8n. O modo Chat Completions não chama ferramentas; o `functionUrl` só existe no modo Assistants (que não lê PDF) |
 | Relatório mensal | **Serviço manual** | Não existe relatório automático. Fonte: uso do project key na OpenAI, sessões e Observabilidade |
-| Contagem da franquia de respostas | **Não existe** | As mensagens enviadas pela IA não são marcadas no banco (o registro de ids é só cache de 10 min) |
+| Contagem da franquia de respostas | Automático (desde 03/11/2026) | Contador por instância, dia e contato (seção 15). As mensagens em si continuam sem marcação de origem no banco |
 | Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela; não envia aviso por e-mail ou WhatsApp |
 | Lembretes ativos de consulta | **Não existe** | Exigiria integração e, na Cloud API, templates pagos |
 | Retenção de 90 dias | **Processo manual** | Não há expurgo automático (seção 7) |
@@ -643,6 +645,8 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `pause_bot_for_contact` | escrita | Pausa manual do bot para um contato (cria a sessão pausada se não existir) |
 | `resume_bot_for_contact` | escrita | Reativa o bot para o contato |
 | `update_bot_settings` | escrita | Altera só: prompt, modelo, expire, minutos da pausa humana, palavra de encerramento, ativo. Devolve os valores anteriores |
+| `get_usage` | leitura | Uso do plano: respostas do mês e de hoje, franquia, excedente em blocos de 1.000, últimos 30 dias, contatos mascarados e limites (seção 15) |
+| `update_limits` | escrita | Altera plano e limites (campos ausentes não mudam; `null` remove o limite). Marcada como destrutiva; devolve os valores anteriores |
 
 Na coluna de remetente, `bot` só é identificado nos últimos 10 minutos (o banco não marca a origem das mensagens, seção 13); depois aparece como `me` (número da instância).
 
@@ -655,3 +659,88 @@ Na coluna de remetente, `bot` só é identificado nos últimos 10 minutos (o ban
 - **Chaves:** comparadas em tempo constante, nunca registradas em log nem devolvidas; a chave OpenAI, tokens, headers de webhook e senhas aparecem mascarados (`****1234`). Erros voltam como mensagem curta, sem detalhes internos.
 - **Tentativas erradas:** 10 falhas de autenticação em 15 min pelo mesmo IP bloqueiam esse IP por até 15 min (429), em memória.
 - **Custo zero de infraestrutura:** nenhuma tabela ou migração nova, nenhum cache de mídia ou mensagem em banco ou disco, nenhum job, timer ou ping (o Neon continua suspendendo sozinho). Cada chamada faz poucas consultas limitadas; resultados têm teto de tamanho; mídias acima do limite nem são baixadas. O SDK do MCP só é carregado na primeira chamada.
+
+## 15. Plano e limites
+
+A franquia de cada plano (Essencial 2.000, Profissional 5.000, Premium 10.000 respostas por mês; excedente R$ 49 por bloco de 1.000) agora é **medida automaticamente** e pode ser **aplicada** por instância. Painel: instância > **Plano e limites** (e a barra no fim da **Visão Geral**).
+
+### 15.1 O que conta como uma resposta
+
+- **Uma resposta** = cada vez que a IA responde uma mensagem (ou uma sequência de mensagens juntadas pelo `debounceTime`) do cliente. Uma resposta dividida em várias partes (`splitMessages`) conta **uma** vez.
+- Conta só depois que a resposta saiu para o WhatsApp. Se a equipe assumiu antes de a primeira parte sair, não conta.
+- **Não contam:** mensagens da equipe (celular, WhatsApp Web, Chatwoot), ecos do próprio bot e da Coexistence, envios pela API REST/MCP, o `unknownMessage` de falha da OpenAI e os avisos desta seção (fora do horário e limite).
+- Os períodos seguem o fuso do horário de atendimento (padrão `America/Sao_Paulo`): "hoje" e "este mês" são os do relógio do cliente.
+- Só o bot OpenAI é contado (é o único que os planos usam).
+
+### 15.2 Limites e o que acontece
+
+Sem plano configurado (nenhuma linha em `InstanceLimits`) **nada muda**: a IA responde como antes, e as respostas são contadas mesmo assim. A verificação acontece antes de qualquer chamada à OpenAI (inclusive transcrição), nesta ordem:
+
+| Regra | Ao bater |
+|---|---|
+| Horário de atendimento: `always` (sempre), `inside` (IA só no horário), `outside` (IA só fora do horário; no horário a equipe atende) | A IA não responde. No modo `inside`, se houver **mensagem fora do horário**, ela vai **uma vez por dia por contato** |
+| Limite por contato por dia | A IA não responde naquele contato até o dia seguinte |
+| Limite por dia | A IA não responde ninguém até o dia seguinte |
+| Franquia do mês, com a ação escolhida | `continue` (padrão, como no contrato): responde e conta **excedente**; `pause`: para de responder até o mês virar; `message`: para e envia a **mensagem de limite** uma vez por dia por contato |
+
+- Com a ação `message`, a mesma mensagem também é usada quando bate um limite diário.
+- Faixa com fim antes do início passa da meia-noite (`["22:00","06:00"]` na segunda = segunda 22h até terça 6h). `24:00` só como fim. Até 4 faixas por dia pela API; o painel edita uma por dia (as extras são mantidas).
+- A palavra de encerramento (`#sair`) continua funcionando com a IA bloqueada. Contato com pausa humana nunca recebe aviso.
+- Avisos (fora do horário e limite) saem marcados como mensagem de bot (o eco não pausa a IA) e não contam como resposta.
+- Excedente = respostas do mês acima da franquia **atual** (se a franquia mudar no meio do mês, o excedente é recalculado). Blocos = arredondado para cima em blocos de 1.000.
+- **Falha segura:** se o banco não responder, a IA responde normalmente (a contagem daquela resposta pode se perder, com erro no log).
+
+### 15.3 API
+
+Mesmas guardas das outras rotas: chave global ou token da instância (header `apikey`).
+
+```bash
+# Ver os limites (defaults quando não configurado: tudo sem limite, continue, alerta 80%)
+curl "$SERVER_URL/usage/limits/$INSTANCE" -H "apikey: $APIKEY"
+
+# Salvar (campos ausentes não mudam; null remove o limite; um plano padrão sem monthlyResponses usa a franquia dele)
+curl -X POST "$SERVER_URL/usage/limits/$INSTANCE" \
+  -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{
+    "planName": "Essencial",
+    "dailyResponses": null,
+    "perContactDailyResponses": 40,
+    "overLimitAction": "continue",
+    "alertPercent": 80,
+    "businessHours": {
+      "enabled": true, "mode": "inside", "timezone": "America/Sao_Paulo",
+      "week": { "mon": [["09:00","18:00"]], "tue": [["09:00","18:00"]], "wed": [["09:00","18:00"]],
+                "thu": [["09:00","18:00"]], "fri": [["09:00","18:00"]], "sat": [], "sun": [] }
+    },
+    "outsideHoursMessage": "Olá! Atendemos de segunda a sexta, das 9h às 18h. Respondemos assim que abrirmos."
+  }'
+# Resposta: { "limits": {...}, "previous": {... ou null} }. Erros de validação: 400 com as mensagens em português.
+
+# Uso: mês (period, responses, limit, percent, excedente, blocks1000, estimatedBRL, status), hoje,
+# last30Days [{day, responses}], topContactsToday (números mascarados, 5521•••••9723) e os limites
+curl "$SERVER_URL/usage/summary/$INSTANCE" -H "apikey: $APIKEY"
+```
+
+| Campo | Valores |
+|---|---|
+| `planName` | `Essencial`, `Profissional`, `Premium`, `Personalizado` ou `null` |
+| `monthlyResponses`, `dailyResponses`, `perContactDailyResponses` | inteiro >= 1 ou `null` (sem limite). Por contato não pode passar do diário |
+| `overLimitAction` | `continue` (padrão), `pause`, `message` (exige `overLimitMessage`) |
+| `overLimitMessage`, `outsideHoursMessage` | texto até 1.000 caracteres ou `null` |
+| `alertPercent` | 1 a 100 (padrão 80) |
+| `businessHours` | `{ enabled, mode: always\|inside\|outside, timezone (IANA), week: { sun..sat: [["HH:MM","HH:MM"]] } }` |
+
+MCP: `get_usage` e `update_limits` (seção 14.2).
+
+### 15.4 Observabilidade
+
+Card **Plano e uso** na página Observabilidade: uma linha por instância com plano ou com respostas no mês. Entra nos **alertas** quando o mês passa do `alertPercent` da instância e fica crítico em 100% ("franquia esgotada", com o excedente nas notas). Não envia e-mail nem WhatsApp.
+
+### 15.5 Armazenamento, custo e deploy
+
+- Duas tabelas pequenas: `InstanceLimits` (uma linha opcional por instância) e `UsageCounter` (chave primária `instanceId + type + period + remoteJid`): uma linha por mês, uma por dia e uma por contato por dia. Cada resposta faz 3 upserts atômicos (`INSERT ... ON CONFLICT DO UPDATE SET responses = responses + 1`).
+- Limpeza no próprio fluxo de escrita, no máximo uma vez por dia por instância: linhas por contato com mais de 7 dias e linhas por dia com mais de 90 dias. Linhas por mês ficam (12 por ano). Sem job, timer ou cron.
+- Antes de cada resposta: limites em cache de memória por 30 s (salvar pelo painel/API vale na hora); sem limites de quantidade, nenhuma consulta aos contadores; com limites, uma consulta pela chave primária.
+- Migration `20261103120000_add_usage_limits` (postgresql e mysql), **aditiva** (só cria tabelas); roda no start do container como as outras. Rollback: reverter o merge; as tabelas ficam e são ignoradas.
+- O cache de limites e o controle da limpeza são por processo (vale para 1 réplica, como o resto do bot). Com mais réplicas, uma alteração pode levar até 30 s para valer nas outras.
+
