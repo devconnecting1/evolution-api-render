@@ -3,14 +3,14 @@
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---:|---:|---:|
 | Mensalidade | R$ 397 | R$ 697 | R$ 1.297 |
-| Implantação, contrato de 6 meses | R$ 1.500 | R$ 2.900 | a partir de R$ 4.900 |
-| Implantação, contrato de 12 meses | R$ 990 | R$ 1.900 | a partir de R$ 3.500 |
+| Implantação, contrato de 6 meses | R$ 1.990 | R$ 4.390 | a partir de R$ 7.390 |
+| Implantação, contrato de 12 meses | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
 | Respostas da IA por mês | 2.000 | 5.000 | 10.000 |
 | Números | 1 | até 2 | 1 (+ sob consulta) |
 | Ajustes nas instruções por mês | 2 | 4 | 8 |
 | Áudio, foto e PDF | Sim | Sim | Sim |
 
-- **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 490, abatido da implantação.
+- **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 690, abatido da implantação.
 - **Contrato mínimo de 6 meses**; o de 12 meses tem a implantação mais barata da tabela.
 - Detalhes para o cliente no **Guia comercial**. Custos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora deste manual.
 
@@ -46,4 +46,4 @@
 - **Cloud API** não elimina bloqueio por política; a Meta pode limitar por qualidade.
 - Não prometer parecer jurídico, resultado, 100% de acerto ou "a IA nunca erra preço".
 
-> Valores de 02/11/2026. Confirme o rate card da Meta e o preço da OpenAI antes de fechar.
+> Valores de 03/11/2026 (contratos e propostas anteriores mantêm seus preços durante a validade). Confirme o rate card da Meta e o preço da OpenAI antes de fechar.

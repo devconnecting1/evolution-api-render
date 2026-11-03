@@ -9,12 +9,19 @@
  * 3. Component rules: layout (playground sidebar, centered content), buttons, fields, cards, badges, dialogs,
  *    menus, toasts, login, instance list, dashboard, Observabilidade, Conversas.
  *
- * Rules: white background; grey only for surfaces (#f9f9f9 sidebar, #f3f3f3 hover, #ececec selected);
+ * Rules: white background; grey only for surfaces (#f9f9f9 sidebar, #f3f3f3 hover, #ececec pressed);
  * borders #ececec (strong #e3e3e3); text #0d0d0d / #5d5d5d (#8f8f8f only for icons and decoration, it is
- * 3.3:1 on white); colour only in status dots (green #10a37f, amber #c27a00, red #d93025; red also on
- * destructive actions); radius 12px cards, 10px fields, 9999px pills; no gradients, no upper case, no heavy
- * shadows (popovers only: 0 4px 24px rgba(0,0,0,.06)); Geist 400/500/600; sizes 13/14/15/20/28/40; spacing
- * in multiples of 4; line icons 1.5px.
+ * 3.3:1 on white); no gradients, no upper case; Geist 400/500/600; spacing in multiples of 4; line icons 1.5px.
+ *
+ * Brand green (v2, shared with the landing and the Manual; see the comment of the tokens below):
+ *   primary #0e7a4d (5.4:1 on white, white on it 5.4:1) · hover #0b6b43 · text on tint #095c39 ·
+ *   tint #e9f6ef (selected / active / AI bubble) · tint border #cfe8da · deep #0b3d2a (bands of the landing).
+ *   Green fills = actions (buttons, switches, send, unread count), green tint = "you are here" (active nav item,
+ *   open conversation, active tab), status = a dot inside a neutral chip (ok #1a9e5c, warn #c27a00, bad #d93025),
+ *   so "primary" and "success" never look alike.
+ * Density (after Twenty CRM, twenty-ui theme): 14px base text, 13px meta; 32px controls (buttons, fields,
+ * selects, nav and menu items); radius 8px controls, 12px cards/dialogs/popovers, 6px menu items, pill only
+ * for status chips, avatars and switches; 1px borders instead of shadows; shadows on popovers/menus/dialogs only.
  */
 
 /* ============================================================================================ tokens */
@@ -28,18 +35,28 @@
   --m-text: #0d0d0d;
   --m-text-2: #5d5d5d;
   --m-text-3: #8f8f8f;
-  --m-primary: #0d0d0d;
-  --m-primary-hover: #2f2f2f;
+  /* brand green */
+  --m-primary: #0e7a4d;
+  --m-primary-hover: #0b6b43;
   --m-on-primary: #ffffff;
-  --m-ok: #10a37f;
+  --m-tint: #e9f6ef;
+  --m-tint-hover: #dff1e7;
+  --m-tint-line: #cfe8da;
+  --m-tint-text: #095c39;
+  --m-deep: #0b3d2a;
+  --m-ok: #1a9e5c;
   --m-warn: #c27a00;
   --m-bad: #d93025;
-  --m-out: #e8f5ef; /* sent message bubble */
+  --m-out: var(--m-tint); /* sent message bubble (AI and team) */
   --m-radius-card: 12px;
-  --m-radius-field: 10px;
+  --m-radius-field: 8px;
+  --m-radius-item: 6px;
   --m-radius-pill: 9999px;
-  --m-shadow-pop: 0 4px 24px rgba(0, 0, 0, 0.06);
-  --m-ring: 0 0 0 2px var(--m-bg), 0 0 0 4px var(--m-text);
+  --m-control: 32px;
+  /* twenty-ui boxShadow.light / .strong */
+  --m-shadow-pop: 0 2px 4px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.08);
+  --m-shadow-menu: 2px 4px 16px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --m-ring: 0 0 0 2px var(--m-bg), 0 0 0 4px var(--m-primary);
   --m-content: 1040px;
 
   /* shadcn / Tailwind (index-DsIrum0U.css), HSL triplets */
@@ -53,7 +70,7 @@
   --muted-foreground: 0 0% 36.5%;
   --border: 0 0% 92.5%;
   --input: 0 0% 89%;
-  --primary: 0 0% 5.1%;
+  --primary: 155 79% 27%;
   --primary-foreground: 0 0% 100%;
   --secondary: 0 0% 95.3%;
   --secondary-foreground: 0 0% 5.1%;
@@ -61,8 +78,8 @@
   --accent-foreground: 0 0% 5.1%;
   --destructive: 4 71% 50%;
   --destructive-foreground: 0 0% 100%;
-  --ring: 0 0% 5.1%;
-  --radius: 12px; /* rounded-lg = 12px (cards), rounded-md = 10px (fields), rounded-sm = 8px */
+  --ring: 155 79% 27%;
+  --radius: 12px; /* rounded-lg = 12px (cards), rounded-md = 10px, rounded-sm = 8px (fields are set below) */
 
   /* render-style.css / dashboard-ui.css */
   --wo-ink: var(--m-text);
@@ -74,7 +91,7 @@
   --wo-soft: var(--m-surface);
   --wo-hover: var(--m-hover);
   --wo-active: var(--m-selected);
-  --wo-accent: var(--m-text);
+  --wo-accent: var(--m-primary);
   --wo-ok: var(--m-ok);
   --wo-ok-bg: var(--m-hover);
   --wo-warn: var(--m-warn);
@@ -93,8 +110,8 @@
   --wa-line: var(--m-border);
   --wa-line-strong: var(--m-border-strong);
   --wa-paper: var(--m-bg);
-  --wa-accent-from: var(--m-text);
-  --wa-accent-to: var(--m-text);
+  --wa-accent-from: var(--m-primary);
+  --wa-accent-to: var(--m-primary);
   --wa-ok: var(--m-ok);
   --wa-ok-bg: var(--m-hover);
   --wa-warn: var(--m-warn);
@@ -145,19 +162,19 @@ body {
   text-rendering: optimizeLegibility;
 }
 ::selection {
-  background: var(--m-selected);
+  background: var(--m-tint-line);
   color: var(--m-text);
 }
-/* one focus look everywhere: 2px ink ring with a 2px offset */
+/* one focus look everywhere: 2px green ring with a 2px offset */
 :where(a, button, summary, input, textarea, select, [role="button"], [role="tab"], [role="switch"],
   [role="checkbox"], [role="combobox"], [role="menuitem"], [role="option"], [tabindex="0"]):focus-visible {
-  outline: 2px solid var(--m-text);
+  outline: 2px solid var(--m-primary);
   outline-offset: 2px;
 }
 /* buttons of the upstream build draw focus with the Tailwind ring (box-shadow, --ring = ink) and hide the
    outline with a transparent one: keep that ring visible on every shape */
 #root .focus-visible\:ring-2:focus-visible {
-  box-shadow: 0 0 0 2px var(--m-bg), 0 0 0 4px var(--m-text);
+  box-shadow: var(--m-ring);
 }
 /* thin line icons (lucide draws them at 2px) */
 #root svg.lucide,
@@ -215,6 +232,9 @@ body {
   }
 }
 .wa-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -235,10 +255,10 @@ body {
 }
 /* "Observabilidade" link of the instance list */
 [data-wa-header] > div:last-child > a {
-  height: 36px;
+  height: var(--m-control);
   padding: 0 12px;
   border: 0;
-  border-radius: var(--m-radius-pill);
+  border-radius: var(--m-radius-field);
   background: transparent;
   color: var(--m-text);
 }
@@ -302,13 +322,13 @@ div:has(> main .wo-page) > [data-wa-header] {
     border-radius: var(--m-radius-pill);
   }
 }
-/* nav items: rounded, selected #ececec, hover #f3f3f3 */
+/* nav items (Twenty-like): 32px rows, 8px radius, hover #f3f3f3, the current page in green tint */
 [data-wa-nav] > li > button,
 [data-wa-nav] > li > div > button {
-  height: 36px;
-  min-height: 36px;
-  padding: 0 12px;
-  gap: 12px;
+  height: var(--m-control);
+  min-height: var(--m-control);
+  padding: 0 10px;
+  gap: 10px;
   border-radius: var(--m-radius-field);
   color: var(--m-text);
   font-size: 14px;
@@ -320,8 +340,13 @@ div:has(> main .wo-page) > [data-wa-header] {
 }
 [data-wa-nav] > li > button.bg-secondary,
 [data-wa-nav] > li > div > button.bg-secondary {
-  background: var(--m-selected);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
   font-weight: 500;
+}
+[data-wa-nav] > li > button.bg-secondary svg,
+[data-wa-nav] > li > div > button.bg-secondary svg {
+  color: var(--m-primary);
 }
 [data-wa-nav] > li > button svg,
 [data-wa-nav] > li > div > button svg {
@@ -332,14 +357,32 @@ div:has(> main .wo-page) > [data-wa-header] {
   padding-left: 8px;
   border-left: 1px solid var(--m-border-strong);
 }
+/* a group whose page is open (Integrações > OpenAI): only the sub-item is green, the group stays quiet */
+[data-wa-nav] > li:has(ul) > button.bg-secondary,
+[data-wa-nav] > li:has(ul) > div > button.bg-secondary {
+  background: transparent;
+  color: var(--m-text);
+}
+[data-wa-nav] > li:has(ul) > button.bg-secondary:hover,
+[data-wa-nav] > li:has(ul) > div > button.bg-secondary:hover {
+  background: var(--m-hover);
+}
+[data-wa-nav] > li:has(ul) > button.bg-secondary svg,
+[data-wa-nav] > li:has(ul) > div > button.bg-secondary svg {
+  color: var(--m-text-2);
+}
 [data-wa-nav] ul button {
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: var(--m-radius-field);
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--m-radius-item);
   font-size: 14px;
 }
+[data-wa-nav] ul button:hover {
+  background: var(--m-hover);
+}
 [data-wa-nav] ul button.text-foreground {
-  background: var(--m-selected);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
   font-weight: 500;
 }
 [data-wa-nav] ul button.text-muted-foreground {
@@ -384,22 +427,27 @@ h1.wa-page-title,
 .wo-title {
   margin: 0;
   color: var(--m-text);
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 36px;
+  line-height: 32px;
 }
 .wa-list-sub,
 .wo-sub {
   color: var(--m-text-2);
-  font-size: 15px;
-  line-height: 24px;
+  font-size: 14px;
+  line-height: 20px;
 }
 [role="dialog"] h2.text-lg.font-semibold,
 form h3.text-lg.font-medium {
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   letter-spacing: -0.01em;
+}
+/* body text of the panel: 14px (Twenty uses 13px; Portuguese runs ~10% longer, so one step up) */
+#root main :is(p, li, td, label, dd, dt).text-base,
+#root main h4.text-base {
+  font-size: 14px;
 }
 .wa-eyebrow,
 .wa-section-title,
@@ -421,17 +469,29 @@ form h3.text-lg.font-medium {
 }
 
 /* =========================================================================================== buttons */
-/* pills: primary = black, secondary/outline = white with a hairline, ghost = transparent */
+/* 32px buttons with an 8px radius (Twenty): primary = green, secondary/outline = white with a hairline,
+   ghost = transparent */
 :where(button, a).ring-offset-background.whitespace-nowrap:not([data-wa-nav] *, [data-wa-header] *, .wa-composer *, .wa-token *, [role="tablist"] *, .wa-chat-tablist *) {
-  border-radius: var(--m-radius-pill);
+  border-radius: var(--m-radius-field);
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
 }
-:where(button, a).ring-offset-background.whitespace-nowrap.h-10:not(.w-10, [data-wa-nav] *, [data-wa-header] *, .wa-composer *) {
-  height: 36px;
-  padding-left: 16px;
-  padding-right: 16px;
+:where(button, a).ring-offset-background.whitespace-nowrap:is(.h-10, .h-9):not(.w-10, .w-9, .h-auto, [data-wa-nav] *, [data-wa-header] *, .wa-composer *) {
+  height: var(--m-control);
+  padding-left: 12px;
+  padding-right: 12px;
+  gap: 6px;
+}
+:where(button, a).ring-offset-background.whitespace-nowrap.h-10.w-10:not([data-wa-nav] *, [data-wa-header] *, .wa-composer *),
+:where(button, a).ring-offset-background.whitespace-nowrap.h-9.w-9:not([data-wa-nav] *, [data-wa-header] *, .wa-composer *) {
+  width: var(--m-control);
+  height: var(--m-control);
+}
+:where(button, a).ring-offset-background.whitespace-nowrap svg:not(.wa-spin) {
+  width: 16px;
+  height: 16px;
 }
 :where(button, a).ring-offset-background.bg-primary:not(.wa-composer *),
 #root .wa-btn-ink,
@@ -486,6 +546,39 @@ form h3.text-lg.font-medium {
 #root button[disabled] {
   opacity: 0.45;
 }
+/* list of bots (OpenAI, Typebot...): rows of a list, the open one in green tint */
+#root main button.h-auto.flex-col.items-start:is(.border-input, .bg-secondary) {
+  padding: 10px 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  white-space: normal;
+}
+#root main button.h-auto.flex-col.items-start.border-input:hover {
+  border-color: var(--m-border-strong);
+  background: var(--m-surface);
+}
+#root main button.h-auto.flex-col.items-start.bg-secondary {
+  border-color: var(--m-tint-line);
+  background: var(--m-tint);
+}
+#root main button.h-auto.flex-col.items-start.bg-secondary h4 {
+  color: var(--m-tint-text);
+}
+#root main button.h-auto.flex-col.items-start h4 {
+  font-weight: 500;
+}
+#root main button.h-auto.flex-col.items-start p {
+  font-size: 13px;
+}
+/* plain text links of the panel */
+#root main a.underline,
+#root main :is(p, li) > a:not([class]),
+.wo-page a:not([class]) {
+  color: var(--m-primary);
+  text-decoration-color: var(--m-tint-line);
+  text-underline-offset: 3px;
+}
 
 /* ============================================================================================ fields */
 #root :is(input, textarea).border-input:not(.wa-composer-input),
@@ -511,14 +604,30 @@ form h3.text-lg.font-medium {
   color: var(--m-text-2);
   opacity: 1;
 }
+/* focus of a field: green border plus a soft green halo (no offset ring, the field itself lights up) */
 #root :is(input, textarea, button[role="combobox"]):not(.wa-composer-input):focus-visible,
 [role="dialog"] :is(input, textarea, button[role="combobox"]):focus-visible {
-  border-color: var(--m-text);
-  outline: 2px solid var(--m-text);
-  outline-offset: 2px;
-  box-shadow: none;
+  border-color: var(--m-primary);
+  outline: 0;
+  box-shadow: 0 0 0 1px var(--m-primary), 0 0 0 4px rgba(14, 122, 77, 0.16);
 }
-/* switches: black when on, light grey track when off (3:1 against white) */
+/* 32px single-line fields and selects, 14px text */
+#root :is(input.h-10, input.h-9).border-input:not(.wa-composer-input),
+#root button[role="combobox"].border-input:is(.h-10, .h-9),
+[role="dialog"] :is(input.h-10, input.h-9).border-input,
+[role="dialog"] button[role="combobox"].border-input:is(.h-10, .h-9) {
+  height: var(--m-control);
+  padding-left: 10px;
+  padding-right: 10px;
+  font-size: 14px;
+}
+#root textarea.border-input:not(.wa-composer-input),
+[role="dialog"] textarea.border-input {
+  padding: 8px 10px;
+  font-size: 14px;
+  line-height: 20px;
+}
+/* switches: green when on, grey track when off (3:1 against white) */
 button[role="switch"][data-state="checked"] {
   background-color: var(--m-primary);
 }
@@ -526,7 +635,7 @@ button[role="switch"][data-state="unchecked"] {
   background-color: #949494;
 }
 button[role="checkbox"] {
-  border-radius: 6px;
+  border-radius: 4px;
   border-color: #949494;
 }
 button[role="checkbox"][data-state="checked"] {
@@ -619,41 +728,65 @@ button[role="checkbox"][data-state="checked"] {
   border: 1px solid var(--m-border);
   border-radius: var(--m-radius-card);
   background: var(--m-bg);
-  box-shadow: var(--m-shadow-pop);
+  box-shadow: var(--m-shadow-menu);
   padding: 4px;
 }
+/* menu items: 32px rows, 6px radius (Twenty menu item) */
 :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]) {
-  border-radius: 8px;
+  min-height: var(--m-control);
+  border-radius: var(--m-radius-item);
   color: var(--m-text);
+  font-size: 14px;
 }
 :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]):is(:hover, [data-highlighted]) {
   background: var(--m-hover);
 }
+:is([role="option"], [role="menuitemradio"])[data-state="checked"] {
+  color: var(--m-tint-text);
+  font-weight: 500;
+}
+:is([role="option"], [role="menuitemradio"])[data-state="checked"] svg {
+  color: var(--m-primary);
+}
 /* tabs (segmented control) */
 #root [role="tablist"]:not(.wa-chat-tablist) {
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--m-radius-pill);
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--m-radius-field);
   background: var(--m-hover);
 }
 #root [role="tablist"]:not(.wa-chat-tablist) > [role="tab"] {
-  border-radius: var(--m-radius-pill);
+  min-height: 28px;
+  border-radius: var(--m-radius-item);
   color: var(--m-text-2);
+  font-size: 14px;
 }
 #root [role="tablist"]:not(.wa-chat-tablist) > [role="tab"][data-state="active"] {
   background: var(--m-bg);
   color: var(--m-text);
   box-shadow: 0 0 0 1px var(--m-border);
 }
-/* tables of the dialogs (sessions) */
+/* tables (sessions): dense Twenty-like rows, 13px headers, light row lines, hover #f9f9f9 */
 #root table th,
 [role="dialog"] table th {
+  height: 36px;
   color: var(--m-text-2);
+  font-size: 13px;
   font-weight: 500;
+}
+#root table td,
+[role="dialog"] table td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: 14px;
 }
 #root table tr,
 [role="dialog"] table tr {
   border-color: var(--m-border);
+}
+#root table tbody tr:hover,
+[role="dialog"] table tbody tr:hover {
+  background: var(--m-surface);
 }
 
 /* ============================================================================================= toasts */
@@ -716,7 +849,7 @@ button[role="checkbox"][data-state="checked"] {
   color: var(--m-text-2);
 }
 [data-wa-home="login"] input {
-  height: 44px;
+  height: 40px;
   border: 1px solid var(--m-border-strong);
   border-radius: var(--m-radius-field);
   font-size: 15px;
@@ -728,9 +861,9 @@ button[role="checkbox"][data-state="checked"] {
   border-color: #d6d6d6;
 }
 [data-wa-home="login"] input:focus-visible {
-  border-color: var(--m-text);
-  outline: 2px solid var(--m-text);
-  outline-offset: 2px;
+  border-color: var(--m-primary);
+  outline: 0;
+  box-shadow: 0 0 0 1px var(--m-primary), 0 0 0 4px rgba(14, 122, 77, 0.16);
 }
 [data-wa-home="login"] input[aria-invalid="true"] {
   border-color: var(--m-bad);
@@ -744,13 +877,28 @@ button[role="checkbox"][data-state="checked"] {
   padding: 24px 32px 32px;
 }
 [data-wa-home="login"] .wa-login-submit {
-  min-height: 44px;
-  border-radius: var(--m-radius-pill);
+  min-height: 40px;
+  border-radius: var(--m-radius-field);
   font-size: 15px;
 }
 .wa-login-back a {
   color: var(--m-text-2);
   font-size: 14px;
+}
+.wa-login-back a:hover {
+  color: var(--m-primary);
+}
+/* a thin brand line on top of the login card */
+[data-wa-home="login"] .wa-login-card {
+  position: relative;
+  overflow: hidden;
+}
+[data-wa-home="login"] .wa-login-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--m-primary);
 }
 @media (max-width: 480px) {
   [data-wa-home="login"] .wa-login-card {
@@ -796,6 +944,9 @@ button[role="checkbox"][data-state="checked"] {
   font-weight: 600;
   letter-spacing: 0;
 }
+[data-wa-home] .wa-instance-card:focus-within {
+  border-color: var(--m-tint-line);
+}
 [data-wa-home] .wa-instance-card .wa-token,
 [data-wa-home] .wa-instance-card .bg-primary\/20 {
   border: 0;
@@ -812,7 +963,7 @@ button[role="checkbox"][data-state="checked"] {
     padding: 32px 0 20px;
   }
   .wa-list-title {
-    font-size: 28px;
+    font-size: 24px;
   }
 }
 
@@ -834,8 +985,8 @@ button[role="checkbox"][data-state="checked"] {
   border: 0;
 }
 .wa-dash-title {
-  font-size: 28px;
-  line-height: 36px;
+  font-size: 24px;
+  line-height: 32px;
 }
 .wa-dash-pname {
   color: var(--m-text);
@@ -870,16 +1021,24 @@ button[role="checkbox"][data-state="checked"] {
   font-size: 14px;
   font-weight: 400;
 }
+/* metric icon in a small green tile (Twenty record icons) */
 .wa-metric-icon {
-  color: var(--m-text-3);
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: var(--m-radius-field);
+  background: var(--m-tint);
+  color: var(--m-primary);
 }
 .wa-metric-value {
   margin-top: 8px;
   color: var(--m-text);
-  font-size: 40px;
-  font-weight: 400;
+  font-size: 32px;
+  font-weight: 500;
   letter-spacing: -0.03em;
-  line-height: 48px;
+  line-height: 40px;
+  font-variant-numeric: tabular-nums;
 }
 @media (max-width: 559px) {
   .wa-metric-value {
@@ -925,10 +1084,11 @@ button[role="checkbox"][data-state="checked"] {
   text-transform: none;
 }
 .wo-stat dd {
-  font-size: 28px;
-  font-weight: 400;
+  font-size: 24px;
+  font-weight: 500;
   letter-spacing: -0.02em;
-  line-height: 36px;
+  line-height: 32px;
+  font-variant-numeric: tabular-nums;
 }
 .wo-stat[data-tone="warn"] dd,
 .wo-metric[data-status="warning"] .wo-metric-value,
@@ -937,8 +1097,9 @@ button[role="checkbox"][data-state="checked"] {
 }
 .wo-metric-value {
   font-size: 20px;
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 .wo-bar {
   height: 4px;
@@ -948,7 +1109,7 @@ button[role="checkbox"][data-state="checked"] {
 .wo-bar > span,
 .wo-metric[data-status="ok"] .wo-bar > span {
   border-radius: var(--m-radius-pill);
-  background: var(--m-text);
+  background: var(--m-primary);
 }
 .wo-metric[data-status="warning"] .wo-bar > span {
   background: var(--m-warn);
@@ -959,8 +1120,8 @@ button[role="checkbox"][data-state="checked"] {
 .wo-mark {
   border: 0;
   border-radius: var(--m-radius-field);
-  background: var(--m-hover);
-  color: var(--m-text);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
 }
 .wo-tag {
   border-color: var(--m-border);
@@ -969,10 +1130,12 @@ button[role="checkbox"][data-state="checked"] {
   color: var(--m-text-2);
 }
 .wo-btn {
+  min-height: var(--m-control);
   border-color: var(--m-border-strong);
-  border-radius: var(--m-radius-pill);
+  border-radius: var(--m-radius-field);
   background: var(--m-bg);
   color: var(--m-text);
+  font-size: 14px;
 }
 .wo-btn:hover {
   border-color: var(--m-border-strong);
@@ -991,6 +1154,15 @@ button[role="checkbox"][data-state="checked"] {
 }
 .wo-notes li::before {
   background: var(--m-text-3);
+}
+.wo-banner a,
+.wo-callout a {
+  color: var(--m-primary);
+  text-decoration-color: var(--m-tint-line);
+}
+.wo-banner a:hover,
+.wo-callout a:hover {
+  text-decoration-color: var(--m-primary);
 }
 
 /* ========================================================================================== Conversas */
@@ -1030,11 +1202,17 @@ button[role="checkbox"][data-state="checked"] {
 }
 .wa-chat-search {
   border: 0;
-  border-radius: var(--m-radius-pill);
-  background: var(--m-hover);
+  border-radius: var(--m-radius-field);
+  background: transparent;
 }
 .wa-chat-search input {
+  height: var(--m-control);
+  border-radius: var(--m-radius-field);
   font-size: 14px;
+}
+.wa-chat-search input:focus-visible {
+  border-color: var(--m-primary);
+  box-shadow: 0 0 0 1px var(--m-primary), 0 0 0 4px rgba(14, 122, 77, 0.16);
 }
 .wa-chat-search svg {
   color: var(--m-text-2);
@@ -1048,9 +1226,9 @@ button[role="checkbox"][data-state="checked"] {
   background: transparent;
 }
 .wa-chat-tabs .wa-chat-tablist [role="tab"] {
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: var(--m-radius-pill);
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--m-radius-item);
   color: var(--m-text-2);
   font-size: 14px;
   font-weight: 500;
@@ -1060,8 +1238,8 @@ button[role="checkbox"][data-state="checked"] {
   color: var(--m-text);
 }
 .wa-chat-tabs .wa-chat-tablist [role="tab"][data-state="active"] {
-  background: var(--m-selected);
-  color: var(--m-text);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
 }
 .wa-chat-tabs .wa-chat-tablist [role="tab"][data-state="active"]::after {
   display: none;
@@ -1070,15 +1248,31 @@ button[role="checkbox"][data-state="checked"] {
   padding: 0 8px 8px;
 }
 .wa-chat-item {
+  position: relative;
   margin: 1px 0;
   padding: 8px;
-  border-radius: var(--m-radius-card);
+  border-radius: var(--m-radius-field);
 }
 .wa-chat-item:hover {
   background: var(--m-hover);
 }
+/* the open conversation: green tint and a 2px green bar on the left */
 .wa-chat-item[aria-current="page"] {
-  background: var(--m-selected);
+  background: var(--m-tint);
+}
+.wa-chat-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--m-primary);
+}
+.wa-chat-avatar.wa-chat-avatar {
+  width: 40px;
+  height: 40px;
 }
 .wa-chat-item-name {
   font-size: 14px;
@@ -1093,7 +1287,7 @@ button[role="checkbox"][data-state="checked"] {
   color: var(--m-text);
   font-weight: 500;
 }
-/* unread count: ink pill (white on the green #10a37f would be 3.2:1) */
+/* unread count: green pill (white on #0e7a4d is 5.4:1) */
 .wa-chat-unread {
   background: var(--m-primary);
   color: var(--m-on-primary);
@@ -1136,37 +1330,41 @@ button[role="checkbox"][data-state="checked"] {
   text-transform: none;
   box-shadow: none;
 }
+/* bubbles: customer = neutral grey, sent by us (AI or team) = green tint with a hairline */
 .wa-bubble {
-  border: 0;
-  border-radius: 20px;
+  border: 1px solid transparent;
+  border-radius: 16px;
   background: var(--m-hover);
   color: var(--m-text);
-  font-size: 15px;
-  line-height: 22px;
+  font-size: 14px;
+  line-height: 21px;
   box-shadow: none;
 }
 .wa-msg--out .wa-bubble {
-  border: 0;
+  border: 1px solid var(--m-tint-line);
   background: var(--m-out);
 }
 .wa-msg--in:not(.wa-msg--cont) .wa-bubble {
-  border-top-left-radius: 20px;
+  border-top-left-radius: 4px;
 }
 .wa-msg--out:not(.wa-msg--cont) .wa-bubble {
-  border-top-right-radius: 20px;
+  border-top-right-radius: 4px;
 }
 .wa-msg--in.wa-msg--cont .wa-bubble {
-  border-top-left-radius: 8px;
+  border-top-left-radius: 16px;
 }
 .wa-msg--out.wa-msg--cont .wa-bubble {
-  border-top-right-radius: 8px;
+  border-top-right-radius: 16px;
 }
 .wa-bubble-time,
 .wa-msg--out .wa-bubble-time {
   color: var(--m-text-2);
 }
 .wa-bubble a {
-  color: var(--m-text);
+  color: var(--m-primary);
+}
+.wa-msg--out .wa-bubble a {
+  color: var(--m-tint-text);
 }
 .wa-doc {
   border: 0;
@@ -1190,7 +1388,7 @@ button[role="checkbox"][data-state="checked"] {
 .wa-chat-empty svg {
   color: var(--m-text-3);
 }
-/* composer: pill field with a round send button and a small note under it */
+/* composer: 12px field with a green 32px send button and a small note under it */
 .wa-composer {
   padding: 8px max(16px, calc((100% - 760px) / 2)) 12px;
   border-top: 0;
@@ -1199,17 +1397,17 @@ button[role="checkbox"][data-state="checked"] {
 .wa-composer-box {
   align-items: flex-end;
   gap: 4px;
-  min-height: 52px;
-  padding: 6px;
+  min-height: 48px;
+  padding: 7px;
   border: 1px solid var(--m-border-strong);
-  border-radius: 26px;
+  border-radius: var(--m-radius-card);
   background: var(--m-bg);
-  box-shadow: none;
+  box-shadow: var(--m-shadow-pop);
 }
-/* the field has no ring of its own: the whole pill shows focus */
+/* the field has no ring of its own: the whole box shows focus */
 .wa-composer-box:focus-within {
-  border-color: var(--m-text);
-  box-shadow: 0 0 0 1px var(--m-text);
+  border-color: var(--m-primary);
+  box-shadow: 0 0 0 1px var(--m-primary), 0 0 0 4px rgba(14, 122, 77, 0.12);
 }
 .wa-composer .wa-composer-input,
 .wa-composer .wa-composer-input:focus-visible {
@@ -1218,9 +1416,9 @@ button[role="checkbox"][data-state="checked"] {
   box-shadow: none;
 }
 .wa-composer .wa-composer-input {
-  padding: 9px 8px;
-  font-size: 15px;
-  line-height: 22px;
+  padding: 6px 6px;
+  font-size: 14px;
+  line-height: 20px;
   background: transparent;
 }
 .wa-composer .wa-composer-input::placeholder {
@@ -1229,13 +1427,13 @@ button[role="checkbox"][data-state="checked"] {
 .wa-composer .wa-chat-attach,
 .wa-composer .wa-chat-send {
   flex: none;
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
-  min-height: 40px;
+  width: var(--m-control);
+  min-width: var(--m-control);
+  height: var(--m-control);
+  min-height: var(--m-control);
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--m-radius-field);
 }
 .wa-composer .wa-chat-attach {
   background: transparent;
@@ -1258,8 +1456,8 @@ button[role="checkbox"][data-state="checked"] {
   opacity: 1;
 }
 .wa-composer .wa-chat-send svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 .wa-composer-note {
   margin: 8px 0 0;
@@ -1293,6 +1491,16 @@ button[role="checkbox"][data-state="checked"] {
   max-width: 520px;
   padding: 32px 24px;
 }
+/* brand tile above the title: a green square with a chat bubble (drawn here, no markup) */
+.wa-start::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: var(--m-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v11H9l-5 4z'/%3E%3Cpath d='M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01'/%3E%3C/svg%3E") center / 20px no-repeat;
+}
 .wa-start-title {
   margin: 0;
   color: var(--m-text);
@@ -1318,8 +1526,8 @@ button[role="checkbox"][data-state="checked"] {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 40px;
-  padding: 8px 12px;
+  min-height: 44px;
+  padding: 6px 8px;
   border-radius: var(--m-radius-field);
   color: var(--m-text);
   font-size: 14px;
@@ -1330,8 +1538,15 @@ button[role="checkbox"][data-state="checked"] {
   background: var(--m-hover);
 }
 .wa-start-link svg {
+  box-sizing: content-box;
   flex: none;
-  color: var(--m-text-2);
+  padding: 6px;
+  border-radius: var(--m-radius-field);
+  background: var(--m-tint);
+  color: var(--m-primary);
+}
+.wa-start-link:hover svg {
+  background: var(--m-tint-hover);
 }
 .wa-start-hint {
   color: var(--m-text-2);
@@ -1353,7 +1568,7 @@ button[role="checkbox"][data-state="checked"] {
   min-height: 32px;
   padding: 0 14px;
   border: 1px solid var(--m-border-strong);
-  border-radius: var(--m-radius-pill);
+  border-radius: var(--m-radius-field);
   background: var(--m-bg);
   color: var(--m-text);
   font-size: 13px;
@@ -1377,7 +1592,7 @@ button[role="checkbox"][data-state="checked"] {
   width: 14px;
   height: 14px;
   border: 1.5px solid var(--m-border-strong);
-  border-top-color: var(--m-text);
+  border-top-color: var(--m-primary);
   border-radius: 50%;
 }
 @media (prefers-reduced-motion: no-preference) {
