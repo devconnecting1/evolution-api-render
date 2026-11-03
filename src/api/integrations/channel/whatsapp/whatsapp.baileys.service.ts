@@ -570,6 +570,25 @@ export class BaileysStartupService extends ChannelStartupService {
     return row.message ?? undefined;
   }
 
+  /** Whether a message with this key.id is already stored for the instance (uses the key->>'id' index). */
+  private async isMessageStored(keyId: string | null | undefined): Promise<boolean> {
+    if (!keyId) return false;
+
+    try {
+      const rows = (await this.prismaRepository.$queryRaw`
+        SELECT 1 AS found FROM "Message"
+        WHERE "instanceId" = ${this.instanceId}
+        AND "key"->>'id' = ${keyId}
+        LIMIT 1
+      `) as unknown[];
+      return Array.isArray(rows) && rows.length > 0;
+    } catch (error) {
+      // On doubt store it: a duplicate row is better than a lost message
+      this.logger.warn(`Duplicate check failed for ${keyId}: ${error?.message}`);
+      return false;
+    }
+  }
+
   private async defineAuthState() {
     const db = this.configService.get<Database>('DATABASE');
     const cache = this.configService.get<CacheConf>('CACHE');
@@ -1369,7 +1388,14 @@ export class BaileysStartupService extends ChannelStartupService {
             }
           }
 
-          if (this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE) {
+          const saveNewMessage = this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE;
+          // WhatsApp redelivers the same key.id (#2737): do not store a second row for it
+          const alreadyStored = saveNewMessage && (await this.isMessageStored(received.key.id));
+          if (alreadyStored) {
+            this.logger.verbose(`Message ${received.key.id} already stored: duplicate insert skipped`);
+          }
+
+          if (saveNewMessage && !alreadyStored) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { pollUpdates, ...messageData } = messageRaw;
             const msg = await this.prismaRepository.message.create({ data: messageData });

@@ -13,6 +13,7 @@ import { WAMonitoringService } from '@api/services/monitor.service';
 import { Logger } from '@config/logger.config';
 import { IntegrationSession } from '@prisma/client';
 import { findBotByTrigger } from '@utils/findBotByTrigger';
+import { claimMessageOnce } from '@utils/processedMessageRegistry';
 
 export type EmitData = {
   instance: InstanceDto;
@@ -84,6 +85,14 @@ export class ChatbotController {
     pushName?: string;
     isIntegration?: boolean;
   }): Promise<void> {
+    // A redelivery of an id already handed to the bots (#2737) must not be answered, billed or stored again.
+    // Claimed once here, before the fan-out, so one bot never blocks another of the same instance.
+    const keyId = msg?.key?.id;
+    if (keyId && !(await claimMessageOnce(instance?.instanceId, keyId))) {
+      this.logger.verbose(`Message ${keyId} already handed to the chatbots: redelivery ignored`);
+      return;
+    }
+
     const emitData = {
       instance,
       remoteJid,
