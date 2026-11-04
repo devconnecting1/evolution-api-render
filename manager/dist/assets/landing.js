@@ -82,6 +82,40 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
     });
   }
 
+  // ------------------------------------------------------------------ product tour tabs (WAI-ARIA tabs)
+  // Automatic activation: arrows Left/Right (wrapping), Home and End move focus and select; Tab goes into the panel.
+  document.querySelectorAll('[data-tabs]').forEach(function (box) {
+    const tabs = Array.prototype.slice.call(box.querySelectorAll('[role="tab"]'));
+    const select = function (tab, focus) {
+      tabs.forEach(function (t) {
+        const on = t === tab;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        const panel = document.getElementById(t.getAttribute('aria-controls'));
+        if (panel) panel.hidden = !on;
+      });
+      if (focus) tab.focus();
+    };
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () {
+        select(t, false);
+      });
+      t.addEventListener('keydown', function (e) {
+        const last = tabs.length - 1;
+        const next =
+          e.key === 'ArrowRight' ? tabs[i === last ? 0 : i + 1]
+          : e.key === 'ArrowLeft' ? tabs[i === 0 ? last : i - 1]
+          : e.key === 'Home' ? tabs[0]
+          : e.key === 'End' ? tabs[last]
+          : null;
+        if (next) {
+          e.preventDefault();
+          select(next, true);
+        }
+      });
+    });
+  });
+
   // ------------------------------------------------------------------ header hairline after scrolling
   const head = document.querySelector('[data-head]');
   const hero = document.querySelector('.hero');
