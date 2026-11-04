@@ -1,0 +1,983 @@
+/*
+ * WhatsAI Manager: Twenty CRM component layout (twenty-front / twenty-ui patterns), on top of the tokens of minimal.css.
+ * Linked LAST in manager/dist/index.html by manager/patches/twenty-layout.py. Written by hand; only var(--m-*) tokens.
+ *
+ *   .wa-tw-crumbs        breadcrumb page header in the top bar ("Instâncias / Renato Paixão / Conversas")
+ *   .wa-tw-cmdbtn        "Buscar  Ctrl K" button of the top bar; .wa-tw-cmd* the command menu (Ctrl/⌘+K)
+ *   .wa-tw-view          Conversas: segmented view switcher, view bar (count + Filtro / Ordenar), filter chips
+ *   .wa-tw-pop           popover of the view bar (the only place, with menus and dialogs, that gets a shadow)
+ *   .wa-tw-row           dense contact rows (52px, 32px avatar), "IA pausada" badge
+ *   .wa-tw-shell/.panel  open conversation + contact side panel (320px on desktop, sheet on smaller screens)
+ *   .wa-tw-ibtn          24px icon button; .wa-tw-sbtn 28px small button; .wa-tw-lbtn light text button
+ *   .wa-tw-empty         empty state: icon box + title + one line + action
+ * System-wide (section "small components"): 24px icon buttons in the top bar and 28px secondary toolbar buttons
+ * in the page headers; Twenty-like empty state for the existing .wa-chat-empty.
+ */
+
+/* ========================================================================================= primitives */
+.wa-tw-ibtn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  cursor: pointer;
+}
+.wa-tw-ibtn:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-tw-ibtn[aria-pressed="true"] {
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+}
+.wa-tw-sbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--m-primary);
+  border-radius: var(--m-radius-field);
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+.wa-tw-sbtn:hover {
+  background: var(--m-primary-hover);
+  border-color: var(--m-primary-hover);
+}
+.wa-tw-sbtn--ghost {
+  border-color: var(--m-border-strong);
+  background: var(--m-bg);
+  color: var(--m-text);
+}
+.wa-tw-sbtn--ghost:hover {
+  border-color: var(--m-border-strong);
+  background: var(--m-hover);
+}
+.wa-tw-sbtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+/* Twenty "light" text button (Filter / Sort / Options) */
+.wa-tw-lbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.wa-tw-lbtn:hover,
+.wa-tw-lbtn[aria-expanded="true"] {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-tw-lbtn[data-active="true"] {
+  color: var(--m-tint-text);
+}
+.wa-tw-lbtn-n {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+}
+:is(.wa-tw-ibtn, .wa-tw-sbtn, .wa-tw-lbtn, .wa-tw-seg, .wa-tw-chip-x, .wa-tw-chip-clear, .wa-tw-cmdbtn, .wa-tw-kbd-btn, .wa-tw-crumbs a):focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wa-tw-muted {
+  color: var(--m-text-2);
+}
+.wa-tw-hint {
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 16px;
+}
+.wa-tw-mono {
+  font-variant-numeric: tabular-nums;
+}
+/* status = dot inside a neutral chip (BRIEF: primary and success never look alike) */
+.wa-tw-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-pill);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.wa-tw-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--m-text-3);
+}
+.wa-tw-badge[data-tone="ok"] .wa-tw-badge-dot { background: var(--m-ok); }
+.wa-tw-badge[data-tone="warn"] .wa-tw-badge-dot { background: var(--m-warn); }
+.wa-tw-badge[data-tone="bad"] .wa-tw-badge-dot { background: var(--m-bad); }
+
+/* empty state: icon box + title + one line + action (twenty-ui AnimatedPlaceholder layout, without the art) */
+.wa-tw-empty,
+.wa-chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 300px;
+  margin: 0 auto;
+  padding: 48px 16px;
+  text-align: center;
+}
+.wa-tw-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+}
+.wa-chat-empty > svg {
+  box-sizing: content-box;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 8px;
+  padding: 9px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+}
+.wa-tw-empty-title,
+.wa-chat-empty .wa-chat-empty-title {
+  margin: 0;
+  color: var(--m-text);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.wa-tw-empty-text,
+.wa-chat-empty .wa-chat-empty-text {
+  margin: 0 0 8px;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+/* =================================================================================== top bar: crumbs */
+.wa-tw-crumbs {
+  display: none;
+  min-width: 0;
+}
+.wa-tw-crumbs ol {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 20px;
+}
+.wa-tw-crumbs li {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wa-tw-crumbs a {
+  padding: 2px 4px;
+  border-radius: var(--m-radius-item);
+  color: var(--m-text-2);
+  text-decoration: none;
+}
+.wa-tw-crumbs a:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-tw-crumbs [aria-current="page"] {
+  padding: 2px 4px;
+  color: var(--m-text);
+  font-weight: 500;
+}
+.wa-tw-crumb-sep {
+  flex: none;
+  color: var(--m-text-3);
+}
+@media (min-width: 768px) {
+  .wa-tw-crumbs {
+    display: block;
+    flex: 1 1 auto;
+    margin: 0 16px;
+  }
+}
+@media (min-width: 1024px) {
+  [data-wa-layout] > [data-wa-header] .wa-tw-crumbs {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 276px;
+    right: 220px;
+    display: flex;
+    align-items: center;
+    margin: 0;
+  }
+}
+
+/* top bar: 24px icon buttons (pointer devices), "Buscar Ctrl K" */
+@media (min-width: 1024px) and (pointer: fine) {
+  [data-wa-header] button.wa-hd-btn,
+  [data-wa-header] > div:last-child > button.wa-hd-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: var(--m-radius-item);
+  }
+  [data-wa-header] button.wa-hd-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+[data-wa-header] > div:last-child > button.wa-tw-cmdbtn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 6px 0 8px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+[data-wa-header] > div:last-child > button.wa-tw-cmdbtn:hover {
+  border-color: var(--m-border-strong);
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+[data-wa-header] > div:last-child > button.wa-tw-cmdbtn {
+  display: inline-flex;
+}
+/* phones: icon-only search button (44px touch target) that opens the same command menu */
+@media (max-width: 767px) {
+  [data-wa-header] > div:last-child > button.wa-tw-cmdbtn {
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--m-radius-pill);
+    background: transparent;
+  }
+  [data-wa-header] > div:last-child > button.wa-tw-cmdbtn svg {
+    width: 20px;
+    height: 20px;
+  }
+  .wa-tw-cmdbtn .wa-tw-cmdbtn-text,
+  .wa-tw-cmdbtn .wa-tw-kbd {
+    display: none;
+  }
+}
+.wa-tw-kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid var(--m-border);
+  border-radius: 4px;
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+}
+.wa-tw-cmdbtn .wa-tw-cmdbtn-text {
+  margin-right: 12px;
+}
+
+/* ========================================================================================= Conversas */
+.wa-tw-view {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.wa-tw-segs {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  margin: 4px 16px 0;
+  padding: 2px;
+  overflow-x: auto;
+  border-radius: var(--m-radius-field);
+  background: var(--m-hover);
+  scrollbar-width: none;
+}
+.wa-tw-segs::-webkit-scrollbar {
+  display: none;
+}
+.wa-tw-seg {
+  display: inline-flex;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wa-tw-seg:hover {
+  color: var(--m-text);
+}
+.wa-tw-seg[aria-pressed="true"] {
+  background: var(--m-bg);
+  color: var(--m-text);
+  box-shadow: 0 0 0 1px var(--m-border);
+}
+.wa-tw-seg-n {
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.wa-tw-seg[aria-pressed="true"] .wa-tw-seg-n {
+  color: var(--m-tint-text);
+}
+/* view bar: "322 conversas" on the left, Filtro / Ordenar on the right (Twenty ViewBar) */
+.wa-tw-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 40px;
+  margin: 0 16px;
+  border-bottom: 1px solid var(--m-border);
+}
+.wa-tw-count {
+  margin: 0;
+  overflow: hidden;
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wa-tw-bar-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+.wa-tw-popwrap {
+  position: relative;
+}
+.wa-tw-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  width: 264px;
+  max-width: calc(100vw - 32px);
+  padding: 4px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+}
+.wa-tw-pop--end,
+.wa-tw-popwrap:first-child .wa-tw-pop {
+  right: 0;
+  left: auto;
+}
+.wa-tw-pop-sec {
+  margin: 0;
+  padding: 4px 0;
+  border: 0;
+}
+.wa-tw-pop-sec + .wa-tw-pop-sec {
+  border-top: 1px solid var(--m-border);
+}
+.wa-tw-pop-label {
+  padding: 4px 8px;
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+}
+.wa-tw-opt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 6px 8px;
+  border-radius: var(--m-radius-item);
+  color: var(--m-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.wa-tw-opt:hover {
+  background: var(--m-hover);
+}
+.wa-tw-opt input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.wa-tw-opt:has(input:focus-visible) {
+  box-shadow: inset 0 0 0 2px var(--m-primary);
+}
+.wa-tw-opt-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+.wa-tw-opt-hint {
+  color: var(--m-text-2);
+  font-size: 12px;
+}
+.wa-tw-opt-check {
+  display: inline-flex;
+  flex: none;
+  width: 14px;
+  color: var(--m-primary);
+}
+.wa-tw-opt[data-checked="true"] {
+  font-weight: 500;
+}
+.wa-tw-pop-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 4px 4px;
+  border-top: 1px solid var(--m-border);
+}
+/* active filter chips with × (Twenty SortOrFilterChip) */
+.wa-tw-chips {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--m-border);
+}
+.wa-tw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 24px;
+  padding: 0 2px 0 8px;
+  border: 1px solid var(--m-tint-line);
+  border-radius: var(--m-radius-item);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+  font-size: 12px;
+  font-weight: 500;
+}
+.wa-tw-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.wa-tw-chip-x:hover {
+  background: var(--m-tint-hover);
+}
+.wa-tw-chip-clear {
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.wa-tw-chip-clear:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-tw-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-top: 4px;
+}
+/* dense rows: 52px, 32px avatar (Twenty record table density, two lines for name and preview) */
+.wa-tw-items {
+  padding: 0 8px 8px;
+}
+.wa-chat-item.wa-tw-row {
+  gap: 10px;
+  min-height: 52px;
+  margin: 0;
+  padding: 6px 8px;
+}
+.wa-tw-row .wa-chat-avatar.wa-chat-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+.wa-tw-row .wa-chat-item-row + .wa-chat-item-row {
+  gap: 6px;
+}
+.wa-tw-row .wa-chat-item-name,
+.wa-tw-row .wa-chat-item-preview {
+  font-size: 13px;
+  line-height: 18px;
+}
+.wa-tw-row .wa-chat-item-name {
+  font-size: 14px;
+}
+.wa-tw-row .wa-chat-item-time {
+  font-size: 12px;
+}
+.wa-tw-row .wa-tw-badge {
+  height: 18px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+.wa-tw-view .wa-chat-loading {
+  padding-top: 4px;
+}
+
+/* ====================================================================== open conversation + side panel */
+.wa-tw-shell {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+}
+.wa-tw-shell-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+.wa-tw-head-extra {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.wa-tw-panel {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 320px;
+  height: 100%;
+  min-height: 0;
+  border-left: 1px solid var(--m-border);
+  background: var(--m-bg);
+}
+.wa-tw-panel-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--m-border);
+}
+.wa-tw-panel-kicker {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wa-tw-panel-id {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+.wa-tw-panel-idtext {
+  min-width: 0;
+}
+.wa-tw-panel-name {
+  margin: 0;
+  overflow: hidden;
+  color: var(--m-text);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wa-tw-panel-idtext .wa-tw-muted {
+  margin: 0;
+  font-size: 13px;
+}
+.wa-tw-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 8px 16px;
+}
+/* record fields: label column with icon, value column (Twenty RecordInlineCell) */
+.wa-tw-fields {
+  margin: 0;
+}
+.wa-tw-field {
+  display: grid;
+  grid-template-columns: 144px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: var(--m-radius-item);
+}
+.wa-tw-field:hover {
+  background: var(--m-surface);
+}
+.wa-tw-field dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wa-tw-field--stack {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.wa-tw-field--stack .wa-tw-ai {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.wa-tw-field--stack .wa-tw-ai .wa-tw-hint {
+  flex-basis: 100%;
+}
+.wa-tw-field dt span {
+  white-space: nowrap;
+}
+.wa-tw-field dt svg {
+  flex: none;
+  color: var(--m-text-3);
+}
+.wa-tw-field dd {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  margin: 0;
+  color: var(--m-text);
+  font-size: 13px;
+}
+.wa-tw-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.wa-tw-ai {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 2px 0;
+}
+.wa-tw-ai .wa-tw-badge {
+  height: auto;
+  min-height: 20px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  line-height: 15px;
+  white-space: normal;
+}
+.wa-tw-ai .wa-tw-badge-dot {
+  flex: none;
+}
+.wa-tw-panel-sec {
+  margin-top: 12px;
+  padding: 12px 8px 0;
+  border-top: 1px solid var(--m-border);
+}
+.wa-tw-panel-label {
+  margin: 0 0 8px;
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+}
+.wa-tw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wa-tw-panel-note {
+  margin: 16px 8px 0;
+}
+.wa-tw-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: rgba(13, 13, 13, 0.24);
+}
+/* tablets: drawer on the right; phones: bottom sheet */
+.wa-tw-panel--sheet {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  width: min(360px, 100vw);
+  height: auto;
+  border-left: 1px solid var(--m-border);
+  box-shadow: var(--m-shadow-menu);
+}
+@media (max-width: 767px) {
+  .wa-tw-panel--sheet {
+    top: auto;
+    left: 0;
+    width: 100%;
+    max-height: 85vh;
+    border-left: 0;
+    border-top: 1px solid var(--m-border);
+    border-radius: var(--m-radius-card) var(--m-radius-card) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .wa-tw-panel--sheet .wa-tw-panel-head {
+    height: 52px;
+  }
+  .wa-tw-panel--sheet .wa-tw-ibtn,
+  .wa-tw-head-extra .wa-tw-ibtn {
+    width: 40px;
+    height: 40px;
+  }
+  .wa-tw-panel--sheet .wa-tw-sbtn {
+    height: 36px;
+  }
+}
+
+/* ======================================================================================= command menu */
+.wa-tw-cmd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 16px 16px;
+  background: rgba(13, 13, 13, 0.16);
+}
+.wa-tw-cmd {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: min(480px, 76vh);
+  overflow: hidden;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+}
+.wa-tw-cmd-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--m-border);
+  color: var(--m-text-2);
+}
+.wa-tw-cmd-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--m-text);
+  font-size: 14px;
+}
+.wa-tw-cmd-search input::placeholder {
+  color: var(--m-text-2);
+}
+/* the whole search row shows focus (green line), not the field (minimal.css rings every #root input) */
+#root .wa-tw-cmd .wa-tw-cmd-search input.wa-tw-cmd-input,
+#root .wa-tw-cmd .wa-tw-cmd-search input.wa-tw-cmd-input:focus,
+#root .wa-tw-cmd .wa-tw-cmd-search input.wa-tw-cmd-input:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+.wa-tw-cmd-search:focus-within {
+  box-shadow: inset 0 -2px 0 var(--m-primary);
+}
+.wa-tw-kbd-btn {
+  cursor: pointer;
+}
+.wa-tw-cmd-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px;
+}
+.wa-tw-cmd-gtitle {
+  padding: 8px 8px 4px;
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+}
+.wa-tw-cmd-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 4px 8px;
+  border-radius: var(--m-radius-item);
+  color: var(--m-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+.wa-tw-cmd-opt:hover {
+  background: transparent;
+}
+.wa-tw-cmd-opt[aria-selected="true"],
+.wa-tw-cmd-opt[aria-selected="true"]:hover {
+  background: var(--m-hover);
+}
+.wa-tw-cmd-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--m-text-2);
+}
+.wa-tw-cmd-opt .wa-chat-avatar.wa-chat-avatar {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+.wa-tw-cmd-lb {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wa-tw-cmd-meta {
+  flex: none;
+  color: var(--m-text-2);
+  font-size: 12px;
+}
+.wa-tw-cmd-none {
+  margin: 0;
+  padding: 16px 8px;
+  color: var(--m-text-2);
+  font-size: 13px;
+  text-align: center;
+}
+.wa-tw-cmd-foot {
+  display: flex;
+  flex: none;
+  gap: 16px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--m-border);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 12px;
+}
+@media (max-width: 767px) {
+  .wa-tw-cmd-backdrop {
+    padding-top: 8px;
+  }
+  .wa-tw-cmd-foot {
+    display: none;
+  }
+  .wa-tw-cmd-opt {
+    min-height: 44px;
+  }
+}
+
+/* ========================================================================== small components (global) */
+/* page headers ("OpenAI  Sessões · Configurações Padrão · Credenciais · + OpenAI"): 28px small buttons */
+@media (min-width: 768px) {
+  #root .mb-1.flex.items-center.justify-between:has(> .wa-page-title) :where(button, a).ring-offset-background,
+  #root .wa-dash-actions :where(button, a).ring-offset-background:not(.w-9, .w-10) {
+    height: 28px;
+    padding: 0 10px;
+    gap: 6px;
+    font-size: 13px;
+  }
+  #root .mb-1.flex.items-center.justify-between:has(> .wa-page-title) :where(button, a).ring-offset-background svg {
+    width: 14px;
+    height: 14px;
+  }
+  #root .mb-1.flex.items-center.justify-between:has(> .wa-page-title) > div {
+    gap: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-tw-view *,
+  .wa-tw-panel,
+  .wa-tw-panel *,
+  .wa-tw-cmd,
+  .wa-tw-cmd * {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
