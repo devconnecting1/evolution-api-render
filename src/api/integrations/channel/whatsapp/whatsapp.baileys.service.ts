@@ -263,6 +263,17 @@ export class BaileysStartupService extends ChannelStartupService {
   private readonly MESSAGE_CACHE_TTL_SECONDS = 5 * 60; // 5 minutes - avoid duplicate message processing
   private readonly UPDATE_CACHE_TTL_SECONDS = 30 * 60; // 30 minutes - avoid duplicate status updates
 
+  /** A 401 this soon after a stream:error 515 (restart required) is the post-pairing cleanup, not a logout. */
+  private static readonly STREAM_515_GRACE_MS = 30_000;
+  /** At most one reconnect per minute after a send failed with "Connection Closed" on an "open" socket. */
+  private static readonly ZOMBIE_RECONNECT_INTERVAL_MS = 60_000;
+  /** When the last stream:error 515 closed the socket (#2498/#2437, upstream PR #2509). */
+  private lastStream515At = 0;
+  private lastZombieReconnectAt = 0;
+  private zombieReconnecting = false;
+  /** Unsubscribes the event handler of the current socket (so a stale socket cannot trigger a reconnect). */
+  private unsubscribeEvents?: () => void;
+
   public stateConnection: wa.StateConnection = { state: 'close' };
 
   public phoneNumber: string;
@@ -433,7 +444,24 @@ export class BaileysStartupService extends ChannelStartupService {
     if (connection === 'close') {
       const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
       const codesToNotReconnect = [DisconnectReason.loggedOut, DisconnectReason.forbidden, 402, 406];
-      const shouldReconnect = !codesToNotReconnect.includes(statusCode);
+
+      if (statusCode === DisconnectReason.restartRequired) {
+        this.lastStream515At = Date.now();
+      }
+
+      // Right after a new pairing WhatsApp sends stream:error 515 and then a 401 that is only the cleanup of the
+      // old session: reconnect instead of logging out and removing the instance (#2498/#2437, upstream #2509).
+      // One rescue per 515: a real 401 inside the window costs one extra reconnect attempt, then logs out.
+      const recentStream515 =
+        statusCode === DisconnectReason.loggedOut &&
+        this.lastStream515At > 0 &&
+        Date.now() - this.lastStream515At < BaileysStartupService.STREAM_515_GRACE_MS;
+      if (recentStream515) {
+        this.lastStream515At = 0;
+        this.logger.warn('401 shortly after stream:error 515 (new pairing): reconnecting instead of logging out');
+      }
+
+      const shouldReconnect = recentStream515 || !codesToNotReconnect.includes(statusCode);
       if (shouldReconnect) {
         await this.connectToWhatsapp(this.phoneNumber);
       } else {
@@ -1390,18 +1418,21 @@ export class BaileysStartupService extends ChannelStartupService {
 
           const isVideo = received?.message?.videoMessage;
 
-          if (this.localSettings.readMessages && received.key.id !== 'status@broadcast') {
+          // A status is told apart by the chat (remoteJid), never by the message id
+          const isStatusBroadcast = received.key.remoteJid === 'status@broadcast';
+
+          if (this.localSettings.readMessages && !isStatusBroadcast) {
             await this.client.readMessages([received.key]);
           }
 
-          if (this.localSettings.readStatus && received.key.id === 'status@broadcast') {
+          if (this.localSettings.readStatus && isStatusBroadcast) {
             await this.client.readMessages([received.key]);
           }
 
           if (
             this.configService.get<Chatwoot>('CHATWOOT').ENABLED &&
             this.localChatwoot?.enabled &&
-            !received.key.id.includes('@broadcast')
+            !received.key.remoteJid?.includes('@broadcast')
           ) {
             const chatwootSentMessage = await this.chatwootService.eventWhatsapp(
               Events.MESSAGES_UPSERT,
@@ -1467,60 +1498,9 @@ export class BaileysStartupService extends ChannelStartupService {
                 this.logger.info(`Update readed messages duplicated ignored [avoid deadlock]: ${messageKey}`);
               }
 
-              if (isMedia) {
-                if (this.configService.get<S3>('S3').ENABLE) {
-                  try {
-                    if (isVideo && !this.configService.get<S3>('S3').SAVE_VIDEO) {
-                      this.logger.warn('Video upload is disabled. Skipping video upload.');
-                      // Skip video upload by returning early from this block
-                      return;
-                    }
-
-                    const message: any = received;
-
-                    // Verificação adicional para garantir que há conteúdo de mídia real
-                    const hasRealMedia = this.hasValidMediaContent(message);
-
-                    if (!hasRealMedia) {
-                      this.logger.warn('Message detected as media but contains no valid media content');
-                    } else {
-                      const media = await this.getBase64FromMediaMessage({ message }, true);
-
-                      if (!media) {
-                        this.logger.verbose('No valid media to upload (messageContextInfo only), skipping MinIO');
-                        return;
-                      }
-
-                      const { buffer, mediaType, fileName, size } = media;
-                      const mimetype = mimeTypes.lookup(fileName).toString();
-                      const fullName = join(
-                        `${this.instance.id}`,
-                        received.key.remoteJid,
-                        mediaType,
-                        `${Date.now()}_${fileName}`,
-                      );
-                      await s3Service.uploadFile(fullName, buffer, size.fileLength?.low, { 'Content-Type': mimetype });
-
-                      await this.prismaRepository.media.create({
-                        data: {
-                          messageId: msg.id,
-                          instanceId: this.instanceId,
-                          type: mediaType,
-                          fileName: fullName,
-                          mimetype,
-                        },
-                      });
-
-                      const mediaUrl = await s3Service.getObjectUrl(fullName);
-
-                      messageRaw.message.mediaUrl = mediaUrl;
-
-                      await this.prismaRepository.message.update({ where: { id: msg.id }, data: messageRaw });
-                    }
-                  } catch (error) {
-                    this.logger.error(['Error on upload file to minio', error?.message, error?.stack]);
-                  }
-                }
+              // Only this message's media is skipped on any problem: never the rest of the batch (#2768)
+              if (isMedia && this.configService.get<S3>('S3').ENABLE) {
+                await this.uploadReceivedMediaToS3(received, msg, messageRaw, !!isVideo);
               }
             } catch (error) {
               // Not stored (database unreachable, pool timeout...): say it loudly and still hand the message to
@@ -1572,12 +1552,20 @@ export class BaileysStartupService extends ChannelStartupService {
 
           this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
 
-          await chatbotController.emit({
-            instance: { instanceName: this.instance.name, instanceId: this.instanceId },
-            remoteJid: messageRaw.key.remoteJid,
-            msg: messageRaw,
-            pushName: messageRaw.pushName,
-          });
+          // An edit encrypted with the message secret (#2545/#2617) is not decrypted by this Baileys: it is stored
+          // and sent to the webhook as today, but the bots would only see an empty/unknown message
+          if (received.message?.secretEncryptedMessage) {
+            this.logger.verbose(
+              `Encrypted edit (secretEncryptedMessage) ${received.key.id} not handed to the chatbots: content unreadable`,
+            );
+          } else {
+            await chatbotController.emit({
+              instance: { instanceName: this.instance.name, instanceId: this.instanceId },
+              remoteJid: messageRaw.key.remoteJid,
+              msg: messageRaw,
+              pushName: messageRaw.pushName,
+            });
+          }
 
           const contact = await this.prismaRepository.contact.findFirst({
             where: { remoteJid: received.key.remoteJid, instanceId: this.instanceId },
@@ -2003,7 +1991,7 @@ export class BaileysStartupService extends ChannelStartupService {
   }
 
   private eventHandler() {
-    this.client.ev.process(async (events) => {
+    this.unsubscribeEvents = this.client.ev.process(async (events) => {
       this.eventProcessingQueue = this.eventProcessingQueue.then(async () => {
         try {
           if (!this.endSession) {
@@ -2705,7 +2693,49 @@ export class BaileysStartupService extends ChannelStartupService {
       return messageRaw;
     } catch (error) {
       this.logger.error(error);
+      // Zombie socket (#2403/#2257/#2443): do not wait for the HTTP answer to reconnect
+      void this.reconnectZombieSocket(error);
       throw new BadRequestException(error.toString());
+    }
+  }
+
+  /**
+   * A send failed with "Connection Closed" while the instance still says "open": the socket is dead but no
+   * connection.update arrived, so every send fails until a restart (#2403, #2257, #2443). Reconnect once, at most
+   * once per minute, never while a connection is already being made. True when a reconnect was started.
+   */
+  private async reconnectZombieSocket(error: unknown): Promise<boolean> {
+    const text = String((error as any)?.message ?? (error as any)?.output?.payload?.message ?? error ?? '');
+    if (!text.includes('Connection Closed')) return false;
+    if (this.stateConnection?.state !== 'open' || this.zombieReconnecting) return false;
+    if (Date.now() - this.lastZombieReconnectAt < BaileysStartupService.ZOMBIE_RECONNECT_INTERVAL_MS) return false;
+
+    this.lastZombieReconnectAt = Date.now();
+    this.zombieReconnecting = true;
+    this.logger.warn('Send failed with "Connection Closed" while the connection is open: reconnecting the socket');
+
+    const stale = this.client;
+    // The stale socket must not trigger a second reconnect through its own connection.update
+    try {
+      this.unsubscribeEvents?.();
+      stale?.ws?.close();
+      stale?.end?.(undefined);
+    } catch (closeError) {
+      this.logger.verbose(`Stale socket not closed cleanly: ${(closeError as any)?.message ?? closeError}`);
+    }
+
+    this.stateConnection = { state: 'connecting', statusReason: DisconnectReason.connectionClosed };
+
+    try {
+      await this.connectToWhatsapp(this.phoneNumber);
+      return true;
+    } catch (reconnectError) {
+      this.logger.error(
+        `Reconnect after "Connection Closed" failed: ${(reconnectError as any)?.message ?? reconnectError}`,
+      );
+      return false;
+    } finally {
+      this.zombieReconnecting = false;
     }
   }
 
@@ -4005,14 +4035,17 @@ export class BaileysStartupService extends ChannelStartupService {
       const m = data?.message;
       const convertToMp4 = data?.convertToMp4 ?? false;
 
-      const msg = m?.message ? m : ((await this.getMessage(m.key, true)) as proto.IWebMessageInfo);
+      const msg = m?.message ? m : ((await this.getMessage(m?.key, true)) as proto.IWebMessageInfo);
 
-      if (!msg) {
-        throw 'Message not found';
+      // Neither in the payload nor in the database (#2550): a clear 400 instead of "reading 'ephemeralMessage'"
+      if (!msg?.message || typeof msg.message !== 'object') {
+        throw new BadRequestException('Mensagem não encontrada');
       }
 
+      // Disappearing / view once / document with caption wrappers. A wrapper without inner message is kept as is
+      msg.message = unwrapMessageContent(msg.message);
       for (const subtype of MessageSubtype) {
-        if (msg.message[subtype]) {
+        if (msg.message[subtype]?.message) {
           msg.message = msg.message[subtype].message;
         }
       }
@@ -4140,6 +4173,8 @@ export class BaileysStartupService extends ChannelStartupService {
     } catch (error) {
       this.logger.error('Error processing media message:');
       this.logger.error(error);
+      // Already an HTTP error (e.g. message not found): keep its message instead of "[object Object]"
+      if (error?.status === 400) throw error;
       throw new BadRequestException(error.toString());
     }
   }
@@ -4920,6 +4955,56 @@ export class BaileysStartupService extends ChannelStartupService {
     }
 
     return 0;
+  }
+
+  /**
+   * Uploads the media of a received (already stored) message to S3/MinIO and stores its URL. Every early exit
+   * returns from this method only (#2768): a skipped or failed upload never drops the other messages of the batch,
+   * nor the webhook and the chatbots of this one.
+   */
+  private async uploadReceivedMediaToS3(received: any, msg: { id: string }, messageRaw: any, isVideo: boolean) {
+    try {
+      if (isVideo && !this.configService.get<S3>('S3').SAVE_VIDEO) {
+        this.logger.warn('Video upload is disabled. Skipping video upload.');
+        return;
+      }
+
+      // Verificação adicional para garantir que há conteúdo de mídia real
+      if (!this.hasValidMediaContent(received)) {
+        this.logger.warn('Message detected as media but contains no valid media content');
+        return;
+      }
+
+      const media = await this.getBase64FromMediaMessage({ message: received }, true);
+
+      if (!media) {
+        this.logger.verbose('No valid media to upload (messageContextInfo only), skipping MinIO');
+        return;
+      }
+
+      const { buffer, mediaType, fileName, size } = media;
+      const mimetype = mimeTypes.lookup(fileName).toString();
+      const fullName = join(`${this.instance.id}`, received.key.remoteJid, mediaType, `${Date.now()}_${fileName}`);
+      await s3Service.uploadFile(fullName, buffer, size.fileLength?.low, { 'Content-Type': mimetype });
+
+      await this.prismaRepository.media.create({
+        data: {
+          messageId: msg.id,
+          instanceId: this.instanceId,
+          type: mediaType,
+          fileName: fullName,
+          mimetype,
+        },
+      });
+
+      const mediaUrl = await s3Service.getObjectUrl(fullName);
+
+      messageRaw.message.mediaUrl = mediaUrl;
+
+      await this.prismaRepository.message.update({ where: { id: msg.id }, data: messageRaw });
+    } catch (error) {
+      this.logger.error(['Error on upload file to minio', error?.message, error?.stack]);
+    }
   }
 
   private async updateChatUnreadMessages(remoteJid: string): Promise<number> {
