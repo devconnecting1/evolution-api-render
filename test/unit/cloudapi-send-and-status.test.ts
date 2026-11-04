@@ -102,6 +102,39 @@ describe('Cloud API status webhooks', () => {
     assert.deepEqual(ctx.state.errors, []);
   });
 
+  test('a failed status forwards a compact copy of the Meta errors to the webhook (#2486)', async () => {
+    const payload = statuses(['wamid.KNOWN']);
+    payload.statuses[0] = {
+      ...payload.statuses[0],
+      status: 'failed',
+      errors: [
+        {
+          code: 131047,
+          title: 'Re-engagement message',
+          message: 'Re-engagement message',
+          error_data: { details: 'Message failed to send because more than 24 hours have passed.'.repeat(10) },
+          href: 'https://developers.facebook.com/docs/whatsapp/cloud-api/support/error-codes/',
+        },
+      ],
+    } as any;
+
+    await ctx.service.messageHandle(payload, {}, {});
+
+    const [update] = updates();
+    assert.equal(update.data.status, 'FAILED');
+    assert.equal(update.data.errors.length, 1);
+    assert.equal(update.data.errors[0].code, 131047);
+    assert.equal(update.data.errors[0].title, 'Re-engagement message');
+    assert.equal(update.data.errors[0].details.length, 300, 'long texts are cut');
+    assert.equal(update.data.errors[0].href, undefined, 'only the useful fields');
+    assert.equal(ctx.state.messageUpdates[0].errors, undefined, 'no new column in MessageUpdate');
+  });
+
+  test('statuses without errors keep the payload as before', async () => {
+    await ctx.service.messageHandle(statuses(['wamid.KNOWN']), {}, {});
+    assert.equal('errors' in updates()[0].data, false);
+  });
+
   test('an unknown wamid does not drop the rest of the batch (#2700)', async () => {
     await ctx.service.messageHandle(statuses(['wamid.UNKNOWN', 'wamid.KNOWN']), {}, {});
 
