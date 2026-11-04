@@ -892,6 +892,15 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     return getConversationMessage(msg);
   }
 
+  /**
+   * Content handed to the bot (debounce and processBot), after the trigger and the finish keyword were checked
+   * on the plain content. Integrations may add context, e.g. the message the customer is replying to.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected getBotContent(content: string, msg: any): string {
+    return content;
+  }
+
   /** Integration-specific values added to the merged settings handed to processBot. */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
@@ -1321,31 +1330,39 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         session = resumed;
       }
 
+      const botContent = this.getBotContent(content, msg);
+
       // Process with debounce if needed
       if (debounceTime && debounceTime > 0) {
         // One window per chat of each instance: the controller is shared by every instance, and the same contact
         // writing to two instances must not have its messages merged and answered by only one of them
         const debounceKey = `${instance.instanceId}:${remoteJid}`;
 
-        this.processDebounce(this.userMessageDebounce, content, debounceKey, debounceTime, async (debouncedContent) => {
-          const reloaded = await this.reloadSessionAfterDebounce(instance, remoteJid, sessionJids, session);
+        this.processDebounce(
+          this.userMessageDebounce,
+          botContent,
+          debounceKey,
+          debounceTime,
+          async (debouncedContent) => {
+            const reloaded = await this.reloadSessionAfterDebounce(instance, remoteJid, sessionJids, session);
 
-          if (reloaded.skip) {
-            this.logger.log(`Discarding debounced message for ${remoteJid}: ${reloaded.reason}`);
-            return;
-          }
+            if (reloaded.skip) {
+              this.logger.log(`Discarding debounced message for ${remoteJid}: ${reloaded.reason}`);
+              return;
+            }
 
-          await this.processBot(
-            this.waMonitor.waInstances[instance.instanceName],
-            remoteJid,
-            findBot,
-            reloaded.session,
-            mergedSettings,
-            debouncedContent,
-            msg?.pushName,
-            msg,
-          );
-        });
+            await this.processBot(
+              this.waMonitor.waInstances[instance.instanceName],
+              remoteJid,
+              findBot,
+              reloaded.session,
+              mergedSettings,
+              debouncedContent,
+              msg?.pushName,
+              msg,
+            );
+          },
+        );
       } else {
         await this.processBot(
           this.waMonitor.waInstances[instance.instanceName],
@@ -1353,7 +1370,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
           findBot,
           session,
           mergedSettings,
-          content,
+          botContent,
           msg?.pushName,
           msg,
         );

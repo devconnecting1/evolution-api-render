@@ -439,3 +439,69 @@ describe('OpenaiService: sending', { concurrency: true }, () => {
     assert.deepEqual(t.waInstance.sent, []);
   });
 });
+
+describe('OpenaiService: presence after the bot turn (#2469/#2537)', { concurrency: true }, () => {
+  const states = (t: ReturnType<typeof setup>) => t.waInstance.presence.map((p: any) => p.state);
+
+  test('alwaysOnline off: "unavailable" once, after the last "paused" of the answer', async () => {
+    const t = setup({ settings: { splitMessages: true } });
+    t.waInstance.localSettings = { alwaysOnline: false };
+    t.openai.reply('parte 1\n\nparte 2');
+    await t.ask();
+
+    assert.deepEqual(texts(t.waInstance), ['parte 1', 'parte 2']);
+    const sequence = states(t);
+    assert.equal(sequence.filter((s: string) => s === 'unavailable').length, 1);
+    assert.equal(sequence.at(-1), 'unavailable');
+    assert.equal(sequence.at(-2), 'paused');
+    assert.equal(t.waInstance.presence.at(-1).jid, undefined, 'a global presence, not a chat state');
+  });
+
+  test('also after the fallback and after a discarded answer', async () => {
+    const failing = setup();
+    failing.openai.reply(apiError(500, 'boom'));
+    await failing.ask();
+    assert.deepEqual(texts(failing.waInstance), [UNKNOWN]);
+    assert.equal(states(failing).at(-1), 'unavailable');
+
+    const discarded = setup();
+    discarded.openai.reply(() => {
+      Object.assign(discarded.prisma.sessions.get(discarded.session.id), {
+        status: 'paused',
+        parameters: { humanLastMessageAt: new Date().toISOString() },
+      });
+      return discarded.openai.completion('resposta tardia');
+    });
+    await discarded.ask();
+    assert.deepEqual(discarded.waInstance.sent, []);
+    assert.equal(states(discarded).at(-1), 'unavailable');
+  });
+
+  test('alwaysOnline on: never "unavailable"', async () => {
+    const t = setup();
+    t.waInstance.localSettings = { alwaysOnline: true };
+    await t.ask();
+
+    assert.equal(texts(t.waInstance).length, 1);
+    assert.ok(!states(t).includes('unavailable'));
+  });
+
+  test('Cloud API: no presence at all', async () => {
+    const t = setup();
+    t.waInstance.integration = 'WHATSAPP-BUSINESS';
+    await t.ask();
+
+    assert.equal(texts(t.waInstance).length, 1);
+    assert.deepEqual(states(t), []);
+  });
+
+  test('a failing "unavailable" never affects the answer', async () => {
+    const t = setup();
+    t.waInstance.client.sendPresenceUpdate = async (state: string) => {
+      if (state === 'unavailable') throw new Error('Connection Closed');
+    };
+    await t.ask();
+
+    assert.deepEqual(texts(t.waInstance), ['resposta 1']);
+  });
+});

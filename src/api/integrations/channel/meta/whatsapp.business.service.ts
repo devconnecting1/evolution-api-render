@@ -839,14 +839,18 @@ export class BusinessStartupService extends ChannelStartupService {
               instanceId: this.instanceId,
             };
 
-            this.sendDataWebhook(Events.MESSAGES_UPDATE, message);
+            // Why Meta did not deliver (e.g. 131047 outside the 24 h window, #2486): webhook only, no new column
+            const errors = this.summarizeStatusErrors(item.errors);
+            const payload = errors ? { ...message, errors } : message;
+
+            this.sendDataWebhook(Events.MESSAGES_UPDATE, payload);
 
             await this.prismaRepository.messageUpdate.create({
               data: message,
             });
 
             if (findMessage.webhookUrl) {
-              await axios.post(findMessage.webhookUrl, message);
+              await axios.post(findMessage.webhookUrl, payload);
             }
           }
         }
@@ -854,6 +858,23 @@ export class BusinessStartupService extends ChannelStartupService {
     } catch (error) {
       this.logger.error(error);
     }
+  }
+
+  /**
+   * The `errors` of a Meta status (`statuses[].errors`), kept small for the webhook: at most 3 entries with
+   * code, title, message and details, each text cut at 300 characters. Undefined when there is none.
+   */
+  private summarizeStatusErrors(errors: any): { code?: number; title?: string; message?: string; details?: string }[] {
+    if (!Array.isArray(errors) || errors.length === 0) return undefined;
+
+    const cut = (value: any) => (typeof value === 'string' && value.length > 0 ? value.slice(0, 300) : undefined);
+
+    return errors.slice(0, 3).map((error: any) => ({
+      code: typeof error?.code === 'number' ? error.code : Number(error?.code) || undefined,
+      title: cut(error?.title),
+      message: cut(error?.message),
+      details: cut(error?.error_data?.details),
+    }));
   }
 
   /**

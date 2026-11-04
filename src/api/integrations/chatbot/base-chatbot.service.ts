@@ -181,6 +181,23 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
   }
 
   /**
+   * End of a bot turn (after the last 'paused'): unless the instance is set to always online, tell WhatsApp this
+   * device is offline again, so the phone of the office keeps getting push notifications (#2469, #2537).
+   * Baileys only; a failure here never affects the answer.
+   */
+  protected async sendUnavailablePresence(instance: any): Promise<void> {
+    if (instance?.integration !== Integration.WHATSAPP_BAILEYS) return;
+    if (instance?.localSettings?.alwaysOnline === true) return;
+    if (typeof instance?.client?.sendPresenceUpdate !== 'function') return;
+
+    try {
+      await instance.client.sendPresenceUpdate('unavailable');
+    } catch (error) {
+      this.logger.verbose(`Presence 'unavailable' not sent: ${error?.message || error}`);
+    }
+  }
+
+  /**
    * Standard implementation for sending messages to WhatsApp
    * This handles common patterns like markdown links and formatting.
    * Returns how many WhatsApp messages went out (text parts and media); 0 when a human took over first.
