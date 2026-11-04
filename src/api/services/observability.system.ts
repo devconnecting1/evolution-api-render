@@ -7,6 +7,8 @@
 import fs from 'node:fs';
 import os from 'node:os';
 
+import { getMessageStoreFailures, MessageStoreFailures } from '@utils/messageStoreFailures';
+
 import {
   buildMetric,
   finite,
@@ -18,6 +20,7 @@ import {
   withTimeout,
   worstStatus,
 } from './observability.shared';
+import type { UsageSnapshotItem } from './usage.service';
 
 const DB_TIMEOUT_MS = 5_000;
 const CACHE_TIMEOUT_MS = 2_000;
@@ -32,7 +35,7 @@ export type RedisState = { state: 'ready' | 'connecting' | 'down' | 'absent'; la
 export type PrismaLike = {
   $queryRawUnsafe: (query: string) => Promise<any>;
   instance: { groupBy: (args: any) => Promise<any[]>; findMany?: (args: any) => Promise<any[]> };
-  message: { count: (args: any) => Promise<number> };
+  message: { count: (args: any) => Promise<number>; groupBy?: (args: any) => Promise<any[]> };
   integrationSession: { groupBy: (args: any) => Promise<any[]> };
 };
 
@@ -40,6 +43,8 @@ export type SystemDeps = {
   prisma?: PrismaLike | null;
   /** In-memory instances of the WAMonitoringService (live connection state). */
   waInstances?: () => Record<string, any> | null | undefined;
+  /** "Plano e limites": month usage per instance (UsageService.snapshot). Without it there is no usage card. */
+  usage?: () => Promise<UsageSnapshotItem[]>;
   databaseProvider?: string;
   cache?: {
     redisEnabled: boolean;
@@ -58,6 +63,8 @@ export type SystemDeps = {
   sleep?: (ms: number) => Promise<void>;
   packageVersion?: () => string | null;
   nodeVersion?: string;
+  /** Incoming messages not stored because of a database error since the process started (#2714). */
+  messageStoreFailures?: () => MessageStoreFailures;
 };
 
 const defaultReadFile = (path: string): string | null => {
@@ -265,6 +272,29 @@ export class SystemProbe {
       { detail: instances.detail, status: instanceStatus, higherIsBetter: true },
     );
 
+    // Database errors while storing incoming messages (#2714): warning while the last one is less than 24 h old
+    let failures: MessageStoreFailures = { count: 0, lastAt: null, lastCode: null };
+    try {
+      failures = (d.messageStoreFailures ?? getMessageStoreFailures)();
+    } catch {
+      // optional
+    }
+    const lastFailureAt = failures.lastAt ? Date.parse(failures.lastAt) : NaN;
+    const recentFailure = Number.isFinite(lastFailureAt) && now() - lastFailureAt < 24 * 60 * 60 * 1000;
+    const storeFailuresMetric = buildMetric(
+      'message_store_failures',
+      'Falhas ao salvar mensagens',
+      failures.count,
+      null,
+      'count',
+      {
+        detail: failures.count
+          ? `Última em ${formatShortDate(failures.lastAt)} (${failures.lastCode}) · desde o início do processo`
+          : 'Erros do banco ao salvar mensagens recebidas, desde o início do processo',
+        status: recentFailure ? 'warning' : 'ok',
+      },
+    );
+
     const metrics: Metric[] = [
       memoryMetric,
       cpuMetric,
@@ -272,6 +302,7 @@ export class SystemProbe {
       buildMetric('messages_24h', 'Mensagens (24h)', database.messages24h, null, 'count', {
         detail: 'Mensagens enviadas e recebidas nas últimas 24 horas (salvas no banco)',
       }),
+      storeFailuresMetric,
       buildMetric('chatbot_sessions', 'Sessões de chatbot ativas', sessions.active, null, 'count', {
         detail: sessions.detail,
       }),
@@ -299,6 +330,11 @@ export class SystemProbe {
       notes.push(`${instances.total - instances.open} instância(s) não conectada(s) ao WhatsApp.`);
     }
     if (database.errors.length) notes.push(`Não foi possível ler do banco: ${database.errors.join(', ')}.`);
+    if (recentFailure) {
+      notes.push(
+        'Mensagens recebidas não foram salvas por erro do banco nas últimas 24 h: confira o log (P1001 = banco inacessível).',
+      );
+    }
     if (sessions.error) notes.push('Não foi possível ler as sessões de chatbot.');
     if (cacheState.problem) notes.push(cacheState.problem);
 
@@ -568,6 +604,40 @@ export class SystemProbe {
   }
 
   /**
+   * Time (ms) of the last message received (fromMe false) by each instance in the last 7 days, computed on
+   * request from the database; null when it cannot be read. Only timestamps per instance id.
+   */
+  private async collectLastReceived(): Promise<Map<string, number> | null> {
+    const d = this.deps;
+    const groupBy = d.prisma?.message?.groupBy;
+    if (!groupBy) return null;
+
+    const now = d.now ?? Date.now;
+    const sinceMs = now() - LAST_RECEIVED_WINDOW_MS;
+    const fromMePath = d.databaseProvider === 'mysql' ? '$.fromMe' : ['fromMe'];
+
+    try {
+      const rows = await withTimeout(
+        groupBy({
+          by: ['instanceId'],
+          where: { id: { gte: cuidFloor(sinceMs) }, key: { path: fromMePath, equals: false } },
+          _max: { messageTimestamp: true },
+        }),
+        DB_TIMEOUT_MS,
+        'timeout',
+      );
+      const result = new Map<string, number>();
+      for (const row of rows ?? []) {
+        const seconds = finite(row?._max?.messageTimestamp);
+        if (row?.instanceId && seconds) result.set(String(row.instanceId), seconds * 1000);
+      }
+      return result;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * "WhatsApp" card: the connection of each instance (live state of this server, or the stored one), the
    * disconnected ones first. Shows only the instance name, the channel and the state: never the phone number,
    * the profile name or the token (the page already requires the global API key, which lists the instances).
@@ -613,6 +683,8 @@ export class SystemProbe {
         stored = null;
       }
     }
+
+    const lastReceived = await this.collectLastReceived();
 
     let live: Record<string, any> = {};
     try {
@@ -667,6 +739,7 @@ export class SystemProbe {
         state === 'close' && reason !== null ? disconnectReason(reason) : null,
         state === 'connecting' ? 'aguardando QR code ou reconexão' : null,
         liveNames.length && !loaded ? 'não carregada neste servidor (estado salvo)' : null,
+        state === 'open' && lastReceived ? lastReceivedLabel(lastReceived.get(String(row.id)), now()) : null,
       ]
         .filter(Boolean)
         .join(' · '),
@@ -678,6 +751,19 @@ export class SystemProbe {
         `${notOpen} instância(s) sem conexão: abra a instância no painel e leia o QR code de novo se a sessão foi encerrada.`,
       );
     }
+    // #2647: an instance can stay "open" while WhatsApp stops delivering its messages; restarting it fixes it
+    if (lastReceived) {
+      const quiet = items.filter(({ row, state }) => {
+        if (state !== 'open' || !row.id) return false;
+        const at = lastReceived.get(String(row.id));
+        return !at || now() - at > QUIET_INSTANCE_MS;
+      }).length;
+      if (quiet) {
+        view.notes.push(
+          `${quiet} instância(s) conectada(s) sem mensagem recebida há mais de 24 h. Se clientes estão escrevendo, reinicie a instância (pode estar conectada mas sem receber eventos).`,
+        );
+      }
+    }
     if (items.length > WHATSAPP_MAX_RESOURCES) {
       view.notes.push(`Mostrando ${WHATSAPP_MAX_RESOURCES} de ${items.length} instâncias (as sem conexão primeiro).`);
     }
@@ -688,9 +774,78 @@ export class SystemProbe {
 
     return view;
   }
+
+  public hasUsage(): boolean {
+    return typeof this.deps.usage === 'function';
+  }
+
+  /**
+   * "Plano e uso" card: AI answers of the month per instance against its franchise. A metric reaches the overview
+   * alerts at the alertPercent of the instance and turns critical at 100% (then the excedente is in the notes).
+   */
+  public async collectUsage(): Promise<ProviderView> {
+    const now = this.deps.now ?? Date.now;
+    const items = await withTimeout(this.deps.usage?.() ?? Promise.resolve([]), DB_TIMEOUT_MS, 'timeout');
+    const view: ProviderView = {
+      id: 'usage',
+      name: 'Plano e uso',
+      description: 'Respostas da IA no mês, por instância',
+      configured: true,
+      plan: null,
+      status: 'ok',
+      updatedAt: new Date(now()).toISOString(),
+      metrics: [],
+      resources: [],
+      notes: [],
+      links: [],
+    };
+
+    view.metrics = items.slice(0, USAGE_MAX_METRICS).map((item) =>
+      buildMetric(`usage:${item.name}`, `Respostas da IA · ${item.name}`, item.responses, item.limit, 'count', {
+        warnAt: item.alertPercent,
+        criticalAt: 100,
+        alertAt: item.limit ? item.alertPercent : undefined,
+        detail: item.limit
+          ? `${item.planName ? `Plano ${item.planName} · ` : ''}${formatNumber(item.responses, 0)} de ${formatNumber(
+              item.limit,
+              0,
+            )} em ${item.period}${item.excedente ? ` · excedente ${formatNumber(item.excedente, 0)}` : ''}`
+          : `Sem limite configurado · ${formatNumber(item.responses, 0)} em ${item.period}`,
+      }),
+    );
+
+    for (const item of items) {
+      if (item.limit && item.excedente > 0) {
+        view.notes.push(
+          `${item.name}: franquia esgotada, ${formatNumber(item.excedente, 0)} respostas de excedente ` +
+            `(${item.blocks1000} bloco(s) de 1.000).`,
+        );
+      }
+    }
+    if (!items.length) view.notes.push('Nenhuma resposta da IA neste mês e nenhum plano configurado.');
+    if (items.length > USAGE_MAX_METRICS)
+      view.notes.push(`Mostrando ${USAGE_MAX_METRICS} de ${items.length} instâncias.`);
+    if (worstStatus(view.metrics) === 'critical') view.status = 'partial';
+
+    return view;
+  }
 }
 
+export const USAGE_MAX_METRICS = 50;
+
 const WHATSAPP_MAX_INSTANCES = 500;
+/** Window of the "last message received" lookup (bounded by the cuid primary key, like the 24h count). */
+const LAST_RECEIVED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const QUIET_INSTANCE_MS = 24 * 60 * 60 * 1000;
+
+function lastReceivedLabel(at: number | undefined, now: number): string {
+  if (!at) return 'nenhuma mensagem recebida em 7 dias';
+  const minutes = Math.max(0, Math.floor((now - at) / 60_000));
+  if (minutes < 60) return `última mensagem recebida há ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `última mensagem recebida há ${hours} h`;
+  return `última mensagem recebida há ${Math.floor(hours / 24)} dias`;
+}
 const WHATSAPP_MAX_RESOURCES = 50;
 
 function channelLabel(integration: unknown): string {

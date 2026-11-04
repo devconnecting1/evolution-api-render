@@ -19,3 +19,9 @@ export const recordChatbotEmit = async (data: any) => {
   chatbotEmitCalls.push(data);
   if (emitHandler) await emitHandler(data);
 };
+
+/**
+ * Members of the `@api/server.module` stub (setup.ts) a test wants real, e.g. `openaiController` to run the real
+ * ChatbotController fan-out. Read on every access, so it can be set after the modules under test were loaded.
+ */
+export const serverModuleOverrides: Record<string, any> = {};

@@ -1,0 +1,513 @@
+/*
+ * WhatsAI Manager: "Plano e limites" page and the usage bar of "Visão Geral" (WaUsage, manager/patches/usage-limits.py).
+ * Linked right after minimal.css. Only the design tokens of minimal.css (var(--m-*)): no colour is defined here,
+ * so a change of palette there applies to this page too.
+ */
+
+/* ============================================================================================== page */
+.wu-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: var(--m-content);
+  margin: 0 auto;
+  padding: 0 0 32px;
+  color: var(--m-text);
+  font-size: 14px;
+}
+.wu-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wu-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+}
+.wu-muted,
+.wu-hint {
+  color: var(--m-text-2);
+}
+.wu-hint {
+  display: block;
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+}
+.wu-label {
+  display: block;
+  margin: 0 0 6px;
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wu-mono {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================================================= cards */
+.wu-card,
+.wu-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+}
+.wu-card-head,
+.wu-bar-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wu-card-head p {
+  margin: 4px 0 0;
+}
+.wu-card-title,
+.wu-bar-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 22px;
+}
+.wu-bar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.wu-ico {
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: var(--m-radius-field);
+  background: var(--m-tint);
+  color: var(--m-primary);
+}
+.wu-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wu-big {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+  font-variant-numeric: tabular-nums;
+}
+.wu-bar {
+  gap: 10px;
+}
+.wu-bar-text,
+.wu-bar-note {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.wu-bar-text strong {
+  font-weight: 500;
+}
+.wu-bar-note {
+  font-size: 13px;
+}
+.wu-bar-note[data-tone='bad'] {
+  color: var(--m-bad);
+}
+.wu-link {
+  color: var(--m-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+.wu-link:hover {
+  color: var(--m-primary-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.wu-skeleton {
+  min-height: 160px;
+  background: var(--m-surface);
+}
+
+/* ============================================================================================= meter */
+.wu-meter {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-hover);
+}
+.wu-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--m-primary);
+  transition: width 0.3s ease;
+}
+.wu-meter[data-tone='warn'] .wu-meter-fill {
+  background: var(--m-warn);
+}
+.wu-meter[data-tone='bad'] .wu-meter-fill {
+  background: var(--m-bad);
+}
+
+.wu-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-pill);
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.wu-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--m-ok);
+}
+.wu-chip[data-tone='warn'] .wu-dot {
+  background: var(--m-warn);
+}
+.wu-chip[data-tone='bad'] .wu-dot {
+  background: var(--m-bad);
+}
+
+.wu-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.wu-stats > div {
+  padding: 12px 16px;
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+}
+.wu-stats dt {
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wu-stats dd {
+  margin: 4px 0 0;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================================= chart */
+.wu-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 72px;
+  padding: 0 0 1px;
+  border-bottom: 1px solid var(--m-border);
+}
+.wu-col {
+  flex: 1 1 0;
+  min-width: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--m-tint-line);
+}
+.wu-col:last-child {
+  background: var(--m-primary);
+}
+.wu-col:hover {
+  background: var(--m-primary-hover);
+}
+.wu-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  color: var(--m-text-2);
+  font-size: 12px;
+}
+.wu-top ol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wu-top li {
+  display: flex;
+  justify-content: space-between;
+  max-width: 360px;
+  padding: 6px 10px;
+  border-radius: var(--m-radius-item);
+  background: var(--m-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================================== form */
+.wu-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.wu-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.wu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.wu-field {
+  min-width: 0;
+}
+.wu-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--m-control);
+  padding: 0 10px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: 14px;
+}
+.wu-input:disabled {
+  background: var(--m-surface);
+  color: var(--m-text-3);
+}
+.wu-input:focus-visible,
+.wu-plan:focus-within,
+.wu-option:focus-within,
+.wu-btn:focus-visible,
+.wu-link:focus-visible,
+.wu-day-name input:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wu-textarea {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  line-height: 20px;
+  resize: vertical;
+}
+.wu-time {
+  /* room for 12-hour browsers ("09:00 AM") */
+  width: 136px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wu-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.wu-plan,
+.wu-option {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  cursor: pointer;
+}
+.wu-plan {
+  flex-direction: column;
+  gap: 2px;
+}
+.wu-plan input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.wu-plan:hover,
+.wu-option:hover {
+  background: var(--m-hover);
+}
+.wu-plan[data-checked='true'],
+.wu-option[data-checked='true'] {
+  border-color: var(--m-primary);
+  background: var(--m-tint);
+}
+.wu-plan-name,
+.wu-option-title {
+  font-weight: 500;
+}
+.wu-plan-n {
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.wu-option input {
+  flex: none;
+  margin: 3px 0 0;
+  accent-color: var(--m-primary);
+}
+.wu-option > span {
+  display: flex;
+  flex-direction: column;
+}
+.wu-option .wu-hint {
+  margin: 2px 0 0;
+}
+
+.wu-hours {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.wu-hours > .wu-field:first-child {
+  max-width: 280px;
+}
+.wu-week {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+}
+.wu-day {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px;
+}
+.wu-day + .wu-day {
+  border-top: 1px solid var(--m-border);
+}
+.wu-day-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.wu-day-name input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--m-primary);
+}
+.wu-day-times {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.wu-day-times .wu-hint {
+  margin: 0;
+}
+
+/* =========================================================================================== buttons */
+.wu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.wu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--m-control);
+  padding: 0 12px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wu-btn:hover:not(:disabled) {
+  background: var(--m-hover);
+}
+.wu-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.wu-btn-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+.wu-btn-primary {
+  border-color: var(--m-primary);
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+}
+.wu-btn-primary:hover:not(:disabled) {
+  border-color: var(--m-primary-hover);
+  background: var(--m-primary-hover);
+}
+.wu-copy {
+  height: 28px;
+  padding: 0 8px;
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+
+.wu-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--m-border);
+  border-left: 3px solid var(--m-bad);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+}
+.wu-callout p,
+.wu-callout ul {
+  margin: 0;
+}
+.wu-callout ul {
+  padding-left: 18px;
+}
+
+/* ============================================================================================ mobile */
+@media (max-width: 639px) {
+  .wu-card,
+  .wu-bar {
+    padding: 16px;
+  }
+  .wu-day {
+    grid-template-columns: 1fr auto;
+  }
+  .wu-day-times {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: 6px;
+  }
+  .wu-time {
+    width: 120px;
+    padding: 0 6px;
+  }
+  .wu-actions .wu-btn {
+    flex: 1 1 auto;
+  }
+}

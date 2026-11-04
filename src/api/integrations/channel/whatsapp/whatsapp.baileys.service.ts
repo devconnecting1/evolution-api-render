@@ -85,9 +85,12 @@ import { createJid } from '@utils/createJid';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
 import { LidPnPair, toLidPnPair } from '@utils/lidJid';
 import { makeProxyAgent, makeProxyAgentUndici } from '@utils/makeProxyAgent';
+import { databaseErrorCode, recordMessageStoreFailure } from '@utils/messageStoreFailures';
 import { getOnWhatsappCache, saveOnWhatsappCache } from '@utils/onWhatsappCache';
+import { PlaceholderResendTracker } from '@utils/placeholderResendTracker';
 import { status } from '@utils/renderStatus';
 import { sendTelemetry } from '@utils/sendTelemetry';
+import { unwrapMessageContent } from '@utils/unwrapMessageContent';
 import useMultiFileAuthStatePrisma from '@utils/use-multi-file-auth-state-prisma';
 import { AuthStateProvider } from '@utils/use-multi-file-auth-state-provider-files';
 import { useMultiFileAuthStateRedisDb } from '@utils/use-multi-file-auth-state-redis-db';
@@ -250,6 +253,7 @@ export class BaileysStartupService extends ChannelStartupService {
 
   private authStateProvider: AuthStateProvider;
   private readonly msgRetryCounterCache: CacheStore = new NodeCache();
+  private readonly placeholderResendTracker = new PlaceholderResendTracker();
   private readonly userDevicesCache: CacheStore = new NodeCache({ stdTTL: 300000, useClones: false });
   private endSession = false;
   private logBaileys = this.configService.get<Log>('LOG').BAILEYS;
@@ -523,36 +527,69 @@ export class BaileysStartupService extends ChannelStartupService {
     }
   }
 
+  /**
+   * Stored message of a key (`full`: the whole row). Returns `undefined` when it is not stored or the query
+   * fails: Baileys takes any truthy value from `getMessage` as "found" and would answer a retry request with an
+   * empty message, spending one of the retries and leaving "Waiting for this message" on the recipient (#2705).
+   */
   private async getMessage(key: proto.IMessageKey, full = false) {
+    if (!key?.id) return undefined;
+
+    let webMessageInfo: proto.IWebMessageInfo[];
     try {
       // Use raw SQL to avoid JSON path issues
-      const webMessageInfo = (await this.prismaRepository.$queryRaw`
+      webMessageInfo = (await this.prismaRepository.$queryRaw`
         SELECT * FROM "Message"
         WHERE "instanceId" = ${this.instanceId}
         AND "key"->>'id' = ${key.id}
+        LIMIT 1
       `) as proto.IWebMessageInfo[];
+    } catch (error) {
+      this.logger.warn(`getMessage failed for ${key.id}: ${error?.message}`);
+      return undefined;
+    }
 
-      if (full) {
-        return webMessageInfo[0];
+    const row = webMessageInfo?.[0];
+    if (!row) return undefined;
+
+    if (full) {
+      return row;
+    }
+
+    if (row.message?.pollCreationMessage) {
+      const messageSecretBase64 = row.message?.messageContextInfo?.messageSecret;
+
+      if (typeof messageSecretBase64 === 'string') {
+        const messageSecret = Buffer.from(messageSecretBase64, 'base64');
+
+        const msg = {
+          messageContextInfo: { messageSecret },
+          pollCreationMessage: row.message?.pollCreationMessage,
+        };
+
+        return msg;
       }
-      if (webMessageInfo[0].message?.pollCreationMessage) {
-        const messageSecretBase64 = webMessageInfo[0].message?.messageContextInfo?.messageSecret;
+    }
 
-        if (typeof messageSecretBase64 === 'string') {
-          const messageSecret = Buffer.from(messageSecretBase64, 'base64');
+    return row.message ?? undefined;
+  }
 
-          const msg = {
-            messageContextInfo: { messageSecret },
-            pollCreationMessage: webMessageInfo[0].message?.pollCreationMessage,
-          };
+  /** Whether a message with this key.id is already stored for the instance (uses the key->>'id' index). */
+  private async isMessageStored(keyId: string | null | undefined): Promise<boolean> {
+    if (!keyId) return false;
 
-          return msg;
-        }
-      }
-
-      return webMessageInfo[0].message;
-    } catch {
-      return { conversation: '' };
+    try {
+      const rows = (await this.prismaRepository.$queryRaw`
+        SELECT 1 AS found FROM "Message"
+        WHERE "instanceId" = ${this.instanceId}
+        AND "key"->>'id' = ${keyId}
+        LIMIT 1
+      `) as unknown[];
+      return Array.isArray(rows) && rows.length > 0;
+    } catch (error) {
+      // On doubt store it: a duplicate row is better than a lost message
+      this.logger.warn(`Duplicate check failed for ${keyId}: ${error?.message}`);
+      return false;
     }
   }
 
@@ -648,6 +685,7 @@ export class BaileysStartupService extends ChannelStartupService {
         keys: makeCacheableSignalKeyStore(this.instance.authState.state.keys, P({ level: 'error' }) as any),
       },
       msgRetryCounterCache: this.msgRetryCounterCache,
+      placeholderResendCache: this.placeholderResendTracker.cache,
       generateHighQualityLinkPreview: true,
       getMessage: async (key) => (await this.getMessage(key)) as Promise<proto.IMessage>,
       ...browserOptions,
@@ -944,7 +982,7 @@ export class BaileysStartupService extends ChannelStartupService {
     }) => {
       try {
         if (syncType === proto.HistorySync.HistorySyncType.ON_DEMAND) {
-          console.log('received on-demand history sync, messages=', messages);
+          this.logger.verbose(`received on-demand history sync, messages=${messages.length}`);
         }
         console.log(
           `recv ${chats.length} chats, ${contacts.length} contacts, ${messages.length} msgs (is latest: ${isLatest}, progress: ${progress}%), type: ${syncType}`,
@@ -1086,8 +1124,9 @@ export class BaileysStartupService extends ChannelStartupService {
       { messages, type, requestId }: { messages: WAMessage[]; type: MessageUpsertType; requestId?: string },
       settings: any,
     ) => {
-      try {
-        for (const received of messages) {
+      // Each message has its own try/catch: one bad message must not drop the rest of the batch (#2773)
+      for (const received of messages) {
+        try {
           if (
             received?.messageStubParameters?.some?.((param) =>
               [
@@ -1105,25 +1144,51 @@ export class BaileysStartupService extends ChannelStartupService {
             this.logger.warn(`Message ignored with messageStubParameters: ${JSON.stringify(received, null, 2)}`);
             continue;
           }
-          if (received.message?.conversation || received.message?.extendedTextMessage?.text) {
-            const text = received.message?.conversation || received.message?.extendedTextMessage?.text;
 
-            if (text == 'requestPlaceholder' && !requestId) {
-              const messageId = await this.client.requestPlaceholderResend(received.key);
-
-              console.log('requested placeholder resync, id=', messageId);
-            } else if (requestId) {
-              console.log('Message received from phone, id=', requestId, received);
+          // GHSA-qvv5-jq5g-4cgg (Baileys < rc12): an upsert with requestId is the answer to a placeholder resend
+          // and its key/content come from the answer bytes, which a contact can forge. Accept it only for a
+          // message this socket really asked the phone to resend.
+          if (requestId) {
+            if (!this.placeholderResendTracker.consume(received?.key?.id)) {
+              this.logger.warn(
+                `messages.upsert with requestId ${requestId} ignored: message ${received?.key?.id} was never requested (possible forged placeholder resend)`,
+              );
+              continue;
             }
-
-            if (text == 'onDemandHistSync') {
-              const messageId = await this.client.fetchMessageHistory(50, received.key, received.messageTimestamp!);
-              console.log('requested on-demand sync, id=', messageId);
-            }
+            this.logger.verbose(
+              `Placeholder resend received from the phone, requestId=${requestId}, id=${received.key.id}`,
+            );
           }
 
-          const editedMessage =
+          // An edit (editedMessage wrapper) is never a new message, whatever it unwraps to (#2672)
+          const isEditWrapper = !!received?.message?.editedMessage;
+
+          // Disappearing/view once/document with caption: work on the real content (#2773)
+          if (received?.message) {
+            received.message = unwrapMessageContent(received.message);
+          }
+
+          // Debug triggers of Baileys, only for messages written by the owner of the number
+          const debugText = received?.key?.fromMe
+            ? received.message?.conversation || received.message?.extendedTextMessage?.text
+            : undefined;
+
+          if (debugText === 'requestPlaceholder' && !requestId) {
+            const messageId = await this.client.requestPlaceholderResend(received.key);
+            this.logger.info(`requested placeholder resync, id=${messageId}`);
+          }
+
+          if (debugText === 'onDemandHistSync') {
+            const messageId = await this.client.fetchMessageHistory(50, received.key, received.messageTimestamp!);
+            this.logger.info(`requested on-demand sync, id=${messageId}`);
+          }
+
+          const protocolMessage =
             received?.message?.protocolMessage || received?.message?.editedMessage?.message?.protocolMessage;
+          // Only MESSAGE_EDIT is an edit: REVOKE, EPHEMERAL_SETTING, history/app state sync... are not (#2672);
+          // a revoke reaches messages.update (MESSAGES_DELETE) through Baileys
+          const editedMessage =
+            protocolMessage?.type === proto.Message.ProtocolMessage.Type.MESSAGE_EDIT ? protocolMessage : undefined;
 
           if (editedMessage) {
             if (this.configService.get<Chatwoot>('CHATWOOT').ENABLED && this.localChatwoot?.enabled)
@@ -1140,7 +1205,8 @@ export class BaileysStartupService extends ChannelStartupService {
             }
 
             const oldMessage = await this.getMessage(editedMessage.key, true);
-            if ((oldMessage as any)?.id) {
+            // An edit without readable content (e.g. still encrypted) must not wipe the stored message
+            if ((oldMessage as any)?.id && editedMessage.editedMessage) {
               const editedMessageTimestamp = Long.isLong(received?.messageTimestamp)
                 ? Math.floor(received?.messageTimestamp.toNumber())
                 : Math.floor(received?.messageTimestamp as number);
@@ -1166,7 +1232,7 @@ export class BaileysStartupService extends ChannelStartupService {
             }
           }
 
-          if ((type !== 'notify' && type !== 'append') || editedMessage || !received?.message) {
+          if ((type !== 'notify' && type !== 'append') || protocolMessage || isEditWrapper || !received?.message) {
             continue;
           }
 
@@ -1178,10 +1244,16 @@ export class BaileysStartupService extends ChannelStartupService {
             continue;
           }
 
-          const existingChat = await this.prismaRepository.chat.findFirst({
-            where: { instanceId: this.instanceId, remoteJid: received.key.remoteJid },
-            select: { id: true, name: true },
-          });
+          // Only used to refresh the contact name: a database error here must not drop the message (#2714)
+          const existingChat = await this.prismaRepository.chat
+            .findFirst({
+              where: { instanceId: this.instanceId, remoteJid: received.key.remoteJid },
+              select: { id: true, name: true },
+            })
+            .catch((error) => {
+              this.logger.warn(`Chat lookup failed for ${received.key.id} (${databaseErrorCode(error)})`);
+              return null;
+            });
 
           if (
             existingChat &&
@@ -1355,92 +1427,108 @@ export class BaileysStartupService extends ChannelStartupService {
             }
           }
 
-          if (this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { pollUpdates, ...messageData } = messageRaw;
-            const msg = await this.prismaRepository.message.create({ data: messageData });
+          const saveNewMessage = this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE;
+          // WhatsApp redelivers the same key.id (#2737): do not store a second row for it
+          const alreadyStored = saveNewMessage && (await this.isMessageStored(received.key.id));
+          if (alreadyStored) {
+            this.logger.verbose(`Message ${received.key.id} already stored: duplicate insert skipped`);
+          }
 
-            const { remoteJid } = received.key;
-            const timestamp = msg.messageTimestamp;
-            const fromMe = received.key.fromMe.toString();
-            const messageKey = `${remoteJid}_${timestamp}_${fromMe}`;
+          if (saveNewMessage && !alreadyStored) {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { pollUpdates, ...messageData } = messageRaw;
+              const msg = await this.prismaRepository.message.create({ data: messageData });
 
-            const cachedTimestamp = await this.baileysCache.get(messageKey);
+              const { remoteJid } = received.key;
+              const timestamp = msg.messageTimestamp;
+              const fromMe = received.key.fromMe.toString();
+              const messageKey = `${remoteJid}_${timestamp}_${fromMe}`;
 
-            if (!cachedTimestamp) {
-              if (!received.key.fromMe) {
-                if (msg.status === status[3]) {
-                  this.logger.log(`Update not read messages ${remoteJid}`);
-                  await this.updateChatUnreadMessages(remoteJid);
-                } else if (msg.status === status[4]) {
+              const cachedTimestamp = await this.baileysCache.get(messageKey);
+
+              if (!cachedTimestamp) {
+                if (!received.key.fromMe) {
+                  if (msg.status === status[3]) {
+                    this.logger.log(`Update not read messages ${remoteJid}`);
+                    await this.updateChatUnreadMessages(remoteJid);
+                  } else if (msg.status === status[4]) {
+                    this.logger.log(`Update readed messages ${remoteJid} - ${timestamp}`);
+                    await this.updateMessagesReadedByTimestamp(remoteJid, timestamp);
+                  }
+                } else {
+                  // is send message by me
                   this.logger.log(`Update readed messages ${remoteJid} - ${timestamp}`);
                   await this.updateMessagesReadedByTimestamp(remoteJid, timestamp);
                 }
+
+                await this.baileysCache.set(messageKey, true, this.MESSAGE_CACHE_TTL_SECONDS);
               } else {
-                // is send message by me
-                this.logger.log(`Update readed messages ${remoteJid} - ${timestamp}`);
-                await this.updateMessagesReadedByTimestamp(remoteJid, timestamp);
+                this.logger.info(`Update readed messages duplicated ignored [avoid deadlock]: ${messageKey}`);
               }
 
-              await this.baileysCache.set(messageKey, true, this.MESSAGE_CACHE_TTL_SECONDS);
-            } else {
-              this.logger.info(`Update readed messages duplicated ignored [avoid deadlock]: ${messageKey}`);
-            }
-
-            if (isMedia) {
-              if (this.configService.get<S3>('S3').ENABLE) {
-                try {
-                  if (isVideo && !this.configService.get<S3>('S3').SAVE_VIDEO) {
-                    this.logger.warn('Video upload is disabled. Skipping video upload.');
-                    // Skip video upload by returning early from this block
-                    return;
-                  }
-
-                  const message: any = received;
-
-                  // Verificação adicional para garantir que há conteúdo de mídia real
-                  const hasRealMedia = this.hasValidMediaContent(message);
-
-                  if (!hasRealMedia) {
-                    this.logger.warn('Message detected as media but contains no valid media content');
-                  } else {
-                    const media = await this.getBase64FromMediaMessage({ message }, true);
-
-                    if (!media) {
-                      this.logger.verbose('No valid media to upload (messageContextInfo only), skipping MinIO');
+              if (isMedia) {
+                if (this.configService.get<S3>('S3').ENABLE) {
+                  try {
+                    if (isVideo && !this.configService.get<S3>('S3').SAVE_VIDEO) {
+                      this.logger.warn('Video upload is disabled. Skipping video upload.');
+                      // Skip video upload by returning early from this block
                       return;
                     }
 
-                    const { buffer, mediaType, fileName, size } = media;
-                    const mimetype = mimeTypes.lookup(fileName).toString();
-                    const fullName = join(
-                      `${this.instance.id}`,
-                      received.key.remoteJid,
-                      mediaType,
-                      `${Date.now()}_${fileName}`,
-                    );
-                    await s3Service.uploadFile(fullName, buffer, size.fileLength?.low, { 'Content-Type': mimetype });
+                    const message: any = received;
 
-                    await this.prismaRepository.media.create({
-                      data: {
-                        messageId: msg.id,
-                        instanceId: this.instanceId,
-                        type: mediaType,
-                        fileName: fullName,
-                        mimetype,
-                      },
-                    });
+                    // Verificação adicional para garantir que há conteúdo de mídia real
+                    const hasRealMedia = this.hasValidMediaContent(message);
 
-                    const mediaUrl = await s3Service.getObjectUrl(fullName);
+                    if (!hasRealMedia) {
+                      this.logger.warn('Message detected as media but contains no valid media content');
+                    } else {
+                      const media = await this.getBase64FromMediaMessage({ message }, true);
 
-                    messageRaw.message.mediaUrl = mediaUrl;
+                      if (!media) {
+                        this.logger.verbose('No valid media to upload (messageContextInfo only), skipping MinIO');
+                        return;
+                      }
 
-                    await this.prismaRepository.message.update({ where: { id: msg.id }, data: messageRaw });
+                      const { buffer, mediaType, fileName, size } = media;
+                      const mimetype = mimeTypes.lookup(fileName).toString();
+                      const fullName = join(
+                        `${this.instance.id}`,
+                        received.key.remoteJid,
+                        mediaType,
+                        `${Date.now()}_${fileName}`,
+                      );
+                      await s3Service.uploadFile(fullName, buffer, size.fileLength?.low, { 'Content-Type': mimetype });
+
+                      await this.prismaRepository.media.create({
+                        data: {
+                          messageId: msg.id,
+                          instanceId: this.instanceId,
+                          type: mediaType,
+                          fileName: fullName,
+                          mimetype,
+                        },
+                      });
+
+                      const mediaUrl = await s3Service.getObjectUrl(fullName);
+
+                      messageRaw.message.mediaUrl = mediaUrl;
+
+                      await this.prismaRepository.message.update({ where: { id: msg.id }, data: messageRaw });
+                    }
+                  } catch (error) {
+                    this.logger.error(['Error on upload file to minio', error?.message, error?.stack]);
                   }
-                } catch (error) {
-                  this.logger.error(['Error on upload file to minio', error?.message, error?.stack]);
                 }
               }
+            } catch (error) {
+              // Not stored (database unreachable, pool timeout...): say it loudly and still hand the message to
+              // the webhook and the chatbots below, so the contact may get an answer (#2714)
+              recordMessageStoreFailure(error);
+              this.logger.error(
+                `Message ${received.key.id} (${messageRaw.messageType}) not stored (${databaseErrorCode(error)}): ${error?.message ?? error}`,
+              );
             }
           }
 
@@ -1481,7 +1569,6 @@ export class BaileysStartupService extends ChannelStartupService {
           if (messageRaw.key.remoteJid?.includes('@lid') && messageRaw.key.remoteJidAlt) {
             messageRaw.key.remoteJid = messageRaw.key.remoteJidAlt;
           }
-          console.log(messageRaw);
 
           this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
 
@@ -1552,9 +1639,20 @@ export class BaileysStartupService extends ChannelStartupService {
               update: contactRaw,
               create: contactRaw,
             });
+        } catch (error) {
+          let messageType: string;
+          try {
+            messageType = getContentType(received?.message) ?? 'unknown';
+          } catch {
+            messageType = 'unknown';
+          }
+          // A Prisma error (P1001 unreachable, P2024 pool timeout...) also counts for the observability card
+          if (/^P\d{4}$/.test(databaseErrorCode(error))) recordMessageStoreFailure(error);
+          this.logger.error(
+            `Error processing messages.upsert message ${received?.key?.id} (${messageType}): ${error?.message ?? error}`,
+          );
+          if (error?.stack) this.logger.error(error.stack);
         }
-      } catch (error) {
-        this.logger.error(error);
       }
     },
 
@@ -1875,37 +1973,55 @@ export class BaileysStartupService extends ChannelStartupService {
     },
   };
 
+  /**
+   * Incoming call: rejected when `rejectCall` is on, and only then answered with `msgCall` (#2664: the text used
+   * to be sent even with `rejectCall` off, e.g. when the Manager saved a placeholder text).
+   */
+  private async callHandle(call: any, settings: any) {
+    const isOffer = call?.status == 'offer';
+
+    if (settings?.rejectCall && isOffer) {
+      this.client.rejectCall(call.id, call.from);
+
+      if (settings?.msgCall?.trim().length > 0) {
+        if (call.from.endsWith('@lid')) {
+          call.from = await this.client.signalRepository.lidMapping.getPNForLID(call.from as string);
+        }
+        // Automatic reply re-emitted below as a fromMe upsert: register its id so it is not
+        // taken for a human message by the chatbots.
+        const msg = await this.client.sendMessage(
+          call.from,
+          { text: settings.msgCall },
+          { messageId: await this.generateBotMessageId() },
+        );
+
+        this.client.ev.emit('messages.upsert', { messages: [msg], type: 'notify' });
+      }
+    }
+
+    this.sendDataWebhook(Events.CALL, call);
+  }
+
   private eventHandler() {
     this.client.ev.process(async (events) => {
       this.eventProcessingQueue = this.eventProcessingQueue.then(async () => {
         try {
           if (!this.endSession) {
             const database = this.configService.get<Database>('DATABASE');
-            const settings = await this.findSettings();
+            let settings: any;
+            try {
+              settings = await this.findSettings();
+            } catch (error) {
+              // Database unreachable (#2714): keep handling the events with the settings loaded at startup
+              // instead of dropping the whole batch (messages included) in silence
+              this.logger.error(
+                `Settings not read from the database (${databaseErrorCode(error)}): using the cached settings. ${error?.message ?? ''}`,
+              );
+              settings = { ...this.localSettings };
+            }
 
             if (events.call) {
-              const call = events.call[0];
-
-              if (settings?.rejectCall && call.status == 'offer') {
-                this.client.rejectCall(call.id, call.from);
-              }
-
-              if (settings?.msgCall?.trim().length > 0 && call.status == 'offer') {
-                if (call.from.endsWith('@lid')) {
-                  call.from = await this.client.signalRepository.lidMapping.getPNForLID(call.from as string);
-                }
-                // Automatic reply re-emitted below as a fromMe upsert: register its id so it is not
-                // taken for a human message by the chatbots.
-                const msg = await this.client.sendMessage(
-                  call.from,
-                  { text: settings.msgCall },
-                  { messageId: await this.generateBotMessageId() },
-                );
-
-                this.client.ev.emit('messages.upsert', { messages: [msg], type: 'notify' });
-              }
-
-              this.sendDataWebhook(Events.CALL, call);
+              await this.callHandle(events.call[0], settings);
             }
 
             if (events['connection.update']) {
@@ -4910,7 +5026,7 @@ export class BaileysStartupService extends ChannelStartupService {
   }
 
   public async baileysSendNode(stanza: any) {
-    console.log('stanza', JSON.stringify(stanza));
+    this.logger.verbose('sending custom stanza');
     const response = await this.client.sendNode(stanza);
 
     return response;

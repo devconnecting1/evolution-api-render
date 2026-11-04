@@ -21,6 +21,7 @@ Uma implantação, cobrada uma vez, e uma mensalidade fixa que cobre a operaçã
 
 - **Uma resposta** é cada vez que a IA responde uma mensagem (ou uma sequência de mensagens seguidas) do seu cliente. Uma conversa típica tem de 5 a 10 respostas: 2.000 respostas equivalem a algo entre 200 e 400 conversas por mês.
 - **Excedente:** se o mês passar da franquia, a IA continua respondendo. O excedente custa **R$ 49 por bloco de 1.000 respostas**, na fatura seguinte. No primeiro mês em que isso acontecer, avisamos e não cobramos. Respostas não usadas não acumulam.
+- **Medição:** as respostas da IA são contadas automaticamente, por número, e o uso do mês (franquia, excedente e últimos 30 dias) fica visível no painel. Se preferir, a IA pode pausar ou avisar o cliente ao atingir a franquia, ou atender só em horários definidos.
 - **Piloto assistido de 14 dias:** R$ 690 (1 número, até 500 respostas), abatido da implantação se você contratar em até 7 dias após o piloto.
 
 ## O que a IA faz sozinha e o que é serviço da nossa equipe

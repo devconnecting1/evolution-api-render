@@ -112,5 +112,28 @@ describe('observability: Sistema on a real database (integration)', { skip: SKIP
     assert.equal(row.url, `/manager/instance/${instanceId}/dashboard`);
     assert.match(row.detail, /sessão encerrada no celular/);
     assert.equal(whatsapp.status, 'partial');
+
+    // Last message received of a connected instance (#2647): the JSON path filter and _max on the real schema
+    const open = await tx.instance.create({
+      data: { name: `obs-open-${nextId()}`.toLowerCase(), integration: 'WHATSAPP-BAILEYS', connectionStatus: 'open' },
+    });
+    await tx.message.createMany({
+      data: [
+        { key: { id: nextId(), fromMe: false }, timestamp: now - 5 * 60 },
+        // A newer message sent by the instance does not count as received
+        { key: { id: nextId(), fromMe: true }, timestamp: now - 60 },
+      ].map(({ key, timestamp }) => ({
+        key,
+        messageType: 'conversation',
+        message: { conversation: 'x' },
+        source: 'unknown' as const,
+        messageTimestamp: timestamp,
+        instanceId: open.id,
+      })),
+    });
+    const withOpen = await probe(tx).collectWhatsapp();
+    const openRow = withOpen.resources.find((item) => item.name === open.name);
+    assert.equal(openRow.status, 'conectada');
+    assert.match(openRow.detail, /última mensagem recebida há [5-6] min/);
   }
 });

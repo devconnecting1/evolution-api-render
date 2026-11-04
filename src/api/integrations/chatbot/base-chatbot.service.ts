@@ -182,7 +182,8 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
 
   /**
    * Standard implementation for sending messages to WhatsApp
-   * This handles common patterns like markdown links and formatting
+   * This handles common patterns like markdown links and formatting.
+   * Returns how many WhatsApp messages went out (text parts and media); 0 when a human took over first.
    */
   protected async sendMessageWhatsApp(
     instance: any,
@@ -190,8 +191,10 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
     message: string,
     settings: SettingsType,
     linkPreview: boolean = true,
-  ): Promise<void> {
-    if (!message) return;
+  ): Promise<number> {
+    if (!message) return 0;
+
+    let sent = 0;
 
     const linkRegex = /!?\[(.*?)\]\((.*?)\)/g;
     let textBuffer = '';
@@ -212,13 +215,20 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
       if (mediaType) {
         // Send accumulated text before sending media
         if (textBuffer.trim()) {
-          await this.sendFormattedText(instance, remoteJid, textBuffer.trim(), settings, splitMessages, linkPreview);
+          sent += await this.sendFormattedText(
+            instance,
+            remoteJid,
+            textBuffer.trim(),
+            settings,
+            splitMessages,
+            linkPreview,
+          );
           textBuffer = '';
         }
 
         if (await this.shouldStopSending(instance, remoteJid)) {
           this.logger.warn(`[BaseChatbot] Human took over ${remoteJid}, remaining media discarded`);
-          return;
+          return sent;
         }
 
         // Handle sending the media
@@ -236,6 +246,7 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
               false,
               true,
             );
+            sent++;
           } else {
             await instance.mediaMessage(
               {
@@ -250,6 +261,7 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
               false,
               true,
             );
+            sent++;
           }
         } catch (error) {
           this.logger.error(`Error sending media: ${error}`);
@@ -274,8 +286,17 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
 
     // Send any remaining text
     if (textBuffer.trim()) {
-      await this.sendFormattedText(instance, remoteJid, textBuffer.trim(), settings, splitMessages, linkPreview);
+      sent += await this.sendFormattedText(
+        instance,
+        remoteJid,
+        textBuffer.trim(),
+        settings,
+        splitMessages,
+        linkPreview,
+      );
     }
+
+    return sent;
   }
 
   /**
@@ -286,7 +307,7 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
   }
 
   /**
-   * Send a single message with proper typing indicators and delays
+   * Send a single message with proper typing indicators and delays. False when a human took over first.
    */
   private async sendSingleMessage(
     instance: any,
@@ -294,7 +315,7 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
     message: string,
     settings: any,
     linkPreview: boolean = true,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const timePerChar = settings?.timePerChar ?? 0;
     const minDelay = 1000;
     const maxDelay = 20000;
@@ -314,7 +335,7 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
       if (instance.integration === Integration.WHATSAPP_BAILEYS) {
         await instance.client.sendPresenceUpdate('paused', remoteJid);
       }
-      return;
+      return false;
     }
 
     await instance.textMessage(
@@ -331,10 +352,12 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
     if (instance.integration === Integration.WHATSAPP_BAILEYS) {
       await instance.client.sendPresenceUpdate('paused', remoteJid);
     }
+
+    return true;
   }
 
   /**
-   * Helper method to send formatted text with proper typing indicators and delays
+   * Helper method to send formatted text with proper typing indicators and delays. Returns the parts sent.
    */
   private async sendFormattedText(
     instance: any,
@@ -343,7 +366,9 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
     settings: any,
     splitMessages: boolean,
     linkPreview: boolean = true,
-  ): Promise<void> {
+  ): Promise<number> {
+    let sent = 0;
+
     if (splitMessages) {
       const messageParts = this.splitMessageByDoubleLineBreaks(text);
 
@@ -353,14 +378,16 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
         const message = messageParts[index];
 
         this.logger.debug(`[BaseChatbot] Sending message part ${index + 1}/${messageParts.length}`);
-        await this.sendSingleMessage(instance, remoteJid, message, settings, linkPreview);
+        if (await this.sendSingleMessage(instance, remoteJid, message, settings, linkPreview)) sent++;
       }
 
       this.logger.debug(`[BaseChatbot] All message parts sent successfully`);
     } else {
       this.logger.debug(`[BaseChatbot] Sending single message`);
-      await this.sendSingleMessage(instance, remoteJid, text, settings, linkPreview);
+      if (await this.sendSingleMessage(instance, remoteJid, text, settings, linkPreview)) sent++;
     }
+
+    return sent;
   }
 
   /**

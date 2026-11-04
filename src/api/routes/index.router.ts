@@ -27,6 +27,7 @@ import { ProxyRouter } from './proxy.router';
 import { MessageRouter } from './sendMessage.router';
 import { SettingsRouter } from './settings.router';
 import { TemplateRouter } from './template.router';
+import { UsageRouter } from './usage.router';
 import { ViewsRouter } from './view.router';
 
 enum HttpStatus {
@@ -236,6 +237,7 @@ router
   .use('/settings', new SettingsRouter(...guards).router)
   .use('/proxy', new ProxyRouter(...guards).router)
   .use('/label', new LabelRouter(...guards).router)
+  .use('/usage', new UsageRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
   .use('', new ChannelRouter(configService, ...guards).router)
   .use('', new EventRouter(configService, ...guards).router)
