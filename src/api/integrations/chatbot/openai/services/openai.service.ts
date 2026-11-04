@@ -22,6 +22,7 @@ import {
   resolveOpenaiMediaOptions,
   withCaption,
 } from '@utils/openaiMedia';
+import { stripQuotedContext } from '@utils/quotedContext';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import axios from 'axios';
 import { downloadMediaMessage } from 'baileys';
@@ -167,7 +168,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
 
       // Handle keyword finish
       const keywordFinish = settings?.keywordFinish || '';
-      const normalizedContent = content.toLowerCase().trim();
+      // The quote line added for the model (#2078) is not part of what the customer typed
+      const normalizedContent = stripQuotedContext(content).toLowerCase().trim();
       if (keywordFinish.length > 0 && normalizedContent === keywordFinish.toLowerCase()) {
         if (!session) return;
 
@@ -345,12 +347,15 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       this.logOpenaiError('sendMessageToBot', error);
       await this.sendErrorFallback(instance, remoteJid, settings, session);
       return;
+    } finally {
+      // The turn is over (answer, discarded answer or fallback): offline again unless alwaysOnline (#2469/#2537)
+      await this.sendUnavailablePresence(instance);
     }
   }
 
   private isFinishKeyword(content: string, settings: OpenaiSetting): boolean {
     const keywordFinish = settings?.keywordFinish || '';
-    return keywordFinish.length > 0 && content.toLowerCase().trim() === keywordFinish.toLowerCase();
+    return keywordFinish.length > 0 && stripQuotedContext(content).toLowerCase().trim() === keywordFinish.toLowerCase();
   }
 
   /**

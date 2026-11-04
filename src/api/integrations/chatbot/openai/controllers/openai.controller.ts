@@ -11,6 +11,7 @@ import { IntegrationSession, OpenaiBot } from '@prisma/client';
 import { getConversationMessage } from '@utils/getConversationMessage';
 import { describeHumanPause, resolveHumanResumeMinutes } from '@utils/humanPause';
 import { describeOpenaiMessage, OPENAI_MEDIA_DEFAULTS, resolveOpenaiMediaOptions } from '@utils/openaiMedia';
+import { withQuotedContext } from '@utils/quotedContext';
 import OpenAI from 'openai';
 
 import { BaseChatbotController } from '../../base-chatbot.controller';
@@ -73,6 +74,11 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
   // Video, sticker, location and shared contact reach the model as a clear sentence (other bots keep the raw text)
   protected getConversationContent(msg: any): string {
     return describeOpenaiMessage(msg) ?? getConversationMessage(msg);
+  }
+
+  // A reply to an older message tells the model what is being answered (#2078): `[respondendo a: "..."]`
+  protected getBotContent(content: string, msg: any): string {
+    return withQuotedContext(content, msg);
   }
 
   protected getAdditionalBotData(data: OpenaiDto): Record<string, any> {
