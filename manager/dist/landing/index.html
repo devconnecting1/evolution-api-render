@@ -47,8 +47,8 @@
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=2" />
-    <link rel="stylesheet" href="/assets/landing.css?v=6" />
-    <script src="/assets/landing.js?v=3" defer></script>
+    <link rel="stylesheet" href="/assets/landing.css?v=7" />
+    <script src="/assets/landing.js?v=4" defer></script>
 
     <script type="application/ld+json">
       {
@@ -129,6 +129,21 @@
         <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></symbol>
         <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 5 8 6 8 9s-8 4-8 9M16 3c0 5-8 6-8 9s8 4 8 9" /></symbol>
         <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.8 2.8L16.5 9.5" /></symbol>
+        <!-- ícones do painel atual (mockups) -->
+        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></symbol>
+        <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M3.3 18a9 9 0 1117.4 0" /><path d="M12 14l4-4" /></symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8" /></symbol>
+        <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4" /></symbol>
+        <symbol id="i-sort" viewBox="0 0 24 24"><path d="M7 20V4M4 7l3-3 3 3M11 8h9M11 12h7M11 16h4" /></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" /></symbol>
+        <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9" /><path d="M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4" /></symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M10 8.8v6.4l5-3.2z" /></symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z" /></symbol>
+        <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M8 3v4M16 3v4M3.5 10h17" /></symbol>
+        <symbol id="i-msgs" viewBox="0 0 24 24"><path d="M14 9a2 2 0 01-2 2H6l-4 4V4a2 2 0 012-2h8a2 2 0 012 2z" /><path d="M18 9h2a2 2 0 012 2v11l-4-4h-6a2 2 0 01-2-2v-1" /></symbol>
+        <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M15 4v16" /></symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" /></symbol>
+        <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 004 0" /></symbol>
       </defs>
     </svg>
 
@@ -200,40 +215,63 @@
                 <p class="deck-row"><i class="dot dot-warn"></i>comercial<span>Aguardando QR</span></p>
               </div>
               <div class="deck-card deck-r">
-                <p class="deck-h">Mensagens · 24 h</p>
-                <p class="deck-v">137</p>
+                <p class="deck-h">Respostas da IA · novembro</p>
+                <p class="deck-v">1.234 <small>de 2.000</small></p>
                 <span class="deck-bars"><i style="height: 30%"></i><i style="height: 45%"></i><i style="height: 25%"></i><i style="height: 60%"></i><i style="height: 80%"></i><i style="height: 55%"></i><i style="height: 70%"></i><i style="height: 95%"></i><i style="height: 65%"></i><i style="height: 40%"></i></span>
               </div>
             </div>
+            <!-- o painel atual: menu, caminho + Buscar (Ctrl K), lista com visões e filtros, conversa e painel do contato -->
             <div
               class="app"
               role="img"
-              aria-label="Exemplo do painel de conversas do WhatsAI. À esquerda, a lista de conversas da recepção, com Carla M. selecionada e a pausa humana configurada em 2 horas. No centro, a conversa: Carla pergunta às 22:47 se a clínica atende aos sábados e a IA responde em 4 segundos com o horário, destacado por uma anotação à mão; depois transcreve um áudio de 8 segundos com o nome e o horário e anota o pedido. Ana, da equipe, assume, a IA pausa e volta às 16:40. Embaixo, sugestões para a equipe e o campo de mensagem. Em destaque, um cartão avisa que Ana respondeu pelo celular e a IA pausou só nessa conversa."
+              aria-label="Exemplo do painel de conversas do WhatsAI. À esquerda, o menu do painel com Conversas selecionado. No topo, o caminho Instâncias / recepcao / Conversas e o botão Buscar com o atalho Ctrl K. A lista de conversas tem as visões Todas, Não lidas, IA pausada e Grupos com as contagens, os botões Filtro e Ordenar, o filtro ativo Período: últimos 7 dias e 5 conversas, com Carla M. selecionada e marcada como IA pausada. No centro, a conversa: Carla pergunta às 22:47 se a clínica atende aos sábados e a IA responde em 4 segundos com o horário, destacado por uma anotação à mão; depois transcreve um áudio de 8 segundos com o nome e o horário e anota o pedido. Ana, da equipe, assume e a IA pausa. À direita, o painel do contato: IA pausada até 16:40, botão Retomar IA, 5 mensagens, a primeira ontem às 22:47 e a última hoje às 08:02. Em destaque, um cartão avisa que Ana respondeu pelo celular e a IA pausou só nessa conversa."
             >
-              <div class="app-side">
-                <p class="app-name">WhatsAI</p>
-                <p class="app-desc">Recepção · Clínica Bem-Estar</p>
-                <p class="app-h">Conversas</p>
-                <ul class="app-list">
-                  <li class="is-on"><span class="av">CM</span><span class="app-li"><b>Carla M.</b><small>IA pausada · volta 16:40</small></span><i class="dot dot-warn"></i><svg class="cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L10 18.5z" /></svg></li>
-                  <li><span class="av">RS</span><span class="app-li"><b>Roberto S.</b><small>Qual o valor da consulta?</small></span><i class="dot dot-ok"></i></li>
-                  <li><span class="av">JP</span><span class="app-li"><b>Juliana P.</b><small>Precisa de jejum?</small></span><i class="dot dot-ok"></i></li>
-                  <li><span class="av">LC</span><span class="app-li"><b>Loja Centro</b><small>Atendimento manual</small></span><i class="dot dot-mute"></i></li>
+              <div class="ap-nav">
+                <p class="ap-brand">WhatsAI</p>
+                <ul class="ap-menu">
+                  <li><svg class="ico" aria-hidden="true"><use href="#i-grid" /></svg>Visão Geral</li>
+                  <li class="is-on"><svg class="ico" aria-hidden="true"><use href="#i-chat" /></svg>Conversas</li>
+                  <li><svg class="ico" aria-hidden="true"><use href="#i-gauge" /></svg>Plano e limites</li>
+                  <li><svg class="ico" aria-hidden="true"><use href="#i-settings" /></svg>Configurações<svg class="ico ap-chev" aria-hidden="true"><use href="#i-chev-d" /></svg></li>
+                  <li><svg class="ico" aria-hidden="true"><use href="#i-history" /></svg>Eventos<svg class="ico ap-chev" aria-hidden="true"><use href="#i-chev-d" /></svg></li>
                 </ul>
-                <p class="app-h">Pausa humana</p>
-                <ul class="app-opts">
-                  <li><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>30 min</li>
-                  <li class="is-on"><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>2 h sem a equipe</li>
-                  <li><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>4 h sem a equipe</li>
+                <p class="ap-sec">Ferramentas</p>
+                <ul class="ap-menu">
+                  <li><svg class="ico" aria-hidden="true"><use href="#i-activity" /></svg>Observabilidade</li>
+                  <li><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg>Manual</li>
                 </ul>
               </div>
-              <div class="app-main">
-                <div class="app-bar">
-                  <svg class="ico" aria-hidden="true"><use href="#i-sidebar" /></svg>
-                  <span class="app-bar-t">Carla M. <small>+55 21 9•••• 1234</small></span>
-                  <span class="app-bar-end"><svg class="ico" aria-hidden="true"><use href="#i-edit" /></svg><svg class="ico" aria-hidden="true"><use href="#i-history" /></svg></span>
+              <div class="ap-body">
+                <div class="ap-top">
+                  <ol class="ui-crumbs"><li>Instâncias</li><li>recepcao</li><li>Conversas</li></ol>
+                  <span class="ui-search"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="ui-search-t">Buscar</span><kbd class="ui-kbd">Ctrl K</kbd></span>
                 </div>
-                <ol class="thread">
+                <div class="ap-cols">
+                  <div class="ap-list">
+                    <p class="ap-h">Conversas</p>
+                    <p class="ui-field"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg>Buscar nome ou número</p>
+                    <p class="ui-seg"><span class="is-on">Todas</span><span>Não lidas <i>1</i></span><span>IA pausada <i>2</i></span><span>Grupos <i>1</i></span></p>
+                    <div class="ui-vbar">
+                      <span>5 conversas</span>
+                      <span class="ui-vbar-end"><span class="ui-btn ui-btn-ghost is-on"><svg class="ico" aria-hidden="true"><use href="#i-filter" /></svg>Filtro<i class="ui-n">1</i></span><span class="ui-btn ui-btn-ghost"><svg class="ico" aria-hidden="true"><use href="#i-sort" /></svg>Ordenar</span></span>
+                    </div>
+                    <p class="ui-chips"><span class="ui-chip">Período: últimos 7 dias<svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span></p>
+                    <ul class="ui-rows">
+                      <li class="ui-row is-on"><span class="ui-av">CM</span><span class="ui-row-main"><b>Carla M.</b><small>Ana: Bom dia, Carla! Confirmado: sábado, 9h.</small></span><span class="ui-row-meta"><time>08:02</time><span class="ui-badge"><i class="dot dot-warn"></i>IA pausada</span></span><svg class="cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L10 18.5z" /></svg></li>
+                      <li class="ui-row"><span class="ui-av">RS</span><span class="ui-row-main"><b>Roberto S.</b><small>Qual o valor da consulta?</small></span><span class="ui-row-meta"><time class="is-new">07:51</time><i class="ui-unread">1</i></span></li>
+                      <li class="ui-row"><span class="ui-av">JP</span><span class="ui-row-main"><b>Juliana P.</b><small>IA: Para esse exame, o jejum é de 8 horas.</small></span><span class="ui-row-meta"><time>Ontem</time></span></li>
+                      <li class="ui-row"><span class="ui-av">MT</span><span class="ui-row-main"><b>Marcos T.</b><small>Você: Obrigado pelo contato!</small></span><span class="ui-row-meta"><time>Ontem</time><span class="ui-badge"><i class="dot dot-warn"></i>IA pausada</span></span></li>
+                      <li class="ui-row"><span class="ui-av">FL</span><span class="ui-row-main"><b>Fernanda L.</b><small>IA: Aceitamos, sim. Qual é o plano?</small></span><span class="ui-row-meta"><time>seg</time></span></li>
+                    </ul>
+                  </div>
+                  <div class="ap-chat">
+                    <div class="ap-chat-head">
+                      <span class="ui-av">CM</span>
+                      <b>Carla M.</b>
+                      <span class="ui-badge"><i class="dot dot-warn"></i>IA pausada</span>
+                      <span class="ui-ibtn is-on"><svg class="ico" aria-hidden="true"><use href="#i-panel" /></svg></span>
+                    </div>
+                    <ol class="thread">
                   <li class="b b-in">Oi! Vocês atendem sábado? Queria marcar uma limpeza.<time>22:47</time></li>
                   <li class="b b-out b-ai b-noted"><span class="b-who">IA</span>Olá! Sou a assistente virtual da Clínica Bem-Estar. Atendemos aos sábados das 8h às 12h. Qual horário fica melhor?<time class="circled">22:47</time></li>
                   <li class="note-hand" aria-hidden="true">
@@ -245,14 +283,27 @@
                   <li class="b-sys"><i class="dot dot-warn"></i>Ana (equipe) assumiu · IA volta às 16:40</li>
                   <li class="b b-out b-team"><span class="b-who">Ana · equipe</span>Bom dia, Carla! Confirmado: sábado, 9h.<time>08:02</time></li>
                 </ol>
-                <div class="composer">
-                  <ul class="sugs">
-                    <li><svg class="ico" aria-hidden="true"><use href="#i-file" /></svg>Resumir a conversa</li>
-                    <li><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>Confirmar o horário de sábado</li>
-                    <li><svg class="ico" aria-hidden="true"><use href="#i-redo" /></svg>Devolver para a IA agora</li>
-                    <li class="sug-x"><svg class="ico" aria-hidden="true"><use href="#i-bulb" /></svg>Sugerir uma resposta</li>
-                  </ul>
-                  <div class="field"><span>Escreva para a Carla…</span><span class="send"><svg class="ico" aria-hidden="true"><use href="#i-arrow-up" /></svg></span></div>
+                    <div class="composer">
+                      <div class="field"><svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg><span>Escreva para a Carla…</span><span class="send"><svg class="ico" aria-hidden="true"><use href="#i-arrow-up" /></svg></span></div>
+                      <p class="composer-hint">Enter envia · Shift+Enter quebra a linha</p>
+                    </div>
+                  </div>
+                  <div class="ap-panel">
+                    <p class="cp-head">Contato<span class="ui-ibtn"><svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span></p>
+                    <div class="cp">
+                      <p class="cp-who"><span class="ui-av ui-av-lg">CM</span><b>Carla M.</b></p>
+                      <dl class="cp-kv">
+                        <div><dt><svg class="ico" aria-hidden="true"><use href="#i-phone" /></svg>Telefone</dt><dd>+55 21 9•••• 1234</dd></div>
+                        <div class="cp-ai"><dt><svg class="ico" aria-hidden="true"><use href="#i-sparkle" /></svg>IA neste contato</dt><dd><span class="ui-badge"><i class="dot dot-warn"></i>Pausada até 16:40</span><span class="ui-btn ui-btn-primary"><svg class="ico" aria-hidden="true"><use href="#i-play" /></svg>Retomar IA</span></dd></div>
+                        <div><dt><svg class="ico" aria-hidden="true"><use href="#i-msgs" /></svg>Mensagens</dt><dd>5</dd></div>
+                        <div><dt><svg class="ico" aria-hidden="true"><use href="#i-eye" /></svg>Não lidas</dt><dd>0</dd></div>
+                        <div><dt><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg>Primeira mensagem</dt><dd>Ontem, 22:47</dd></div>
+                        <div><dt><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>Última mensagem</dt><dd>Hoje, 08:02</dd></div>
+                      </dl>
+                      <p class="cp-sub">Ações rápidas</p>
+                      <p class="cp-actions"><span class="ui-btn"><svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg>Copiar número</span><span class="ui-btn"><svg class="ico" aria-hidden="true"><use href="#i-external" /></svg>Abrir no WhatsApp</span></p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -390,6 +441,319 @@
               </figure>
             </li>
           </ol>
+        </div>
+      </section>
+
+      <!-- === tour do produto (abas acessíveis: role=tablist, setas/Home/End em /assets/landing.js; cada aba mostra um
+           mockup em HTML de uma tela do painel atual + o que ela faz. Dados fictícios; ao mudar um dado, atualize o aria-label) -->
+      <section class="section" id="tour" aria-labelledby="tour-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="tour-title" class="h2">O painel por dentro. <span class="soft">Cada tela, como ela é hoje.</span></h2>
+            <p class="section-lead">Conversas, contato, plano, horário e o estado do serviço num só lugar. Os exemplos usam dados fictícios.</p>
+          </div>
+          <div class="tour" data-tabs>
+            <div class="tour-tabs" role="tablist" aria-label="Telas do painel">
+              <button class="tour-tab" type="button" role="tab" id="tt-conversas" aria-controls="tp-conversas" aria-selected="true"><svg class="ico" aria-hidden="true"><use href="#i-chat" /></svg>Conversas</button>
+              <button class="tour-tab" type="button" role="tab" id="tt-contato" aria-controls="tp-contato" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-panel" /></svg>Painel do contato</button>
+              <button class="tour-tab" type="button" role="tab" id="tt-plano" aria-controls="tp-plano" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-gauge" /></svg>Plano e limites</button>
+              <button class="tour-tab" type="button" role="tab" id="tt-horario" aria-controls="tp-horario" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>Horário de atendimento</button>
+              <button class="tour-tab" type="button" role="tab" id="tt-obs" aria-controls="tp-obs" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-activity" /></svg>Observabilidade</button>
+            </div>
+            <div class="tour-panels">
+              <!-- aba: Conversas -->
+              <div class="tour-panel" role="tabpanel" id="tp-conversas" aria-labelledby="tt-conversas" tabindex="0">
+                <div class="tour-copy">
+                  <h3 class="h3">Todas as conversas, filtradas do seu jeito</h3>
+                  <ul class="checks">
+                    <li>Visões prontas com contagem: Todas, Não lidas, IA pausada e Grupos</li>
+                    <li>Filtro por período da última mensagem, com mídia ou aguardando resposta; os filtros ativos ficam à vista e saem no ×</li>
+                    <li>O selo “IA pausada” mostra na lista onde a equipe está atendendo</li>
+                  </ul>
+                </div>
+                <figure class="tour-mock">
+                  <div class="ui-win" role="img" aria-label="Exemplo da lista de conversas: visões Todas, Não lidas 2, IA pausada 3 e Grupos 1, com IA pausada selecionada; 3 conversas; os filtros ativos Período: últimos 7 dias e Aguardando resposta, cada um com um x para remover, e Limpar tudo; o menu Filtro aberto, com o período da última mensagem (hoje, últimos 7 dias ou últimos 30 dias) e as opções com mídia e aguardando resposta; as conversas de Carla M., Marcos T. e Paulo R., todas com o selo IA pausada.">
+                    <div class="ui-win-top"><ol class="ui-crumbs"><li>Instâncias</li><li>recepcao</li><li>Conversas</li></ol><span class="ui-search"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="ui-search-t">Buscar</span><kbd class="ui-kbd">Ctrl K</kbd></span></div>
+                    <div class="ui-win-body tm-conv">
+                      <div class="tm-list">
+                        <p class="ap-h">Conversas</p>
+                        <p class="ui-seg"><span>Todas</span><span>Não lidas <i>2</i></span><span class="is-on">IA pausada <i>3</i></span><span>Grupos <i>1</i></span></p>
+                        <div class="ui-vbar">
+                          <span>3 conversas</span>
+                          <span class="ui-vbar-end"><span class="ui-btn ui-btn-ghost is-on is-open"><svg class="ico" aria-hidden="true"><use href="#i-filter" /></svg>Filtro<i class="ui-n">2</i></span><span class="ui-btn ui-btn-ghost"><svg class="ico" aria-hidden="true"><use href="#i-sort" /></svg>Ordenar</span></span>
+                        </div>
+                        <p class="ui-chips"><span class="ui-chip">Período: últimos 7 dias<svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span><span class="ui-chip">Aguardando resposta<svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span><span class="ui-clear">Limpar tudo</span></p>
+                        <ul class="ui-rows">
+                          <li class="ui-row"><span class="ui-av">CM</span><span class="ui-row-main"><b>Carla M.</b><small>Pode ser às 9h? Meu nome é Carla.</small></span><span class="ui-row-meta"><time>08:02</time><span class="ui-badge"><i class="dot dot-warn"></i>IA pausada</span></span></li>
+                          <li class="ui-row"><span class="ui-av">MT</span><span class="ui-row-main"><b>Marcos T.</b><small>Mandei o pedido médico em PDF</small></span><span class="ui-row-meta"><time>Ontem</time><span class="ui-badge"><i class="dot dot-warn"></i>IA pausada</span></span></li>
+                          <li class="ui-row"><span class="ui-av">PR</span><span class="ui-row-main"><b>Paulo R.</b><small>Prefiro falar com uma pessoa.</small></span><span class="ui-row-meta"><time>sex</time><span class="ui-badge"><i class="dot dot-warn"></i>IA pausada</span></span></li>
+                        </ul>
+                      </div>
+                      <div class="ui-pop tm-pop">
+                        <p class="ui-pop-h">Período da última mensagem</p>
+                        <ul class="ui-opts">
+                          <li>Hoje</li>
+                          <li class="is-on">Últimos 7 dias<svg class="ico" aria-hidden="true"><use href="#i-check" /></svg></li>
+                          <li>Últimos 30 dias</li>
+                        </ul>
+                        <p class="ui-pop-h">Mostrar só</p>
+                        <ul class="ui-opts">
+                          <li>Com mídia</li>
+                          <li class="is-on">Aguardando resposta<svg class="ico" aria-hidden="true"><use href="#i-check" /></svg></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <figcaption class="caption">Ilustrativo · dados fictícios</figcaption>
+                </figure>
+              </div>
+
+              <!-- aba: Painel do contato -->
+              <div class="tour-panel" role="tabpanel" id="tp-contato" aria-labelledby="tt-contato" tabindex="0" hidden>
+                <div class="tour-copy">
+                  <h3 class="h3">O contato inteiro num painel ao lado da conversa</h3>
+                  <ul class="checks">
+                    <li>Nome, número e o estado da IA naquela conversa: ativa ou pausada até um horário</li>
+                    <li>Pausar ou retomar a IA com um botão, sempre com confirmação antes</li>
+                    <li>Quantas mensagens, a primeira e a última, e atalhos para copiar o número ou abrir no WhatsApp</li>
+                  </ul>
+                </div>
+                <figure class="tour-mock">
+                  <div class="ui-win" role="img" aria-label="Exemplo da conversa com Paulo R. e o painel do contato aberto ao lado: telefone +55 11 9•••• 4321, IA neste contato ativa e o botão Pausar IA, 12 mensagens, nenhuma não lida, primeira mensagem em 28/10 às 14:05 e última hoje às 10:12, e as ações rápidas Copiar número e Abrir no WhatsApp. Por cima da conversa, a confirmação: Pausar a IA para Paulo R.? A IA para de responder este contato até alguém retomar; a equipe continua atendendo pelo WhatsApp normalmente. Botões Cancelar e Pausar IA.">
+                    <div class="ui-win-top"><ol class="ui-crumbs"><li>Instâncias</li><li>recepcao</li><li>Conversas</li></ol><span class="ui-search"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="ui-search-t">Buscar</span><kbd class="ui-kbd">Ctrl K</kbd></span></div>
+                    <div class="ui-win-body tm-contact">
+                      <div class="tm-chat">
+                        <div class="ap-chat-head">
+                          <span class="ui-av">PR</span>
+                          <b>Paulo R.</b>
+                          <span class="ui-ibtn is-on"><svg class="ico" aria-hidden="true"><use href="#i-panel" /></svg></span>
+                        </div>
+                        <ol class="thread thread-sm">
+                          <li class="b b-in">Bom dia! Queria falar com a doutora sobre o resultado do exame.<time>10:08</time></li>
+                          <li class="b b-out b-ai"><span class="b-who">IA</span>Claro! Vou avisar a equipe. Pode me dizer o seu nome completo?<time>10:08</time></li>
+                          <li class="b b-in">Paulo Ribeiro. Prefiro falar com uma pessoa.<time>10:12</time></li>
+                        </ol>
+                        <div class="ui-dialog">
+                          <p class="ui-dialog-t">Pausar a IA para Paulo R.?</p>
+                          <p class="ui-dialog-d">A IA para de responder este contato até alguém retomar. A equipe continua atendendo pelo WhatsApp normalmente.</p>
+                          <p class="ui-dialog-f"><span class="ui-btn">Cancelar</span><span class="ui-btn ui-btn-primary">Pausar IA</span></p>
+                        </div>
+                      </div>
+                      <div class="ap-panel tm-panel">
+                        <p class="cp-head">Contato<span class="ui-ibtn"><svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span></p>
+                        <div class="cp">
+                          <p class="cp-who"><span class="ui-av ui-av-lg">PR</span><b>Paulo R.</b></p>
+                          <dl class="cp-kv">
+                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-phone" /></svg>Telefone</dt><dd>+55 11 9•••• 4321</dd></div>
+                            <div class="cp-ai"><dt><svg class="ico" aria-hidden="true"><use href="#i-sparkle" /></svg>IA neste contato</dt><dd><span class="ui-badge"><i class="dot dot-ok"></i>Ativa</span><span class="ui-btn is-pressed"><svg class="ico" aria-hidden="true"><use href="#i-pause" /></svg>Pausar IA</span></dd></div>
+                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-msgs" /></svg>Mensagens</dt><dd>12</dd></div>
+                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-eye" /></svg>Não lidas</dt><dd>0</dd></div>
+                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg>Primeira mensagem</dt><dd>28/10, 14:05</dd></div>
+                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>Última mensagem</dt><dd>Hoje, 10:12</dd></div>
+                          </dl>
+                          <p class="cp-sub">Ações rápidas</p>
+                          <p class="cp-actions"><span class="ui-btn"><svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg>Copiar número</span><span class="ui-btn"><svg class="ico" aria-hidden="true"><use href="#i-external" /></svg>Abrir no WhatsApp</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <figcaption class="caption">Ilustrativo · dados fictícios</figcaption>
+                </figure>
+              </div>
+
+              <!-- aba: Plano e limites (franquias e excedente iguais aos planos aprovados) -->
+              <div class="tour-panel" role="tabpanel" id="tp-plano" aria-labelledby="tt-plano" tabindex="0" hidden>
+                <div class="tour-copy">
+                  <h3 class="h3">Quanto a IA respondeu e quanto o plano inclui</h3>
+                  <ul class="checks">
+                    <li>Respostas do mês, de hoje e dos últimos 30 dias, contadas automaticamente</li>
+                    <li>Excedente estimado em blocos de 1.000 respostas (R$ 49 cada), como no contrato</li>
+                    <li>Você escolhe o que acontece ao passar da franquia: continuar, pausar a IA ou enviar uma mensagem</li>
+                  </ul>
+                </div>
+                <figure class="tour-mock">
+                  <div class="ui-win" role="img" aria-label="Exemplo da página Plano e limites: uso em novembro de 2026, dentro da franquia, 1.234 de 2.000 respostas este mês, 61,7 por cento; hoje 56 respostas; excedente estimado nenhum; alerta em 80 por cento da franquia; gráfico de barras dos últimos 30 dias com 1.806 respostas; plano contratado Essencial, com 2.000 respostas por mês, entre Profissional 5.000, Premium 10.000, Personalizado e Sem limite; quando passar da franquia do mês, continuar respondendo selecionado, com as opções pausar a IA e enviar uma mensagem.">
+                    <div class="ui-win-top"><ol class="ui-crumbs"><li>Instâncias</li><li>recepcao</li><li>Plano e limites</li></ol><span class="ui-search"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="ui-search-t">Buscar</span><kbd class="ui-kbd">Ctrl K</kbd></span></div>
+                    <div class="ui-win-body tm-stack">
+                      <div class="ui-card">
+                        <p class="ui-card-h"><span>Uso em novembro de 2026</span><span class="ui-badge"><i class="dot dot-ok"></i>Dentro da franquia</span></p>
+                        <p class="us-big"><b>1.234 de 2.000 respostas este mês</b><span> · 61,7%</span></p>
+                        <span class="us-bar"><i style="width: 61.7%"></i><em style="left: 80%"></em></span>
+                        <dl class="us-stats">
+                          <div><dt>Hoje</dt><dd>56 respostas</dd></div>
+                          <div><dt>Excedente estimado</dt><dd>Nenhum</dd></div>
+                          <div><dt>Alerta</dt><dd>em 80% da franquia</dd></div>
+                        </dl>
+                        <p class="us-k">Últimos 30 dias · 1.806 respostas</p>
+                        <span class="us-days"><i style="height: 38%"></i><i style="height: 52%"></i><i style="height: 61%"></i><i style="height: 44%"></i><i style="height: 20%"></i><i style="height: 12%"></i><i style="height: 58%"></i><i style="height: 66%"></i><i style="height: 71%"></i><i style="height: 63%"></i><i style="height: 55%"></i><i style="height: 24%"></i><i style="height: 10%"></i><i style="height: 60%"></i><i style="height: 74%"></i><i style="height: 69%"></i><i style="height: 77%"></i><i style="height: 64%"></i><i style="height: 28%"></i><i style="height: 14%"></i><i style="height: 70%"></i><i style="height: 82%"></i><i style="height: 75%"></i><i style="height: 68%"></i><i style="height: 72%"></i><i style="height: 30%"></i><i style="height: 16%"></i><i style="height: 79%"></i><i style="height: 86%"></i><i style="height: 62%"></i></span>
+                        <p class="us-axis"><span>06/10</span><span>hoje</span></p>
+                      </div>
+                      <div class="ui-card">
+                        <p class="ui-card-h"><span>Plano contratado</span></p>
+                        <ul class="us-presets">
+                          <li class="is-on"><b>Essencial</b><small>2.000 respostas/mês</small></li>
+                          <li><b>Profissional</b><small>5.000 respostas/mês</small></li>
+                          <li><b>Premium</b><small>10.000 respostas/mês</small></li>
+                          <li><b>Personalizado</b><small>você define</small></li>
+                          <li><b>Sem limite</b><small>IA sem franquia</small></li>
+                        </ul>
+                        <p class="ui-card-h ui-card-h2"><span>Quando passar da franquia do mês</span></p>
+                        <ul class="ui-radios ui-radios-row">
+                          <li class="is-on"><i class="ui-radio"></i>Continuar respondendo</li>
+                          <li><i class="ui-radio"></i>Pausar a IA</li>
+                          <li><i class="ui-radio"></i>Enviar uma mensagem</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <figcaption class="caption">Ilustrativo · dados fictícios</figcaption>
+                </figure>
+              </div>
+
+              <!-- aba: Horário de atendimento -->
+              <div class="tour-panel" role="tabpanel" id="tp-horario" aria-labelledby="tt-horario" tabindex="0" hidden>
+                <div class="tour-copy">
+                  <h3 class="h3">A IA atende no horário que você definir</h3>
+                  <ul class="checks">
+                    <li>Sempre, só no horário de atendimento ou só fora dele, cobrindo noites, fins de semana e folgas</li>
+                    <li>Uma faixa por dia, com fuso horário e “Copiar para todos”</li>
+                    <li>Mensagem opcional para quem chama fora do horário, enviada no máximo uma vez por dia por contato</li>
+                  </ul>
+                </div>
+                <figure class="tour-mock">
+                  <div class="ui-win" role="img" aria-label="Exemplo do horário de atendimento: IA só no horário de atendimento selecionado, entre IA responde sempre e IA só fora do horário; fuso horário São Paulo; de segunda a sexta das 09:00 às 18:00, sábado das 09:00 às 13:00 e domingo fechado, cada dia com Copiar para todos; mensagem fora do horário: Oi! Nosso horário é de segunda a sexta, das 9h às 18h, e sábado até 13h. Respondemos assim que abrirmos.">
+                    <div class="ui-win-top"><ol class="ui-crumbs"><li>Instâncias</li><li>recepcao</li><li>Plano e limites</li></ol><span class="ui-search"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="ui-search-t">Buscar</span><kbd class="ui-kbd">Ctrl K</kbd></span></div>
+                    <div class="ui-win-body tm-stack">
+                      <div class="ui-card">
+                        <p class="ui-card-h"><span>Horário de atendimento</span></p>
+                        <ul class="ui-radios">
+                          <li><i class="ui-radio"></i><span><b>IA responde sempre</b></span></li>
+                          <li class="is-on"><i class="ui-radio"></i><span><b>IA só no horário de atendimento</b><small>Fora do horário a IA não responde.</small></span></li>
+                          <li><i class="ui-radio"></i><span><b>IA só fora do horário</b></span></li>
+                        </ul>
+                        <p class="hr-tz"><span>Fuso horário</span><span class="ui-select"><svg class="ico" aria-hidden="true"><use href="#i-globe" /></svg>São Paulo (GMT−3)<svg class="ico" aria-hidden="true"><use href="#i-chev-d" /></svg></span></p>
+                        <ul class="hr-days">
+                          <li><i class="ui-cb is-on"></i><b>Segunda</b><span class="ui-time">09:00</span><span class="hr-to">às</span><span class="ui-time">18:00</span><span class="hr-copy">Copiar para todos</span></li>
+                          <li><i class="ui-cb is-on"></i><b>Terça</b><span class="ui-time">09:00</span><span class="hr-to">às</span><span class="ui-time">18:00</span><span class="hr-copy">Copiar para todos</span></li>
+                          <li><i class="ui-cb is-on"></i><b>Quarta</b><span class="ui-time">09:00</span><span class="hr-to">às</span><span class="ui-time">18:00</span><span class="hr-copy">Copiar para todos</span></li>
+                          <li><i class="ui-cb is-on"></i><b>Quinta</b><span class="ui-time">09:00</span><span class="hr-to">às</span><span class="ui-time">18:00</span><span class="hr-copy">Copiar para todos</span></li>
+                          <li><i class="ui-cb is-on"></i><b>Sexta</b><span class="ui-time">09:00</span><span class="hr-to">às</span><span class="ui-time">18:00</span><span class="hr-copy">Copiar para todos</span></li>
+                          <li><i class="ui-cb is-on"></i><b>Sábado</b><span class="ui-time">09:00</span><span class="hr-to">às</span><span class="ui-time">13:00</span><span class="hr-copy">Copiar para todos</span></li>
+                          <li class="is-off"><i class="ui-cb"></i><b>Domingo</b><span class="hr-closed">Fechado</span></li>
+                        </ul>
+                        <p class="us-k">Mensagem fora do horário (opcional)</p>
+                        <p class="ui-textarea">Oi! Nosso horário é de segunda a sexta, das 9h às 18h, e sábado até 13h. Respondemos assim que abrirmos.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <figcaption class="caption">Ilustrativo · dados fictícios</figcaption>
+                </figure>
+              </div>
+
+              <!-- aba: Observabilidade (sem nomes de fornecedores; só o tipo de serviço) -->
+              <div class="tour-panel" role="tabpanel" id="tp-obs" aria-labelledby="tt-obs" tabindex="0" hidden>
+                <div class="tour-copy">
+                  <h3 class="h3">O estado do serviço, sempre à vista</h3>
+                  <ul class="checks">
+                    <li>Servidor, banco de dados, painel e números conectados, atualizados a cada 60 segundos</li>
+                    <li>Alerta quando algo chega perto do limite, inclusive a franquia de respostas (padrão: 80%)</li>
+                    <li>A nossa equipe acompanha esses sinais e age antes de virar problema</li>
+                  </ul>
+                </div>
+                <figure class="tour-mock">
+                  <div class="ui-win" role="img" aria-label="Exemplo da página Observabilidade, com atualização automática a cada 60 segundos e o botão Atualizar. Um alerta: banco de dados perto do limite, 82 por cento do armazenamento. Tabela por provedor: servidor da API operacional, memória em 39 por cento; banco de dados perto do limite, 410 MB de 500 MB; painel web operacional, último deploy hoje às 09:12; WhatsApp com 2 de 3 números conectados, comercial aguardando QR; respostas da IA dentro da franquia, 1.234 de 2.000.">
+                    <div class="ui-win-top"><ol class="ui-crumbs"><li>Painel</li><li>Observabilidade</li></ol><span class="ui-search"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="ui-search-t">Buscar</span><kbd class="ui-kbd">Ctrl K</kbd></span></div>
+                    <div class="ui-win-body tm-stack">
+                      <p class="ob-head"><span><b>Observabilidade</b><small>Atualização automática a cada 60&nbsp;s</small></span><span class="ui-btn"><svg class="ico" aria-hidden="true"><use href="#i-redo" /></svg>Atualizar</span></p>
+                      <p class="ob-alert"><svg class="ico" aria-hidden="true"><use href="#i-alert" /></svg><span><b>1 alerta · perto do limite.</b> Banco de dados em 82% do armazenamento.</span></p>
+                      <table class="ob-tbl">
+                        <thead><tr><th>Provedor</th><th>Estado</th><th class="ob-use">Uso</th></tr></thead>
+                        <tbody>
+                          <tr><td><svg class="ico" aria-hidden="true"><use href="#i-server" /></svg>Servidor da API</td><td><span class="ui-badge"><i class="dot dot-ok"></i>Operacional</span></td><td class="ob-use"><span class="ob-m"><span class="bar"><i style="width: 39%"></i></span>Memória 39%</span></td></tr>
+                          <tr><td><svg class="ico" aria-hidden="true"><use href="#i-db" /></svg>Banco de dados</td><td><span class="ui-badge"><i class="dot dot-warn"></i>Perto do limite</span></td><td class="ob-use"><span class="ob-m"><span class="bar bar-warn"><i style="width: 82%"></i></span>410 de 500 MB</span></td></tr>
+                          <tr><td><svg class="ico" aria-hidden="true"><use href="#i-grid" /></svg>Painel web</td><td><span class="ui-badge"><i class="dot dot-ok"></i>Operacional</span></td><td class="ob-use">Último deploy hoje, 09:12</td></tr>
+                          <tr><td><svg class="ico" aria-hidden="true"><use href="#i-phone" /></svg>WhatsApp</td><td><span class="ui-badge"><i class="dot dot-warn"></i>2 de 3 conectados</span></td><td class="ob-use">comercial aguardando QR</td></tr>
+                          <tr><td><svg class="ico" aria-hidden="true"><use href="#i-sparkle" /></svg>Respostas da IA</td><td><span class="ui-badge"><i class="dot dot-ok"></i>Dentro da franquia</span></td><td class="ob-use"><span class="ob-m"><span class="bar"><i style="width: 61.7%"></i></span>1.234 de 2.000</span></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <figcaption class="caption">Ilustrativo · dados fictícios</figcaption>
+                </figure>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- === detalhes (bento): componentes do painel que vendem o dia a dia -->
+      <section class="section" id="detalhes" aria-labelledby="bento-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="bento-title" class="h2">Detalhes que poupam cliques. <span class="soft">No dia a dia da equipe.</span></h2>
+          </div>
+          <ul class="bento">
+            <li class="bento-card bento-wide">
+              <h3 class="h4">Ctrl K para ir a qualquer lugar</h3>
+              <p>Busque uma conversa pelo nome ou número, ou pule para outra página do painel sem tirar a mão do teclado (⌘ K no Mac).</p>
+              <div class="bento-snip" role="img" aria-label="Exemplo do menu de comandos: busca por jul; em Conversas, Juliana P., +55 11 9•••• 5678, selecionada; em Ir para, Visão Geral, Plano e limites e Observabilidade; rodapé com setas para navegar, Enter para abrir e Esc para fechar.">
+                <div class="ui-cmdk">
+                  <p class="ui-cmdk-in"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span>jul<i class="caret"></i></span><kbd class="ui-kbd">Esc</kbd></p>
+                  <p class="ui-cmdk-h">Conversas</p>
+                  <p class="ui-cmdk-i is-on"><span class="ui-av ui-av-sm">JP</span>Juliana P.<small>+55 11 9•••• 5678</small></p>
+                  <p class="ui-cmdk-h">Ir para</p>
+                  <p class="ui-cmdk-i"><svg class="ico" aria-hidden="true"><use href="#i-grid" /></svg>Visão Geral</p>
+                  <p class="ui-cmdk-i"><svg class="ico" aria-hidden="true"><use href="#i-gauge" /></svg>Plano e limites</p>
+                  <p class="ui-cmdk-i"><svg class="ico" aria-hidden="true"><use href="#i-activity" /></svg>Observabilidade</p>
+                  <p class="ui-cmdk-f"><span><kbd class="ui-kbd">↑↓</kbd>navegar</span><span><kbd class="ui-kbd">Enter</kbd>abrir</span><span><kbd class="ui-kbd">Esc</kbd>fechar</span></p>
+                </div>
+              </div>
+            </li>
+            <li class="bento-card">
+              <h3 class="h4">Aviso antes de a franquia acabar</h3>
+              <p>Ao chegar a 80% das respostas do mês (ou o percentual que você escolher), aparece o alerta.</p>
+              <div class="bento-snip" role="img" aria-label="Exemplo da barra de uso perto do limite: 1.712 de 2.000 respostas este mês, 85,6 por cento, com a marca de alerta em 80 por cento e o selo Perto do limite; excedente estimado nenhum.">
+                <div class="ui-card ui-card-snip">
+                  <p class="ui-card-h"><span>Respostas este mês</span><span class="ui-badge"><i class="dot dot-warn"></i>Perto do limite</span></p>
+                  <p class="us-big"><b>1.712 de 2.000</b><span> · 85,6%</span></p>
+                  <span class="us-bar us-bar-warn"><i style="width: 85.6%"></i><em style="left: 80%"></em></span>
+                  <p class="us-axis"><span>Alerta em 80%</span><span>Excedente estimado: nenhum</span></p>
+                </div>
+              </div>
+            </li>
+            <li class="bento-card">
+              <h3 class="h4">Filtros que ficam à vista</h3>
+              <p>Cada filtro ativo vira um chip. Um × tira só aquele; “Limpar tudo” volta para a lista inteira.</p>
+              <div class="bento-snip" role="img" aria-label="Exemplo dos filtros ativos: Período: hoje, Com mídia e Ordem: não lidas primeiro, cada um com um x, e Limpar tudo; 4 conversas.">
+                <div class="ui-card ui-card-snip">
+                  <div class="ui-vbar"><span>4 conversas</span><span class="ui-btn ui-btn-ghost is-on"><svg class="ico" aria-hidden="true"><use href="#i-filter" /></svg>Filtro<i class="ui-n">2</i></span></div>
+                  <p class="ui-chips"><span class="ui-chip">Período: hoje<svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span><span class="ui-chip">Com mídia<svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span><span class="ui-chip">Ordem: não lidas primeiro<svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span><span class="ui-clear">Limpar tudo</span></p>
+                </div>
+              </div>
+            </li>
+            <li class="bento-card">
+              <h3 class="h4">Pausar ou devolver para a IA</h3>
+              <p>No painel do contato, um botão pausa a IA naquela conversa ou devolve o atendimento para ela, com confirmação.</p>
+              <div class="bento-snip" role="img" aria-label="Exemplo de dois estados da IA num contato: pausada até 16:40, com o botão Retomar IA; e ativa, com o botão Pausar IA.">
+                <div class="ui-card ui-card-snip ai-states">
+                  <p class="ai-st"><span class="ai-st-l"><small>IA neste contato</small><span class="ui-badge"><i class="dot dot-warn"></i>Pausada até 16:40</span></span><span class="ui-btn ui-btn-primary"><svg class="ico" aria-hidden="true"><use href="#i-play" /></svg>Retomar IA</span></p>
+                  <p class="ai-st"><span class="ai-st-l"><small>IA neste contato</small><span class="ui-badge"><i class="dot dot-ok"></i>Ativa</span></span><span class="ui-btn"><svg class="ico" aria-hidden="true"><use href="#i-pause" /></svg>Pausar IA</span></p>
+                </div>
+              </div>
+            </li>
+            <li class="bento-card">
+              <h3 class="h4">Horário de atendimento em uma linha por dia</h3>
+              <p>Ajuste um dia e use “Copiar para todos” para repetir a faixa na semana.</p>
+              <div class="bento-snip" role="img" aria-label="Exemplo das linhas de horário: sábado das 09:00 às 13:00, com Copiar para todos; domingo fechado.">
+                <div class="ui-card ui-card-snip">
+                  <ul class="hr-days">
+                    <li><i class="ui-cb is-on"></i><b>Sábado</b><span class="ui-time">09:00</span><span class="hr-to">às</span><span class="ui-time">13:00</span><span class="hr-copy">Copiar para todos</span></li>
+                    <li class="is-off"><i class="ui-cb"></i><b>Domingo</b><span class="hr-closed">Fechado</span></li>
+                  </ul>
+                </div>
+              </div>
+            </li>
+          </ul>
         </div>
       </section>
 
@@ -904,6 +1268,7 @@
             <h2 id="fc1" class="foot-h">Produto</h2>
             <ul>
               <li><a href="#como-funciona">Como funciona</a></li>
+              <li><a href="#tour">Tour do produto</a></li>
               <li><a href="#recursos">Recursos</a></li>
               <li><a href="#canais">WhatsApp Web ou API oficial</a></li>
               <li><a href="#planos">Planos</a></li>
