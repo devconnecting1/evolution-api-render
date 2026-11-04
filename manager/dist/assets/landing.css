@@ -431,6 +431,7 @@ small {
 }
 .nav-links a {
   display: block;
+  white-space: nowrap;
   padding: 8px 12px;
   border-radius: var(--r-ctl);
   color: var(--text-2);
