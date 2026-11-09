@@ -14,6 +14,7 @@ import './unit/authStatePrisma.test';
 import './unit/usage.test';
 import './unit/agenda.test';
 import './unit/agenda-openai.test';
+import './unit/agenda-router.test';
 import './integration/openai-human-pause.test';
 import './integration/openai-status.test';
 import './integration/cloudapi-human-pause.test';
