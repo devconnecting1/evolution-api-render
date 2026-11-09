@@ -1,4 +1,5 @@
 import {
+  leadsService,
   openaiController,
   prismaRepository,
   processosService,
@@ -28,6 +29,7 @@ export function defaultMcpDeps(): McpDeps {
     observability: observabilityService,
     usage: usageService,
     processos: processosService,
+    leads: leadsService,
     isBotMessageId,
     logger,
     config: {

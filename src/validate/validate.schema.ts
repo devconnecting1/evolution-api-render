@@ -4,6 +4,7 @@ export * from './chat.schema';
 export * from './group.schema';
 export * from './instance.schema';
 export * from './label.schema';
+export * from './leads.schema';
 export * from './message.schema';
 export * from './processos.schema';
 export * from './proxy.schema';

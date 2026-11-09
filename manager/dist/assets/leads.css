@@ -1,0 +1,427 @@
+/*
+ * WhatsAI Manager: "Leads" page (triagem dos atendimentos), Twenty-like record table + record side panel.
+ * Linked after twenty-layout.css by manager/patches/leads.py. Written by hand; only var(--m-*) tokens of minimal.css.
+ * Reuses the primitives of twenty-layout.css (.wa-tw-sbtn, .wa-tw-lbtn, .wa-tw-ibtn, .wa-tw-pop, .wa-tw-opt,
+ * .wa-tw-segs, .wa-tw-chip, .wa-tw-empty, .wa-tw-panel*, .wa-tw-field*).
+ *
+ *   .wl-page        page column (header, view bar, table)
+ *   .wl-table       dense record table (40px rows, sticky header, horizontal scroll inside its own box)
+ *   .wl-chip        priority / waiting / status chips (dot + text, never color alone)
+ *   .wl-panel       record side panel: 400px on desktop, bottom sheet below 1024px
+ *   .wl-drawer      settings drawer (right side, modal)
+ */
+
+/* ========================================================================================= page */
+.wl-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: calc(var(--m-content) + 240px);
+  margin: 0 auto;
+  padding: 0 0 32px;
+  color: var(--m-text);
+}
+.wl-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wl-head-text {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.wl-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+}
+.wl-muted {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+.wl-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.wl-progress {
+  color: var(--m-text-2);
+  font-size: 12px;
+}
+.wl-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--m-border);
+}
+.wl-bar-left,
+.wl-bar-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.wl-count {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wl-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 220px;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text-2);
+}
+.wl-search:focus-within {
+  border-color: var(--m-primary);
+  box-shadow: var(--m-ring);
+}
+.wl-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--m-text);
+  font-size: 13px;
+}
+.wl-select-inline {
+  max-width: 100%;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-size: 13px;
+}
+
+/* ========================================================================================= table */
+.wl-table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+}
+.wl-table {
+  width: 100%;
+  min-width: 880px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+.wl-table th {
+  position: sticky;
+  top: 0;
+  height: 36px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--m-border);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+.wl-table td {
+  height: 44px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--m-border);
+  color: var(--m-text);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.wl-table tr:last-child td {
+  border-bottom: 0;
+}
+.wl-row {
+  cursor: pointer;
+}
+.wl-row:hover td {
+  background: var(--m-hover);
+}
+.wl-row[aria-selected="true"] td {
+  background: var(--m-tint);
+}
+.wl-row:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: -2px;
+}
+.wl-name {
+  display: flex;
+  flex-direction: column;
+  max-width: 200px;
+  overflow: hidden;
+}
+.wl-trunc {
+  display: block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wl-name strong {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+.wl-name span {
+  overflow: hidden;
+  color: var(--m-text-2);
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
+.wl-mono {
+  font-variant-numeric: tabular-nums;
+}
+.wl-dim {
+  color: var(--m-text-3);
+}
+.wl-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+
+/* ========================================================================================= chips */
+.wl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  max-width: 100%;
+  padding: 0 8px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-pill);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.wl-chip::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--m-text-3);
+}
+.wl-chip[data-tone="bad"]::before { background: var(--m-bad); }
+.wl-chip[data-tone="warn"]::before { background: var(--m-warn); }
+.wl-chip[data-tone="ok"]::before { background: var(--m-ok); }
+.wl-chip[data-tone="tint"] {
+  border-color: var(--m-tint-line);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+}
+.wl-chip[data-tone="tint"]::before { background: var(--m-primary); }
+.wl-chip--plain::before {
+  display: none;
+}
+.wl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ========================================================================================= side panel */
+.wl-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.24);
+}
+.wl-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  max-width: 100vw;
+  border-left: 1px solid var(--m-border);
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+}
+.wl-panel .wa-tw-field {
+  grid-template-columns: 128px minmax(0, 1fr);
+}
+.wl-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 8px 16px;
+}
+.wl-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 8px;
+  border-top: 1px solid var(--m-border);
+}
+.wl-sec-title {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.wl-summary {
+  margin: 0;
+  color: var(--m-text);
+  font-size: 14px;
+  line-height: 20px;
+  white-space: pre-wrap;
+}
+.wl-input,
+.wl-textarea,
+.wl-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: 13px;
+}
+.wl-textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+.wl-input:focus,
+.wl-textarea:focus,
+.wl-select:focus {
+  border-color: var(--m-primary);
+  outline: 0;
+  box-shadow: var(--m-ring);
+}
+.wl-hint {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 16px;
+}
+.wl-warn {
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  border: 1px solid var(--m-border-strong);
+  border-left: 3px solid var(--m-warn);
+  border-radius: var(--m-radius-item);
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-size: 12px;
+  line-height: 16px;
+}
+.wl-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 20px;
+}
+.wl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wl-foot {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--m-border);
+  background: var(--m-bg);
+}
+.wl-error {
+  margin: 0;
+  color: var(--m-bad);
+  font-size: 12px;
+}
+
+/* ========================================================================================= settings drawer */
+.wl-drawer {
+  width: 440px;
+}
+.wl-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.wl-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 18px;
+}
+.wl-check input {
+  margin-top: 2px;
+  accent-color: var(--m-primary);
+}
+
+/* ========================================================================================= small screens */
+@media (max-width: 1023px) {
+  .wl-panel {
+    top: auto;
+    left: 0;
+    width: auto;
+    max-height: 88vh;
+    border-top: 1px solid var(--m-border);
+    border-left: 0;
+    border-radius: var(--m-radius-card) var(--m-radius-card) 0 0;
+  }
+  .wl-drawer {
+    width: auto;
+  }
+}
+@media (max-width: 640px) {
+  .wl-search {
+    width: 100%;
+  }
+  .wl-bar-right {
+    width: 100%;
+  }
+  .wl-head-actions {
+    width: 100%;
+  }
+}

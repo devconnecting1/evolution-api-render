@@ -2,6 +2,7 @@ import { ToolSpec } from '../mcp.tool';
 import { botTools } from './bot.tools';
 import { chatTools } from './chat.tools';
 import { instanceTools } from './instance.tools';
+import { leadTools } from './leads.tools';
 import { processosTools } from './processos.tools';
 import { usageTools } from './usage.tools';
 
@@ -14,6 +15,7 @@ export const allTools: ToolSpec<any>[] = [
   ...chatTools,
   ...botTools,
   ...usageTools,
+  ...leadTools,
   ...processosTools,
 ];
 

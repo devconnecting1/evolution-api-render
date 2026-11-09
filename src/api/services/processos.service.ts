@@ -179,9 +179,16 @@ export class ProcessosService {
     };
   }
 
-  async getSettings(instanceId: string): Promise<ProcessSettingsView & { configured: boolean }> {
+  async getSettings(
+    instanceId: string,
+  ): Promise<ProcessSettingsView & { configured: boolean; leadsNumbers: string[] }> {
     const row = await this.prisma.processSettings.findUnique({ where: { instanceId } });
-    return { configured: !!row, ...this.toSettingsView(row) };
+    const view = this.toSettingsView(row);
+    // Without numbers of its own, "Processos" uses the numbers of the Leads notifications (shown in the panel)
+    const leadsNumbers = view.notifyNumbers.length
+      ? []
+      : ((await this.leadsNumbers([instanceId])).get(instanceId) ?? []);
+    return { configured: !!row, ...view, leadsNumbers };
   }
 
   async saveSettings(instanceId: string, input: Record<string, any>) {
@@ -963,6 +970,25 @@ export class ProcessosService {
     return true;
   }
 
+  /** Notification numbers of the Leads settings (LeadSettings.notifyNumbers), when that module exists. */
+  async leadsNumbers(instanceIds: string[]): Promise<Map<string, string[]>> {
+    const out = new Map<string, string[]>();
+    if (!instanceIds.length || !this.prisma.leadSettings?.findMany) return out;
+    try {
+      const rows = await this.prisma.leadSettings.findMany({
+        where: { instanceId: { in: instanceIds } },
+        select: { instanceId: true, notifyNumbers: true },
+      });
+      for (const row of rows) {
+        const list = Array.isArray(row.notifyNumbers) ? row.notifyNumbers : [];
+        out.set(row.instanceId, [...new Set<string>(list.map(normalizeNotifyNumber).filter(Boolean))]);
+      }
+    } catch (error) {
+      this.log('warn', `leads numbers: ${error?.message ?? error}`);
+    }
+    return out;
+  }
+
   /** Sends what is pending for every enabled instance outside its quiet hours. */
   async dispatch(settingsById: Map<string, ProcessSettingsView>) {
     let sent = 0;
@@ -977,6 +1003,13 @@ export class ProcessosService {
       } else active.push(instanceId);
     }
     if (!active.length) return { sent, held, heldUntil };
+
+    // Team numbers: those of "Processos"; when empty, the ones of the Leads notifications (same office team)
+    const fallback = await this.leadsNumbers(active.filter((id) => !settingsById.get(id).notifyNumbers.length));
+    const numbersOf = (instanceId: string) => {
+      const own = settingsById.get(instanceId).notifyNumbers;
+      return own.length ? own : (fallback.get(instanceId) ?? []);
+    };
 
     const instances = await this.prisma.instance.findMany({
       where: { id: { in: active } },
@@ -1018,7 +1051,7 @@ export class ProcessosService {
       try {
         if (process.notifyTeam) {
           const text = teamMovementText(process, list);
-          for (const number of settings.notifyNumbers) {
+          for (const number of numbersOf(process.instanceId)) {
             await this.send(channel, number, text);
             sent++;
           }
@@ -1044,7 +1077,7 @@ export class ProcessosService {
       }
       try {
         const text = teamPublicationText(p);
-        for (const number of settings.notifyNumbers) {
+        for (const number of numbersOf(p.instanceId)) {
           await this.send(channel, number, text);
           sent++;
         }

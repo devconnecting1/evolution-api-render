@@ -1,4 +1,4 @@
-import { prismaRepository, usageService, waMonitor } from '@api/server.module';
+import { leadsService, prismaRepository, usageService, waMonitor } from '@api/server.module';
 import { redisClient } from '@cache/rediscache.client';
 import { CacheConf, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
@@ -302,6 +302,7 @@ export class ObservabilityService {
       prisma: prismaRepository as unknown as SystemDeps['prisma'],
       waInstances: () => waMonitor?.waInstances,
       usage: () => usageService.snapshot(),
+      leads: () => leadsService.snapshot(),
       databaseProvider: configService.get<Database>('DATABASE')?.PROVIDER,
       cache: {
         redisEnabled: Boolean(cacheConf?.REDIS?.ENABLED && cacheConf?.REDIS?.URI),

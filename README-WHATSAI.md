@@ -63,8 +63,7 @@ Só existe `manager/dist` (bundle Vite). Patches já aplicados:
 4. **Aba README**: item na sidebar (acima de Documentação) que abre um painel **dentro do dashboard** (mesma aba, sidebar visível) com um resumo operacional em um único card; `/readme` também funciona como acesso direto. Conteúdo: `readmes/RESUMO.md`, com links para o guia comercial e o manual interno. Arquivos: `assets/readme-tab.js`, `assets/readme-tab.css`, `assets/marked.min.js` e `readmes/` (gerado por `scripts/sync-readmes.sh`). Para atualizar o conteúdo, rode o sync antes do deploy.
 5. **Observabilidade**: item na sidebar e no cabeçalho do dashboard (`/manager/observability` e `/manager/instance/:instanceId/observability`), página React nativa usando os componentes do projeto (`Card`, `Button`, `Badge`, `Alert`). Consulta `GET /observability` com a chave global do localStorage. A rota antiga `/observability` redireciona para a página nativa.
 6. **Plano e limites**: item na sidebar da instância, logo abaixo de Conversas (`/manager/instance/:instanceId/usage`), e uma barra de uso no fim da Visão Geral. Patch `manager/patches/usage-limits.py` (aceita `--check`, roda depois de todos os outros) + `assets/usage-limits.css` (só tokens do `minimal.css`). Detalhes na seção 15.
-
-7. **Processos**: item na sidebar da instância, depois dos itens do topo (`/manager/instance/:instanceId/processos`), com a contagem de novidades não vistas. Patch `manager/patches/processos.py` (aceita `--check`, roda depois de `root-redirect.py`) + `assets/processos.css`. Detalhes na seção 16.
+7. **Processos**: item na sidebar da instância, depois dos itens do topo (`/manager/instance/:instanceId/processos`), com a contagem de novidades não vistas. Patch `manager/patches/processos.py` (aceita `--check`, roda depois de `root-redirect.py`) + `assets/processos.css`. Detalhes na seção 17.
 
 Campos do bot OpenAI no Manager: `manager/patches/openai-fields.py` (tokenParam, pausa humana, descrições), `manager/patches/responsive.py` (celular/tablet) e `manager/patches/openai-media.py` (seção Mídia e memória da conversa, seção 12.10), aplicados nessa ordem; cada um aceita `--check`.
 
@@ -223,7 +222,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 03/11/2026: chaves Signal do WhatsApp gravadas também no Postgres (tabela `AuthStateKey`, migration `20261103120000_add_auth_state_key`), com backfill do Redis no start: o Redis grátis não tem persistência.
 - 03/11/2026: correções de robustez vindas das issues do upstream (branch `fix/upstream-hardening`): o bot responde uma vez por mensagem mesmo quando o WhatsApp reentrega o mesmo id (cache de 24 h); mensagens temporárias, de visualização única e documentos com legenda são lidos pelo conteúdo real; uma mensagem com erro não derruba as outras do lote; edições, exclusões e o aviso de "mensagens temporárias" não viram mensagem nova para a IA; `msgCall` só sai com `rejectCall` ligado; o token de uma instância não acessa outra pela query (`?instanceName=`); com o banco fora do ar a mensagem ainda vai para o bot e a falha aparece na Observabilidade; o card WhatsApp mostra a última mensagem recebida por instância. Paliativo da CVE do Baileys (GHSA-qvv5-jq5g-4cgg) até o upgrade: respostas de "placeholder resend" só são aceitas para ids que a própria API pediu. Nova migration `20261103120000_message_key_id_index` (só um índice, aplicada no start do container). O upgrade do Baileys continua pendente: testar antes num número descartável.
 - 03/11/2026: **Plano e limites** (seção 15): contagem automática das respostas da IA, franquia, limites diários e horário de atendimento por instância. Sem plano configurado, nada muda no atendimento.
-- 09/11/2026: **Processos** (seção 16): andamentos do DataJud e intimações do DJEN por OAB, avisos à equipe, aviso neutro opcional ao cliente e contexto opcional (só datas) para a IA. Migration aditiva `20261109120000_add_processos`.
+- 09/11/2026: **Processos** (seção 17): andamentos do DataJud e intimações do DJEN por OAB, avisos à equipe, aviso neutro opcional ao cliente e contexto opcional (só datas) para a IA. Migration aditiva `20261109120000_add_processos`.
 - Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
@@ -580,7 +579,9 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela; não envia aviso por e-mail ou WhatsApp |
 | Lembretes ativos de consulta | **Não existe** | Exigiria integração e, na Cloud API, templates pagos |
 | Retenção de 90 dias | **Processo manual** | Não há expurgo automático (seção 7) |
-| Acompanhamento de processos (DataJud/DJEN) | Automático, opcional (desde 09/11/2026) | Aviso à equipe por WhatsApp; ao cliente só a frase neutra, se ligado. Não é tempo real e não substitui os canais oficiais de intimação (seção 16) |
+| Acompanhamento de processos (DataJud/DJEN) | Automático, opcional (desde 09/11/2026) | Aviso à equipe por WhatsApp; ao cliente só a frase neutra, se ligado. Não é tempo real e não substitui os canais oficiais de intimação (seção 17) |
+| Triagem de leads (ficha por conversa) | Automático (desde 04/11/2026) | Uma análise em segundo plano a partir da 3ª mensagem do cliente, com a chave OpenAI da instância; uso interno da equipe, nada vai ao cliente (seção 16) |
+| Aviso de lead para a equipe | Configuração (desligado por padrão) | Uma mensagem de WhatsApp para os números da equipe, uma vez por lead (seção 16) |
 
 Recomendações de produto, em ordem: (1) marcar no banco quais mensagens foram da IA e quais da equipe (contagem de franquia, relatório e auditoria); (2) quando o cliente pedir uma pessoa, pausar a sessão e avisar a equipe (mensagem para um número interno ou webhook); (3) relatório mensal gerado a partir dessa marcação; (4) expurgo automático pela retenção do contrato; (5) validar PDF e foto no gpt-6-luna e a pausa da Cloud API com um número em Coexistence.
 
@@ -656,11 +657,16 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `update_bot_settings` | escrita | Altera só: prompt, modelo, expire, minutos da pausa humana, palavra de encerramento, ativo. Devolve os valores anteriores |
 | `get_usage` | leitura | Uso do plano: respostas do mês e de hoje, franquia, excedente em blocos de 1.000, últimos 30 dias, contatos mascarados e limites (seção 15) |
 | `update_limits` | escrita | Altera plano e limites (campos ausentes não mudam; `null` remove o limite). Marcada como destrutiva; devolve os valores anteriores |
-| `list_processes` | leitura | Processos monitorados (DataJud): situação, última movimentação, novidades (seção 16) |
+| `list_processes` | leitura | Processos monitorados (DataJud): situação, última movimentação, novidades (seção 17) |
 | `get_process` | leitura | Um processo com a capa, os avisos ligados e as últimas movimentações |
 | `add_process` | escrita | Adiciona um processo pelo número CNJ (valida o dígito); não envia nada |
 | `list_publications` | leitura | Intimações/publicações do DJEN das OABs acompanhadas |
 | `sync_process` | escrita | Consulta o DataJud agora para um processo (1 por minuto) |
+| `list_leads` | leitura | Leads da instância (triagem): filtros por status (ou `aguardando`), área, prioridade, texto e data; ordem padrão prioridade alta e depois a maior espera; contagem por visão (seção 16) |
+| `get_lead` | leitura | Ficha completa de um lead: resumo, prioridade e motivo, o que falta saber, próximo passo, parte contrária, documentos citados, origem, datas |
+| `update_lead` | escrita | Altera status, prioridade, nome, área, cidade, próximo passo, resumo, parte contrária, advogado, o que falta saber. Cada campo alterado fica travado contra a IA. Marcada como destrutiva; devolve os valores anteriores |
+| `get_lead_settings` | leitura | Configurações da triagem: análise ligada, áreas, modelo, avisos para a equipe |
+| `update_lead_settings` | escrita | Altera essas configurações (campos ausentes não mudam). Marcada como destrutiva |
 
 Na coluna de remetente, `bot` só é identificado nos últimos 10 minutos (o banco não marca a origem das mensagens, seção 13); depois aparece como `me` (número da instância).
 
@@ -759,11 +765,109 @@ Card **Plano e uso** na página Observabilidade: uma linha por instância com pl
 - O cache de limites e o controle da limpeza são por processo (vale para 1 réplica, como o resto do bot). Com mais réplicas, uma alteração pode levar até 30 s para valer nas outras.
 
 
-## 16. Processos (DataJud e DJEN)
+## 16. Leads (triagem)
+
+Cada conversa privada vira uma **ficha de triagem** para a equipe organizar os atendimentos: nome, área, cidade, resumo, prioridade (com o motivo), o que ainda falta saber, próximo passo, parte contrária, se já tem advogado, documentos citados e origem. Painel: instância > **Leads** (entre Conversas e Plano e limites); na Conversas, o painel do contato mostra a linha **Lead** (status e área, com link para a ficha).
+
+**Uso interno.** Nada da ficha é enviado ao cliente. A única mensagem que a função envia é o aviso opcional para os números da equipe (desligado por padrão).
+
+### 16.1 Como a ficha é preenchida
+
+- **Quando:** depois que a IA responde (a resposta sai primeiro; a análise roda em segundo plano), se o contato mandou **3 ou mais mensagens** e: nunca foi analisado, ou chegaram **3 mensagens novas** do cliente desde a última análise, ou a ficha continua "novo" (pela IA) 24 h depois e há mensagem nova. Grupos e os números da equipe nunca viram lead.
+- **O que é lido:** as últimas **30 mensagens** salvas da conversa (texto, legendas e transcrições já salvas; mídia nunca é baixada). Áudio que o bot transcreveu não fica salvo na mensagem: quando houver áudio sem transcrição, entram também as falas do cliente que estão no histórico da sessão do bot.
+- **Uma chamada** Chat Completions com *structured output* (JSON schema) e a credencial OpenAI da própria instância; modelo = o do bot, ou o definido nas configurações. Tempo máximo 30 s, teto de tokens (600; 2.500 em modelos de raciocínio como gpt-6-luna). Se o modelo recusar o JSON schema, tenta uma vez no modo JSON.
+- **Regras do prompt (PT-BR, triagem de escritório):** só o que o cliente disse ou confirmou, nunca dedução; **nunca** CPF, RG, CNH, CNPJ, PIS/NIT, número de benefício, de processo, dados bancários, cartão ou senha (e o servidor ainda apaga qualquer número com cara de documento que escape: 7+ dígitos, CPF, CNPJ, número CNJ; datas são mantidas); saúde só o mínimo para a área.
+- **Não conta como resposta** do Plano e limites. É pulada quando os limites bloqueiam a IA (limites diários e franquia com `pause`/`message`); o horário de atendimento não bloqueia (a análise não fala com o cliente).
+- **Falhas** só vão para o log; a mesma conversa não é tentada de novo por 10 minutos. O bot nunca é afetado.
+
+### 16.2 Prioridade, status e "aguardando equipe" (regras, não nota da IA)
+
+Não existe nota numérica de lead. A IA só relata fatos; o servidor aplica regras fixas:
+
+| Campo | Regra |
+|---|---|
+| `priority` = `alta` | Só com fato explícito citado pelo cliente: prazo correndo, audiência marcada, intimação/citação, prisão, despejo/reintegração, corte ou suspensão de benefício/salário/serviço, liminar. `priorityReason` traz o fato (ex.: "audiência em 12/11") |
+| `priority` = `baixa` | Sem demanda jurídica (engano, propaganda, spam) ou área fora da lista do escritório (`Outro`) |
+| `priority` = `normal` | O resto ("Sem prazo ou fato urgente informado") |
+| `status` | A IA só muda de `novo` para `qualificado`, quando há nome + área do escritório + (cidade ou necessidade jurídica clara). Nunca rebaixa e **nunca altera um status definido pela equipe** (`statusSource: manual`) |
+| `missingInfo` | Primeiro o que falta entre nome, área e cidade; depois o que o modelo listou (ex.: "data da demissão", "tem contrato assinado?") |
+| `awaitingHumanSince` | Lead aberto (`novo`/`qualificado`) e acionável (qualificado ou prioridade alta) sem resposta de uma pessoa da equipe depois da última mensagem do cliente. Termina quando alguém da equipe escreve na conversa ou quando o status muda para em atendimento, cliente ou descartado |
+
+**Limitação do "aguardando equipe":** o banco não marca quem enviou cada mensagem (seção 13). A resposta da equipe é detectada pela **pausa humana do bot OpenAI** (mensagem `fromMe` que não é do bot, com `stopBotFromMe` ligado), o que inclui o celular, o WhatsApp Web e envios pela API/MCP. Respostas que não passam por esse caminho (Chatwoot, `stopBotFromMe` desligado, Cloud API sem Coexistence) não encerram a espera: mude o status para "Em atendimento". Depois de uma resposta da equipe, a espera só recomeça quando o bot voltar a responder (fim da pausa humana).
+
+Campos editados pela equipe (painel, API ou MCP) ficam em `manualFields` e a IA não os altera mais.
+
+### 16.3 Painel
+
+- **Visões:** Todos · Aguardando equipe · Novos · Qualificados · Em atendimento · Clientes · Descartados, com contagem. **Filtro** (área, prioridade, período da última mensagem), **Ordenar** (padrão: prioridade alta primeiro e depois quem espera há mais tempo), busca por nome, cidade, resumo, parte contrária ou número.
+- **Tabela:** Nome, Telefone (mascarado), Área, Cidade, Prioridade, Status (muda na própria linha), Aguardando ("Aguardando há 3 h") e Última mensagem.
+- **Ficha (clique na linha):** resumo, falta saber, próximo passo, campos editáveis, documentos citados e quantidade de arquivos enviados, origem, datas, **"Abrir conversa"** e **"Abrir no WhatsApp"**. Com parte contrária informada aparece **"Verificar conflito de interesses"**.
+- **Exportar CSV:** UTF-8 com BOM, separado por `;` (abre direto no Excel em português), segue os filtros da tela, até 5.000 linhas.
+- **Analisar conversas anteriores:** conta antes (diálogo com a estimativa), depois analisa em segundo plano, 2 por vez, só conversas dos últimos 7/30/60 dias com 3+ mensagens do cliente e ainda sem análise (até 200 por vez). Uma execução por instância de cada vez.
+- **Configurações:** análise automática, áreas do escritório (padrão: Trabalhista, Previdenciário (BPC/INSS), Família, Consumidor, Cível, Criminal, Outro), modelo e aviso para a equipe.
+
+### 16.4 Aviso para a equipe (desligado por padrão)
+
+Ligado nas configurações, com 1 a 5 números (DDI + DDD) e quando avisar (`qualificado`, `urgente` = prioridade alta, ou `ambos`). Vai **uma vez por lead** (`notifiedAt`), da própria instância, marcado como mensagem do bot (não pausa a IA daquela conversa):
+
+```
+Novo lead qualificado — Nome · Área · Cidade · prioridade alta (audiência em 12/11)
+Resumo do caso.
+Conversa: https://wa.me/55DDDNUMERO
+```
+
+Um número da equipe nunca vira lead, e o número do próprio cliente nunca recebe o aviso.
+
+### 16.5 API
+
+Mesmas guardas das outras rotas (chave global ou token da instância).
+
+```bash
+# Lista: status (novo|qualificado|em_atendimento|cliente|descartado|aguardando), area, priority (alta|normal|baixa),
+# search, since (ISO), remoteJid, sort (priority|waiting|recent|created|name), page, pageSize (até 100)
+curl "$SERVER_URL/leads/$INSTANCE?status=aguardando&sort=priority" -H "apikey: $APIKEY"
+# Resposta: { total, page, pageSize, pages, sort, counts: { todos, aguardando, novo, ... }, leads: [...] }
+
+curl "$SERVER_URL/leads/$INSTANCE/$LEAD_ID" -H "apikey: $APIKEY"
+
+# Edição pela equipe (cada campo enviado fica travado contra a IA; status vira manual). Devolve { previous, lead }
+curl -X PATCH "$SERVER_URL/leads/$INSTANCE/$LEAD_ID" -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{"status":"em_atendimento","nextStep":"Ligar na terça à tarde"}'
+# Campos: status, priority, priorityReason, name, area, city, nextStep, summary, opposingParty, hasLawyer, missingInfo
+
+curl "$SERVER_URL/leads/$INSTANCE/export.csv?status=qualificado" -H "apikey: $APIKEY" -o leads.csv
+
+curl "$SERVER_URL/leads/settings/$INSTANCE" -H "apikey: $APIKEY"
+curl -X POST "$SERVER_URL/leads/settings/$INSTANCE" -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{"enabled":true,"areas":["Trabalhista","Previdenciário (BPC/INSS)","Família","Consumidor","Cível"],
+       "extractionModel":null,"notify":{"enabled":true,"numbers":["55DDDNUMERO"],"on":"ambos"}}'
+
+# Conversas anteriores: dryRun só conta; sem dryRun inicia (201) e o GET mostra o progresso. 409 se já estiver rodando
+curl -X POST "$SERVER_URL/leads/backfill/$INSTANCE" -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{"days":30,"max":50,"dryRun":true}'
+curl "$SERVER_URL/leads/backfill/$INSTANCE" -H "apikey: $APIKEY"
+```
+
+MCP: `list_leads`, `get_lead`, `update_lead`, `get_lead_settings`, `update_lead_settings` (seção 14.2). Observabilidade: o card **Plano e uso** ganha uma linha por instância ("Leads · nome: X novos nas últimas 24 h, Y qualificados em 7 dias, Z aguardando equipe").
+
+### 16.6 Custo e armazenamento
+
+- **Por análise:** ~1,5 a 2,5 mil tokens de entrada (prompt ~900 + até 30 mensagens) e ~150 a 300 de saída (mais o raciocínio em modelos como gpt-6-luna). Em modelos do porte do gpt-4o-mini isso é menos de US$ 0,001 por análise; uma conversa típica tem 1 a 3 análises. O custo fica na conta OpenAI do cliente (a mesma chave do bot). Para baratear, defina nas configurações um modelo menor só para a triagem.
+- **Banco:** `Lead` (uma linha por conversa, campos de tamanho fixo: resumo até 600 caracteres, listas até 8 itens) e `LeadSettings` (uma linha opcional por instância). Migration `20261104120000_add_leads` (postgresql e mysql), **aditiva**; roda no start do container. Rollback: reverter o merge; as tabelas ficam e são ignoradas.
+- Cache de configurações (30 s), controle de análise em andamento, backoff de falhas e progresso da análise de conversas anteriores ficam em memória do processo (1 réplica, como o resto do bot).
+
+### 16.7 LGPD e ética profissional (advocacia)
+
+- **Base legal:** legítimo interesse do escritório em organizar o atendimento que o próprio titular iniciou e procedimentos preliminares a contrato a pedido do titular (LGPD art. 7º, V e IX). O escritório é o controlador; o WhatsAI é operador. Registre a finalidade no contrato e na política de privacidade do escritório.
+- **Dados mínimos:** a ficha guarda só o necessário para a triagem; números de documento são proibidos no prompt e apagados no servidor; saúde só no nível da área do caso. A parte contrária é guardada para a **verificação de conflito de interesses** que o advogado deve fazer antes de aceitar o caso.
+- **Retenção:** **não há expurgo automático** de leads (nem de mensagens, seção 7). A retenção configurável ainda não está implementada: exclua manualmente conforme o contrato (os leads saem junto com a instância, `ON DELETE CASCADE`).
+- **Linguagem para escritórios de advocacia:** apresente como **"organizar os atendimentos e a triagem"**, nunca como "captação de clientes". O Código de Ética e Disciplina da OAB (art. 7º) veda o oferecimento de serviços para captação de clientela, e o Provimento 205/2021 só admite publicidade informativa. O aviso para a equipe é interno; nada é enviado ao cliente automaticamente, e a análise não responde nem oferece serviço a ninguém.
+
+## 17. Processos (DataJud e DJEN)
 
 Acompanhamento dos processos do escritório: o sistema consulta os andamentos públicos no **DataJud** (CNJ) e as intimações/publicações no **DJEN** (Comunica PJe) pelo número da OAB, guarda o histórico e avisa a equipe pelo WhatsApp. Painel: instância > **Processos** (abas Processos, Publicações (DJEN) e Configurações). Vem **desligado** por instância.
 
-### 16.1 Fontes e limites
+### 17.1 Fontes e limites
 
 | Fonte | O que traz | Acesso |
 |---|---|---|
@@ -777,7 +881,7 @@ Acompanhamento dos processos do escritório: o sistema consulta os andamentos p�
 - **Termos de uso do DataJud (v1.2):** no máximo 120 requisições por minuto (aqui: 1 por vez, com pausa, 5 processos por rodada) e uso "não comercial" (item 3.3/3.8). O uso previsto é o escritório acompanhar os próprios processos; a revenda dos dados não é permitida. Avalie com o cliente.
 - **Não substitui** os sistemas oficiais de intimação (PJe, Domicílio Judicial Eletrônico, DJEN, e-mails dos tribunais). O advogado continua conferindo os canais oficiais e contando prazos pela publicação oficial.
 
-### 16.2 Avisos
+### 17.2 Avisos
 
 - Só para itens **novos**: a primeira importação de um processo ou de uma OAB nunca avisa ninguém (fica tudo como visto).
 - **Equipe** (números em Configurações): detalhe completo. Ex.: `Nova movimentação — Silva x Banco (TJRJ)` / `03/11/2026 · Juntada de Petição` / complemento; para o DJEN: `Nova intimação/publicação no DJEN — TJRJ · <processo>` / primeiras linhas / link.
@@ -785,21 +889,21 @@ Acompanhamento dos processos do escritório: o sistema consulta os andamentos p�
 - **Horário de silêncio** (padrão 20:00–08:00, `America/Sao_Paulo`): os avisos ficam guardados e saem quando o horário acaba. Se o WhatsApp estiver desconectado, tentam de novo; depois de 3 dias são descartados.
 - Os avisos saem marcados como mensagem do bot (não pausam a IA).
 
-### 16.3 IA
+### 17.3 IA
 
 Desligado por padrão (**IA pode responder**, por processo, exige contato vinculado). Quando esse contato pergunta sobre "processo/andamento/novidade", o bot recebe um bloco curto só com as **datas** das últimas atualizações dos processos **desse** contato e a instrução de responder de forma neutra, sem interpretar, e oferecer encaminhar ao advogado. O bloco não fica no histórico. Nunca entra processo de outro cliente nem em segredo de justiça.
 
-### 16.4 Rotinas, custo e cron
+### 17.4 Rotinas, custo e cron
 
 - Um temporizador interno roda a cada 5 min e só consulta o banco quando algo está vencido (`lastCheckedAt` mais antigo que **Consultar a cada**, padrão 6 h) ou depois de uma alteração pela API: o Neon pode continuar suspendendo. Lote pequeno (5 processos + 2 OABs por rodada), uma consulta externa por vez, timeouts, espera crescente em 429/5xx e o erro gravado no item. `PROCESSOS_TICKER=false` desliga o temporizador.
 - **cron-job.org** (recomendado, porque o Render free dorme): crie um job `POST https://<url-da-api>/processos/tick` a cada 15 min com o header `apikey: <chave global>`. Ele faz o mesmo que o temporizador (e não repete se já estiver rodando). `?force=1` ignora o horário calculado.
 - Migration `20261109120000_add_processos` (postgresql e mysql), **aditiva** (5 tabelas: `Process`, `ProcessMovement`, `OabWatch`, `Publication`, `ProcessSettings`).
 
-### 16.5 LGPD
+### 17.5 LGPD
 
 Os dados vêm de fontes públicas, mas são dados pessoais: o **escritório é o controlador** (decide quais processos acompanhar e quem é avisado); o WhatsAI é operador. Cadastre só processos de clientes do escritório, vincule o contato só com autorização do cliente e remova os processos encerrados (remover apaga as movimentações e desvincula as publicações).
 
-### 16.6 API
+### 17.6 API
 
 Mesmas guardas das outras rotas (chave global ou token da instância). Erros em português.
 

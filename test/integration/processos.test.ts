@@ -309,4 +309,14 @@ describe('Processos (integration, PostgreSQL)', { skip: SKIP_INTEGRATION }, () =
     const list = await service.list(instanceId, {});
     assert.equal(list.items.find((p: any) => p.id === row.id).status, 'erro');
   });
+
+  test('without numbers of its own, the team numbers of Leads are used', async () => {
+    await prisma.leadSettings.create({ data: { instanceId, notifyNumbers: ['5521911112222'] } });
+    await enable({ notifyNumbers: [] });
+    assert.deepEqual((await service.getSettings(instanceId)).leadsNumbers, ['5521911112222']);
+    sent.length = 0;
+    datajud[TJRJ_DIGITS].movimentos.push(mov('Petição juntada', '2026-11-09T12:00:00Z'));
+    await dueTick();
+    assert.ok(sent.some((x) => x.number === '5521911112222' && /Petição juntada/.test(x.text)));
+  });
 });

@@ -44,6 +44,13 @@ describe('Processos: MCP tools', () => {
         getSummary: async () => ({}),
         saveLimits: async () => ({ previous: null, limits: {} }),
       },
+      leads: {
+        list: async () => ({}),
+        get: async () => null,
+        update: async () => null,
+        getStoredSettings: async () => ({ configured: false, settings: {} }),
+        saveSettings: async () => ({ previous: null, settings: {} }),
+      } as any,
       processos: {
         list: async (instanceId, filters) => {
           calls.push(['list', instanceId, filters]);

@@ -1,4 +1,5 @@
 import { PrismaRepository } from '@api/repository/repository.service';
+import { LeadsService } from '@api/services/leads.service';
 import { WAMonitoringService } from '@api/services/monitor.service';
 import { UsageGate, UsageService } from '@api/services/usage.service';
 import { Integration } from '@api/types/wa.types';
@@ -84,15 +85,19 @@ type UserSegment =
 export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> {
   /** "Plano e limites": counts every answer and enforces business hours and caps (shared with the REST routes). */
   protected readonly usage: UsageService;
+  /** "Leads (triagem)": each answered conversation may be analysed in the background (never delays the answer). */
+  public leads: LeadsService | null;
 
   constructor(
     waMonitor: WAMonitoringService,
     prismaRepository: PrismaRepository,
     configService: ConfigService,
     usage?: UsageService,
+    leads?: LeadsService | null,
   ) {
     super(waMonitor, prismaRepository, 'OpenaiService', configService);
     this.usage = usage ?? new UsageService(prismaRepository);
+    this.leads = leads ?? null;
   }
 
   /**
@@ -328,7 +333,19 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       if (message) {
         this.logger.log('Sending message to WhatsApp');
         const sent = await this.sendMessageWhatsApp(instance, remoteJid, message, settings, true);
-        if (sent > 0) await this.usage.recordAnswer(instance.instanceId, remoteJid);
+        if (sent > 0) {
+          await this.usage.recordAnswer(instance.instanceId, remoteJid);
+          // Not an answer of the plan: a background analysis of the conversation for the team (never sent to the client)
+          this.leads?.afterBotReply({
+            instance,
+            instanceId: instance.instanceId,
+            instanceName: instance.instanceName,
+            remoteJid,
+            pushName,
+            apiKey: creds.apiKey,
+            model: openaiBot.model,
+          });
+        }
       } else {
         this.logger.error('No message to send to WhatsApp');
       }
