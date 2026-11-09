@@ -114,6 +114,10 @@ model Instance {
   Pusher                  Pusher?
   InstanceLimits          InstanceLimits?
   UsageCounter            UsageCounter[]
+  ProcessSettings         ProcessSettings?
+  Process                 Process[]
+  OabWatch                OabWatch[]
+  Publication             Publication[]
 }
 
 model Session {
@@ -821,4 +825,121 @@ model UsageCounter {
   Instance    Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@id([instanceId, type, period, remoteJid])
+}
+
+/// "Processos": court cases monitored per instance (DataJud CNJ). numeroDigits = the 20 digits of the CNJ number.
+model Process {
+  id               String            @id @default(cuid())
+  numeroCnj        String            @db.VarChar(25)
+  numeroDigits     String            @db.VarChar(20)
+  tribunalAlias    String            @db.VarChar(20)
+  apelido          String?           @db.VarChar(120)
+  clientName       String?           @db.VarChar(120)
+  remoteJid        String?           @db.VarChar(100)
+  classe           String?           @db.VarChar(200)
+  assuntos         String?           @db.VarChar(300)
+  orgaoJulgador    String?           @db.VarChar(200)
+  dataAjuizamento  DateTime?         @db.Timestamp
+  lastMovementAt   DateTime?         @db.Timestamp
+  lastCheckedAt    DateTime?         @db.Timestamp
+  lastSyncedAt     DateTime?         @db.Timestamp
+  lastError        String?           @db.VarChar(300)
+  errorCount       Int               @default(0) @db.Int
+  active           Boolean           @default(true)
+  notifyTeam       Boolean           @default(true)
+  notifyClient     Boolean           @default(false)
+  allowAiAnswer    Boolean           @default(false)
+  segredoJustica   Boolean           @default(false)
+  initialized      Boolean           @default(false)
+  lastClientNotice DateTime?         @db.Timestamp
+  createdAt        DateTime          @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp
+  updatedAt        DateTime          @updatedAt @db.Timestamp
+  Instance         Instance          @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId       String
+  ProcessMovement  ProcessMovement[]
+  Publication      Publication[]
+
+  @@unique([instanceId, numeroDigits])
+  @@index([instanceId, active, lastCheckedAt])
+}
+
+/// One movement (andamento) of a Process. hash = dedupe key of the DataJud movement (code + date + name + complements).
+model ProcessMovement {
+  id           String    @id @default(cuid())
+  occurredAt   DateTime  @db.Timestamp
+  code         Int?      @db.Int
+  name         String    @db.VarChar(300)
+  complement   String?   @db.VarChar(500)
+  hash         String    @db.VarChar(64)
+  seenAt       DateTime? @db.Timestamp
+  notifyStatus String    @default("none") @db.VarChar(10)
+  createdAt    DateTime  @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp
+  Process      Process   @relation(fields: [processId], references: [id], onDelete: Cascade)
+  processId    String
+
+  @@unique([processId, hash])
+  @@index([processId, occurredAt])
+  @@index([notifyStatus])
+}
+
+/// OAB number watched on the DJEN (Comunica PJe) for intimações/publicações.
+model OabWatch {
+  id            String        @id @default(cuid())
+  numeroOab     String        @db.VarChar(20)
+  ufOab         String        @db.VarChar(2)
+  label         String?       @db.VarChar(120)
+  active        Boolean       @default(true)
+  initialized   Boolean       @default(false)
+  lastCheckedAt DateTime?     @db.Timestamp
+  lastError     String?       @db.VarChar(300)
+  errorCount    Int           @default(0) @db.Int
+  createdAt     DateTime      @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp
+  updatedAt     DateTime      @updatedAt @db.Timestamp
+  Instance      Instance      @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId    String
+  Publication   Publication[]
+
+  @@unique([instanceId, numeroOab, ufOab])
+}
+
+/// Communication published on the DJEN. externalId = id of the communication on the Comunica API.
+model Publication {
+  id                String    @id @default(cuid())
+  externalId        String    @db.VarChar(64)
+  processNumber     String?   @db.VarChar(25)
+  processDigits     String?   @db.VarChar(20)
+  siglaTribunal     String?   @db.VarChar(20)
+  tipo              String?   @db.VarChar(80)
+  orgao             String?   @db.VarChar(200)
+  disponibilizadaEm DateTime? @db.Timestamp
+  texto             String?   @db.Text
+  link              String?   @db.VarChar(500)
+  seenAt            DateTime? @db.Timestamp
+  notifyStatus      String    @default("none") @db.VarChar(10)
+  createdAt         DateTime  @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp
+  Instance          Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId        String
+  OabWatch          OabWatch? @relation(fields: [oabWatchId], references: [id], onDelete: SetNull)
+  oabWatchId        String?
+  Process           Process?  @relation(fields: [linkedProcessId], references: [id], onDelete: SetNull)
+  linkedProcessId   String?
+
+  @@unique([instanceId, externalId])
+  @@index([instanceId, seenAt])
+  @@index([notifyStatus])
+}
+
+/// "Processos" settings of an instance (one optional row). Without a row (or enabled = false) nothing runs.
+model ProcessSettings {
+  id                    String   @id @default(cuid())
+  enabled               Boolean  @default(false)
+  checkEveryHours       Int      @default(6) @db.Int
+  djenDays              Int      @default(7) @db.Int
+  notifyNumbers         Json?    @db.Json
+  quietHours            Json?    @db.Json
+  clientMessageTemplate String?  @db.Text
+  createdAt             DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp
+  updatedAt             DateTime @updatedAt @db.Timestamp
+  Instance              Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId            String   @unique
 }

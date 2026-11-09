@@ -1,7 +1,8 @@
 import { CacheEngine } from '@cache/cacheengine';
-import { Chatwoot, configService, ProviderSession } from '@config/env.config';
+import { Chatwoot, configService, Processos, ProviderSession } from '@config/env.config';
 import { eventEmitter } from '@config/event.config';
 import { Logger } from '@config/logger.config';
+import { setProcessAiContextProvider } from '@utils/processos/aiContext';
 
 import { BusinessController } from './controllers/business.controller';
 import { CallController } from './controllers/call.controller';
@@ -9,6 +10,7 @@ import { ChatController } from './controllers/chat.controller';
 import { GroupController } from './controllers/group.controller';
 import { InstanceController } from './controllers/instance.controller';
 import { LabelController } from './controllers/label.controller';
+import { ProcessosController } from './controllers/processos.controller';
 import { ProxyController } from './controllers/proxy.controller';
 import { SendMessageController } from './controllers/sendMessage.controller';
 import { SettingsController } from './controllers/settings.controller';
@@ -42,6 +44,7 @@ import { ProviderFiles } from './provider/sessions';
 import { PrismaRepository } from './repository/repository.service';
 import { CacheService } from './services/cache.service';
 import { WAMonitoringService } from './services/monitor.service';
+import { ProcessosService } from './services/processos.service';
 import { ProxyService } from './services/proxy.service';
 import { SettingsService } from './services/settings.service';
 import { TemplateService } from './services/template.service';
@@ -121,6 +124,22 @@ export const baileysController = new BaileysController(waMonitor);
 // "Plano e limites": one instance, so the limits cache invalidated by the REST routes is the one the bot reads
 export const usageService = new UsageService(prismaRepository);
 export const usageController = new UsageController(usageService, prismaRepository);
+
+// "Processos" (DataJud + DJEN): one instance (in-memory ticker state, rate limits, AI context provider)
+const processosConfig = configService.get<Processos>('PROCESSOS');
+const processosLogger = new Logger('Processos');
+export const processosService = new ProcessosService(prismaRepository, waMonitor, {
+  datajudApiKey: processosConfig.DATAJUD_API_KEY,
+  datajudBaseUrl: processosConfig.DATAJUD_BASE_URL,
+  djenBaseUrl: processosConfig.DJEN_BASE_URL,
+  logger: {
+    log: (m) => processosLogger.log(m),
+    warn: (m) => processosLogger.warn(m),
+    error: (m) => processosLogger.error(m),
+  },
+});
+export const processosController = new ProcessosController(processosService);
+setProcessAiContextProvider((instanceId, remoteJid) => processosService.aiContext(instanceId, remoteJid));
 
 const openaiService = new OpenaiService(waMonitor, prismaRepository, configService, usageService);
 export const openaiController = new OpenaiController(openaiService, prismaRepository, waMonitor);

@@ -39,6 +39,11 @@ const EXPECTED_TOOLS = [
   'update_bot_settings',
   'get_usage',
   'update_limits',
+  'list_processes',
+  'get_process',
+  'add_process',
+  'list_publications',
+  'sync_process',
 ];
 
 // --------------------------------------------------------------------------------------------- fakes

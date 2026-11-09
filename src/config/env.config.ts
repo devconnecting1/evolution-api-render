@@ -1,3 +1,4 @@
+import { DATAJUD_PUBLIC_KEY } from '@utils/processos/datajud';
 import { isBooleanString } from 'class-validator';
 import dotenv from 'dotenv';
 
@@ -330,6 +331,8 @@ export type Chatwoot = {
   };
 };
 export type Openai = { ENABLED: boolean; API_KEY_GLOBAL?: string };
+/** "Processos": DataJud public key (default: the current one published by the CNJ), optional DJEN relay, ticker. */
+export type Processos = { DATAJUD_API_KEY: string; DATAJUD_BASE_URL?: string; DJEN_BASE_URL?: string; TICKER: boolean };
 export type Dify = { ENABLED: boolean };
 export type N8n = { ENABLED: boolean };
 export type Evoai = { ENABLED: boolean };
@@ -414,6 +417,7 @@ export interface Env {
   TYPEBOT: Typebot;
   CHATWOOT: Chatwoot;
   OPENAI: Openai;
+  PROCESSOS: Processos;
   DIFY: Dify;
   N8N: N8n;
   EVOAI: Evoai;
@@ -826,6 +830,13 @@ export class ConfigService {
       OPENAI: {
         ENABLED: process.env?.OPENAI_ENABLED === 'true',
         API_KEY_GLOBAL: process.env?.OPENAI_API_KEY_GLOBAL || null,
+      },
+      PROCESSOS: {
+        // Public key of the DataJud API (https://datajud-wiki.cnj.jus.br/api-publica/acesso); the CNJ may change it
+        DATAJUD_API_KEY: process.env?.DATAJUD_API_KEY || DATAJUD_PUBLIC_KEY,
+        DATAJUD_BASE_URL: process.env?.DATAJUD_BASE_URL || undefined,
+        DJEN_BASE_URL: process.env?.DJEN_BASE_URL || undefined,
+        TICKER: process.env?.PROCESSOS_TICKER !== 'false',
       },
       DIFY: {
         ENABLED: process.env?.DIFY_ENABLED === 'true',

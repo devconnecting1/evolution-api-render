@@ -39,6 +39,14 @@ export interface McpDeps {
     getSummary: (instanceId: string) => Promise<any>;
     saveLimits: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; limits: any }>;
   };
+  /** "Processos" (ProcessosService): court cases (DataJud) and DJEN publications. */
+  processos?: {
+    list: (instanceId: string, filters?: Record<string, any>) => Promise<any>;
+    get: (instanceId: string, id: string, movementsLimit?: number) => Promise<any>;
+    add: (instanceId: string, input: Record<string, any>) => Promise<any>;
+    listPublications: (instanceId: string, filters?: Record<string, any>) => Promise<any>;
+    manualSync: (instanceId: string, id: string) => Promise<any>;
+  };
   isBotMessageId: (instanceId: string, messageId: string) => Promise<boolean>;
   config: McpConfig;
   logger: McpLogger;

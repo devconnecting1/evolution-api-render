@@ -22,6 +22,7 @@ import {
   resolveOpenaiMediaOptions,
   withCaption,
 } from '@utils/openaiMedia';
+import { getProcessAiContext } from '@utils/processos/aiContext';
 import { stripQuotedContext } from '@utils/quotedContext';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import axios from 'axios';
@@ -593,12 +594,16 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       content: await this.buildChatCompletionContent(instance, content, msg, media),
     };
 
+    // "Processos": dates of the last updates of THIS contact's monitored processes (opt-in, never saved in history)
+    const processContext = await getProcessAiContext(instance.instanceId, remoteJid, stripQuotedContext(content));
+
     // Combine all messages: system messages, pre-defined messages, conversation history, and current message
     const messages: any[] = [
       ...messagesSystem,
       ...messagesAssistant,
       ...messagesUser,
       ...conversationHistory,
+      ...(processContext ? [{ role: 'system', content: processContext }] : []),
       messageData,
     ];
 
