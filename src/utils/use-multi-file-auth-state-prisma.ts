@@ -1,3 +1,4 @@
+import { runWithInstance } from '@api/repository/instance-db/instance-context';
 import { prismaRepository } from '@api/server.module';
 import { CacheService } from '@api/services/cache.service';
 import { CacheConf, configService } from '@config/env.config';
@@ -219,10 +220,12 @@ export default async function useMultiFileAuthStatePrisma(
 
     // delete + insert: two statements per chunk whatever the batch size, the same on PostgreSQL and MySQL
     const run = enqueue(sessionId, () =>
-      prisma.$transaction([
-        ...chunk(keys).map((part) => prisma.authStateKey.deleteMany({ where: { sessionId, key: { in: part } } })),
-        ...chunk(rows).map((part) => prisma.authStateKey.createMany({ data: part })),
-      ]),
+      runWithInstance(sessionId, () =>
+        prisma.$transaction([
+          ...chunk(keys).map((part) => prisma.authStateKey.deleteMany({ where: { sessionId, key: { in: part } } })),
+          ...chunk(rows).map((part) => prisma.authStateKey.createMany({ data: part })),
+        ]),
+      ),
     ).then(
       () => true,
       (error) => {
