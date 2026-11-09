@@ -1011,6 +1011,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
         });
 
         this.logger.log(`Human message in ${remoteJid}: ${this.integrationName} session ${current.id} paused`);
+        this.onHumanReply(instance, sessionJids, now);
         // Only the transition is notified; later human messages just move resumesAt (see fetchSessions)
         if (!isHumanPaused(current)) this.notifyHumanPause(instance, paused, resumeMinutes);
         return;
@@ -1050,9 +1051,14 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
       });
 
       this.logger.log(`Human message in ${remoteJid}: created paused ${this.integrationName} session ${created.id}`);
+      this.onHumanReply(instance, sessionJids, now);
       this.notifyHumanPause(instance, created, resumeMinutes);
     });
   }
+
+  /** A person of the team wrote in the chat (after the takeover was recorded). Must never throw or wait. */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected onHumanReply(instance: InstanceDto, remoteJids: string[], at: Date): void {}
 
   private notifyHumanPause(instance: InstanceDto, session: any, resumeMinutes: number): void {
     this.notifyStatusChange(instance, session, () => ({
