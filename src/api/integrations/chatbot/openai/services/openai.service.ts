@@ -1,4 +1,5 @@
 import { PrismaRepository } from '@api/repository/repository.service';
+import { AgendaService } from '@api/services/agenda.service';
 import { WAMonitoringService } from '@api/services/monitor.service';
 import { UsageGate, UsageService } from '@api/services/usage.service';
 import { Integration } from '@api/types/wa.types';
@@ -31,6 +32,13 @@ import OpenAI, { toFile } from 'openai';
 import P from 'pino';
 
 import { BaseChatbotService } from '../../base-chatbot.service';
+import {
+  buildAgendaContext,
+  contactJidsOf,
+  isToolsUnsupportedError,
+  modelsWithoutTools,
+  runToolLoop,
+} from '../agenda-ai';
 
 type TokenParamName = 'max_tokens' | 'max_completion_tokens';
 type TokenParamMode = 'auto' | TokenParamName;
@@ -89,6 +97,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     prismaRepository: PrismaRepository,
     configService: ConfigService,
     usage?: UsageService,
+    /** "Agenda" (optional): tools for the AI and the replies to reminders, only where the agenda is on. */
+    protected readonly agenda?: AgendaService,
   ) {
     super(waMonitor, prismaRepository, 'OpenaiService', configService);
     this.usage = usage ?? new UsageService(prismaRepository);
@@ -132,10 +142,27 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         return;
       }
 
+      // "Agenda": "1" / "2" right after a reminder (no OpenAI call, not counted as an answer)
+      const reminderReply = await this.agenda
+        ?.handleReminderReply(instance.instanceId, contactJidsOf(remoteJid, msg), stripQuotedContext(content))
+        .catch((error) => {
+          this.logger.error(`Agenda reply check failed: ${error?.message ?? error}`);
+          return null;
+        });
+      if (reminderReply?.reply) {
+        await this.sendMessageWhatsApp(instance, remoteJid, reminderReply.reply, settings, false);
+        return;
+      }
+      if (reminderReply?.note) content = `${content}\n${reminderReply.note}`;
+
       // "Plano e limites": business hours and caps, before anything is sent to OpenAI (transcription included).
       // The finish keyword still works while the AI is off.
       const gate = await this.usage.checkBeforeAnswer(instance.instanceId, remoteJid);
       if (!gate.allow && !this.isFinishKeyword(content, settings)) {
+        if (reminderReply?.fallback) {
+          await this.sendMessageWhatsApp(instance, remoteJid, reminderReply.fallback, settings, false);
+          return;
+        }
         await this.handleBlockedAnswer(instance, remoteJid, session, settings, gate);
         return;
       }
@@ -615,7 +642,15 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     // Send the request to OpenAI
     try {
       this.logger.log('Sending request to OpenAI API');
-      const completions = await this.createChatCompletionWithFiles(client, openaiBot, messages, tokenParam);
+      const completions = await this.createAnswerCompletion(
+        client,
+        instance,
+        openaiBot,
+        remoteJid,
+        messages,
+        tokenParam,
+        msg,
+      );
 
       if (instance.integration === Integration.WHATSAPP_BAILEYS) {
         await instance.client.sendPresenceUpdate('paused', remoteJid);
@@ -1133,9 +1168,10 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     openaiBot: OpenaiBot,
     messages: any[],
     tokenParam: { mode: TokenParamMode; param: TokenParamName },
+    extra: Record<string, any> = {},
   ) {
     try {
-      return await this.createChatCompletion(client, openaiBot, messages, tokenParam);
+      return await this.createChatCompletion(client, openaiBot, messages, tokenParam, extra);
     } catch (error) {
       const current = messages[messages.length - 1];
       const hasFiles = Array.isArray(current?.content) && current.content.some((part: any) => part?.type === 'file');
@@ -1160,7 +1196,47 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         ),
       };
 
-      return await this.createChatCompletion(client, openaiBot, messages, tokenParam);
+      return await this.createChatCompletion(client, openaiBot, messages, tokenParam, extra);
+    }
+  }
+
+  /**
+   * The completion of one answer. With the agenda of the instance on, the agenda tools (and a short system note)
+   * are offered in a bounded tool loop; a model that rejects tools is remembered and answered without them.
+   */
+  private async createAnswerCompletion(
+    client: OpenAI,
+    instance: any,
+    openaiBot: OpenaiBot,
+    remoteJid: string,
+    messages: any[],
+    tokenParam: { mode: TokenParamMode; param: TokenParamName },
+    msg?: any,
+  ) {
+    const agenda = await buildAgendaContext(this.agenda, instance?.instanceId, remoteJid, {
+      msg,
+      pushName: msg?.pushName,
+      model: openaiBot.model,
+    }).catch((error) => {
+      this.logger.error(`Agenda tools unavailable: ${error?.message ?? error}`);
+      return null;
+    });
+    if (!agenda) return this.createChatCompletionWithFiles(client, openaiBot, messages, tokenParam);
+
+    const firstOther = messages.findIndex((message) => message?.role !== 'system');
+    const withNote = [...messages];
+    withNote.splice(firstOther < 0 ? withNote.length : firstOther, 0, { role: 'system', content: agenda.systemPrompt });
+    try {
+      const { completion, calls } = await runToolLoop(withNote, agenda, (convo, extra) =>
+        this.createChatCompletionWithFiles(client, openaiBot, convo, tokenParam, extra),
+      );
+      if (calls.length) this.logger.log(`Agenda tools used for ${remoteJid}: ${calls.join(', ')}`);
+      return completion;
+    } catch (error) {
+      if (!isToolsUnsupportedError(error)) throw error;
+      if (openaiBot.model) modelsWithoutTools.add(openaiBot.model);
+      this.logger.warn(`Model ${openaiBot.model} does not accept tools: answering without the agenda tools`);
+      return this.createChatCompletionWithFiles(client, openaiBot, messages, tokenParam);
     }
   }
 
@@ -1217,10 +1293,11 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     openaiBot: OpenaiBot,
     messages: any[],
     tokenParam: { mode: TokenParamMode; param: TokenParamName },
+    extra: Record<string, any> = {},
   ) {
     const maxTokens = openaiBot.maxTokens || 500;
     const buildParams = (param: TokenParamName) => {
-      const params: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = { model: openaiBot.model, messages };
+      const params: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = { ...extra, model: openaiBot.model, messages };
       params[param] = maxTokens;
       return params;
     };

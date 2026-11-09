@@ -39,6 +39,17 @@ export interface McpDeps {
     getSummary: (instanceId: string) => Promise<any>;
     saveLimits: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; limits: any }>;
   };
+  /** "Agenda" (AgendaService): the same instance the REST routes and the bot use. */
+  agenda: Pick<
+    import('@api/services/agenda.service').AgendaService,
+    | 'getSettings'
+    | 'today'
+    | 'listAppointments'
+    | 'freeSlots'
+    | 'createAppointment'
+    | 'cancelAppointment'
+    | 'saveSettings'
+  >;
   isBotMessageId: (instanceId: string, messageId: string) => Promise<boolean>;
   config: McpConfig;
   logger: McpLogger;

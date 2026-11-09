@@ -10,12 +10,14 @@ import { createMcpRouter } from '@api/integrations/mcp/mcp.router';
 import { McpDeps } from '@api/integrations/mcp/mcp.types';
 import { maskSecret, maskUrl, normalizeRecipient, scrubSecrets } from '@api/integrations/mcp/mcp.util';
 import { TOOL_NAMES } from '@api/integrations/mcp/tools';
+import { AgendaService } from '@api/services/agenda.service';
 import { UsageService } from '@api/services/usage.service';
 import { Prisma } from '@prisma/client';
 import express from 'express';
 import { Server } from 'http';
 import path from 'path';
 
+import { createAgendaTables } from '../helpers/agenda-mock';
 import { createUsageTables } from '../helpers/usage-mock';
 
 const GLOBAL_KEY = 'global-key-for-tests-only-0123456789';
@@ -39,6 +41,11 @@ const EXPECTED_TOOLS = [
   'update_bot_settings',
   'get_usage',
   'update_limits',
+  'list_appointments',
+  'get_free_slots',
+  'create_appointment',
+  'cancel_appointment',
+  'update_agenda_settings',
 ];
 
 // --------------------------------------------------------------------------------------------- fakes
@@ -176,10 +183,20 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
 
   const usageTables = createUsageTables(instances);
   const usage = new UsageService({ ...prisma, ...usageTables, instance: prisma.instance });
+  const agendaTables = createAgendaTables(instances);
+  const agendaSent: { jid: string; text: string }[] = [];
+  const agenda = new AgendaService(agendaTables, undefined, {
+    cacheTtlMs: 0,
+    sendText: async (_id, jid, text) => {
+      agendaSent.push({ jid, text });
+      return true;
+    },
+  });
 
   const deps: McpDeps = {
     prisma,
     usage,
+    agenda,
     waMonitor: { waInstances: { escritorio: channelA } },
     openaiController: {
       integrationEnabled: true,
@@ -223,7 +240,7 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     },
   };
 
-  return { deps, calls, sessions, usageTables };
+  return { deps, calls, sessions, usageTables, agendaTables, agendaSent };
 }
 
 // --------------------------------------------------------------------------------------------- http helpers
@@ -234,10 +251,12 @@ type Harness = {
   calls: Calls;
   sessions: any[];
   usageTables: ReturnType<typeof createUsageTables>;
+  agendaTables: any;
+  agendaSent: { jid: string; text: string }[];
 };
 
 async function startServer(overrides: Partial<McpDeps['config']> = {}, limiter?: FailedAuthLimiter): Promise<Harness> {
-  const { deps, calls, sessions, usageTables } = fakeDeps(overrides);
+  const { deps, calls, sessions, usageTables, agendaTables, agendaSent } = fakeDeps(overrides);
   const app = express();
   app.use(express.json());
   app.use(
@@ -250,7 +269,7 @@ async function startServer(overrides: Partial<McpDeps['config']> = {}, limiter?:
   });
   const { port } = server.address() as AddressInfo;
 
-  return { url: `http://127.0.0.1:${port}/mcp`, server, calls, sessions, usageTables };
+  return { url: `http://127.0.0.1:${port}/mcp`, server, calls, sessions, usageTables, agendaTables, agendaSent };
 }
 
 let nextRpcId = 1;
@@ -608,6 +627,67 @@ describe('MCP: tools', () => {
     assert.match(json.note, /sem limite/);
     assert.equal(json.month.limit, null);
     assert.equal(json.last30Days.length, 30);
+  });
+
+  test('agenda tools: settings (destructive), free slots, create (messages the client), list and cancel', async () => {
+    const { body } = await rpc(h.url, 'tools/list', {}, bearer(GLOBAL_KEY));
+    const annotations = (name: string) => body.result.tools.find((item: any) => item.name === name).annotations;
+    assert.equal(annotations('update_agenda_settings').destructiveHint, true);
+    assert.equal(annotations('create_appointment').destructiveHint, false);
+    assert.equal(annotations('create_appointment').openWorldHint, true);
+    assert.equal(annotations('list_appointments').readOnlyHint, true);
+
+    const always = Object.fromEntries(
+      ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].map((d) => [d, [['08:00', '18:00']]]),
+    );
+    const saved = await callTool(h.url, 'update_agenda_settings', {
+      instance: 'escritorio',
+      enabled: true,
+      availability: always,
+      ai_permissions: { can_cancel: false },
+    });
+    assert.equal(saved.json.updated, true);
+    assert.equal(saved.json.previous, null);
+    assert.equal(saved.json.settings.aiPermissions.canCancel, false);
+    assert.equal(saved.json.settings.enabled, true);
+
+    const slots = await callTool(h.url, 'get_free_slots', { instance: 'escritorio', days: 3, limit: 2 });
+    assert.equal(slots.json.slots.length, 2);
+
+    const created = await callTool(h.url, 'create_appointment', {
+      instance: 'escritorio',
+      contact: '5511988887777',
+      start: slots.json.slots[0].startsAt,
+      name: 'Maria Teste',
+    });
+    assert.equal(created.json.created, true);
+    assert.equal(h.agendaSent.length, 1);
+    assert.match(h.agendaSent[0].text, /Seu agendamento está marcado/);
+
+    const taken = await callTool(h.url, 'create_appointment', {
+      instance: 'escritorio',
+      contact: '5511977776666',
+      start: slots.json.slots[0].startsAt,
+    });
+    assert.equal(taken.result.isError, true);
+    assert.match(taken.text, /não está disponível/);
+
+    const list = await callTool(h.url, 'list_appointments', { instance: 'escritorio' });
+    assert.equal(list.json.count, 1);
+    const cancelled = await callTool(h.url, 'cancel_appointment', {
+      instance: 'escritorio',
+      id: list.json.appointments[0].id,
+      notify_client: false,
+    });
+    assert.equal(cancelled.json.appointment.status, 'cancelado');
+    assert.equal(h.agendaSent.length, 1);
+    const clinic = await callTool(
+      h.url,
+      'list_appointments',
+      { instance: 'clinica' },
+      bearer('token-of-escritorio-0123456789'),
+    );
+    assert.equal(clinic.result.isError, true);
   });
 
   test('update_limits is destructive, saves a partial change and returns the previous values', async () => {

@@ -115,6 +115,8 @@ model Instance {
   EvoaiSetting            EvoaiSetting?
   InstanceLimits          InstanceLimits?
   UsageCounter            UsageCounter[]
+  AgendaSettings          AgendaSettings?
+  Appointment             Appointment[]
 }
 
 model Session {
@@ -827,4 +829,55 @@ model UsageCounter {
   Instance    Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@id([instanceId, type, period, remoteJid])
+}
+
+/// "Agenda": scheduling settings per instance (no row = agenda off). JSON columns are normalized by src/utils/agenda.ts.
+model AgendaSettings {
+  id               String    @id @default(cuid())
+  enabled          Boolean   @default(false) @db.Boolean
+  timezone         String    @default("America/Sao_Paulo") @db.VarChar(64)
+  slotMinutes      Int       @default(30) @db.Integer
+  bufferMinutes    Int       @default(0) @db.Integer
+  minNoticeHours   Int       @default(2) @db.Integer
+  maxDaysAhead     Int       @default(30) @db.Integer
+  availability     Json?     @db.JsonB
+  blocks           Json?     @db.JsonB
+  appointmentTypes Json?     @db.JsonB
+  reminders        Json?     @db.JsonB
+  confirmation     Json?     @db.JsonB
+  aiPermissions    Json?     @db.JsonB
+  notifyNumbers    Json?     @db.JsonB
+  icsToken         String?   @unique @db.VarChar(64)
+  /// Bumped inside every booking transaction: the row lock serializes concurrent bookings of the instance.
+  bookingSeq       Int       @default(0) @db.Integer
+  createdAt        DateTime? @default(now()) @db.Timestamp
+  updatedAt        DateTime  @updatedAt @db.Timestamp
+  Instance         Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId       String    @unique
+}
+
+/// "Agenda": one appointment (UTC instants). Status agendado | confirmado | cancelado | realizado | faltou.
+model Appointment {
+  id              String    @id @default(cuid())
+  remoteJid       String    @db.VarChar(100)
+  contactName     String?   @db.VarChar(120)
+  typeName        String    @db.VarChar(80)
+  mode            String?   @db.VarChar(12)
+  startsAt        DateTime  @db.Timestamptz(3)
+  endsAt          DateTime  @db.Timestamptz(3)
+  status          String    @default("agendado") @db.VarChar(12)
+  notes           String?   @db.Text
+  source          String    @default("manual") @db.VarChar(8)
+  remindersSent   Json?     @db.JsonB
+  awaitingReplyAt DateTime? @db.Timestamptz(3)
+  confirmedAt     DateTime? @db.Timestamptz(3)
+  cancelledAt     DateTime? @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+  Instance        Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId      String
+
+  @@index([instanceId, startsAt])
+  @@index([instanceId, remoteJid, startsAt])
+  @@index([status, startsAt])
 }
