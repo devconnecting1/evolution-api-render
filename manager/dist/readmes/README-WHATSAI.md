@@ -4,7 +4,7 @@
 
 Plataforma própria de atendimento automatizado: Evolution API (WhatsApp Web via Baileys ou Cloud API oficial da Meta) + agente OpenAI por instância + painel WhatsAI. Cada número = 1 instância com seu próprio agente.
 
-> Este README é o manual operacional do projeto. Atualizado em 03/11/2026.
+> Este README é o manual operacional do projeto. Atualizado em 09/11/2026.
 >
 > **Canais:** os planos Essencial e Profissional usam **WhatsApp Web** (`WHATSAPP-BAILEYS`, QR code); o Premium usa a **Cloud API** (`WHATSAPP-BUSINESS`). O escritório de advocacia em produção usa Baileys. A **pausa humana** está validada em produção no Baileys. Na Cloud API ela funciona pelos ecos da **Coexistence** (`smb_message_echoes`), já tratados no código, mas **ainda não validados com um número real** (seção 12.7).
 
@@ -52,6 +52,7 @@ VERCEL_TOKEN="<token da Vercel>" \
 - Mudanças de env no `render.yaml` são aplicadas no deploy seguinte (Blueprint auto-sync). Se não aplicar: Render > Blueprint > **Sync**.
 - Deploy reinicia a API (~4 min) e reconecta as instâncias automaticamente. Evite durante horário comercial dos clientes.
 - CI: `Check Code Quality` roda lint/build; `Security` roda Gitleaks + `npm audit` (report-only); Dependabot abre atualizações semanais. O deploy do manager usa o secret `VERCEL_TOKEN`.
+- **Build:** o `tsup` empacota cada arquivo de `src` com sourcemap e já passa do heap padrão do Node (~2 GB). O `Dockerfile` (estágio de build) e o CI usam `NODE_OPTIONS=--max-old-space-size=4096`; localmente rode `NODE_OPTIONS=--max-old-space-size=4096 npm run build`. O pipeline Starter do Render tem 8 GB.
 
 ## 4. Manager (build sem fonte)
 
@@ -63,6 +64,7 @@ Só existe `manager/dist` (bundle Vite). Patches já aplicados:
 4. **Aba README**: item na sidebar (acima de Documentação) que abre um painel **dentro do dashboard** (mesma aba, sidebar visível) com um resumo operacional em um único card; `/readme` também funciona como acesso direto. Conteúdo: `readmes/RESUMO.md`, com links para o guia comercial e o manual interno. Arquivos: `assets/readme-tab.js`, `assets/readme-tab.css`, `assets/marked.min.js` e `readmes/` (gerado por `scripts/sync-readmes.sh`). Para atualizar o conteúdo, rode o sync antes do deploy.
 5. **Observabilidade**: item na sidebar e no cabeçalho do dashboard (`/manager/observability` e `/manager/instance/:instanceId/observability`), página React nativa usando os componentes do projeto (`Card`, `Button`, `Badge`, `Alert`). Consulta `GET /observability` com a chave global do localStorage. A rota antiga `/observability` redireciona para a página nativa.
 6. **Plano e limites**: item na sidebar da instância, logo abaixo de Conversas (`/manager/instance/:instanceId/usage`), e uma barra de uso no fim da Visão Geral. Patch `manager/patches/usage-limits.py` (aceita `--check`, roda depois de todos os outros) + `assets/usage-limits.css` (só tokens do `minimal.css`). Detalhes na seção 15.
+7. **Agenda**: item na sidebar da instância, antes de Plano e limites (`/manager/instance/:instanceId/agenda`), atalho no menu de comandos e "Próximo agendamento" no painel do contato em Conversas. Patch `manager/patches/agenda.py` (aceita `--check`, roda depois de `root-redirect.py`; bundle `?v=24`) + `assets/agenda.css` (só tokens `--m-*`). Detalhes na seção 16.
 
 Campos do bot OpenAI no Manager: `manager/patches/openai-fields.py` (tokenParam, pausa humana, descrições), `manager/patches/responsive.py` (celular/tablet) e `manager/patches/openai-media.py` (seção Mídia e memória da conversa, seção 12.10), aplicados nessa ordem; cada um aceita `--check`.
 
@@ -145,7 +147,7 @@ Preços fixos aprovados em 03/11/2026 (reajuste da implantação; contratos e pr
 2. **Regras da Meta para IA mudaram em 2026** e podem mudar de novo: mantenha a cláusula de revisão de preço.
 3. **LGPD:** termo de tratamento de dados, aviso de que o contato fala com uma IA e retenção combinada (padrão 90 dias; a exclusão hoje é manual, seção 7).
 4. **Advocacia:** o Provimento 205/2021 da OAB limita a publicidade. A IA não promete resultado nem capta clientes ativamente; só faz triagem e agendamento.
-5. **Nada prometido que não exista** (seção 13): aviso automático para a equipe, relatório automático e lembretes ativos **não** são recursos atuais.
+5. **Nada prometido que não exista** (seção 13): relatório automático e aviso à equipe quando o cliente pede uma pessoa **não** são recursos atuais. Lembretes de consulta só existem com a **Agenda** ligada (seção 16), no WhatsApp Web; na Cloud API só dentro da janela de 24 h.
 
 ## 7. LGPD, segurança e riscos
 
@@ -177,6 +179,7 @@ Preços fixos aprovados em 03/11/2026 (reajuste da implantação; contratos e pr
 | Cloud API cobrando acima do esperado | Bot dividindo respostas em várias mensagens ou templates de marketing; revisar `splitMessages` e o rate card |
 | Bot parou de responder a um contato (Baileys) | Provável pausa humana: `GET /openai/fetchSessions/{openaiId}/{instancia}`, procurar `status: paused` (e `parameters.humanLastMessageAt`); reative com `POST /openai/changeStatus/{instancia}` (`opened`). O campo `humanPause` de cada sessão mostra o motivo e quanto falta para retomar (seção 12.9). Ver seção 12.2 |
 | Erro `400 Unsupported parameter: 'max_tokens'` | Modelo de raciocínio (gpt-5, o-series, gpt-6) exige `max_completion_tokens`; deixe `tokenParam: "auto"` (seção 12.1) |
+| Card Sistema com "Falhas ao salvar mensagens" ou log `not stored (P1001)` | Banco inacessível (Neon acordando do scale-to-zero). A mensagem ainda vai para o bot, mas não fica salva. Use o endpoint *pooled* do Neon com `connect_timeout=15&pool_timeout=20` na `DATABASE_CONNECTION_URI` |
 | Cliente não recebe nada quando a OpenAI falha | Esperado se `unknownMessage` estiver vazio; configure em PT-BR (seção 12.5) |
 
 ## 10. Observabilidade
@@ -217,7 +220,10 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 02/11/2026: preços fixos aprovados (seção 6) e auditoria do que a landing promete contra o código (seção 13).
 - 03/11/2026: servidor MCP embutido em `/mcp` para operar o projeto por assistentes de IA (seção 14).
 - 03/11/2026: reajuste da implantação e dos adicionais (seção 6); mensalidades e excedente mantidos. Contratos e propostas enviados antes mantêm seus preços durante a validade.
+- 03/11/2026: chaves Signal do WhatsApp gravadas também no Postgres (tabela `AuthStateKey`, migration `20261103120000_add_auth_state_key`), com backfill do Redis no start: o Redis grátis não tem persistência.
+- 03/11/2026: correções de robustez vindas das issues do upstream (branch `fix/upstream-hardening`): o bot responde uma vez por mensagem mesmo quando o WhatsApp reentrega o mesmo id (cache de 24 h); mensagens temporárias, de visualização única e documentos com legenda são lidos pelo conteúdo real; uma mensagem com erro não derruba as outras do lote; edições, exclusões e o aviso de "mensagens temporárias" não viram mensagem nova para a IA; `msgCall` só sai com `rejectCall` ligado; o token de uma instância não acessa outra pela query (`?instanceName=`); com o banco fora do ar a mensagem ainda vai para o bot e a falha aparece na Observabilidade; o card WhatsApp mostra a última mensagem recebida por instância. Paliativo da CVE do Baileys (GHSA-qvv5-jq5g-4cgg) até o upgrade: respostas de "placeholder resend" só são aceitas para ids que a própria API pediu. Nova migration `20261103120000_message_key_id_index` (só um índice, aplicada no start do container). O upgrade do Baileys continua pendente: testar antes num número descartável.
 - 03/11/2026: **Plano e limites** (seção 15): contagem automática das respostas da IA, franquia, limites diários e horário de atendimento por instância. Sem plano configurado, nada muda no atendimento.
+- 09/11/2026: **Agenda** própria (seção 16): a IA consulta horários, agenda, remarca e cancela pelo WhatsApp (ferramentas do Chat Completions), lembretes com confirmação, página no painel, feed ICS e ferramentas MCP. Desligada por padrão. Sem Google Calendar.
 - Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
@@ -261,7 +267,7 @@ Problema resolvido: com `stopBotFromMe=true`, quando o dono escrevia (celular ou
 | Humano escreve durante o debounce do cliente | Nenhuma resposta (o debounce relê a sessão ao disparar) |
 | Atendente responde pelo **Chatwoot** (integração ligada) | Conta como humano e pausa o bot |
 | Envio pela API REST (`/message/sendText`, n8n, CRM) | **Não** pausa: a API não recebe de volta o que ela mesma envia (`emitOwnEvents: false`). Para pausar ao assumir por um painel próprio, chame `changeStatus` `paused` |
-| Auto-resposta de chamada (`msgCall`) | Não pausa |
+| Auto-resposta de chamada (`msgCall`) | Não pausa. Só é enviada quando `rejectCall` está ligado (a chamada é recusada) |
 
 ### 12.3 Sessões legadas e pausa manual
 
@@ -303,7 +309,8 @@ curl -X POST "$SERVER_URL/openai/settings/$INSTANCE" \
 # O fetchSettings devolve esse campo como "fallbackId".
 
 # 3. Criar bot chatCompletion. Obrigatórios: enabled, openaiCredsId, botType, triggerType
-#    (chatCompletion exige ainda model e maxTokens; assistant exige assistantId)
+#    (chatCompletion exige ainda model e maxTokens). Use sempre botType "chatCompletion": o modo "assistant"
+#    não funciona mais, porque a OpenAI desligou a Assistants API em 26/08/2026
 curl -X POST "$SERVER_URL/openai/create/$INSTANCE" \
   -H "apikey: $APIKEY" -H "Content-Type: application/json" \
   -d '{
@@ -364,7 +371,7 @@ curl "$SERVER_URL/openai/fetchSessions/<openaiBotId>/$INSTANCE" -H "apikey: $API
 
 ### 12.6 Imagens
 
-As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa pelo canal, usa o base64 da mensagem ou a URL pública (S3/MinIO). No modo Assistants a imagem sobe por upload `vision` e **os arquivos ficam na conta OpenAI** (considere na política de privacidade/LGPD). Se não conseguir obter a imagem, o fluxo segue só com texto e a nota `[imagem não pôde ser processada]` (no lugar do antigo erro `Failed to download file`).
+As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa pelo canal, usa o base64 da mensagem ou a URL pública (S3/MinIO). Se não conseguir obter a imagem, o fluxo segue só com texto e a nota `[imagem não pôde ser processada]` (no lugar do antigo erro `Failed to download file`).
 
 ### 12.7 Limitações conhecidas
 
@@ -379,6 +386,7 @@ As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa
 - Envios pela API REST (n8n, CRM, painel próprio) **não** pausam o bot; só mensagens digitadas no WhatsApp (celular/Web/Desktop) ou respostas de atendente pelo Chatwoot. Para pausar a partir de um painel, use `changeStatus` `paused`.
 - Mensagens do cliente durante a pausa não são guardadas para responder depois.
 - Só o bot OpenAI tem retomada por `humanResumeMinutes`; Typebot, Dify etc. mantêm o comportamento anterior.
+- **Modo `assistant` indisponível:** a OpenAI desligou a Assistants API em 26/08/2026. Bots com `botType: "assistant"` (e o `functionUrl`, que só existia nesse modo) não respondem mais; use `chatCompletion`. A **Agenda** própria usa ferramentas do Chat Completions (seção 16); planilha ou CRM continuam como serviço sob medida (webhook/n8n).
 
 ### 12.8 Deploy e atualização
 
@@ -518,7 +526,7 @@ O que a IA recebe em cada tipo de mensagem (só no bot OpenAI; Typebot, Dify etc
 | Documento que não é PDF (doc, docx, xls...) ou PDF acima do limite | `[o contato enviou o documento contrato.docx (DOCX)]` + legenda |
 | PDF com mais de 20 páginas | `[o contato enviou o documento autos.pdf (PDF, 35 páginas)]` |
 
-**PDF:** no `chatCompletion` o PDF vai como *file input* do Chat Completions (`{"type":"file","file":{"filename","file_data":"data:application/pdf;base64,..."}}`, suportado pelo SDK `openai` instalado), sem biblioteca de PDF no servidor. Antes de enviar a API confere o tamanho (declarado pelo WhatsApp e real, após o download), se o arquivo é mesmo um PDF e conta as páginas (limite fixo de 20, para controlar custo: a OpenAI lê cada página como texto **e** imagem). Se o modelo recusar o arquivo (400), a chamada é refeita uma vez com o documento descrito como texto e o cliente recebe resposta normalmente. No modo **Assistants** os PDFs são só descritos (a API de threads não aceita arquivo na mensagem).
+**PDF:** no `chatCompletion` o PDF vai como *file input* do Chat Completions (`{"type":"file","file":{"filename","file_data":"data:application/pdf;base64,..."}}`, suportado pelo SDK `openai` instalado), sem biblioteca de PDF no servidor. Antes de enviar a API confere o tamanho (declarado pelo WhatsApp e real, após o download), se o arquivo é mesmo um PDF e conta as páginas (limite fixo de 20, para controlar custo: a OpenAI lê cada página como texto **e** imagem). Se o modelo recusar o arquivo (400), a chamada é refeita uma vez com o documento descrito como texto e o cliente recebe resposta normalmente.
 
 **Privacidade e custo:**
 
@@ -566,11 +574,12 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | "Não inventa preços" | **Orientação** | O prompt instrui; não é garantia técnica |
 | Se apresentar como assistente e não pedir dados sensíveis | **Orientação** | Depende do prompt de cada cliente |
 | Vários números, cada um com sua IA | Automático | 1 instância por número, bot e credencial próprios. A visão de todos num painel é do operador |
-| Integrações (agenda, planilha, CRM) | **Serviço sob medida** | Via webhook (`MESSAGES_UPSERT`, `OPENAI_CHANGE_STATUS`) e n8n. O modo Chat Completions não chama ferramentas; o `functionUrl` só existe no modo Assistants (que não lê PDF) |
+| Agenda (consultar, marcar, remarcar, cancelar) | Automático com a Agenda ligada | Ferramentas do Chat Completions só na instância com a Agenda ligada (seção 16). Ainda **não validado com um número real** |
+| Integrações (planilha, CRM, Google Calendar) | **Serviço sob medida** | Via webhook (`MESSAGES_UPSERT`, `OPENAI_CHANGE_STATUS`) e n8n. O `functionUrl` e o modo Assistants **não estão disponíveis**: a OpenAI desligou a Assistants API em 26/08/2026. A Agenda exporta um feed ICS (somente leitura) para assinar no Google/Apple |
 | Relatório mensal | **Serviço manual** | Não existe relatório automático. Fonte: uso do project key na OpenAI, sessões e Observabilidade |
 | Contagem da franquia de respostas | Automático (desde 03/11/2026) | Contador por instância, dia e contato (seção 15). As mensagens em si continuam sem marcação de origem no banco |
 | Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela; não envia aviso por e-mail ou WhatsApp |
-| Lembretes ativos de consulta | **Não existe** | Exigiria integração e, na Cloud API, templates pagos |
+| Lembretes de consulta | Automático com a Agenda ligada | WhatsApp Web (Baileys). Na Cloud API só funcionam dentro da janela de 24 h (fora dela exigiriam template pago, não implementado) |
 | Retenção de 90 dias | **Processo manual** | Não há expurgo automático (seção 7) |
 
 Recomendações de produto, em ordem: (1) marcar no banco quais mensagens foram da IA e quais da equipe (contagem de franquia, relatório e auditoria); (2) quando o cliente pedir uma pessoa, pausar a sessão e avisar a equipe (mensagem para um número interno ou webhook); (3) relatório mensal gerado a partir dessa marcação; (4) expurgo automático pela retenção do contrato; (5) validar PDF e foto no gpt-6-luna e a pausa da Cloud API com um número em Coexistence.
@@ -647,6 +656,11 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `update_bot_settings` | escrita | Altera só: prompt, modelo, expire, minutos da pausa humana, palavra de encerramento, ativo. Devolve os valores anteriores |
 | `get_usage` | leitura | Uso do plano: respostas do mês e de hoje, franquia, excedente em blocos de 1.000, últimos 30 dias, contatos mascarados e limites (seção 15) |
 | `update_limits` | escrita | Altera plano e limites (campos ausentes não mudam; `null` remove o limite). Marcada como destrutiva; devolve os valores anteriores |
+| `list_appointments` | leitura | Agendamentos da Agenda (padrão: hoje + 14 dias), filtro por contato |
+| `get_free_slots` | leitura | Horários livres por tipo de atendimento |
+| `create_appointment` | **envio** | Cria agendamento (só horário livre, salvo `outside_availability`) e envia a confirmação ao cliente (`notify_client`, padrão sim) |
+| `cancel_appointment` | escrita | Cancela (status `cancelado`) e avisa o cliente (`notify_client`, padrão sim). Marcada como destrutiva |
+| `update_agenda_settings` | escrita | Liga/desliga e altera a Agenda (listas substituem as atuais). Marcada como destrutiva; devolve os valores anteriores |
 
 Na coluna de remetente, `bot` só é identificado nos últimos 10 minutos (o banco não marca a origem das mensagens, seção 13); depois aparece como `me` (número da instância).
 
@@ -744,3 +758,73 @@ Card **Plano e uso** na página Observabilidade: uma linha por instância com pl
 - Migration `20261103120000_add_usage_limits` (postgresql e mysql), **aditiva** (só cria tabelas); roda no start do container como as outras. Rollback: reverter o merge; as tabelas ficam e são ignoradas.
 - O cache de limites e o controle da limpeza são por processo (vale para 1 réplica, como o resto do bot). Com mais réplicas, uma alteração pode levar até 30 s para valer nas outras.
 
+## 16. Agenda
+
+Agenda própria do WhatsAI, por instância: a IA consulta horários e agenda pelo WhatsApp, a equipe opera pelo painel (instância > **Agenda**) e o escritório pode assinar um calendário somente leitura. **Desligada por padrão**: sem ligar, nada muda (sem ferramentas na IA, sem lembretes, sem tratamento de "1"/"2"). Não usa Google Calendar.
+
+### 16.1 Como a IA agenda
+
+- Com a Agenda ligada, cada resposta do bot OpenAI (`chatCompletion`) recebe uma nota curta de sistema (data e hora atuais no fuso da agenda, tipos de atendimento, regras) e as ferramentas: `consultar_horarios(data_inicio?, dias?, tipo?)` (até 6 horários, ex. "qui, 07/11 às 14:00"), `meus_agendamentos()`, `agendar(inicio_iso, tipo, nome?)`, `remarcar(agendamento, novo_inicio_iso)` e `cancelar(agendamento)` (`agendamento` = id ou `proximo`). Agendar, remarcar e cancelar só aparecem se permitidos nas configurações.
+- Regras da nota: confirmar dia, hora e tipo com o cliente antes de agendar; nunca inventar horários; só ver os agendamentos do próprio contato; se nenhum horário servir, oferecer os próximos ou dizer que a equipe vai entrar em contato; sem valores, sem promessa de resultado, sem orientação jurídica.
+- **Validação no servidor:** o horário pedido pelo modelo é conferido de novo na hora (disponibilidade, bloqueios, antecedência mínima, dias à frente, intervalo e outros agendamentos). Agendar é idempotente por contato + horário. A IA pode manter no máximo 2 agendamentos futuros por contato. As ferramentas só enxergam o contato da conversa (telefone ou LID).
+- **Laço limitado:** no máximo 3 rodadas de ferramentas por resposta; a última chamada proíbe ferramentas e sempre devolve texto. Uma resposta com ferramentas conta **uma** resposta do plano (seção 15), como qualquer outra. Pausa humana e limites valem igual (a verificação acontece antes).
+- **Modelo sem ferramentas:** se a OpenAI recusar `tools` (400), a resposta sai sem a Agenda e o modelo fica memorizado (por processo) para não tentar de novo.
+- **Mensagens automáticas ao cliente** (política do dono): só a confirmação do agendamento feito pela equipe (dia, hora, tipo, endereço ou link), os lembretes, as respostas de confirmação/cancelamento/remarcação e o "o que levar" do tipo de atendimento. Nunca preços, nunca promessa, nunca para quem não agendou. A confirmação de um agendamento feito pela IA é a própria resposta da IA.
+
+### 16.2 Lembretes e confirmação
+
+- Padrão: 24 h e 2 h antes (até 3 lembretes, de 1 a 72 h), com "Responda 1 para confirmar ou 2 para remarcar/cancelar" (desligável). Agendamento já confirmado recebe só "Se precisar remarcar ou cancelar, responda 2".
+- **Horário de silêncio:** nunca entre 21h e 8h (fuso da agenda). Se o lembrete cairia nesse intervalo e o atendimento é antes das 10h, ele vai na véspera às 20h; senão, às 8h. Lembretes a menos de 1 h um do outro saem uma vez; os que cairiam antes do agendamento ser feito não saem; com menos de 30 min para o início, não sai mais.
+- **Resposta ao lembrete:** só a **primeira** mensagem do contato depois do lembrete (até 24 h) é tratada: "1", "confirmo", "sim" confirmam (status `confirmado`, resposta automática, sem chamar a OpenAI e sem contar resposta do plano); "2", "remarcar", "cancelar" vão para a IA com uma nota para ela perguntar e usar as ferramentas (sem permissão: resposta automática e aviso à equipe). Qualquer outra mensagem segue para a IA normalmente. Funciona só com o bot OpenAI respondendo o contato (contato em pausa humana não é tratado).
+- **Motor:** um ticker no próprio processo (a cada 60 s, uma execução por vez) que só consulta o banco quando há lembrete devido; sem nada pendente consulta no máximo a cada 30 min, então o Neon continua dormindo. Idempotente por `remindersSent` (envio repetido não acontece). Instância desconectada: tenta de novo no minuto seguinte.
+- **Render free dormindo:** crie um job no cron-job.org: `POST https://<url-da-api>/agenda/tick`, header `apikey: <chave global>`, a cada 5 min (pode ser o mesmo job do keep-alive se ele aceitar POST; senão um segundo job). Resposta: `{ checked, sent, skipped, failed, waiting, nextRunAt }`. Só a chave global é aceita.
+- **Avisos à equipe:** novo, remarcado e cancelado pela IA ou pelo MCP, e pedido de remarcar/cancelar sem permissão da IA, vão para os números da equipe da Agenda; se a lista estiver vazia, usa os números dos avisos de Leads (quando esse recurso estiver instalado e ligado). Agendamentos feitos pelo painel não geram aviso.
+- **Cloud API:** fora da janela de 24 h a Meta exige template pago (não implementado): o envio falha e fica registrado como `ok: false`.
+
+### 16.3 Painel
+
+Instância > **Agenda**: semana (segunda a domingo, horários livres, fora do expediente hachurado, bloqueios) e lista, navegação por semana (por dia no celular) e "Hoje". Clicar num horário vazio abre **Novo agendamento** (busca nas conversas ou número, tipo, data e hora no fuso da agenda, observações internas, enviar confirmação). Clicar num agendamento abre o painel lateral: status, remarcar (com aviso opcional ao cliente), observações, cancelar, **Abrir conversa** e **Abrir no WhatsApp**. **Configurações**: ligar, fuso, intervalo entre horários, pausa entre atendimentos, antecedência mínima, dias à frente, disponibilidade por dia (até 2 faixas, "Copiar para todos"), datas bloqueadas (dia inteiro ou faixa), tipos de atendimento (nome, duração, modo presencial/online/telefone, endereço ou link, o que levar), lembretes, pedido de confirmação, permissões da IA, números da equipe e link do calendário. A equipe pode marcar fora da disponibilidade, mas nunca sobrepor outro agendamento.
+
+### 16.4 Calendário (ICS)
+
+Em Configurações > Calendário, **Gerar link do calendário** cria `https://<url-da-api>/agenda/ics/<token>.ics` (token aleatório de 48 caracteres). Assine no Google Calendar (Outras agendas > Do URL), Apple Calendar (Arquivo > Nova assinatura) ou Outlook. Somente leitura, 30 dias para trás e 180 para frente; mostra tipo, nome curto, telefone, modo e local; **nunca as observações internas** (sigilo). O Google atualiza assinaturas em algumas horas (não é imediato). Quem tiver o link vê nomes e telefones: trate como senha; **Gerar link novo** invalida o anterior. Com a chave da instância: `GET /agenda/:instancia/export.ics`.
+
+### 16.5 API
+
+Mesmas guardas das outras rotas (chave global ou token da instância), exceto `POST /agenda/tick` (só chave global) e o ICS por token (público, o token é a credencial).
+
+```bash
+# Ligar e configurar (campos ausentes não mudam; listas substituem as atuais)
+curl -X POST "$SERVER_URL/agenda/settings/$INSTANCE" -H "apikey: $APIKEY" -H "Content-Type: application/json" -d '{
+  "enabled": true, "timezone": "America/Sao_Paulo", "slotMinutes": 30, "bufferMinutes": 0,
+  "minNoticeHours": 2, "maxDaysAhead": 30,
+  "availability": { "mon": [["09:00","12:00"],["14:00","18:00"]], "tue": [["09:00","12:00"],["14:00","18:00"]],
+                    "wed": [["09:00","12:00"],["14:00","18:00"]], "thu": [["09:00","12:00"],["14:00","18:00"]],
+                    "fri": [["09:00","12:00"],["14:00","18:00"]], "sat": [], "sun": [] },
+  "blocks": [{ "start": "2026-12-24", "end": "2027-01-02", "reason": "Recesso" }],
+  "appointmentTypes": [{ "name": "Atendimento inicial", "minutes": 30, "mode": "presencial",
+                         "location": "Endereço do escritório", "instructions": "Documento com foto" }],
+  "reminders": { "enabled": true, "hoursBefore": [24, 2] }, "confirmation": { "enabled": true },
+  "aiPermissions": { "canBook": true, "canCancel": true, "canReschedule": true },
+  "notifyNumbers": ["5521999999999"] }'
+
+curl "$SERVER_URL/agenda/$INSTANCE?from=2026-11-09&to=2026-11-16" -H "apikey: $APIKEY"          # lista (contact=, status=)
+curl "$SERVER_URL/agenda/$INSTANCE/slots?from=2026-11-10&days=7&type=Atendimento%20inicial" -H "apikey: $APIKEY"
+curl -X POST "$SERVER_URL/agenda/$INSTANCE" -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{"number":"5521999999999","contactName":"Maria","typeName":"Atendimento inicial","startsAt":"2026-11-12T14:00","notifyClient":true}'
+curl -X PATCH "$SERVER_URL/agenda/$INSTANCE/<id>" -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{"status":"realizado"}'            # ou {"startsAt":"2026-11-13T10:00","notifyClient":true} / {"notes":"..."}
+curl -X DELETE "$SERVER_URL/agenda/$INSTANCE/<id>?notifyClient=true" -H "apikey: $APIKEY"     # status cancelado
+curl -X POST "$SERVER_URL/agenda/settings/$INSTANCE/ics-token" -H "apikey: $APIKEY"           # novo link ICS
+curl -X POST "$SERVER_URL/agenda/tick" -H "apikey: $CHAVE_GLOBAL"
+```
+
+`startsAt` sem fuso é lido no fuso da agenda. Status: `agendado`, `confirmado`, `cancelado`, `realizado`, `faltou`. Origem: `ia`, `manual`, `mcp`. MCP: seção 14.2.
+
+### 16.6 Limites, segurança e deploy
+
+- Sobreposição impedida numa transação: a linha de `AgendaSettings` da instância é travada (update) antes de conferir e gravar, então duas marcações simultâneas nunca pegam o mesmo horário (PostgreSQL e MySQL). Sem constraint de exclusão (exigiria a extensão `btree_gist`).
+- Horários gravados em UTC (`timestamptz`); disponibilidade, bloqueios, silêncio e textos no fuso da agenda, com horário de verão (um horário que não existe no dia da mudança é pulado).
+- Duas tabelas: `AgendaSettings` (uma linha opcional por instância) e `Appointment` (índices `instanceId+startsAt`, `instanceId+remoteJid+startsAt`, `status+startsAt`). Migration `20261104130000_add_agenda` (postgresql e mysql), **aditiva**; roda no start do container. Rollback: reverter o merge; as tabelas ficam e são ignoradas.
+- O cache das configurações (30 s), o ticker e a memória de modelos sem ferramentas são por processo (1 réplica, como o resto do bot).
+- **A validar em produção** antes de vender como pronto: agendamento real pela IA com o modelo do bot (gpt-6-luna) e lembretes num número de teste.
