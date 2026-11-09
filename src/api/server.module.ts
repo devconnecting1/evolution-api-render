@@ -1,5 +1,5 @@
 import { CacheEngine } from '@cache/cacheengine';
-import { Chatwoot, configService, ProviderSession } from '@config/env.config';
+import { Chatwoot, configService, Database, ProviderSession } from '@config/env.config';
 import { eventEmitter } from '@config/event.config';
 import { Logger } from '@config/logger.config';
 
@@ -10,6 +10,7 @@ import { ChatController } from './controllers/chat.controller';
 import { GroupController } from './controllers/group.controller';
 import { InstanceController } from './controllers/instance.controller';
 import { LabelController } from './controllers/label.controller';
+import { LeadsController } from './controllers/leads.controller';
 import { ProxyController } from './controllers/proxy.controller';
 import { SendMessageController } from './controllers/sendMessage.controller';
 import { SettingsController } from './controllers/settings.controller';
@@ -43,6 +44,7 @@ import { ProviderFiles } from './provider/sessions';
 import { PrismaRepository } from './repository/repository.service';
 import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
+import { LeadsService } from './services/leads.service';
 import { WAMonitoringService } from './services/monitor.service';
 import { ProxyService } from './services/proxy.service';
 import { SettingsService } from './services/settings.service';
@@ -124,12 +126,25 @@ export const baileysController = new BaileysController(waMonitor);
 export const usageService = new UsageService(prismaRepository);
 export const usageController = new UsageController(usageService, prismaRepository);
 
+// "Leads (triagem)": the bot hands every answered conversation to it (in the background); same instance as the routes
+export const leadsService = new LeadsService(prismaRepository, usageService, waMonitor, {
+  provider: configService.get<Database>('DATABASE').PROVIDER,
+});
+export const leadsController = new LeadsController(leadsService, prismaRepository, waMonitor);
+
 // "Agenda": one instance shared by the REST routes, the MCP and the bot (settings cache + reminder ticker)
 export const agendaService = new AgendaService(prismaRepository, waMonitor);
 export const agendaController = new AgendaController(agendaService, prismaRepository);
 if (process.env.NODE_ENV !== 'test') agendaService.start();
 
-const openaiService = new OpenaiService(waMonitor, prismaRepository, configService, usageService, agendaService);
+const openaiService = new OpenaiService(
+  waMonitor,
+  prismaRepository,
+  configService,
+  usageService,
+  leadsService,
+  agendaService,
+);
 export const openaiController = new OpenaiController(openaiService, prismaRepository, waMonitor);
 
 // chatbots

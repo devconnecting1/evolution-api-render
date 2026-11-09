@@ -52,6 +52,7 @@ async function setup(agendaPatch: Record<string, any> | null = {}) {
     prisma,
     configService,
     usage,
+    null,
     agenda,
   );
   const openai = createFakeOpenai();

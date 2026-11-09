@@ -45,6 +45,8 @@ export type SystemDeps = {
   waInstances?: () => Record<string, any> | null | undefined;
   /** "Plano e limites": month usage per instance (UsageService.snapshot). Without it there is no usage card. */
   usage?: () => Promise<UsageSnapshotItem[]>;
+  /** "Leads (triagem)": one note line per instance in the usage card (LeadsService.snapshot). Optional. */
+  leads?: () => Promise<{ name: string; newToday: number; qualified7d: number; awaiting: number }[]>;
   databaseProvider?: string;
   cache?: {
     redisEnabled: boolean;
@@ -823,6 +825,19 @@ export class SystemProbe {
       }
     }
     if (!items.length) view.notes.push('Nenhuma resposta da IA neste mês e nenhum plano configurado.');
+    if (this.deps.leads) {
+      try {
+        const leads = await withTimeout(this.deps.leads(), DB_TIMEOUT_MS, 'timeout');
+        for (const item of (leads ?? []).slice(0, USAGE_MAX_METRICS)) {
+          view.notes.push(
+            `Leads · ${item.name}: ${formatNumber(item.newToday, 0)} novos nas últimas 24 h, ` +
+              `${formatNumber(item.qualified7d, 0)} qualificados em 7 dias, ${formatNumber(item.awaiting, 0)} aguardando equipe.`,
+          );
+        }
+      } catch {
+        // optional line: the card stays as it is
+      }
+    }
     if (items.length > USAGE_MAX_METRICS)
       view.notes.push(`Mostrando ${USAGE_MAX_METRICS} de ${items.length} instâncias.`);
     if (worstStatus(view.metrics) === 'critical') view.status = 'partial';

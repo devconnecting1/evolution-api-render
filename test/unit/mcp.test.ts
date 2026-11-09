@@ -11,6 +11,7 @@ import { McpDeps } from '@api/integrations/mcp/mcp.types';
 import { maskSecret, maskUrl, normalizeRecipient, scrubSecrets } from '@api/integrations/mcp/mcp.util';
 import { TOOL_NAMES } from '@api/integrations/mcp/tools';
 import { AgendaService } from '@api/services/agenda.service';
+import { LeadsService } from '@api/services/leads.service';
 import { UsageService } from '@api/services/usage.service';
 import { Prisma } from '@prisma/client';
 import express from 'express';
@@ -18,6 +19,7 @@ import { Server } from 'http';
 import path from 'path';
 
 import { createAgendaTables } from '../helpers/agenda-mock';
+import { createLeadsTables } from '../helpers/leads-mock';
 import { createUsageTables } from '../helpers/usage-mock';
 
 const GLOBAL_KEY = 'global-key-for-tests-only-0123456789';
@@ -41,6 +43,11 @@ const EXPECTED_TOOLS = [
   'update_bot_settings',
   'get_usage',
   'update_limits',
+  'list_leads',
+  'get_lead',
+  'update_lead',
+  'get_lead_settings',
+  'update_lead_settings',
   'list_appointments',
   'get_free_slots',
   'create_appointment',
@@ -193,9 +200,33 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     },
   });
 
+  // "Leads (triagem)": one fictional lead of the escritorio instance
+  const leadsTables = createLeadsTables({ instances });
+  leadsTables.leads.push({
+    id: 'lead-a1',
+    instanceId: 'inst-a',
+    remoteJid: '5511988887777@s.whatsapp.net',
+    name: 'Maria Fictícia',
+    area: 'Família',
+    city: 'Cidade Fictícia',
+    status: 'qualificado',
+    statusSource: 'ai',
+    priority: 'alta',
+    priorityRank: 0,
+    priorityReason: 'audiência em 12/11',
+    manualFields: null,
+    missingInfo: ['data do fato'],
+    awaitingHumanSince: new Date(Date.now() - 3_600_000),
+    lastMessageAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  const leads = new LeadsService(leadsTables.prisma, null, null, { provider: 'postgresql' });
+
   const deps: McpDeps = {
     prisma,
     usage,
+    leads,
     agenda,
     waMonitor: { waInstances: { escritorio: channelA } },
     openaiController: {
@@ -749,6 +780,68 @@ describe('MCP: tools', () => {
 
     const observability = await callTool(h.url, 'get_observability', {});
     assert.ok(!observability.text.includes('neon-secret-token-000111'));
+  });
+
+  test('list_leads and get_lead: priority first, waiting time, the note says it is internal', async () => {
+    const list = await callTool(h.url, 'list_leads', { instance: 'escritorio', status: 'aguardando' });
+    assert.ok(!list.result.isError, list.text);
+    assert.equal(list.json.total, 1);
+    assert.equal(list.json.leads[0].priority, 'alta');
+    assert.ok(list.json.leads[0].awaitingHumanSince);
+    assert.match(list.json.note, /nada é enviado ao cliente/);
+    assert.equal(list.json.counts.aguardando, 1);
+
+    const one = await callTool(h.url, 'get_lead', { instance: 'escritorio', id: 'lead-a1' });
+    assert.equal(one.json.lead.name, 'Maria Fictícia');
+    const missing = await callTool(h.url, 'get_lead', { instance: 'escritorio', id: 'nope' });
+    assert.equal(missing.result.isError, true);
+    const other = await callTool(h.url, 'get_lead', { instance: 'clinica', id: 'lead-a1' });
+    assert.equal(other.result.isError, true, 'a lead of another instance is not found');
+  });
+
+  test('update_lead is destructive, locks the fields and returns the previous values', async () => {
+    const { body } = await rpc(h.url, 'tools/list', {}, bearer(GLOBAL_KEY));
+    const tool = body.result.tools.find((item: any) => item.name === 'update_lead');
+    assert.equal(tool.annotations.destructiveHint, true);
+    assert.equal(body.result.tools.find((item: any) => item.name === 'list_leads').annotations.readOnlyHint, true);
+
+    const empty = await callTool(h.url, 'update_lead', { instance: 'escritorio', id: 'lead-a1' });
+    assert.equal(empty.result.isError, true);
+    const bad = await callTool(h.url, 'update_lead', { instance: 'escritorio', id: 'lead-a1', name: 'x'.repeat(121) });
+    assert.equal(bad.result.isError, true);
+
+    const done = await callTool(h.url, 'update_lead', {
+      instance: 'escritorio',
+      id: 'lead-a1',
+      status: 'em_atendimento',
+      has_lawyer: false,
+    });
+    assert.ok(!done.result.isError, done.text);
+    assert.equal(done.json.previous.status, 'qualificado');
+    assert.equal(done.json.lead.status, 'em_atendimento');
+    assert.equal(done.json.lead.statusSource, 'manual');
+    assert.equal(done.json.lead.hasLawyer, false);
+    assert.equal(done.json.lead.awaitingHumanSince, null);
+  });
+
+  test('lead settings: defaults, validation in Portuguese, previous values', async () => {
+    const read = await callTool(h.url, 'get_lead_settings', { instance: 'escritorio' });
+    assert.equal(read.json.configured, false);
+    assert.equal(read.json.settings.notify.enabled, false);
+
+    const refused = await callTool(h.url, 'update_lead_settings', { instance: 'escritorio', notify_enabled: true });
+    assert.equal(refused.result.isError, true);
+    assert.match(refused.text, /pelo menos um número/);
+
+    const saved = await callTool(h.url, 'update_lead_settings', {
+      instance: 'escritorio',
+      notify_enabled: true,
+      notify_numbers: ['5511900009999'],
+      notify_on: 'urgente',
+    });
+    assert.ok(!saved.result.isError, saved.text);
+    assert.deepEqual(saved.json.settings.notify, { enabled: true, numbers: ['5511900009999'], on: 'urgente' });
+    assert.equal(saved.json.previous, null);
   });
 
   test('the manuals are exposed as resources', async () => {

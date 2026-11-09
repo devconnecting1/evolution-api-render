@@ -1,5 +1,6 @@
 import {
   agendaService,
+  leadsService,
   openaiController,
   prismaRepository,
   sendMessageController,
@@ -27,6 +28,7 @@ export function defaultMcpDeps(): McpDeps {
     sendMessageController,
     observability: observabilityService,
     usage: usageService,
+    leads: leadsService,
     agenda: agendaService,
     isBotMessageId,
     logger,
