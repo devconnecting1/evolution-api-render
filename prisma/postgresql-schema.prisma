@@ -499,6 +499,8 @@ model IntegrationSession {
   parameters Json?         @db.JsonB
 
   botId String?
+
+  @@index([instanceId, remoteJid])
 }
 
 model OpenaiSetting {

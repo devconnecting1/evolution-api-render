@@ -1,4 +1,6 @@
 import { InstanceDto } from '@api/dto/instance.dto';
+import { forgetInstanceToken } from '@api/guards/instance-token-cache';
+import { EventController } from '@api/integrations/event/event.controller';
 import { ProviderFiles } from '@api/provider/sessions';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { channelController } from '@api/server.module';
@@ -228,6 +230,10 @@ export class WAMonitoringService {
     await this.prismaRepository.label.deleteMany({ where: { instanceId: instance.id } });
 
     await this.prismaRepository.instance.delete({ where: { name: instanceName } });
+
+    // Caches em memória (configuração de eventos e token) da instância removida.
+    EventController.forgetInstance(instance.id);
+    forgetInstanceToken(instanceName);
   }
 
   public async loadInstance() {

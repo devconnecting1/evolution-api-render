@@ -202,6 +202,7 @@ export class ChannelStartupService {
     this.localSettings.readStatus = data?.readStatus;
     this.localSettings.syncFullHistory = data?.syncFullHistory;
     this.localSettings.wavoipToken = data?.wavoipToken;
+    this.settingsCache = null;
 
     if (this.localSettings.wavoipToken && this.localSettings.wavoipToken.length > 0) {
       this.client.ws.close();
@@ -209,27 +210,40 @@ export class ChannelStartupService {
     }
   }
 
+  /**
+   * Configurações lidas a cada lote de eventos do WhatsApp. Ficam em memória (atualizadas pelo
+   * setSettings) para que eventos de presença/confirmação não acordem o banco; o TTL só cobre
+   * alterações feitas fora da API.
+   */
+  private settingsCache: { value: any; at: number } | null = null;
+  public static SETTINGS_TTL_MS = 60 * 60_000;
+
   public async findSettings() {
+    if (this.settingsCache && Date.now() - this.settingsCache.at < ChannelStartupService.SETTINGS_TTL_MS) {
+      return this.settingsCache.value ? { ...this.settingsCache.value } : null;
+    }
+
     const data = await this.prismaRepository.setting.findUnique({
       where: {
         instanceId: this.instanceId,
       },
     });
 
-    if (!data) {
-      return null;
-    }
+    const value = data
+      ? {
+          rejectCall: data.rejectCall,
+          msgCall: data.msgCall,
+          groupsIgnore: data.groupsIgnore,
+          alwaysOnline: data.alwaysOnline,
+          readMessages: data.readMessages,
+          readStatus: data.readStatus,
+          syncFullHistory: data.syncFullHistory,
+          wavoipToken: data.wavoipToken,
+        }
+      : null;
+    this.settingsCache = { value, at: Date.now() };
 
-    return {
-      rejectCall: data.rejectCall,
-      msgCall: data.msgCall,
-      groupsIgnore: data.groupsIgnore,
-      alwaysOnline: data.alwaysOnline,
-      readMessages: data.readMessages,
-      readStatus: data.readStatus,
-      syncFullHistory: data.syncFullHistory,
-      wavoipToken: data.wavoipToken,
-    };
+    return value ? { ...value } : null;
   }
 
   public async loadChatwoot() {
