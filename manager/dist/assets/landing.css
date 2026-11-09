@@ -468,6 +468,24 @@ small {
   width: 20px;
   height: 20px;
 }
+/* desktop header on narrower screens: tighter links; below 1024 px the "Recursos" link leaves the bar (the section
+   stays in the footer) so the bar never needs more than the viewport */
+@media (min-width: 960px) and (max-width: 1199px) {
+  .head-in {
+    gap: 20px;
+  }
+  .nav-links {
+    gap: 0;
+  }
+  .nav-links a {
+    padding: 8px 8px;
+  }
+}
+@media (min-width: 960px) and (max-width: 1023px) {
+  .nav-links .nav-opt {
+    display: none;
+  }
+}
 
 /* ---------------------------------------------------------------------------------------------- hero */
 .hero {
@@ -1808,6 +1826,12 @@ small {
 }
 .segment > p.muted {
   margin-top: auto;
+  font-size: 14px;
+}
+/* link to the segment page (/advocacia) under the card's note */
+.segment-more {
+  align-self: flex-start;
+  margin-top: 12px;
   font-size: 14px;
 }
 .segment-cta {
