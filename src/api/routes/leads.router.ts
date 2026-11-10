@@ -1,8 +1,8 @@
 import { RouterBroker } from '@api/abstract/abstract.router';
 import { InstanceDto } from '@api/dto/instance.dto';
-import { LeadBackfillDto, LeadPatchDto, LeadSettingsDto } from '@api/dto/leads.dto';
+import { LeadAnalyzeDto, LeadBackfillDto, LeadPatchDto, LeadSettingsDto } from '@api/dto/leads.dto';
 import { leadsController } from '@api/server.module';
-import { leadBackfillSchema, leadPatchSchema, leadSettingsSchema } from '@validate/validate.schema';
+import { leadAnalyzeSchema, leadBackfillSchema, leadPatchSchema, leadSettingsSchema } from '@validate/validate.schema';
 import { RequestHandler, Router } from 'express';
 
 import { HttpStatus } from './index.router';
@@ -54,6 +54,15 @@ export class LeadsRouter extends RouterBroker {
           execute: (instance, data) => leadsController.backfill(instance, data),
         });
         res.status(response?.started ? HttpStatus.CREATED : HttpStatus.OK).json(response);
+      })
+      .post('/:instanceName/analyze', ...guards, async (req, res) => {
+        const response = await this.dataValidate<LeadAnalyzeDto>({
+          request: req,
+          schema: leadAnalyzeSchema,
+          ClassRef: LeadAnalyzeDto,
+          execute: (instance, data) => leadsController.analyzeOne(instance, data.contact),
+        });
+        res.status(HttpStatus.OK).json(response);
       })
       .post('/:instanceName/refresh-waiting', ...guards, async (req, res) => {
         const response = await this.dataValidate<InstanceDto>({
@@ -128,6 +137,15 @@ export class LeadsRouter extends RouterBroker {
           schema: leadPatchSchema,
           ClassRef: LeadPatchDto,
           execute: (instance, data) => leadsController.update(instance, req.params.id, data),
+        });
+        res.status(HttpStatus.OK).json(response);
+      })
+      .delete('/:instanceName/:id', ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => leadsController.remove(instance, req.params.id),
         });
         res.status(HttpStatus.OK).json(response);
       });

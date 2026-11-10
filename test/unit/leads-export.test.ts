@@ -156,7 +156,7 @@ describe('leads: Excel export', () => {
     assert.equal(first[5].link, 'https://wa.me/5521999990000');
     assert.equal(first[7], 'Nova Iguaçu');
     assert.equal(first[11].value, 'confirmar o nome, data do corte');
-    assert.equal(first[13], 'Não informado');
+    assert.equal(first[14], 'Não informado');
     assert.equal((sheet.rows[1] as any[])[5].value, 'Sem número (contato oculto)');
     const text = JSON.stringify(summary.rows);
     assert.match(text, /Aguardando resposta da equipe/);
@@ -189,7 +189,7 @@ describe('leads: Excel export', () => {
     }
     const sheet = files.get('xl/worksheets/sheet2.xml')!;
     assert.match(sheet, /&amp; &lt;corte&gt;/);
-    assert.match(sheet, /<autoFilter ref="A1:U3"\/>/);
+    assert.match(sheet, /<autoFilter ref="A1:V3"\/>/);
     assert.match(sheet, /state="frozen"/);
     assert.match(files.get('xl/worksheets/_rels/sheet2.xml.rels')!, /https:\/\/wa\.me\/5521999990000/);
     assert.match(files.get('xl/styles.xml')!, /dd\/mm\/yyyy hh:mm/);
@@ -262,7 +262,7 @@ describe('leads: panel preview of the workbook', () => {
     assert.match(sheet.rows[0][0].cls ?? '', /fill-header/);
     assert.match(sheet.rows[1][1].cls ?? '', /fill-red/);
     assert.equal(sheet.rows[1][5].link, 'https://wa.me/5521999990000');
-    assert.equal(sheet.rows[1][17].text, '10/11/2026 10:05', 'dates in São Paulo time');
+    assert.equal(sheet.rows[1][18].text, '10/11/2026 10:05', 'dates in São Paulo time');
     assert.equal(sheet.columns[0].letter, 'A');
   });
 });

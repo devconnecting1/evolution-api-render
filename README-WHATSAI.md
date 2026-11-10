@@ -755,6 +755,10 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `update_lead` | escrita | Altera status, prioridade, nome, área, cidade, próximo passo, resumo, parte contrária, advogado, o que falta saber. Cada campo alterado fica travado contra a IA. Marcada como destrutiva; devolve os valores anteriores |
 | `get_lead_settings` | leitura | Configurações da triagem: análise ligada, áreas, modelo, avisos para a equipe |
 | `update_lead_settings` | escrita | Altera essas configurações (campos ausentes não mudam). Marcada como destrutiva |
+| `analyze_leads` | escrita | Analisa com a IA da instância: `mode: "novas"` (conversas ainda sem ficha) ou `"todas"` (reanalisa as fichas existentes); `dry_run` (padrão) só conta |
+| `analyze_lead` | escrita | Cria ou atualiza a ficha de um contato agora |
+| `delete_lead` | escrita | Remove a ficha (a conversa fica). Marcada como destrutiva |
+| `refresh_leads_waiting` | escrita | Recalcula "aguardando equipe" pelas mensagens e pausas do bot, sem OpenAI |
 | `list_appointments` | leitura | Agendamentos da Agenda (padrão: hoje + 14 dias), filtro por contato |
 | `get_free_slots` | leitura | Horários livres por tipo de atendimento |
 | `create_appointment` | **envio** | Cria agendamento (só horário livre, salvo `outside_availability`) e envia a confirmação ao cliente (`notify_client`, padrão sim) |
@@ -892,7 +896,9 @@ Não existe nota numérica de lead. A IA só relata fatos; o servidor aplica reg
 | `area` e `city` | A área é **classificada pelo assunto** descrito (conta de luz, banco, loja = Consumidor; demissão = Trabalhista; INSS/BPC = Previdenciário); null só quando o cliente ainda não disse o assunto. A cidade é gravada de um jeito só: município sem bairro, com erro de digitação corrigido pelos municípios do RJ ("Novo Iguaçu" e "Cabuçu, Nova Iguaçu" → "Nova Iguaçu"); fora do RJ fica com a UF ("Juiz de Fora - MG") |
 | `status` | A IA só muda de `novo` para `qualificado`, quando há nome + área do escritório + (cidade ou necessidade jurídica clara). Nunca rebaixa e **nunca altera um status definido pela equipe** (`statusSource: manual`) |
 | `missingInfo` | Primeiro o que falta entre nome, área e cidade; depois o que o modelo listou (ex.: "data da demissão", "tem contrato assinado?") |
-| `awaitingHumanSince` | Lead aberto (`novo`/`qualificado`) e acionável (qualificado ou prioridade alta) sem resposta de uma pessoa da equipe depois da última mensagem do cliente. Termina quando alguém da equipe escreve na conversa ou quando o status muda para em atendimento, cliente ou descartado |
+| `awaitingHumanSince` | A pessoa escreveu e ninguém da equipe respondeu depois. Vale para `qualificado`, `em_atendimento` e `cliente` (cliente perguntando do processo também espera resposta) e para `novo` só com prioridade alta; nunca para `descartado`. Termina quando alguém da equipe escreve na conversa ou o status vira descartado |
+| `attentionPoints` | **Pontos de atenção do atendimento** apontados pela própria IA da instância na mesma análise (sem custo a mais): pediu uma pessoa e não teve retorno, a assistente deu orientação jurídica, falou de valores ou pediu dado sensível, reclamou da demora, áudio não entendido, pergunta sem resposta. Nunca avalia a pessoa nem o caso. Aparecem na planilha (coluna própria e bloco no Resumo) |
+| `status` pela IA | `novo` → `qualificado` (regra acima) e, para quem já é cliente (`contactKind: cliente_atual`) em triagem, → `cliente`. Nunca muda um status definido pela equipe nem volta atrás |
 
 **Como a resposta da equipe é detectada:** o banco não marca quem enviou cada mensagem (seção 13). São usados três sinais, o mais recente vale:
 1. a **pausa humana do bot** no momento em que acontece (mensagem do número que não é do bot, com `stopBotFromMe` ligado);
@@ -915,6 +921,8 @@ Campos editados pela equipe (painel, API ou MCP) ficam em `manualFields` e a IA 
   - A planilha também mostra **Tipo de contato**, **Analisado pela IA em** e **Mensagens do cliente lidas** (o que já foi analisado e com quantas mensagens); no Resumo, a contagem por tipo e as fichas analisadas há mais de 7 dias com mensagem nova depois (podem estar desatualizadas).
   - O CSV continua na API (`export.csv`) para integrações.
 - **Analisar conversas anteriores:** conta antes (diálogo com a estimativa), depois analisa em segundo plano, 2 por vez, só conversas dos últimos 7/30/60 dias com 3+ mensagens do cliente e ainda sem análise (até 200 por vez). Uma execução por instância de cada vez.
+- **Reanalisar todas as fichas** (API `POST /leads/backfill/{instancia}` com `"reanalyze": true`, até 500, ou MCP `analyze_leads` com `mode: "todas"`): refaz as fichas que existem com as regras atuais, lendo a conversa inteira (cliente, IA e equipe), sem mexer no que a equipe editou. Uma chamada por conversa na conta OpenAI do cliente.
+- **Analisar um contato agora** (`POST /leads/{instancia}/analyze` `{ "contact": "5521…" }` ou MCP `analyze_lead`): cria ou atualiza a ficha mesmo com poucas mensagens. **Remover** (`DELETE /leads/{instancia}/{id}` ou MCP `delete_lead`): apaga só a ficha; para tirar da fila sem apagar, use o status Descartado.
 - **Configurações:** análise automática, áreas do escritório (padrão: Trabalhista, Previdenciário (BPC/INSS), Família, Consumidor, Cível, Criminal, Outro), modelo e aviso para a equipe.
 
 ### 16.4 Aviso para a equipe (desligado por padrão)
@@ -960,7 +968,7 @@ curl -X POST "$SERVER_URL/leads/backfill/$INSTANCE" -H "apikey: $APIKEY" -H "Con
 curl "$SERVER_URL/leads/backfill/$INSTANCE" -H "apikey: $APIKEY"
 ```
 
-MCP: `list_leads`, `get_lead`, `update_lead`, `get_lead_settings`, `update_lead_settings` (seção 14.2). Observabilidade: o card **Plano e uso** ganha uma linha por instância ("Leads · nome: X novos nas últimas 24 h, Y qualificados em 7 dias, Z aguardando equipe").
+MCP: `list_leads`, `get_lead`, `update_lead`, `get_lead_settings`, `update_lead_settings`, `analyze_leads`, `analyze_lead`, `delete_lead`, `refresh_leads_waiting` (seção 14.2). **O escritório pode ter o próprio assistente:** conecte o ChatGPT, o Claude ou o Cursor ao MCP com o **token da instância** (seção 14.1): ele vê e mexe só nos Leads, conversas, Agenda e Processos daquela instância. Observabilidade: o card **Plano e uso** ganha uma linha por instância ("Leads · nome: X novos nas últimas 24 h, Y qualificados em 7 dias, Z aguardando equipe").
 
 ### 16.6 Custo e armazenamento
 

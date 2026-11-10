@@ -19,6 +19,7 @@
  */
 import { Logger } from '@config/logger.config';
 import {
+  AWAITING_STATUSES,
   buildTranscript,
   deriveAwaitingSince,
   detectSource,
@@ -39,7 +40,6 @@ import {
   normalizeLeadSettings,
   notificationText,
   onlyDigits,
-  OPEN_STATUSES,
   parseExtraction,
   phoneOfJid,
   preferredJid,
@@ -124,6 +124,8 @@ const list = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item) => typeof item === 'string') : [];
 
 /** The lead as the API, the panel and the MCP show it. */
+export type LeadTrigger = 'reply' | 'backfill' | 'reanalyze' | 'manual';
+
 export function leadView(row: any) {
   if (!row) return null;
   const phone = phoneOfJid(row.remoteJid);
@@ -149,7 +151,8 @@ export function leadView(row: any) {
     mediaCount: Number(row.mediaCount) || 0,
     source: row.source ?? null,
     manualFields: list(row.manualFields),
-    awaitingHumanSince: (OPEN_STATUSES as string[]).includes(row.status) ? iso(row.awaitingHumanSince) : null,
+    awaitingHumanSince: (AWAITING_STATUSES as string[]).includes(row.status) ? iso(row.awaitingHumanSince) : null,
+    attentionPoints: list(row.attentionPoints),
     lastHumanReplyAt: iso(row.lastHumanReplyAt),
     firstMessageAt: iso(row.firstMessageAt),
     lastMessageAt: iso(row.lastMessageAt),
@@ -458,7 +461,7 @@ export class LeadsService {
     pushName?: string | null;
     apiKey?: string;
     model?: string | null;
-    trigger: 'reply' | 'backfill';
+    trigger: LeadTrigger;
   }): Promise<AnalyzeResult> {
     const { instanceId, remoteJid } = params;
     if (isGroupLikeJid(remoteJid)) return { status: 'skipped', reason: 'grupo' };
@@ -496,7 +499,7 @@ export class LeadsService {
     pushName?: string | null;
     apiKey?: string;
     model?: string | null;
-    trigger: 'reply' | 'backfill';
+    trigger: LeadTrigger;
     settings: LeadSettingsView;
     channel: any;
     jids: string[];
@@ -520,6 +523,13 @@ export class LeadsService {
       if (clientEntries.length < LIMITS.minClientMessages)
         return { status: 'skipped', reason: 'poucas mensagens do cliente' };
       if (lead?.lastExtractedAt) return { status: 'skipped', reason: 'já analisada' };
+    } else if (params.trigger === 'reanalyze') {
+      // Existing leads again, with the current rules (team edits stay locked)
+      if (clientEntries.length < LIMITS.minClientMessages)
+        return { status: 'skipped', reason: 'poucas mensagens do cliente' };
+    } else if (params.trigger === 'manual') {
+      // Asked by the team for one contact: any conversation with a message of the client
+      if (!clientEntries.length) return { status: 'skipped', reason: 'sem mensagem do cliente' };
     } else {
       const decision = shouldExtract({
         clientMessages: clientEntries.length,
@@ -635,7 +645,13 @@ export class LeadsService {
     }
 
     await this.maybeNotify(saved, settings, params.channel);
-    return { status, reason: params.trigger === 'backfill' ? 'backfill' : 'resposta do bot', lead: leadView(saved) };
+    const reasons: Record<LeadTrigger, string> = {
+      reply: 'resposta do bot',
+      backfill: 'backfill',
+      reanalyze: 'reanálise',
+      manual: 'pedido da equipe',
+    };
+    return { status, reason: reasons[params.trigger], lead: leadView(saved) };
   }
 
   private textOf(message: any): string | null {
@@ -797,8 +813,8 @@ export class LeadsService {
     const awaiting = query.status === 'aguardando' || query.awaiting === true || query.awaiting === 'true';
     if (awaiting) {
       where.awaitingHumanSince = { not: null };
-      if (!where.status) where.status = { in: OPEN_STATUSES };
-      else if (!(OPEN_STATUSES as string[]).includes(where.status)) where.id = '__none__';
+      if (!where.status) where.status = { in: AWAITING_STATUSES };
+      else if (!(AWAITING_STATUSES as string[]).includes(where.status)) where.id = '__none__';
     }
     if (str(query.area)) where.area = query.area.trim();
     if (str(query.priority)) {
@@ -857,7 +873,9 @@ export class LeadsService {
     delete base.id;
     const [groups, awaiting] = await Promise.all([
       this.prisma.lead.groupBy({ by: ['status'], where: base, _count: { _all: true } }),
-      this.prisma.lead.count({ where: { ...base, status: { in: OPEN_STATUSES }, awaitingHumanSince: { not: null } } }),
+      this.prisma.lead.count({
+        where: { ...base, status: { in: AWAITING_STATUSES }, awaitingHumanSince: { not: null } },
+      }),
     ]);
     const counts: Record<string, number> = { todos: 0, aguardando: Number(awaiting) || 0 };
     for (const status of LEAD_STATUSES) counts[status] = 0;
@@ -898,6 +916,36 @@ export class LeadsService {
   }
 
   /** Team edit: every edited field is locked against the AI; a status set here is never changed by the AI. */
+  /** Analyses one conversation now, at the request of the team (creates the lead or updates it). */
+  public async analyzeOne(instanceId: string, instanceName: string, contact: string): Promise<AnalyzeResult> {
+    const text = String(contact ?? '').trim();
+    const digits = onlyDigits(text);
+    const remoteJid = text.includes('@') ? text : digits.length >= 10 ? `${digits}@s.whatsapp.net` : '';
+    if (!remoteJid || isGroupLikeJid(remoteJid))
+      throw new LeadsValidationError(['Informe o número com DDI e DDD (ex.: 5521999998888) ou o JID do contato.']);
+    const settings = await this.getSettings(instanceId);
+    if (!settings.enabled)
+      throw new LeadsValidationError(['A triagem de leads está desativada nas configurações desta instância.']);
+    const creds = await this.credentialsOf(instanceId, settings);
+    if (!creds) throw new LeadsValidationError(['A instância não tem credencial OpenAI cadastrada.']);
+    return this.analyzeConversation({
+      instanceId,
+      instanceName,
+      remoteJid,
+      apiKey: creds.apiKey,
+      model: creds.model,
+      trigger: 'manual',
+    });
+  }
+
+  /** Removes the lead (only the triage card: the conversation is not touched). A new message may create it again. */
+  public async remove(instanceId: string, id: string) {
+    const row = await this.prisma.lead.findFirst({ where: { id, instanceId } });
+    if (!row) return null;
+    await this.prisma.lead.delete({ where: { id: row.id } });
+    return leadView(row);
+  }
+
   public async update(instanceId: string, id: string, input: Record<string, any>) {
     const errors = validateLeadPatch(input);
     if (errors.length) throw new LeadsValidationError(errors);
@@ -916,7 +964,7 @@ export class LeadsService {
     }
     if ('status' in data) {
       data.statusSource = 'manual';
-      if (!(OPEN_STATUSES as string[]).includes(data.status)) data.awaitingHumanSince = null;
+      if (!(AWAITING_STATUSES as string[]).includes(data.status)) data.awaitingHumanSince = null;
     }
     if ('priority' in data) {
       data.priorityRank = PRIORITY_RANK[data.priority as keyof typeof PRIORITY_RANK] ?? 1;
@@ -935,7 +983,7 @@ export class LeadsService {
   public async refreshWaiting(instanceId: string): Promise<{ checked: number; cleared: number; changed: number }> {
     const leads: any[] =
       (await this.prisma.lead.findMany({
-        where: { instanceId, status: { in: OPEN_STATUSES } },
+        where: { instanceId, status: { in: AWAITING_STATUSES } },
         take: EXPORT_MAX,
       })) ?? [];
     let cleared = 0;
@@ -1086,10 +1134,11 @@ export class LeadsService {
   public async backfill(
     instanceId: string,
     instanceName: string,
-    input: { days?: number; max?: number; dryRun?: boolean },
+    input: { days?: number; max?: number; dryRun?: boolean; reanalyze?: boolean },
   ) {
+    const reanalyze = input?.reanalyze === true;
     const days = Math.max(1, Math.min(60, Math.floor(Number(input?.days ?? 30)) || 30));
-    const max = Math.max(1, Math.min(200, Math.floor(Number(input?.max ?? 50)) || 50));
+    const max = Math.max(1, Math.min(reanalyze ? 500 : 200, Math.floor(Number(input?.max ?? 50)) || 50));
     const settings = await this.getSettings(instanceId);
     if (!settings.enabled)
       throw new LeadsValidationError(['A triagem de leads está desativada nas configurações desta instância.']);
@@ -1099,8 +1148,18 @@ export class LeadsService {
 
     const creds = await this.credentialsOf(instanceId, settings);
     if (!creds) throw new LeadsValidationError(['A instância não tem credencial OpenAI cadastrada.']);
-    const candidates = await this.backfillCandidates(instanceId, instanceName, days, max, settings);
-    if (input?.dryRun) return { dryRun: true, days, max, candidates: candidates.length, model: creds.model };
+    // reanalyze: the leads that exist (most recent first), with the current rules; otherwise conversations never analysed
+    const candidates = reanalyze
+      ? (
+          ((await this.prisma.lead.findMany({
+            where: { instanceId },
+            orderBy: { lastMessageAt: 'desc' },
+            take: max,
+            select: { remoteJid: true },
+          })) ?? []) as any[]
+        ).map((row) => row.remoteJid as string)
+      : await this.backfillCandidates(instanceId, instanceName, days, max, settings);
+    if (input?.dryRun) return { dryRun: true, reanalyze, days, max, candidates: candidates.length, model: creds.model };
 
     const state: BackfillState = {
       running: true,
@@ -1127,7 +1186,7 @@ export class LeadsService {
             remoteJid,
             apiKey: creds.apiKey,
             model: creds.model,
-            trigger: 'backfill',
+            trigger: reanalyze ? 'reanalyze' : 'backfill',
           });
           if (result.status === 'created') state.created++;
           else if (result.status === 'updated') state.updated++;
@@ -1169,7 +1228,7 @@ export class LeadsService {
       }),
       this.prisma.lead.groupBy({
         by: ['instanceId'],
-        where: { status: { in: OPEN_STATUSES }, awaitingHumanSince: { not: null } },
+        where: { status: { in: AWAITING_STATUSES }, awaitingHumanSince: { not: null } },
         _count: { _all: true },
       }),
     ]);

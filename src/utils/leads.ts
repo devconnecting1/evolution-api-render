@@ -63,8 +63,14 @@ export const STATUS_LABELS: Record<LeadStatus, string> = {
 
 export const PRIORITY_LABELS: Record<LeadPriority, string> = { alta: 'Alta', normal: 'Normal', baixa: 'Baixa' };
 
-/** Statuses in which the team still owes the contact an answer ("Aguardando equipe"). */
+/** Statuses of a contact still in triage (notifications, "em aberto" in the reports). */
 export const OPEN_STATUSES: LeadStatus[] = ['novo', 'qualificado'];
+/**
+ * Statuses in which a message of the contact without an answer counts as "Aguardando equipe": the triage ones
+ * plus the contacts the team is already handling and the clients of the office (a client asking about the case
+ * also waits for an answer). Only "descartado" never waits.
+ */
+export const AWAITING_STATUSES: LeadStatus[] = ['novo', 'qualificado', 'em_atendimento', 'cliente'];
 
 export const DEFAULT_AREAS = [
   'Trabalhista',
@@ -435,6 +441,7 @@ export function extractionSystemPrompt(areas: string[]): string {
     '17. Textos entre colchetes descrevem mídias (áudio, foto, documento) que você não vê.',
     '18. contactKind: "cliente_atual" quando a pessoa já é cliente do escritório (pergunta do andamento do processo dela, de alvará, de audiência de um processo que o escritório já cuida, ou a equipe trata como cliente); "nao_juridico" quando não há demanda jurídica (mesmo critério de noLegalNeed); "novo_caso" nos demais (pessoa trazendo um problema novo). Na dúvida entre novo caso e cliente atual, use "novo_caso".',
     '19. Mensagens marcadas como [equipe] foram escritas por uma pessoa do escritório: use para entender o que já foi respondido e não peça de novo o que a equipe já resolveu.',
+    '20. attentionPoints: até 5 problemas do ATENDIMENTO (não do caso nem da pessoa) que a equipe deve olhar, em frases curtas e objetivas. Exemplos: "pediu para falar com uma pessoa e não teve retorno", "assistente deu orientação jurídica", "assistente prometeu resultado ou falou de valores", "assistente pediu documento ou dado sensível", "reclamou da demora", "assistente não entendeu o áudio ou a foto", "informações contraditórias", "pessoa irritada", "pergunta sem resposta". Só o que aparece na conversa; lista vazia se não houver. Nunca avalie a pessoa nem a chance do caso.',
   ].join('\n');
 }
 
@@ -486,6 +493,7 @@ export function extractionJsonSchema(areas: string[]) {
     hasLawyer: { type: ['boolean', 'null'], description: 'Já tem advogado neste caso.' },
     documentsMentioned: stringArray('Tipos de documento citados ou enviados.'),
     contactKind: { type: 'string', enum: [...CONTACT_KINDS], description: 'Novo caso, já é cliente ou sem demanda.' },
+    attentionPoints: stringArray('Problemas do atendimento que a equipe deve olhar.'),
   };
   return {
     name: 'ficha_lead',
@@ -515,6 +523,8 @@ export type LeadExtraction = {
   hasLawyer: boolean | null;
   documentsMentioned: string[];
   contactKind?: ContactKind | null;
+  /** Problems of the service (not of the case) the team should look at */
+  attentionPoints?: string[];
 };
 
 const DOCUMENT_PATTERNS: RegExp[] = [
@@ -602,6 +612,7 @@ export function parseExtraction(content: unknown, areas: string[]): LeadExtracti
     opposingParty: cleanText(data.opposingParty, LIMITS.opposingParty),
     hasLawyer: typeof data.hasLawyer === 'boolean' ? data.hasLawyer : null,
     documentsMentioned: cleanList(data.documentsMentioned),
+    attentionPoints: cleanList(data.attentionPoints),
     contactKind: (CONTACT_KINDS as readonly string[]).includes(data.contactKind)
       ? (data.contactKind as ContactKind)
       : data.noLegalNeed === true
@@ -704,8 +715,9 @@ export function deriveAwaitingSince(params: {
   clientTimes: number[];
 }): Date | null {
   const { status, priority, current, lastHumanReplyAt, lastClientAt, clientTimes } = params;
-  if (!(OPEN_STATUSES as string[]).includes(status)) return null;
-  if (status !== 'qualificado' && priority !== 'alta') return null;
+  if (!(AWAITING_STATUSES as string[]).includes(status)) return null;
+  // a "novo" contact waits only when urgent: the unqualified ones (spam, a single "oi") do not fill the queue
+  if (status === 'novo' && priority !== 'alta') return null;
   if (!lastClientAt) return current ? new Date(current) : null;
 
   const human = lastHumanReplyAt ? new Date(lastHumanReplyAt).getTime() : NaN;
@@ -765,8 +777,15 @@ export function mergeExtraction(lead: any | null, extraction: LeadExtraction) {
   const currentStatus: LeadStatus = (LEAD_STATUSES as readonly string[]).includes(lead?.status) ? lead.status : 'novo';
   const manualStatus = lead?.statusSource === 'manual' || locked.has('status');
   const suggested = suggestStatus(fields, extraction.clearNeed, extraction.noLegalNeed);
-  const status: LeadStatus =
-    !manualStatus && currentStatus === 'novo' && suggested === 'qualificado' ? 'qualificado' : currentStatus;
+  // the AI only moves forward: a client of the office asking about the case is "cliente"; a clear new case is
+  // "qualificado". It never moves a status the team set, nor backwards
+  const status: LeadStatus = manualStatus
+    ? currentStatus
+    : fields.contactKind === 'cliente_atual' && (OPEN_STATUSES as string[]).includes(currentStatus)
+      ? 'cliente'
+      : currentStatus === 'novo' && suggested === 'qualificado'
+        ? 'qualificado'
+        : currentStatus;
 
   return {
     ...fields,
@@ -776,6 +795,7 @@ export function mergeExtraction(lead: any | null, extraction: LeadExtraction) {
     priorityReason,
     missingInfo,
     documentsMentioned: documents.slice(0, LIMITS.listItems),
+    attentionPoints: locked.has('attentionPoints') ? listOf(lead?.attentionPoints) : (extraction.attentionPoints ?? []),
   };
 }
 
@@ -1160,6 +1180,7 @@ export function leadsToXlsxSheets(
     { header: 'Resumo', width: 64 },
     { header: 'Próximo passo', width: 38 },
     { header: 'Falta saber', width: 32 },
+    { header: 'Pontos de atenção do atendimento', width: 36 },
     { header: 'Parte contrária', width: 22 },
     { header: 'Já tem advogado', width: 13 },
     { header: 'Documentos citados', width: 28 },
@@ -1220,6 +1241,10 @@ export function leadsToXlsxSheets(
       { value: lead.summary ?? '', style: wrap },
       { value: lead.nextStep ?? '', style: wrap },
       { value: missingForExport(lead).join(', '), style: wrap },
+      {
+        value: listOf(lead.attentionPoints).join('; '),
+        style: { wrap: true, fill: listOf(lead.attentionPoints).length ? ('amber' as const) : undefined },
+      },
       { value: lead.opposingParty ?? '', style: wrap },
       yesNo(lead.hasLawyer),
       { value: joined(lead.documentsMentioned), style: wrap },
@@ -1353,6 +1378,18 @@ export function leadsToXlsxSheets(
     'Retornar uma única vez o pedido da própria pessoa; sem resposta, marcar como Descartado',
     'amber',
   );
+
+  const withPoints = leads.filter((lead) => listOf(lead.attentionPoints).length);
+  if (withPoints.length) {
+    band('PONTOS DE ATENÇÃO DO ATENDIMENTO (APONTADOS PELA IA)', 'bandRed');
+    line(
+      'Conversas com algum ponto de atenção',
+      withPoints.length,
+      'Ver a coluna "Pontos de atenção do atendimento" na aba Leads',
+      'amber',
+    );
+    for (const [k, v] of countBy(withPoints.flatMap((lead) => listOf(lead.attentionPoints))).slice(0, 8)) line(k, v);
+  }
 
   band('TIPO DE CONTATO');
   for (const [k, v] of countBy(

@@ -281,15 +281,14 @@ describe('Leads: awaiting the team', () => {
     assert.equal(since?.toISOString(), '2026-11-04T12:00:00.000Z');
   });
 
-  test('not actionable (novo, normal) or not open (em_atendimento) does not wait', () => {
+  test('novo without urgency and descartado do not wait; em_atendimento and cliente do', () => {
     assert.equal(deriveAwaitingSince({ ...base, status: 'novo', lastClientAt: t('2026-11-04T10:00:00Z') }), null);
     assert.ok(
       deriveAwaitingSince({ ...base, status: 'novo', priority: 'alta', lastClientAt: t('2026-11-04T10:00:00Z') }),
     );
-    assert.equal(
-      deriveAwaitingSince({ ...base, status: 'em_atendimento', lastClientAt: t('2026-11-04T10:00:00Z') }),
-      null,
-    );
+    assert.ok(deriveAwaitingSince({ ...base, status: 'em_atendimento', lastClientAt: t('2026-11-04T10:00:00Z') }));
+    assert.ok(deriveAwaitingSince({ ...base, status: 'cliente', lastClientAt: t('2026-11-04T10:00:00Z') }));
+    assert.equal(deriveAwaitingSince({ ...base, status: 'descartado', lastClientAt: t('2026-11-04T10:00:00Z') }), null);
   });
 });
 
@@ -800,7 +799,9 @@ describe('LeadsService: list, edit, export, backfill', () => {
     assert.equal(result.lead.statusSource, 'manual');
     assert.equal(result.lead.priorityReason, 'Definida pela equipe');
     assert.equal(result.lead.city, 'Cidade C');
-    assert.equal(result.lead.awaitingHumanSince, null);
+    // "descartado" is the only status that never waits for the team
+    const discarded = await service.update('inst-1', id, { status: 'descartado' });
+    assert.equal(discarded.lead.awaitingHumanSince, null);
     assert.deepEqual(result.lead.manualFields.sort(), ['city', 'priority', 'status']);
     assert.equal(tables.leads[0].priorityRank, 0);
     assert.equal(await service.update('inst-2', id, { city: 'x' }), null, 'other instances never see it');

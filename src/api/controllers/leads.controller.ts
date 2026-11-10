@@ -106,6 +106,18 @@ export class LeadsController {
     return { instance: row.name, ...(await this.guard(() => this.leads.backfill(row.id, row.name, { ...data }))) };
   }
 
+  public async analyzeOne(instance: InstanceDto, contact: string) {
+    const row = await this.instanceOf(instance);
+    return { instance: row.name, ...(await this.guard(() => this.leads.analyzeOne(row.id, row.name, contact))) };
+  }
+
+  public async remove(instance: InstanceDto, id: string) {
+    const row = await this.instanceOf(instance);
+    const lead = await this.guard(() => this.leads.remove(row.id, id));
+    if (!lead) throw new NotFoundException('Lead não encontrado.');
+    return { instance: row.name, removed: true, lead };
+  }
+
   public async backfillStatus(instance: InstanceDto) {
     const row = await this.instanceOf(instance);
     return { instance: row.name, ...this.leads.backfillStatus(row.id) };
