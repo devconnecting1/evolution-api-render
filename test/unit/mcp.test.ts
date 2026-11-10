@@ -48,6 +48,8 @@ const EXPECTED_TOOLS = [
   'add_process',
   'list_publications',
   'sync_process',
+  'get_process_settings',
+  'update_process_settings',
   'list_leads',
   'get_lead',
   'update_lead',
@@ -57,8 +59,11 @@ const EXPECTED_TOOLS = [
   'list_appointments',
   'get_free_slots',
   'create_appointment',
+  'update_appointment',
   'cancel_appointment',
+  'get_agenda_settings',
   'update_agenda_settings',
+  'get_database_info',
 ];
 
 // --------------------------------------------------------------------------------------------- fakes
@@ -865,6 +870,19 @@ describe('MCP: tools', () => {
     assert.equal(denied.result.isError, true);
 
     assert.ok(!TOOL_NAMES.some((name) => /reveal|secret|apikey/i.test(name)));
+  });
+
+  test('get_database_info: quota and wake log from memory, global key only; list_instances shows dbMode', async () => {
+    const info = await callTool(h.url, 'get_database_info', { wakes: 5 });
+    assert.equal(info.result.isError ?? false, false, info.text);
+    assert.ok(info.json.activity && Array.isArray(info.json.activity.wakes));
+    assert.ok(info.json.quota);
+
+    const denied = await callTool(h.url, 'get_database_info', {}, bearer('token-of-escritorio-0123456789'));
+    assert.equal(denied.result.isError, true);
+
+    const list = await callTool(h.url, 'list_instances', {});
+    assert.ok(list.json.instances.every((i: any) => i.dbMode === 'shared' || i.dbMode === 'own'));
   });
 
   test('the manuals are exposed as resources', async () => {

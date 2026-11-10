@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import { EventController } from '@api/integrations/event/event.controller';
+import { DbActivityTracker, describeQuery } from '@api/repository/db-activity';
 import { ChannelStartupService } from '@api/services/channel.service';
 
 /**
@@ -139,5 +140,46 @@ describe('neon diet: instance settings cache', () => {
     assert.equal(await empty.svc.findSettings(), null);
     assert.equal(await empty.svc.findSettings(), null);
     assert.equal(empty.calls.length, 1);
+  });
+});
+
+describe('neon diet: database wake log (db-activity)', () => {
+  test('describeQuery keeps only the SQL verb and the table, never values', () => {
+    assert.deepEqual(
+      describeQuery('SELECT "public"."AuthStateKey"."key" FROM "public"."AuthStateKey" WHERE "sessionId" = $1'),
+      { op: 'SELECT', table: 'AuthStateKey' },
+    );
+    assert.deepEqual(describeQuery('INSERT INTO "public"."Message" ("id") VALUES ($1)'), {
+      op: 'INSERT',
+      table: 'Message',
+    });
+    assert.deepEqual(describeQuery('UPDATE "public"."Chat" SET "name" = $1'), { op: 'UPDATE', table: 'Chat' });
+    assert.deepEqual(describeQuery('BEGIN'), { op: 'BEGIN', table: '-' });
+  });
+
+  test('a query after 5 idle minutes is a wake; the burst that follows is attached to it', () => {
+    let now = Date.parse('2026-11-10T07:00:00Z');
+    const tracker = new DbActivityTracker(5 * 60_000, () => now);
+    const q = (sql: string, plusMs: number) => {
+      now += plusMs;
+      tracker.record(sql);
+    };
+    q('SELECT * FROM "public"."Instance"', 1_000); // boot traffic, not a wake
+    q('SELECT * FROM "public"."Setting"', 2_000);
+    q('SELECT * FROM "public"."AuthStateKey"', 10 * 60_000); // wake 1
+    q('SELECT * FROM "public"."Chat"', 1_000); // same burst
+    q('SELECT * FROM "public"."AuthStateKey"', 4 * 60_000); // 4 min: still awake, not a wake
+    q('SELECT * FROM "public"."AuthStateKey"', 10 * 60_000); // wake 2
+
+    const snap = tracker.snapshot();
+    assert.equal(snap.totalQueries, 6);
+    assert.equal(snap.wakes.length, 2);
+    assert.equal(snap.wakes[1].at, '2026-11-10T07:10:03.000Z', 'oldest wake last');
+    assert.deepEqual(
+      snap.wakes[1].queries.map((x) => x.table),
+      ['AuthStateKey', 'Chat'],
+    );
+    assert.equal(snap.wakes[0].idleMinutes, 10);
+    assert.deepEqual(snap.topWakeCauses, [{ cause: 'SELECT AuthStateKey', count: 2 }]);
   });
 });

@@ -3,6 +3,7 @@ import { agendaTools } from './agenda.tools';
 import { botTools } from './bot.tools';
 import { chatTools } from './chat.tools';
 import { credentialsTools } from './credentials.tools';
+import { databaseTools } from './database.tools';
 import { instanceTools } from './instance.tools';
 import { leadTools } from './leads.tools';
 import { processosTools } from './processos.tools';
@@ -22,6 +23,7 @@ export const allTools: ToolSpec<any>[] = [
   ...processosTools,
   ...credentialsTools,
   ...agendaTools,
+  ...databaseTools,
 ];
 
 export const TOOL_NAMES = allTools.map((tool) => tool.name);

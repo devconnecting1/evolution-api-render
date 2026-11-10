@@ -87,6 +87,18 @@ export class NeonClient {
     }
   }
 
+  /** Quantos projetos a organização (ou a conta) tem hoje, inclusive o do banco principal. */
+  async countProjects(): Promise<number> {
+    try {
+      const params: Record<string, string | number> = { limit: 400 };
+      if (this.opts.orgId) params.org_id = this.opts.orgId;
+      const { data } = await this.http.get('/projects', { params });
+      return Array.isArray(data?.projects) ? data.projects.length : 0;
+    } catch (error) {
+      throw new Error(`Neon: falha ao contar projetos (${describeAxiosError(error)})`);
+    }
+  }
+
   async deleteProject(projectId: string): Promise<void> {
     try {
       await this.http.delete(`/projects/${projectId}`);

@@ -73,10 +73,10 @@ export class InstanceController {
         status: instanceData.status,
       });
 
-      // Banco próprio (projeto Neon) da instância, quando DB_PER_INSTANCE_ENABLED=true.
-      // Se falhar, desfaz a criação para não misturar dados no banco principal.
+      // Banco próprio (projeto Neon) da instância, quando DB_PER_INSTANCE_ENABLED=true e o painel não pediu
+      // "compartilhado" (dbMode: 'shared'). Se falhar, desfaz a criação para não misturar dados no banco principal.
       const instanceDatabases = getInstanceDatabases();
-      if (instanceDatabases?.enabled) {
+      if (instanceDatabases?.enabled && instanceData.dbMode !== 'shared') {
         try {
           await instanceDatabases.provision(instanceId, instanceData.instanceName);
         } catch (error) {

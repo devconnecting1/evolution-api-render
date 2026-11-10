@@ -226,6 +226,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 03/11/2026: **Plano e limites** (seção 15): contagem automática das respostas da IA, franquia, limites diários e horário de atendimento por instância. Sem plano configurado, nada muda no atendimento.
 - 09/11/2026: **Processos** (seção 17): andamentos do DataJud e intimações do DJEN por OAB, avisos à equipe, aviso neutro opcional ao cliente e contexto opcional (só datas) para a IA. Migration aditiva `20261109120000_add_processos`.
 - 09/11/2026: **Agenda** própria (seção 17): a IA consulta horários, agenda, remarca e cancela pelo WhatsApp (ferramentas do Chat Completions), lembretes com confirmação, página no painel, feed ICS e ferramentas MCP. Desligada por padrão. Sem Google Calendar.
+- 10/11/2026: "Nova instância" com escolha **Banco próprio / Compartilhado** e contador de projetos do Neon; registro das "acordadas" do banco (`GET /admin/db-activity`, MCP `get_database_info`); chaves do WhatsApp que não existem deixam de ser procuradas no banco a cada pedido; MCP ganhou `update_appointment`, `get_agenda_settings`, `get_process_settings` e `update_process_settings`.
 - Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
@@ -666,6 +667,8 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `add_process` | escrita | Adiciona um processo pelo número CNJ (valida o dígito); não envia nada |
 | `list_publications` | leitura | Intimações/publicações do DJEN das OABs acompanhadas |
 | `sync_process` | escrita | Consulta o DataJud agora para um processo (1 por minuto) |
+| `get_process_settings` | leitura | Configurações de Processos (ligado, intervalo, dias do DJEN, números da equipe) e as OABs acompanhadas |
+| `update_process_settings` | escrita | Altera essas configurações (lista de números substitui a atual) e pode adicionar uma OAB. Devolve os valores anteriores |
 | `list_leads` | leitura | Leads da instância (triagem): filtros por status (ou `aguardando`), área, prioridade, texto e data; ordem padrão prioridade alta e depois a maior espera; contagem por visão (seção 16) |
 | `get_lead` | leitura | Ficha completa de um lead: resumo, prioridade e motivo, o que falta saber, próximo passo, parte contrária, documentos citados, origem, datas |
 | `update_lead` | escrita | Altera status, prioridade, nome, área, cidade, próximo passo, resumo, parte contrária, advogado, o que falta saber. Cada campo alterado fica travado contra a IA. Marcada como destrutiva; devolve os valores anteriores |
@@ -674,8 +677,11 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `list_appointments` | leitura | Agendamentos da Agenda (padrão: hoje + 14 dias), filtro por contato |
 | `get_free_slots` | leitura | Horários livres por tipo de atendimento |
 | `create_appointment` | **envio** | Cria agendamento (só horário livre, salvo `outside_availability`) e envia a confirmação ao cliente (`notify_client`, padrão sim) |
+| `update_appointment` | **envio** | Remarca (checa conflito e disponibilidade), confirma ou muda status, tipo e observação; avisa o cliente da remarcação (`notify_client`, padrão sim) |
 | `cancel_appointment` | escrita | Cancela (status `cancelado`) e avisa o cliente (`notify_client`, padrão sim). Marcada como destrutiva |
+| `get_agenda_settings` | leitura | Configurações da Agenda: horários, tipos, lembretes, permissões da IA, números da equipe |
 | `update_agenda_settings` | escrita | Liga/desliga e altera a Agenda (listas substituem as atuais). Marcada como destrutiva; devolve os valores anteriores |
+| `get_database_info` | leitura | Cota de projetos do Neon (banco próprio por instância) e as últimas "acordadas" do banco com as consultas que as causaram. Responde da memória, sem consultar o banco (só chave global) |
 
 Na coluna de remetente, `bot` só é identificado nos últimos 10 minutos (o banco não marca a origem das mensagens, seção 13); depois aparece como `me` (número da instância).
 
