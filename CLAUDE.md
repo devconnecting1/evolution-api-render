@@ -201,12 +201,12 @@ The project follows comprehensive development standards defined in `.cursor/rule
 
 ## Testing Approach
 
-Currently, the project has minimal formal testing infrastructure:
-- **Manual testing** is the primary approach
-- **Integration testing** in development environment
-- **No unit test suite** currently implemented
-- Test files can be placed in `test/` directory as `*.test.ts`
-- Run `npm test` for watch mode development testing
+The project has a `node:test` suite (run with `tsx`), executed by CI (`Check Code Quality`):
+- **Unit tests** in `test/unit/**/*.test.ts`: `npm run test:unit`
+- **Integration tests** in `test/integration/**/*.test.ts` against a local Postgres: `npm run test:db:start`, then `npm run test:integration`
+- **Type-check of the tests**: `npm run test:types` (CI runs it; fakes must implement every method the code calls)
+- `npm run test:run` runs unit + integration; `npm test` is the watch mode
+- WhatsApp connection flows are still tested manually (never re-pair or log out a production number)
 
 ### Recommended Testing Strategy
 - Focus on **critical business logic** in services

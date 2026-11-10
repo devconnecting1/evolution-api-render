@@ -17,23 +17,24 @@
 
 ## O que é automático e o que é serviço
 
-- **Automático:** respostas 24 h, memória (2 a 100 mensagens), áudio, foto e PDF, junção de mensagens seguidas, pausa quando a equipe responde (WhatsApp Web; na API oficial só com Coexistence e o campo `smb_message_echoes` assinado), retomada após o tempo combinado.
-- **Serviço da nossa equipe:** instruções, integrações (n8n ou webhook, sob medida), relatório mensal, monitoramento, pausa manual a pedido do cliente (o cliente não acessa o painel).
+- **Automático:** respostas 24 h, triagem de Leads, Agenda com lembretes e Processos (quando ligados), memória (2 a 100 mensagens), áudio, foto e PDF, junção de mensagens seguidas, pausa quando a equipe responde (WhatsApp Web; na API oficial só com Coexistence e o campo `smb_message_echoes` assinado), retomada após o tempo combinado.
+- **Serviço da nossa equipe:** instruções, integrações (n8n ou webhook, sob medida), relatório mensal, monitoramento (Observabilidade, inclusive a chave OpenAI de cada cliente), pausa manual a pedido do cliente (o cliente não acessa o painel).
 - **Não existe hoje:** aviso automático para a equipe quando o cliente pede uma pessoa; relatório automático; marcação no banco de quais mensagens foram da IA.
 - **Tempo de resposta real:** ~20 a 40 s (espera para juntar mensagens + OpenAI).
 
-## Onboarding em 6 passos
+## Onboarding em 7 passos
 
 1. Fechar plano, conexão (WhatsApp Web ou API oficial), quantos números e escopo das integrações.
 2. Coletar informações do negócio e escrever as instruções (base: `prompts/exemplo-advocacia.md`).
-3. Criar a instância: WhatsApp Web (QR code) ou API oficial (Meta Business verificado, WABA, cartão do cliente; webhook com `messages` e `smb_message_echoes`).
-4. Configurar a OpenAI: um project key por instância, com limite de gasto.
-5. Testar com o roteiro (áudio, foto, PDF, pedido de pessoa, pausa e retomada).
-6. Treinar a equipe, entrar no ar e acompanhar os primeiros dias.
+3. Criar a instância com **Banco próprio** (padrão; Compartilhado só para testes ou sem cota): WhatsApp Web (QR code) ou API oficial (Meta Business verificado, WABA, cartão do cliente; webhook com `messages` e `smb_message_echoes`). Atalho para WhatsApp Web: `scripts/novo-cliente.sh`.
+4. Configurar a OpenAI: um project key por instância, com limite de gasto. **Testar a chave** (cartão OpenAI da Observabilidade ou `POST /openai-health/<instância>/test`): válida, modelo liberado e com crédito.
+5. Configurar **Plano e limites** (franquia, horário de atendimento, mensagens) e, conforme o plano, Leads, Agenda e Processos.
+6. Testar com o roteiro (áudio, foto, PDF, pedido de pessoa, pausa e retomada).
+7. Treinar a equipe, entrar no ar e acompanhar os primeiros dias.
 
 ## Links rápidos
 
-- Painel: `/`
+- Site: `/` · Painel: `/manager` · Manual: `/readme`
 - API: URL do serviço web, configurada no painel do Render
 - Webhook Meta: `<URL da API>/webhook/meta`
 - OpenAI billing: `https://platform.openai.com/settings/organization/billing/overview`
