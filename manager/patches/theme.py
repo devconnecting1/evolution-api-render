@@ -26,7 +26,7 @@ Bundle groups (each one is applied once and leaves a marker comment at the top o
   prio      - Leads: the priority chip gets class wt-prio and data-prio (alta / normal / baixa); theme.css draws
               a three-bar priority icon (3, 2 or 1 bars filled) instead of the plain dot. Text stays the same.
 index.html group (marker: an HTML comment in <head>):
-  html      - inline theme script, color-scheme "light dark", theme.css?v=2 linked last, bundle ?v=CACHE_VERSION.
+  html      - inline theme script, color-scheme "light dark", theme.css?v=3 linked last, bundle ?v=CACHE_VERSION.
 landing group (marker: an HTML comment in <head> of each page):
   landing   - landing-theme.css?v=2 after landing.css / segment.css, color-scheme "light dark".
 
@@ -219,7 +219,7 @@ def patch_html(h):
     h = rep(h, '<meta name="theme-color" content="#ffffff" />',
             '<meta name="theme-color" content="#f5f5f5" />\n' + THEME_SCRIPT.rstrip('\n'), 'index.html theme-color')
     anchor = '    <script type="module" crossorigin'
-    h = rep(h, anchor, '    ' + html_marker('html') + '\n    <link rel="stylesheet" href="/assets/theme.css?v=2" />\n' + anchor,
+    h = rep(h, anchor, '    ' + html_marker('html') + '\n    <link rel="stylesheet" href="/assets/theme.css?v=3" />\n' + anchor,
             'index.html bundle script')
     i = h.index(SCRIPT_TAG) + len(SCRIPT_TAG)
     j = h.index('"', i)
