@@ -8,7 +8,7 @@ import {
   waMonitor,
 } from '@api/server.module';
 import { observabilityService } from '@api/services/observability.service';
-import { Auth, configService, Database } from '@config/env.config';
+import { Auth, configService, Database, Openai } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { isBotMessageId } from '@utils/botMessageRegistry';
 import path from 'path';
@@ -38,6 +38,7 @@ export function defaultMcpDeps(): McpDeps {
       pathToken: process.env.MCP_PATH_TOKEN || undefined,
       clientName: database.CONNECTION.CLIENT_NAME,
       dbProvider: database.PROVIDER,
+      openaiGlobalKeySet: !!configService.get<Openai>('OPENAI').API_KEY_GLOBAL,
       docsDirs: [
         process.cwd(),
         path.join(process.cwd(), 'readmes'),

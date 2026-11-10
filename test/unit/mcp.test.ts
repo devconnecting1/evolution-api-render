@@ -51,6 +51,7 @@ const EXPECTED_TOOLS = [
   'update_lead',
   'get_lead_settings',
   'update_lead_settings',
+  'list_credentials',
 ];
 
 // --------------------------------------------------------------------------------------------- fakes
@@ -162,7 +163,9 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     },
     openaiCreds: {
       findMany: async ({ where }: any) =>
-        where.instanceId === 'inst-a' ? [{ id: 'cred-1', name: 'principal', apiKey: OPENAI_KEY }] : [],
+        where.instanceId === 'inst-a' || where.instanceId?.in?.includes('inst-a')
+          ? [{ id: 'cred-1', instanceId: 'inst-a', name: 'principal', apiKey: OPENAI_KEY }]
+          : [],
     },
     integrationSession: {
       findMany: async ({ where }: any) => sessions.filter((row) => matches(row, where)),
@@ -767,6 +770,21 @@ describe('MCP: tools', () => {
     assert.ok(!saved.result.isError, saved.text);
     assert.deepEqual(saved.json.settings.notify, { enabled: true, numbers: ['5511900009999'], on: 'urgente' });
     assert.equal(saved.json.previous, null);
+  });
+
+  test('list_credentials: masked only, global key only, and no MCP tool reveals a secret', async () => {
+    const list = await callTool(h.url, 'list_credentials', {});
+    for (const secret of [OPENAI_KEY, GLOBAL_KEY, 'token-of-escritorio-0123456789', 'token-of-clinica-0123456789']) {
+      assert.ok(!list.text.includes(secret), secret);
+    }
+    const escritorio = list.json.instances.find((instance: any) => instance.name === 'escritorio');
+    assert.equal(escritorio.items.find((item: any) => item.kind === 'openai').masked, 'sk-…WXYZ');
+    assert.ok(escritorio.items.some((item: any) => item.kind === 'instance_token'));
+
+    const denied = await callTool(h.url, 'list_credentials', {}, bearer('token-of-escritorio-0123456789'));
+    assert.equal(denied.result.isError, true);
+
+    assert.ok(!TOOL_NAMES.some((name) => /reveal|secret|apikey/i.test(name)));
   });
 
   test('the manuals are exposed as resources', async () => {
