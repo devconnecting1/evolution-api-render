@@ -190,6 +190,20 @@ export const analyzeLeads = defineTool({
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   run: async (args, ctx) => {
     const resolved = await resolveInstance(ctx, args.instance);
+    // An analysis already running: answer with its progress (dry_run is how the progress is checked)
+    const running = ctx.deps.leads.backfillStatus(resolved.id);
+    if (running?.running) {
+      return jsonResult({
+        instance: resolved.name,
+        mode: args.mode,
+        alreadyRunning: true,
+        note:
+          args.dry_run === false
+            ? 'Já existe uma análise em andamento nesta instância; espere terminar para começar outra.'
+            : 'Análise em andamento.',
+        progress: running,
+      });
+    }
     const result = await userErrors(() =>
       ctx.deps.leads.backfill(resolved.id, resolved.name, {
         days: args.days,

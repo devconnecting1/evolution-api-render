@@ -3,6 +3,7 @@
     { "src": "^/$", "dest": "/landing/index.html" },
     { "src": "^/advocacia/?$", "dest": "/landing/advocacia.html" },
     { "src": "^/instagram/?$", "dest": "/landing/instagram.html" },
+    { "src": "^/acesso/?$", "dest": "/acesso/index.html" },
     { "handle": "filesystem" },
     { "src": "^/observability/?$", "dest": "/observability/index.html" },
     { "src": "^/(.*)$", "dest": "/index.html" }

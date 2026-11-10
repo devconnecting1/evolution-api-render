@@ -70,7 +70,7 @@ VERCEL_TOKEN="<token da Vercel>" npx -y vercel@65.2.0 deploy --prod --yes --arch
 
 ## 4. Painel, site e manual (build sem fonte)
 
-Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/*.py`: troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (hoje `?v=35`). Depois de qualquer patch: `python3 -I manager/patches/<nome>.py --check` em todos e `node --check` numa cópia `.mjs` do bundle. Se o manager for reconstruído do zero, reaplique todos.
+Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/*.py`: troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (hoje `?v=36`). Depois de qualquer patch: `python3 -I manager/patches/<nome>.py --check` em todos e `node --check` numa cópia `.mjs` do bundle. Se o manager for reconstruído do zero, reaplique todos.
 
 | Área | Patch / arquivos | O que faz |
 |---|---|---|
@@ -87,6 +87,7 @@ Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/in
 | Observabilidade | `observability-ui.py`, `observability-grid.py`, `observability-alerts.py` | Página nativa com cartões por provedor e alertas (seção 10) |
 | Chaves e credenciais | `credentials-vault.py` + `credentials-vault.css` | Só chave global: chaves de cada instância mascaradas e "mostrar" uma por vez (seção 2) |
 | Rotas | `root-redirect.py`, `manager/dist/vercel.json` | A home antiga nunca aparece; rotas SPA e `/observability` com rewrites antes do catch-all |
+| Acesso do cliente | `client-portal.py` + `assets/client-portal.js`, `client-portal.css`, `acesso/` | Itens **Conexão** (cliente) e **Acesso do cliente** (administrador), menu filtrado pelos módulos do código, página `/acesso` e app pelo navegador (seção 19) |
 | Manual | `assets/readme-tab.js`, `readme-tab.css`, `marked.min.js`, `readmes/` | Item **Manual** da lateral e `/readme`: resumo operacional (`readmes/RESUMO.md`) com links para o guia comercial e este manual |
 
 **Site** (`manager/dist/landing/`: `index.html`, `advocacia.html`, `instagram.html`): HTML e CSS escritos à mão (`landing.css`, `segment.css`, `landing-theme.css`, `landing-plus.css`) e `landing.js` / `landing-pixels.js` (fundo de pixels do plano Premium, parado com "reduzir movimento"). Sem logos ou nomes de terceiros, fonte Geist, sem animação de rolagem, dados de exemplo fictícios. Preços iguais aos da seção 6 (inclusive no JSON-LD); ao mudar um preço, mude as três páginas, a seção 6, o guia comercial e o resumo. Em `/advocacia`, a linguagem segue a seção 16.7 (triagem, nunca captação; sem nota numérica para pessoas).
@@ -303,6 +304,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 10/11/2026: **planos sem fidelidade** (mensalidade mês a mês), implantação única pelo valor antigo de 12 meses, todos os planos com 1 número e número adicional com os recursos e a franquia do plano: R$ 247 / R$ 447 / R$ 847 por mês, implantação R$ 490 / R$ 890 / a partir de R$ 1.490. Propostas enviadas antes mantêm os preços durante a validade.
 - 10/11/2026: **reajuste de 10%** em mensalidades, implantações e número adicional (seção 6): R$ 437 / R$ 767 / R$ 1.427 por mês, implantação R$ 1.640 / R$ 3.180 / a partir de R$ 5.820, número adicional R$ 287 / R$ 497 / R$ 927 (cerca de 65% da mensalidade) com implantação R$ 540 / R$ 980 / a partir de R$ 1.640. Excedente (R$ 49 por 1.000 respostas) e piloto (R$ 690) mantidos: o piloto é a porta de entrada e o excedente já cobre a OpenAI com folga.
 - 10/11/2026: **implantação +10%** (seção 6): R$ 1.800 / R$ 3.500 / a partir de R$ 6.400; implantação do número adicional R$ 590 / R$ 1.080 / a partir de R$ 1.800. Mensalidades, piloto (R$ 690) e excedente (R$ 49 por 1.000 respostas) não mudam.
+- 10/11/2026: **Acesso do cliente** (seção 19): código próprio do cliente com módulos escolhidos pelo administrador, aplicado no servidor; app pelo navegador (PWA, `/acesso`) em vez de instalador no GitHub Releases.
 - 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
 - 10/11/2026: **Leads**: resposta da equipe detectada também pelas mensagens do número e pela pausa da sessão do bot (corrige "aguardando equipe" falso das conversas analisadas em lote), `refresh-waiting`, tipo de contato (novo caso, já é cliente, sem demanda jurídica), nome da pessoa do caso quando alguém fala por ela, e visualizador da planilha no painel. Migration aditiva `20261110130000_add_lead_contact_kind`.
 - 10/11/2026: **Leads em planilha Excel** (abas Leads e Resumo, gerada pela própria API sem biblioteca nova) e análise automática mais precisa: área classificada pelo assunto, cidade padronizada, prioridade com a data do fato (contagem, prazo vencido, audiência passada, data distante e problema já resolvido).
@@ -1168,3 +1170,47 @@ curl -X POST "$SERVER_URL/agenda/tick" -H "apikey: $CHAVE_GLOBAL"
 - O cache das configurações (30 s), o ticker e a memória de modelos sem ferramentas são por processo (1 réplica, como o resto do bot).
 - **Banco próprio por instância** (`docs/arquitetura/banco-por-instancia.md`): as tabelas da Agenda ficam no banco da instância. O ticker consulta o banco principal e cada banco próprio com a Agenda ligada; um banco próprio com a Agenda desligada não é consultado de novo (pode dormir). Sem nada pendente, o ticker volta ao banco no máximo a cada 6 h.
 - **A validar em produção** antes de vender como pronto: agendamento real pela IA com o modelo do bot (gpt-6-luna) e lembretes num número de teste.
+
+## 19. Acesso do cliente (painel só com os módulos escolhidos)
+
+O cliente entra no painel com um **código de acesso próprio** e vê só os módulos que você marcou. Bot, prompt, credenciais, integrações, Comportamento, plano e todas as outras configurações continuam só com você (chave global). Não é um app à parte: é o mesmo painel, instalável como app pelo navegador (PWA), grátis e sem nada novo no WhatsApp (mesma conexão, nenhum envio a mais, nenhuma chamada em massa).
+
+### 19.1 Como liberar para um cliente
+
+1. Painel (chave global) > instância > **Acesso do cliente**.
+2. Marque os módulos e clique em **Criar acesso**. O código (`wac_...`) aparece **uma única vez**: copie e envie ao cliente com o link `https://whatsaibr.vercel.app/acesso`.
+3. O cliente abre o link, cola o código e entra. Para instalar: Chrome/Edge no computador ou Android, **Instalar app**; iPhone, Compartilhar > **Adicionar à Tela de Início**. O app abre direto no primeiro módulo dele.
+4. Para trocar os módulos, marque e **Salvar** (o código continua o mesmo; o painel do cliente se ajusta em até 5 minutos ou ao recarregar). **Gerar novo código** invalida o anterior na hora; **Remover acesso** também. Código perdido: gere um novo.
+
+| Módulo | O cliente pode | Fica com você |
+|---|---|---|
+| Conversas | ler e responder (texto, mídia, áudio), marcar como lida, pausar ou retomar a IA **em um contato** | pausar a IA para todos, perfil, bloqueio, apagar mensagem, status, checagem de números em massa |
+| Leads | lista, ficha, editar status, planilha e visualizador, reanálise (usa a chave OpenAI da instância), recalcular espera | configurações dos Leads (áreas, avisos, modelo) |
+| Agenda | ver, marcar, remarcar, cancelar, horários livres | horários, tipos, regras, link do calendário |
+| Processos | lista, andamentos, publicações, sincronizar, marcar como visto | OAB e configurações |
+| Plano e uso | respostas usadas no mês e a franquia | mudar o plano e os limites |
+| Conexão | ver se está conectado e ler o QR code para reconectar | desconectar, reiniciar, apagar a instância |
+
+Recomendado: **Conversas + Leads + Conexão** (padrão). Agenda e Processos só quando estiverem ligados para a instância.
+
+### 19.2 Segurança
+
+- O código é aleatório (32 bytes), guardado só como hash SHA-256 (`ClientAccess`, banco principal, migration `20261110160000_add_client_access`); não é o token da instância e não abre o MCP nem as rotas do administrador.
+- **A regra é do servidor**, em cada requisição (`src/utils/client-access.ts`, `clientRouteAllowed`): só a instância do código e só as rotas dos módulos marcados; o resto responde 403. Esconder menus no painel (`assets/client-portal.js`) é só conforto.
+- `GET /instance/fetchInstances` com o código devolve só a instância dele, **sem o token da instância** e sem segredos de integração.
+- Cache de 30 s por processo: desligar, trocar o código ou remover vale no máximo 30 s depois (na hora no processo que fez a mudança).
+
+### 19.3 API
+
+```bash
+# Ver / criar ou mudar / gerar novo código / remover (só chave global)
+curl "$SERVER_URL/client-access/$INSTANCE" -H "apikey: $APIKEY"
+curl -X POST "$SERVER_URL/client-access/$INSTANCE" -H "apikey: $APIKEY" -H "Content-Type: application/json" \
+  -d '{"enabled": true, "modules": ["conversas", "leads", "conexao"]}'      # 1ª vez: devolve "key"
+curl -X POST "$SERVER_URL/client-access/$INSTANCE" -H "apikey: $APIKEY" -H "Content-Type: application/json" -d '{"newKey": true}'
+curl -X DELETE "$SERVER_URL/client-access/$INSTANCE" -H "apikey: $APIKEY"
+# Quem sou eu (com o código do cliente)
+curl "$SERVER_URL/client-access/me" -H "apikey: wac_..."
+```
+
+Por que não um instalador no GitHub Releases: um app de desktop (Electron, por exemplo) seria o mesmo painel embrulhado, com ~100 MB, aviso do Windows SmartScreen sem certificado pago e atualização manual. O PWA instala em segundos, atualiza sozinho a cada deploy e funciona no computador e no celular.

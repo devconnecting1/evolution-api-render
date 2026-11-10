@@ -47,6 +47,7 @@ import { createInstanceDatabases, createRoutedRepository } from './repository/in
 import { PrismaRepository } from './repository/repository.service';
 import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
+import { ClientAccessService } from './services/client-access.service';
 import { LeadsService } from './services/leads.service';
 import { WAMonitoringService } from './services/monitor.service';
 import { OpenaiHealthService } from './services/openai-health.service';
@@ -134,6 +135,8 @@ export const baileysController = new BaileysController(waMonitor);
 
 // "Plano e limites": one instance, so the limits cache invalidated by the REST routes is the one the bot reads
 export const usageService = new UsageService(prismaRepository);
+/** "Acesso do cliente": códigos de acesso do cliente com módulos escolhidos (src/utils/client-access.ts). */
+export const clientAccessService = new ClientAccessService({ prisma: prismaRepository });
 export const usageController = new UsageController(usageService, prismaRepository);
 
 // "Processos" (DataJud + DJEN): one instance (in-memory ticker state, rate limits, AI context provider)

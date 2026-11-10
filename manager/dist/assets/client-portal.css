@@ -1,0 +1,182 @@
+/* WhatsAI Manager: "Acesso do cliente" (client-portal.js). Only var(--m-*) tokens, so both themes apply. */
+
+/* client: nothing that leads to the instance list or to administrator pages (the server refuses them anyway) */
+[data-wa-portal='client'] [data-wa-header] a[href='/manager'],
+[data-wa-portal='client'] [data-wa-header] a[href='/manager/'],
+[data-wa-portal='client'] .wa-tw-crumb-inst a {
+  pointer-events: none;
+  text-decoration: none;
+}
+[data-wa-portal='client'] .wa-tw-crumbs li:nth-child(-n + 2),
+[data-wa-portal='client'] [data-wa-header] > div:last-child > button.wa-tw-cmdbtn,
+[data-wa-portal='client'] .wa-conv-idle .wa-start-text,
+[data-wa-portal='client'] .wa-conv-idle .wa-start-list,
+[data-wa-portal='client'] .wa-conv-idle .wa-start-hint {
+  display: none;
+}
+
+.wa-portal-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 760px;
+  padding: 4px 0 32px;
+}
+.wa-portal-head .wa-page-title {
+  margin-bottom: 4px;
+}
+.wa-portal-lead,
+.wa-portal-hint {
+  color: var(--m-text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.wa-portal-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: var(--m-surface);
+  color: var(--m-text);
+}
+.wa-portal-status {
+  font-weight: 500;
+}
+.wa-portal-status[data-state='ok']::before,
+.wa-portal-status[data-state='bad']::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--m-bad);
+  vertical-align: middle;
+}
+.wa-portal-status[data-state='ok']::before {
+  background: var(--m-ok, #1f9d55);
+}
+.wa-portal-qr img {
+  display: block;
+  width: 264px;
+  max-width: 100%;
+  height: auto;
+  padding: 12px;
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: #ffffff;
+}
+.wa-portal-btn {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--m-primary);
+  border-radius: 6px;
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.wa-portal-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.wa-portal-btn-line {
+  border-color: var(--m-border-strong);
+  background: transparent;
+  color: var(--m-text);
+}
+.wa-portal-btn-danger {
+  border-color: var(--m-bad);
+  background: transparent;
+  color: var(--m-bad);
+}
+.wa-portal-btn:focus-visible,
+.wa-portal-mod input:focus-visible,
+.wa-portal-switch input:focus-visible {
+  outline: 2px solid var(--m-text);
+  outline-offset: 2px;
+}
+.wa-portal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wa-portal-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+.wa-portal-mods {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.wa-portal-mods legend {
+  margin-bottom: 8px;
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wa-portal-mod {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--m-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.wa-portal-mod:has(input:checked) {
+  border-color: var(--m-border-strong);
+  background: var(--m-selected);
+}
+.wa-portal-mod input,
+.wa-portal-switch input {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--m-primary);
+}
+.wa-portal-mod span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wa-portal-mod small {
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.wa-portal-fresh {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--m-warn);
+  border-radius: 6px;
+  background: var(--m-tint);
+}
+.wa-portal-code {
+  padding: 10px 12px;
+  border: 1px solid var(--m-border);
+  border-radius: 6px;
+  background: var(--m-bg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  word-break: break-all;
+  user-select: all;
+}
+.wa-portal-msg {
+  min-height: 1.2em;
+  color: var(--m-text-2);
+  font-size: 13px;
+}

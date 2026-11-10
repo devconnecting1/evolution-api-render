@@ -1,10 +1,11 @@
 import { InstanceDto } from '@api/dto/instance.dto';
 import { cachedInstanceToken } from '@api/guards/instance-token-cache';
 import { safeEqual } from '@api/integrations/mcp/mcp.auth';
-import { prismaRepository } from '@api/server.module';
+import { clientAccessService, prismaRepository } from '@api/server.module';
 import { Auth, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { ForbiddenException, UnauthorizedException } from '@exceptions';
+import { clientRouteAllowed, isClientKey, normalizeClientPath } from '@utils/client-access';
 import { NextFunction, Request, Response } from 'express';
 
 const logger = new Logger('GUARD');
@@ -27,6 +28,10 @@ async function apikey(req: Request, _: Response, next: NextFunction) {
 
   if (env.KEY === key) {
     return next();
+  }
+
+  if (isClientKey(key)) {
+    return clientAccessGuard(req, key, next);
   }
 
   if ((req.originalUrl.includes('/instance/create') || req.originalUrl.includes('/instance/fetchInstances')) && !key) {
@@ -54,6 +59,35 @@ async function apikey(req: Request, _: Response, next: NextFunction) {
   }
 
   throw new UnauthorizedException();
+}
+
+/**
+ * "Acesso do cliente" (`wac_...` code): only the instance of the code and only the routes of the modules the
+ * administrator chose (src/utils/client-access.ts). Decided here, on the server, for every request.
+ */
+async function clientAccessGuard(req: Request, key: string, next: NextFunction) {
+  let grant = null;
+  try {
+    grant = await clientAccessService.resolve(key);
+  } catch (error) {
+    logger.error(error);
+  }
+  if (!grant) {
+    throw new UnauthorizedException();
+  }
+
+  const instanceName = (req.params as unknown as InstanceDto)?.instanceName;
+  if (instanceName && instanceName !== grant.instanceName) {
+    throw new ForbiddenException('Este código de acesso é de outra instância.');
+  }
+
+  const path = normalizeClientPath(req.originalUrl, grant.instanceName);
+  if (!clientRouteAllowed(req.method, path, grant.modules, req.body)) {
+    throw new ForbiddenException('Este acesso não inclui esta função. Fale com quem configurou o seu painel.');
+  }
+
+  (req as any).clientAccess = grant;
+  return next();
 }
 
 /**
