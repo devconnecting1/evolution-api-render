@@ -61,6 +61,17 @@ export interface McpDeps {
     getStoredSettings: (instanceId: string) => Promise<{ configured: boolean; settings: any }>;
     saveSettings: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; settings: any }>;
   };
+  /** "Agenda" (AgendaService): the same instance the REST routes and the bot use. */
+  agenda: Pick<
+    import('@api/services/agenda.service').AgendaService,
+    | 'getSettings'
+    | 'today'
+    | 'listAppointments'
+    | 'freeSlots'
+    | 'createAppointment'
+    | 'cancelAppointment'
+    | 'saveSettings'
+  >;
   isBotMessageId: (instanceId: string, messageId: string) => Promise<boolean>;
   config: McpConfig;
   logger: McpLogger;

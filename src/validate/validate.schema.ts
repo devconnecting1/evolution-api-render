@@ -1,4 +1,5 @@
 // Integrations Schema
+export * from './agenda.schema';
 export * from './business.schema';
 export * from './chat.schema';
 export * from './credentials.schema';

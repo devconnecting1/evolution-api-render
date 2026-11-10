@@ -16,6 +16,7 @@ import fs from 'fs';
 import mimeTypes from 'mime-types';
 import path from 'path';
 
+import { AgendaRouter } from './agenda.router';
 import { BusinessRouter } from './business.router';
 import { CallRouter } from './call.router';
 import { ChatRouter } from './chat.router';
@@ -244,6 +245,7 @@ router
   .use('/usage', new UsageRouter(...guards).router)
   .use('/processos', new ProcessosRouter(...guards).router)
   .use('/leads', new LeadsRouter(...guards).router)
+  .use('/agenda', new AgendaRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
   // "Chaves e credenciais": only the global key (adminOnlyGuard), never an instance token
   .use(

@@ -51,6 +51,15 @@ describe('Processos: MCP tools', () => {
         getStoredSettings: async () => ({ configured: false, settings: {} }),
         saveSettings: async () => ({ previous: null, settings: {} }),
       } as any,
+      agenda: {
+        getSettings: async () => null,
+        today: () => '2026-11-10',
+        listAppointments: async () => [],
+        freeSlots: async () => [],
+        createAppointment: async () => null,
+        cancelAppointment: async () => null,
+        saveSettings: async () => null,
+      } as any,
       processos: {
         list: async (instanceId, filters) => {
           calls.push(['list', instanceId, filters]);
