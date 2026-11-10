@@ -208,13 +208,15 @@ Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implant
 ### Cuidados que entram nos termos
 1. **WhatsApp Web (Baileys) não é oficial.** O número pode ser bloqueado, principalmente com disparos em massa. Aviso de risco por escrito; a API oficial é a alternativa.
 2. **Regras da Meta para IA mudaram em 2026** e podem mudar de novo: mantenha a cláusula de revisão de preço.
-3. **LGPD:** termo de tratamento de dados, aviso de que o contato fala com uma IA e retenção combinada (padrão 90 dias; a exclusão hoje é manual, seção 7).
+3. **LGPD:** termo de tratamento de dados, aviso de que o contato fala com uma IA e retenção combinada (padrão 90 dias; com `MESSAGE_RETENTION_DAYS=90` no Render a exclusão é automática, seção 7).
 4. **Advocacia:** o Provimento 205/2021 da OAB limita a publicidade. A IA não promete resultado nem capta clientes ativamente; só faz triagem e agendamento.
 5. **Nada prometido que não exista** (seção 13): relatório automático e aviso à equipe quando o cliente pede uma pessoa **não** são recursos atuais. Lembretes de consulta só existem com a **Agenda** ligada (seção 18), no WhatsApp Web; na Cloud API só dentro da janela de 24 h.
 
 ## 7. LGPD, segurança e riscos
 
-- Termo de tratamento de dados (operador); retenção padrão de 90 dias (configurável no termo). **Não existe expurgo automático no código**: as mensagens ficam no banco até alguém apagar. Enquanto não houver rotina automática, faça a exclusão manualmente (mensal) e registre. Backup: snapshots do banco + `pg_dump` mensal (seção 8).
+- Termo de tratamento de dados (operador); retenção padrão de 90 dias (configurável no termo).
+- **Retenção automática das mensagens:** `MESSAGE_RETENTION_DAYS` no Render (Environment). `0` ou vazio = desligada (padrão); mínimo 30, máximo 3650. Ligada, apaga **só do banco do WhatsAI** (nada é apagado no WhatsApp: o celular do escritório e o do contato guardam tudo) as mensagens com mais desses dias (com as atualizações de status e a mídia de cada uma, por cascade) na primeira resposta da IA de cada dia de cada instância, quando o banco já está acordado (não acorda o Neon), em lotes de 1.000 e no máximo 20.000 por dia; o resto sai nos dias seguintes. Conversas, contatos, leads, agendamentos, processos e contadores ficam; no painel, cada conversa passa a mostrar só o período retido. Recomendado: `90`, o prazo prometido no site e no termo. Antes de ligar pela primeira vez, faça um backup (seção 8): a exclusão não tem volta.
+- Backup: snapshots do banco + `pg_dump` mensal (seção 8).
 - Advocacia: sigilo profissional — não solicitar documentos sensíveis pelo chat; usar link seguro.
 - **Cloud API oficial**: conexão via token permanente, WABA e Phone Number ID. A Meta pode limitar por qualidade/política, exige templates fora da janela de 24 h e cartão do cliente cadastrado; não prometa isenção de bloqueio por violação de política.
 - Manager e chave global são do operador. Cliente nunca recebe a chave global.
@@ -276,6 +278,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - **Vercel:** plano Hobby; builds são inferidos dos deploys. O endpoint oficial `/v1/usage` exige Pro/Enterprise, então alguns números ficam parciais.
 - **GitHub:** minutos de Actions via billing API quando o token tem `manage_billing:read`; sem isso, o card fica parcial.
 - A página atualiza a cada 60 s e tem botão **Atualizar**. Cards sem chave aparecem como **Não configurado**; 401/403 indicam chave inválida ou sessão expirada.
+- **Avisos ao administrador pelo WhatsApp:** com `ADMIN_ALERT_NUMBERS` (números com DDI, separados por vírgula) e `ADMIN_ALERT_INSTANCE` (a instância que envia, ex.: o seu número conectado no WhatsAI) no Render, você recebe uma mensagem quando (1) a chave OpenAI de uma instância fica inválida, sem crédito, sem o modelo do bot ou sem permissão, no primeiro erro real de uma resposta, e (2) uma instância fica mais de 10 minutos desconectada, e de novo quando ela volta. O mesmo aviso não se repete por 6 horas. Usa só o estado em memória (não acorda o Neon). Sem as duas variáveis, fica desligado.
 - **Cartões próprios:** **OpenAI** (seção 12.11: chaves funcionando, alerta crítico para sem crédito/inválida/modelo indisponível; testa sozinho a chave que ficou 6 h sem sinal), **Plano e uso** (seção 15.4, com a linha de Leads da seção 16.5) e **WhatsApp** (última mensagem recebida por instância).
 - Segurança: os tokens ficam somente no backend; o browser usa apenas a chave global já existente no login. Se um token vazar, rotacione no provedor e no Render.
 
@@ -305,6 +308,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 10/11/2026: **reajuste de 10%** em mensalidades, implantações e número adicional (seção 6): R$ 437 / R$ 767 / R$ 1.427 por mês, implantação R$ 1.640 / R$ 3.180 / a partir de R$ 5.820, número adicional R$ 287 / R$ 497 / R$ 927 (cerca de 65% da mensalidade) com implantação R$ 540 / R$ 980 / a partir de R$ 1.640. Excedente (R$ 49 por 1.000 respostas) e piloto (R$ 690) mantidos: o piloto é a porta de entrada e o excedente já cobre a OpenAI com folga.
 - 10/11/2026: **implantação +10%** (seção 6): R$ 1.800 / R$ 3.500 / a partir de R$ 6.400; implantação do número adicional R$ 590 / R$ 1.080 / a partir de R$ 1.800. Mensalidades, piloto (R$ 690) e excedente (R$ 49 por 1.000 respostas) não mudam.
 - 10/11/2026: **Acesso do cliente** (seção 19): código próprio do cliente com módulos escolhidos pelo administrador, aplicado no servidor; app pelo navegador (PWA, `/acesso`) em vez de instalador no GitHub Releases.
+- 10/11/2026: **retenção automática** das mensagens (`MESSAGE_RETENTION_DAYS`, desligada por padrão) e **avisos ao administrador pelo WhatsApp** (`ADMIN_ALERT_NUMBERS` + `ADMIN_ALERT_INSTANCE`), recomendações da revisão do manual.
 - 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
 - 10/11/2026: **Leads**: resposta da equipe detectada também pelas mensagens do número e pela pausa da sessão do bot (corrige "aguardando equipe" falso das conversas analisadas em lote), `refresh-waiting`, tipo de contato (novo caso, já é cliente, sem demanda jurídica), nome da pessoa do caso quando alguém fala por ela, e visualizador da planilha no painel. Migration aditiva `20261110130000_add_lead_contact_kind`.
 - 10/11/2026: **Leads em planilha Excel** (abas Leads e Resumo, gerada pela própria API sem biblioteca nova) e análise automática mais precisa: área classificada pelo assunto, cidade padronizada, prioridade com a data do fato (contagem, prazo vencido, audiência passada, data distante e problema já resolvido).
@@ -708,7 +712,7 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela (inclusive chave OpenAI sem crédito); não envia aviso por e-mail ou WhatsApp |
 | Saúde da chave OpenAI do cliente | Automático (desde 10/11/2026) | Situação pela última resposta + teste ativo; sem saldo em dólares (seção 12.11) |
 | Lembretes de consulta | Automático com a Agenda ligada | WhatsApp Web (Baileys). Na Cloud API só funcionam dentro da janela de 24 h (fora dela exigiriam template pago, não implementado) |
-| Retenção de 90 dias | **Processo manual** | Não há expurgo automático (seção 7) |
+| Retenção de 90 dias | Automático com `MESSAGE_RETENTION_DAYS=90` | Desligado por padrão: ligue no Render depois do backup (seção 7) |
 | Acompanhamento de processos (DataJud/DJEN) | Automático, opcional (desde 09/11/2026) | Aviso à equipe por WhatsApp; ao cliente só a frase neutra, se ligado. Não é tempo real e não substitui os canais oficiais de intimação (seção 17) |
 | Triagem de leads (ficha por conversa) | Automático (desde 04/11/2026) | Uma análise em segundo plano a partir da 3ª mensagem do cliente, com a chave OpenAI da instância; uso interno da equipe, nada vai ao cliente (seção 16) |
 | Aviso de lead para a equipe | Configuração (desligado por padrão) | Uma mensagem de WhatsApp para os números da equipe, uma vez por lead (seção 16) |
