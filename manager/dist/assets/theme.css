@@ -7,6 +7,7 @@
  * localStorage "wa-theme" (system | light | dark, default system = prefers-color-scheme). The upstream ThemeProvider
  * keeps toggling the .light/.dark classes; they are not used here.
  *
+ * Instances page (ui-tables.css): its own sidebar (.wa-ut-side) gets the same deep green token set.
  * Palette (references: deep green bands and warm cream sections of messaging business sites; dark dashboards
  * with charcoal surfaces and saturated accents):
  *   light - canvas #f2f3ee (warm green-grey, never pure white), cards #ffffff, sidebar deep green #0f3b2c,
@@ -18,7 +19,7 @@
  *   cards · --m-hover · --m-selected · --m-border(-strong) · --m-border-input (3:1, WCAG 1.4.11) · --m-text(-2,-3)
  *   --m-primary(-hover) · --m-on-primary · --m-tint(-hover,-line,-text) · --m-ok/warn/bad/info · --m-warn-text
  *   --m-chip-{green,blue,purple,amber,red,gray}(-text) · --m-side-* (sidebar) · --m-deep, --m-on-deep(-2), --m-lime
- *   (greeting band) · --m-wall (conversation background) · --m-gauge-track · --m-{warn,bad}-strip(-text).
+ *   (brand bands) · --m-wall (conversation background) · --m-gauge-track · --m-{warn,bad}-strip(-text).
  * Contrast (WCAG AA, checked by a script on this file): every text pair >= 4.5:1, borders of fields and
  * status marks >= 3:1, in both themes.
  * Motion: colour transitions only, none with prefers-reduced-motion: reduce.
@@ -285,7 +286,8 @@ button[role="checkbox"] {
 /* the sidebar (and, on desktop, the strip of the top bar above it) gets its own token set, so every rule of
    minimal.css / dashboard-ui.css inside it follows without being rewritten */
 [data-wa-layout] [data-wa-sidebar],
-[data-wa-layout] > [data-wa-header]::before {
+[data-wa-layout] > [data-wa-header]::before,
+.wa-ut-side {
   --m-surface: var(--m-side-bg);
   --m-bg: var(--m-side-bg);
   --m-text: var(--m-side-text);
@@ -314,6 +316,7 @@ button[role="checkbox"] {
     color: var(--m-side-text);
   }
 }
+.wa-ut-side svg,
 [data-wa-layout] [data-wa-sidebar] svg {
   color: var(--m-side-text-2);
 }
@@ -326,6 +329,7 @@ button[role="checkbox"] {
 [data-wa-layout] [data-wa-nav] > li > div > button.bg-secondary {
   box-shadow: inset 2px 0 0 var(--m-lime);
 }
+.wa-ut-side :focus-visible,
 [data-wa-layout] [data-wa-sidebar] :focus-visible {
   outline-color: var(--m-lime);
 }
@@ -406,61 +410,45 @@ button[role="checkbox"] {
   visibility: visible;
 }
 
-/* ================================================================== instance list: greeting band (deep) */
-[data-wa-home="instances"] .wa-list-head {
-  position: relative;
-  isolation: isolate;
+/* ======================================================= instances page (ui-tables.css): greeting + chips */
+.wt-greet {
+  margin: 0 0 0 4px;
   overflow: hidden;
-  gap: 16px;
-  margin-bottom: 20px;
-  padding: 28px 28px 24px;
-  border-radius: 16px;
-  background: var(--m-deep);
-  color: var(--m-on-deep);
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-[data-wa-home="instances"] .wa-list-head::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(520px 260px at 100% 0%, rgba(198, 242, 124, 0.14), transparent 70%),
-    radial-gradient(420px 260px at 0% 120%, rgba(37, 211, 102, 0.18), transparent 70%);
-  pointer-events: none;
-}
-[data-wa-home="instances"] .wa-list-head .wa-eyebrow {
-  color: var(--m-lime);
-  font-weight: 500;
-}
-[data-wa-home="instances"] .wa-list-head .wa-list-title {
-  color: var(--m-on-deep);
-}
-[data-wa-home="instances"] .wa-list-head .wa-list-sub {
-  color: var(--m-on-deep-2);
-}
-#root [data-wa-home="instances"] .wa-list-head .wa-list-actions > button:not(.bg-primary) {
-  border-color: rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--m-on-deep);
-}
-#root [data-wa-home="instances"] .wa-list-head .wa-list-actions > button:not(.bg-primary):hover {
-  background: rgba(255, 255, 255, 0.14);
-}
-[data-wa-home="instances"] .wa-list-head .wa-list-actions .bg-primary {
-  background: var(--m-lime);
-  color: #0f3b2c;
-}
-[data-wa-home="instances"] .wa-list-head .wa-list-actions .bg-primary:hover {
-  background: #b5e566;
-}
-[data-wa-home="instances"] .wa-list-head :focus-visible {
-  outline-color: var(--m-lime);
-}
-@media (max-width: 639px) {
-  [data-wa-home="instances"] .wa-list-head {
-    padding: 20px;
-    border-radius: 12px;
+@media (max-width: 719px) {
+  .wt-greet {
+    display: none;
   }
+}
+.wa-ut-side .wa-wordmark {
+  color: var(--m-side-text);
+}
+.wa-ut-top-actions .wa-theme-btn {
+  width: 28px;
+  height: 28px;
+}
+:root {
+  --ut-ok-bg: var(--m-chip-green);
+  --ut-ok-text: var(--m-chip-green-text);
+  --ut-bad-bg: var(--m-chip-red);
+  --ut-bad-text: var(--m-chip-red-text);
+  --ut-warn-bg: var(--m-chip-amber);
+  --ut-warn-text: var(--m-chip-amber-text);
+  --ut-info-bg: var(--m-chip-blue);
+  --ut-info-text: var(--m-chip-blue-text);
+}
+.wa-ut-scrim,
+.wa-ut-backdrop {
+  background: var(--m-veil);
+}
+.wa-ut-main,
+.wa-ut-app {
+  background: var(--m-canvas);
 }
 
 /* ========================================================================== conversations: warm wall */

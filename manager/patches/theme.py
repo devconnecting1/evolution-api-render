@@ -17,9 +17,9 @@ Bundle groups (each one is applied once and leaves a marker comment at the top o
   component - WaTheme, an isolated component module (IIFE) placed before the route table: Menu (top bar button
               with a Sistema / Claro / Escuro menu: menuitemradio, arrows/Home/End, Escape and a click outside
               close it, focus returns to the button), greet() ("Bom dia" / "Boa tarde" / "Boa noite" + date).
-  header    - top bar (zM): WaTheme.Menu right before "Sair" (instance pages and instance list).
-  greeting  - instance list: the eyebrow "Painel WhatsAI" becomes the greeting with the date (the header block
-              turns into a deep green band through theme.css).
+  header    - top bar (zM, instance pages): WaTheme.Menu in the empty language slot, before "Sair".
+  greeting  - instances page (WaUt.Instances of ui-tables.py): "Bom dia · <data>" next to the "Instâncias" title.
+  home-menu - instances page: WaTheme.Menu before "Nova instância" (that page hides the top bar zM).
   usage     - WaUsage.Bar ("Visão Geral"): semicircle gauge of the month (earlier days, today, remaining) with a
               legend (value | %) and, from the alert percent on, a warning strip "90% da franquia usada"
               (red at 100%). Same data as before (GET /usage/summary/:instance), no new request.
@@ -32,7 +32,7 @@ landing group (marker: an HTML comment in <head> of each page):
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: groups whose marker is present are skipped.
-Order: run after every other script (it needs usage-limits.py and twenty-layout.py applied).
+Order: run after every other script (it needs usage-limits.py, twenty-layout.py, leads.py and ui-tables.py applied).
 
 Usage (from the repository root):
   python3 -I manager/patches/theme.py           # apply
@@ -49,7 +49,8 @@ INDEX = os.path.join(DIST, 'index.html')
 LANDINGS = [os.path.join(DIST, 'landing', n) for n in ('index.html', 'advocacia.html', 'instagram.html')]
 CSS = [os.path.join(DIST, 'assets', 'theme.css'), os.path.join(DIST, 'assets', 'landing-theme.css')]
 REQUIRED = ('/*whatsai-patch:usage-limits:component*/', '/*whatsai-patch:twenty-layout:header*/',
-            '/*whatsai-patch:home-redesign:instances*/', '/*whatsai-patch:leads:component*/')
+            '/*whatsai-patch:home-redesign:instances*/', '/*whatsai-patch:leads:component*/',
+            '/*whatsai-patch:ui-tables:v1*/')
 CACHE_VERSION = '29'
 SCRIPT_TAG = '<script type="module" crossorigin src="/assets/index-b29a5d7a.js?v='
 
@@ -116,13 +117,15 @@ COMPONENT = r'''const WaTheme=(()=>{
 
 '''
 
-HEADER_OLD = ('i.jsx(iM,{}),i.jsx(se,{onClick:()=>n(!0),variant:"outline",size:"icon",'
-              'className:"wa-hd-btn wa-hd-logout"')
-HEADER_NEW = ('i.jsx(WaTheme.Menu,{}),i.jsx(se,{onClick:()=>n(!0),variant:"outline",size:"icon",'
-              'className:"wa-hd-btn wa-hd-logout"')
+# anchor on the (empty) language slot iM of the top bar, right after the "Observabilidade" link: credentials-vault.py
+# inserts its own item after it, so the "Sair" button is not part of the anchor
+HEADER_OLD = 'children:"Observabilidade"})]})}),i.jsx(iM,{}),'
+HEADER_NEW = 'children:"Observabilidade"})]})}),i.jsx(WaTheme.Menu,{}),'
 
-GREETING_OLD = 'i.jsx("p",{className:"wa-eyebrow",children:"Painel WhatsAI"})'
-GREETING_NEW = 'i.jsx("p",{className:"wa-eyebrow",children:WaTheme.greet()})'
+GREETING_OLD = "children:svg('db',14)}),'Instâncias']}),"
+GREETING_NEW = GREETING_OLD + "i.jsx('p',{className:'wt-greet',children:WaTheme.greet()}),"
+HOME_MENU_OLD = "i.jsxs('div',{className:'wa-ut-top-actions',children:[create,"
+HOME_MENU_NEW = "i.jsxs('div',{className:'wa-ut-top-actions',children:[i.jsx(WaTheme.Menu,{}),create,"
 
 BAR_OLD = r'''  function Bar({instance}){
     const{data}=useSummary(instance?.name);
@@ -183,11 +186,15 @@ def patch_component(s):
 
 
 def patch_header(s):
-    return rep(s, HEADER_OLD, HEADER_NEW, 'top bar language slot before "Sair"')
+    return rep(s, HEADER_OLD, HEADER_NEW, 'top bar language slot (iM) after "Observabilidade"')
 
 
 def patch_greeting(s):
-    return rep(s, GREETING_OLD, GREETING_NEW, 'instance list eyebrow')
+    return rep(s, GREETING_OLD, GREETING_NEW, 'instances page title (WaUt.Instances)')
+
+
+def patch_home_menu(s):
+    return rep(s, HOME_MENU_OLD, HOME_MENU_NEW, 'instances page top bar actions (WaUt.Instances)')
 
 
 def patch_usage(s):
@@ -202,8 +209,8 @@ def patch_prio(s):
     return rep(s, PRIO_OLD, PRIO_NEW, 'Leads priority chip (WaLeads Prio)')
 
 
-GROUPS = [('component', patch_component), ('header', patch_header), ('greeting', patch_greeting), ('usage', patch_usage),
-          ('prio', patch_prio)]
+GROUPS = [('component', patch_component), ('header', patch_header), ('greeting', patch_greeting),
+          ('home-menu', patch_home_menu), ('usage', patch_usage), ('prio', patch_prio)]
 
 
 def patch_html(h):
