@@ -72,6 +72,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
   protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
     return {
       tokenParam: bot?.tokenParam ?? settings?.tokenParam ?? 'auto',
+      ethicsProfile: settings?.ethicsProfile ?? 'none',
       ...resolveOpenaiMediaOptions(bot, settings),
     };
   }
@@ -448,6 +449,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         readDocuments: data.readDocuments,
         maxDocumentMB: data.maxDocumentMB,
         historyMessages: data.historyMessages,
+        ethicsProfile: data.ethicsProfile,
       };
 
       if (existingSettings) {
@@ -495,6 +497,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       ...settings,
       tokenParam: settings?.tokenParam ?? 'auto',
       humanResumeMinutes: settings?.humanResumeMinutes ?? 0,
+      ethicsProfile: settings?.ethicsProfile ?? 'none',
       ...resolveOpenaiMediaOptions(null, settings),
     };
   }

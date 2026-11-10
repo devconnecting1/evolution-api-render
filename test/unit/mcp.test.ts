@@ -80,10 +80,24 @@ const matches = (row: any, where: any = {}) =>
     return row[key] === value;
   });
 
-type Calls = { sendText: any[]; changeStatus: any[]; updateBot: any[]; fetchMessages: any[]; sessionCreate: any[] };
+type Calls = {
+  sendText: any[];
+  changeStatus: any[];
+  updateBot: any[];
+  fetchMessages: any[];
+  sessionCreate: any[];
+  settingsUpdate: any[];
+};
 
 function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
-  const calls: Calls = { sendText: [], changeStatus: [], updateBot: [], fetchMessages: [], sessionCreate: [] };
+  const calls: Calls = {
+    sendText: [],
+    changeStatus: [],
+    updateBot: [],
+    fetchMessages: [],
+    sessionCreate: [],
+    settingsUpdate: [],
+  };
 
   const instances = [
     {
@@ -172,7 +186,11 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     },
     openaiBot: { findMany: async ({ where }: any) => bots.filter((row) => matches(row, where)) },
     openaiSetting: {
-      findFirst: async () => ({ instanceId: 'inst-a', humanResumeMinutes: 0, openaiCredsId: 'cred-1' }),
+      findFirst: async () => ({ id: 'set-1', instanceId: 'inst-a', humanResumeMinutes: 0, openaiCredsId: 'cred-1' }),
+      update: async ({ where, data }: any) => {
+        calls.settingsUpdate.push({ where, data });
+        return { id: where.id, ...data };
+      },
     },
     openaiCreds: {
       findMany: async ({ where }: any) =>
@@ -662,6 +680,18 @@ describe('MCP: tools', () => {
 
     const empty = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio' });
     assert.equal(empty.result.isError, true);
+  });
+
+  test('update_bot_settings: ethics profile of the instance (OAB) without touching the bot', async () => {
+    const before = h.calls.updateBot.length;
+    const { json, result } = await callTool(h.url, 'update_bot_settings', {
+      instance: 'escritorio',
+      ethics_profile: 'advocacia',
+    });
+    assert.ok(!result.isError, JSON.stringify(result));
+    assert.deepEqual(h.calls.settingsUpdate.at(-1), { where: { id: 'set-1' }, data: { ethicsProfile: 'advocacia' } });
+    assert.deepEqual(json.changes.ethicsProfile, { before: 'none', after: 'advocacia' });
+    assert.equal(h.calls.updateBot.length, before, 'the bot was not updated');
   });
 
   test('get_usage: no plan configured still shows the counted answers', async () => {

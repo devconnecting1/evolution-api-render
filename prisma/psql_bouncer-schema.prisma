@@ -534,6 +534,7 @@ model OpenaiSetting {
   readDocuments      Boolean?     @default(true) @db.Boolean
   maxDocumentMB      Int?         @default(10) @db.Integer
   historyMessages    Int?         @default(10) @db.Integer
+  ethicsProfile      String?      @default("none") @db.VarChar(20)
   createdAt        DateTime?    @default(now()) @db.Timestamp
   updatedAt        DateTime     @updatedAt @db.Timestamp
   OpenaiCreds      OpenaiCreds? @relation(fields: [openaiCredsId], references: [id])

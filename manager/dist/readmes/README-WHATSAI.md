@@ -160,6 +160,7 @@ Header de autenticação: `apikey: <chave>`.
 - [ ] Áudio transcrito (`transcribeAudio`), foto e PDF lidos com o modelo do bot (PDF no gpt-6-luna ainda não validado: se o modelo recusar, a IA recebe só a descrição do arquivo)
 - [ ] Plano e limites configurados (franquia do plano, horário de atendimento, `outsideHoursMessage`)
 - [ ] `unknownMessage` em PT-BR e grupos ignorados (`ignoreJids: ["@g.us"]`)
+- [ ] Escritório de advocacia: `ethicsProfile: "advocacia"` ligado (seção 12.12) e prompt revisado (sem gratuidade, sem "especialista" sem título, sem autoelogio)
 - [ ] Cliente avisado sobre políticas/limites da Meta e fair use
 - [ ] Termo de serviço e de tratamento de dados aceitos + cobrança da implantação
 
@@ -284,6 +285,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 10/11/2026: **planos sem fidelidade** (mensalidade mês a mês), implantação única pelo valor antigo de 12 meses, todos os planos com 1 número e número adicional com os recursos e a franquia do plano: R$ 247 / R$ 447 / R$ 847 por mês, implantação R$ 490 / R$ 890 / a partir de R$ 1.490. Propostas enviadas antes mantêm os preços durante a validade.
 - 10/11/2026: **reajuste de 10%** em mensalidades, implantações e número adicional (seção 6): R$ 437 / R$ 767 / R$ 1.427 por mês, implantação R$ 1.640 / R$ 3.180 / a partir de R$ 5.820, número adicional R$ 287 / R$ 497 / R$ 927 (cerca de 65% da mensalidade) com implantação R$ 540 / R$ 980 / a partir de R$ 1.640. Excedente (R$ 49 por 1.000 respostas) e piloto (R$ 690) mantidos: o piloto é a porta de entrada e o excedente já cobre a OpenAI com folga.
 - 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
+- 10/11/2026: **perfil ético "advocacia"** (seção 12.12): regras do Código de Ética e Disciplina da OAB e do Provimento 205/2021 aplicadas pelo servidor acima do prompt; prompt de exemplo revisado; mensagens fixas vazias do bot não vão mais à OpenAI.
 - Avaliado e adiado: Neon Free → Supabase Free. O banco por instância no Neon já isola a cota de cada cliente; reavaliar se o limite de 100 projetos ou o custo do Neon pago pesar.
 - Planejado: Render Free → Starter (US$ 7/mês) ao ter cliente pagante; site e painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
@@ -631,6 +633,27 @@ Cada resposta do bot registra, em memória, se a chave funcionou; o teste ativo 
 - A Observabilidade testa sozinha as chaves sem sinal há 6 h (no máximo 6 em paralelo).
 - **Limite:** a OpenAI não informa o saldo em dólares para chaves comuns; "sem crédito" só aparece quando acaba. Recomende ao cliente ligar a recarga automática ou um alerta de gasto na conta.
 - O estado fica em memória: zera no restart (vira "Ainda sem uso nem teste" até a próxima resposta ou teste).
+
+### 12.12 Perfil ético (advocacia: Código de Ética da OAB)
+
+Para escritórios de advocacia, ligue nas settings do bot **`ethicsProfile: "advocacia"`** (padrão `none`). O servidor coloca então, como **primeira** mensagem de sistema de toda resposta, acima do prompt do cliente, as regras do Código de Ética e Disciplina da OAB, do Provimento 205/2021 (publicidade) e das orientações da OAB sobre IA:
+
+| Regra | Na prática |
+|---|---|
+| Identificação | É uma IA do escritório, não advogada; um advogado acompanha |
+| Sem consulta | Não diz se tem direito, chances, valores, prazos de processo nem o que fazer juridicamente |
+| Sem promessa | Nunca "vai ganhar", "causa ganha" |
+| Honorários | Não informa valores, descontos, **gratuidade** nem formas de pagamento: o advogado trata disso |
+| Sobriedade | Sem autoelogio, superlativos, comparação, tom de propaganda; não critica colegas, juízes, órgãos nem a parte contrária |
+| Sem captação | Atende só quem procurou, só sobre o assunto dela; não oferece serviço a terceiros, não pede indicação, não incentiva processar ninguém, não cria urgência |
+| Sigilo | Não comenta outros casos, não confirma a terceiros quem é cliente, não pede senha, dados bancários ou documento completo pelo chat |
+| Urgência | Só registra e sinaliza ao advogado; não orienta providência |
+| Fora das áreas | Sugere OAB ou Defensoria; não indica colegas |
+
+- Configurar: `POST /openai/settings/{instancia}` com `"ethicsProfile": "advocacia"` (junto dos campos obrigatórios, seção 12.4) ou MCP `update_bot_settings` com `ethics_profile` (só esse campo, sem mexer no bot). Migration aditiva `20261110140000_add_openai_ethics_profile`.
+- As regras do sistema **não substituem** um prompt bem escrito: o prompt do escritório também não deve ter "sem custo", "especialista" sem título, "ampla experiência" ou promessas (use `prompts/exemplo-advocacia.md`).
+- Mensagens fixas vazias do bot (`assistantMessages`/`userMessages` com `""`, que o painel salva em campos em branco) deixaram de ser enviadas à OpenAI.
+- **Fora do bot**, o produto já segue as mesmas regras: Leads é triagem interna, sem nota numérica de pessoas, e nada vai ao cliente (seção 16.7); Processos só manda ao cliente a frase neutra (seção 17.2); a Agenda não informa preço nem promete (seção 18.1). Mensagens de "retomada" de atendimento só para quem procurou o escritório e sobre o pedido dela, uma vez; nunca campanhas para listas.
 
 ## 13. O que é automático e o que é serviço (auditoria de 02/11/2026)
 

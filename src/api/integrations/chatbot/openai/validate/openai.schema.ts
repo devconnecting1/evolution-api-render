@@ -113,6 +113,7 @@ export const openaiSettingSchema: JSONSchema7 = {
     ...mediaProperties,
     ignoreJids: { type: 'array', items: { type: 'string' } },
     openaiIdFallback: { type: 'string' },
+    ethicsProfile: { type: 'string', enum: ['none', 'advocacia'] },
   },
   required: [
     'openaiCredsId',

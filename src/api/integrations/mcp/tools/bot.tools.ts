@@ -101,6 +101,7 @@ export const getBotConfig = defineTool({
           timePerChar: settings.timePerChar ?? null,
           ignoreJids: settings.ignoreJids ?? null,
           tokenParam: settings.tokenParam ?? null,
+          ethicsProfile: settings.ethicsProfile ?? 'none',
           historyMessages: settings.historyMessages ?? null,
           fallbackBotId: settings.openaiIdFallback ?? null,
           credentialId: settings.openaiCredsId ?? null,
@@ -413,6 +414,12 @@ export const updateBotSettings = defineTool({
     pause_minutes: minutes('humanResumeMinutes: minutos até o bot voltar após a equipe responder (0 = só manual).'),
     keyword_finish: z.string().min(1).max(100).optional().describe('Palavra que encerra a sessão (ex.: #sair).'),
     enabled: z.boolean().optional().describe('Liga ou desliga o bot.'),
+    ethics_profile: z
+      .enum(['none', 'advocacia'])
+      .optional()
+      .describe(
+        'Regras éticas que o sistema coloca acima do prompt, para a instância toda: "advocacia" (Código de Ética e Disciplina da OAB e Provimento 205/2021: sem consulta jurídica, sem promessa de resultado, sem valores de honorários, sem captação, sigilo) ou "none".',
+      ),
   },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
   run: async (args, ctx) => {
@@ -429,12 +436,32 @@ export const updateBotSettings = defineTool({
     if (args.keyword_finish !== undefined) changes.keywordFinish = args.keyword_finish;
     if (args.enabled !== undefined) changes.enabled = args.enabled;
 
-    if (!Object.keys(changes).length) throw new McpToolError('nenhum campo para alterar foi informado.');
+    if (!Object.keys(changes).length && args.ethics_profile === undefined)
+      throw new McpToolError('nenhum campo para alterar foi informado.');
     if (ctx.deps.openaiController?.integrationEnabled === false) {
       throw new McpToolError('a integração OpenAI está desativada neste servidor (OPENAI_ENABLED).');
     }
 
     const resolved = await resolveInstance(ctx, args.instance);
+
+    // instance-wide setting (default settings of the OpenAI bot): changed directly, the bot is not touched
+    let ethics: { before: string; after: string } | null = null;
+    if (args.ethics_profile !== undefined) {
+      const row = await ctx.deps.prisma.openaiSetting.findFirst({
+        where: { instanceId: resolved.id },
+        select: { id: true, ethicsProfile: true },
+      });
+      if (!row) throw new McpToolError('a instância ainda não tem as configurações padrão do bot OpenAI.');
+      await ctx.deps.prisma.openaiSetting.update({
+        where: { id: row.id },
+        data: { ethicsProfile: args.ethics_profile },
+      });
+      ethics = { before: row.ethicsProfile ?? 'none', after: args.ethics_profile };
+      if (!Object.keys(changes).length) {
+        return jsonResult({ updated: true, instance: resolved.name, changes: { ethicsProfile: ethics } });
+      }
+    }
+
     const bot = pickBot(await loadBots(ctx, resolved.id), args.bot_id);
 
     // The REST update (PUT /openai/update) takes the whole bot: send the current values with the changes on top
@@ -450,7 +477,12 @@ export const updateBotSettings = defineTool({
       ]),
     );
 
-    return jsonResult({ updated: true, instance: resolved.name, botId: bot.id, changes: diff });
+    return jsonResult({
+      updated: true,
+      instance: resolved.name,
+      botId: bot.id,
+      changes: ethics ? { ...diff, ethicsProfile: ethics } : diff,
+    });
   },
 });
 

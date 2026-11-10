@@ -37,6 +37,8 @@ export class OpenaiDto extends BaseChatbotDto {
 
 export class OpenaiSettingDto extends BaseChatbotSettingDto {
   openaiCredsId?: string;
+  /** Ethics rules added by the server above the prompt: 'none' or 'advocacia' (Código de Ética da OAB) */
+  ethicsProfile?: 'none' | 'advocacia';
   openaiIdFallback?: string;
   speechToText?: boolean;
   tokenParam?: OpenaiTokenParam;
