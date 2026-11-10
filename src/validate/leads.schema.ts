@@ -18,8 +18,23 @@ export const leadBackfillSchema: JSONSchema7 = {
   type: 'object',
   properties: {
     days: { type: 'integer', minimum: 1, maximum: 60, description: '"days" deve ser um número inteiro de 1 a 60.' },
-    max: { type: 'integer', minimum: 1, maximum: 200, description: '"max" deve ser um número inteiro de 1 a 200.' },
+    max: { type: 'integer', minimum: 1, maximum: 500, description: '"max" deve ser um número inteiro de 1 a 500.' },
     dryRun: { type: 'boolean', description: '"dryRun" deve ser true ou false.' },
+    reanalyze: { type: 'boolean', description: '"reanalyze" deve ser true ou false.' },
   },
+  additionalProperties: false,
+};
+
+export const leadAnalyzeSchema: JSONSchema7 = {
+  type: 'object',
+  properties: {
+    contact: {
+      type: 'string',
+      minLength: 3,
+      maxLength: 120,
+      description: '"contact" é o número com DDI e DDD (ex.: 5521999998888) ou o JID do contato.',
+    },
+  },
+  required: ['contact'],
   additionalProperties: false,
 };

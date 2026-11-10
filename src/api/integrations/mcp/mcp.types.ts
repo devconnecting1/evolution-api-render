@@ -64,6 +64,15 @@ export interface McpDeps {
     ) => Promise<{ previous: any; lead: any } | null>;
     getStoredSettings: (instanceId: string) => Promise<{ configured: boolean; settings: any }>;
     saveSettings: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; settings: any }>;
+    backfill: (
+      instanceId: string,
+      instanceName: string,
+      input: { days?: number; max?: number; dryRun?: boolean; reanalyze?: boolean },
+    ) => Promise<Record<string, any>>;
+    backfillStatus: (instanceId: string) => Record<string, any>;
+    analyzeOne: (instanceId: string, instanceName: string, contact: string) => Promise<Record<string, any>>;
+    remove: (instanceId: string, id: string) => Promise<any>;
+    refreshWaiting: (instanceId: string) => Promise<{ checked: number; cleared: number; changed: number }>;
   };
   /** "Agenda" (AgendaService): the same instance the REST routes and the bot use. */
   agenda: Pick<

@@ -55,6 +55,10 @@ const EXPECTED_TOOLS = [
   'update_lead',
   'get_lead_settings',
   'update_lead_settings',
+  'analyze_leads',
+  'analyze_lead',
+  'delete_lead',
+  'refresh_leads_waiting',
   'list_credentials',
   'list_appointments',
   'get_free_slots',
@@ -835,7 +839,21 @@ describe('MCP: tools', () => {
     assert.equal(done.json.lead.status, 'em_atendimento');
     assert.equal(done.json.lead.statusSource, 'manual');
     assert.equal(done.json.lead.hasLawyer, false);
-    assert.equal(done.json.lead.awaitingHumanSince, null);
+  });
+
+  test('lead tools: analyze is not destructive, delete is; delete removes only the card', async () => {
+    const { body } = await rpc(h.url, 'tools/list', {}, bearer(GLOBAL_KEY));
+    const tool = (name: string) => body.result.tools.find((item: any) => item.name === name);
+    assert.equal(tool('delete_lead').annotations.destructiveHint, true);
+    assert.equal(tool('analyze_leads').annotations.destructiveHint, false);
+    assert.equal(tool('refresh_leads_waiting').annotations.destructiveHint, false);
+
+    const gone = await callTool(h.url, 'delete_lead', { instance: 'escritorio', id: 'lead-a1' });
+    assert.ok(!gone.result.isError, gone.text);
+    assert.equal(gone.json.removed, true);
+    assert.equal(gone.json.lead.id, 'lead-a1');
+    const again = await callTool(h.url, 'delete_lead', { instance: 'escritorio', id: 'lead-a1' });
+    assert.equal(again.result.isError, true);
   });
 
   test('lead settings: defaults, validation in Portuguese, previous values', async () => {

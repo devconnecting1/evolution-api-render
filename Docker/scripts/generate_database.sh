@@ -9,7 +9,9 @@ fi
 if [[ "$DATABASE_PROVIDER" == "postgresql" || "$DATABASE_PROVIDER" == "mysql" || "$DATABASE_PROVIDER" == "psql_bouncer" ]]; then
     export DATABASE_URL
     echo "Generating database for $DATABASE_PROVIDER"
-    echo "Database URL: $DATABASE_URL"
+    # never print the full URL: it carries the database password
+    SAFE_DATABASE_URL=$(printf '%s' "$DATABASE_URL" | sed -E 's#^([A-Za-z0-9+.-]+://)[^@/]*@([^/?]+)(/[^?]*)?.*$#\1***@\2\3#')
+    echo "Database: $SAFE_DATABASE_URL"
     npm run db:generate
     if [ $? -ne 0 ]; then
         echo "Prisma generate failed"

@@ -856,3 +856,8 @@
 #whatsai-readme .wr-prose li::marker {
   color: var(--wr-primary);
 }
+
+/* the inline manual focuses its content on open (no close button any more): no focus ring around the page */
+#whatsai-readme .wr-main:focus {
+  outline: none;
+}

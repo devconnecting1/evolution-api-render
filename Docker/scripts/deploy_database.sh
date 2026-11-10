@@ -9,7 +9,9 @@ fi
 if [[ "$DATABASE_PROVIDER" == "postgresql" || "$DATABASE_PROVIDER" == "mysql" || "$DATABASE_PROVIDER" == "psql_bouncer" ]]; then
     export DATABASE_URL
     echo "Deploying migrations for $DATABASE_PROVIDER"
-    echo "Database URL: $DATABASE_URL"
+    # never print the full URL: it carries the database password (Render keeps boot logs)
+    SAFE_DATABASE_URL=$(printf '%s' "$DATABASE_URL" | sed -E 's#^([A-Za-z0-9+.-]+://)[^@/]*@([^/?]+)(/[^?]*)?.*$#\1***@\2\3#')
+    echo "Database: $SAFE_DATABASE_URL"
     # rm -rf ./prisma/migrations
     # cp -r ./prisma/$DATABASE_PROVIDER-migrations ./prisma/migrations
     npm run db:deploy

@@ -1,7 +1,7 @@
 /*
  * WhatsAI Manager: manual (documentation layout). Plain script, no dependencies besides marked (marked.min.js).
  * Opens as a page at /readme (top bar, own <main>) or inline in the Manager (the "Manual" item of the instance
- * menu; panel beside the menu, closes on Escape, "Fechar", a click outside or a route change).
+ * menu; panel beside the menu, closes on Escape, a click outside or a route change, e.g. another sidebar item).
  * Layout: documents on the left (with a title search over documents and their sections), content column
  * (~720px), "Nesta página" (h2/h3 of the current document) on the right. Narrow widths: the document list is
  * a drawer opened by "Menu do manual" and "Nesta página" becomes an accordion above the content.
@@ -356,12 +356,9 @@
     main.id = 'wr-main';
     if (inline) {
       var bar = h('div', 'wr-bar');
+      // No "Fechar manual" button: the Manager sidebar (and Escape, a click outside or a route change) leaves
+      // the manual like any other page
       bar.appendChild(menuBtn);
-      var closeBtn = h('button', 'wr-btn wr-close', 'Fechar manual');
-      closeBtn.type = 'button';
-      closeBtn.prepend(svg(ICON_CLOSE));
-      closeBtn.addEventListener('click', function () { close(); });
-      bar.appendChild(closeBtn);
       main.appendChild(bar);
     }
     var content = h('div', 'wr-content');
@@ -673,8 +670,11 @@
     var hash = isPage && location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
     show(ui, start || DOCS[0].id, hash, false);
     if (inline) {
-      var t = ui.root.querySelector('.wr-close');
-      if (t) setTimeout(function () { t.focus(); }, 0);
+      var t = ui.root.querySelector('.wr-main');
+      if (t) {
+        t.setAttribute('tabindex', '-1');
+        setTimeout(function () { t.focus({ preventScroll: true }); }, 0);
+      }
     }
   }
 
