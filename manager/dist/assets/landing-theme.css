@@ -2,32 +2,54 @@
  * WhatsAI: cores das páginas públicas (/, /advocacia, /instagram). Carregado por ÚLTIMO (depois de landing.css e
  * segment.css) por manager/patches/theme.py. Escrito à mão: só redefine os tokens de landing.css e pinta as faixas.
  *
- * Ritmo (referência: sites de plataformas de mensagens para empresas, só a paleta): o hero e o CTA final continuam
- * na faixa verde profunda; o resto da página alterna creme quente (#f7f3ea, fundo da página) e menta (#e6f1e8), com
- * cards brancos por cima, e duas faixas verdes no meio ("O painel por dentro" e "O produto em números" na home;
- * "Sigilo" nas páginas de segmento). Nada de branco puro como fundo de página.
- * Modo escuro: prefers-color-scheme: dark (carvão #111312, cards #1a1d1b, verde #2fb873 com texto escuro).
- * Contraste AA verificado: texto pequeno >= 4.5:1 em creme, menta, branco e no verde profundo, nos dois modos.
+ * Paleta "Meu Tema Global" (a mesma do painel, theme.css): monocromática, Geist, raio 0,25rem, sem sombras.
+ * Claro: página #f5f5f5, seções alternadas #e9e9e9, cards #ffffff, tinta #1a1a1a, texto secundário #5e5e5e,
+ * bordas #e0e0e0 / #cccccc; o hero, o CTA final e as faixas do meio ("O painel por dentro", "O produto em números",
+ * "Sigilo") ficam em grafite #1a1a1a com destaque creme #ffffe3.
+ * Escuro (prefers-color-scheme: dark): página e cards #10100e, texto creme #ffffe3 / #999989, bordas #2e2e29 /
+ * #606055, primário creme com texto #10100e; faixas em #1a1a1a.
+ * Contraste AA verificado: texto pequeno >= 4.5:1 em todos os fundos, nos dois modos.
  * Sem animação nova; os mockups do painel seguem os mesmos tokens e ficam no tema da página.
  */
 
 :root {
-  --canvas: #f7f3ea;
-  --mint: #e6f1e8;
+  --canvas: #f5f5f5;
+  --mint: #e9e9e9;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --line: #e7e1d3;
-  --line-strong: #d9d2c1;
-  --text: #13201a;
-  --text-2: #4f5a53;
-  --deep: #0f3b2c;
-  --deep-2: #134735;
-  --on-deep-2: #c9e4d4;
+  --hover: #f5f5f5;
+  --selected: #e5e5e5;
+  --line: #e0e0e0;
+  --line-strong: #cccccc;
+  --text: #1a1a1a;
+  --text-2: #5e5e5e;
+  --text-3: #666666;
+  --ok: #2e8b57;
+  --primary: #1a1a1a;
+  --primary-hover: #333333;
+  --tint: #e9e9e9;
+  --tint-hover: #e0e0e0;
+  --tint-line: #cccccc;
+  --tint-text: #1a1a1a;
+  --deep: #1a1a1a;
+  --deep-2: #262626;
+  --on-deep: #ffffff;
+  --on-deep-2: #cccccc;
+  --lime: #ffffe3;
+  --lime-hover: #f0f0cc;
+  --warn: #c25e17;
+  --bad: #dc2626;
+  --shadow: none;
+  --r-ctl: 4px;
+  --r-inner: 4px;
+  --r-card: 8px;
+  letter-spacing: 0;
 }
 body {
   background: var(--canvas);
 }
 .site-head {
-  background: rgba(247, 243, 234, 0.94);
+  background: rgba(245, 245, 245, 0.94);
 }
 html.menu-open .site-head {
   background: var(--canvas);
@@ -36,10 +58,10 @@ html.menu-open .site-head {
 .plan,
 .bento-card,
 .mini-plan {
-  box-shadow: 0 1px 2px rgba(19, 32, 26, 0.04);
+  box-shadow: none;
 }
 
-/* ------------------------------------------------------------------------------------ menta (alternadas) */
+/* ------------------------------------------------------------------------------- seções alternadas */
 #como-funciona,
 #canais,
 #segmentos,
@@ -49,36 +71,32 @@ html.menu-open .site-head {
 #beneficios,
 #mensagem {
   background: var(--mint);
-  --line: #d3e3d7;
-  --line-strong: #c3d8c8;
+  --line: #d6d6d6;
+  --line-strong: #c4c4c4;
 }
 #segmentos .chip,
 .spot-in .chip {
   background: var(--bg);
 }
-/* the "spot" box sits on cream: deep green tint, not the same mint as the bands */
 .spot-in {
   background: var(--mint);
 }
 
-/* -------------------------------------------------------------------- faixas verdes no meio da página */
+/* -------------------------------------------------------------------- faixas grafite no meio da página */
 #tour,
 .section-tight[aria-labelledby="metrics-title"],
 #sigilo,
 #seguranca {
   --text: #ffffff;
   --text-2: var(--on-deep-2);
-  --text-3: #9cc3ad;
+  --text-3: #b3b3b3;
   --line: rgba(255, 255, 255, 0.14);
   --line-strong: rgba(255, 255, 255, 0.22);
   --primary: var(--lime);
   --tint-text: var(--lime);
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(720px 420px at 100% 0%, rgba(198, 242, 124, 0.08), transparent 70%),
-    radial-gradient(640px 420px at 0% 100%, rgba(26, 158, 92, 0.22), transparent 70%),
-    var(--deep);
+  background: var(--deep);
   color: var(--text);
 }
 :is(#tour, #sigilo, #seguranca, .section-tight[aria-labelledby="metrics-title"]) .h2 .soft {
@@ -87,15 +105,15 @@ html.menu-open .site-head {
 :is(#tour, #sigilo, #seguranca, .section-tight[aria-labelledby="metrics-title"]) :focus-visible {
   outline-color: var(--lime);
 }
-/* cards and mockups inside the deep bands keep the light (page) tokens */
+/* cards and mockups inside the bands keep the light (page) tokens */
 :is(#tour .tour, #sigilo .card, #seguranca .card, #sigilo .card-white, #seguranca .card-white) {
-  --text: #13201a;
-  --text-2: #4f5a53;
-  --text-3: #8f8f8f;
-  --line: #ececec;
-  --line-strong: #e3e3e3;
-  --primary: #0e7a4d;
-  --tint-text: #095c39;
+  --text: #1a1a1a;
+  --text-2: #5e5e5e;
+  --text-3: #666666;
+  --line: #e0e0e0;
+  --line-strong: #cccccc;
+  --primary: #1a1a1a;
+  --tint-text: #1a1a1a;
   color: var(--text);
 }
 .section-tight[aria-labelledby="metrics-title"] .numbers > div::before {
@@ -109,32 +127,34 @@ html.menu-open .site-head {
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --canvas: #111312;
-    --mint: #142019;
-    --bg: #1a1d1b;
-    --surface: #1a1d1b;
-    --hover: #262a28;
-    --selected: #2e3330;
-    --line: #2b302d;
-    --line-strong: #3b413d;
-    --text: #edf1ee;
-    --text-2: #a6b0aa;
-    --text-3: #78827c;
-    --primary: #2fb873;
-    --primary-hover: #3fcb84;
-    --tint: #15291f;
-    --tint-hover: #1a3326;
-    --tint-line: #24442f;
-    --tint-text: #86e0ae;
-    --deep: #0e2a1f;
-    --deep-2: #12352a;
-    --ok: #3fcf85;
-    --warn: #f0a53a;
-    --bad: #ff6b5e;
-    --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    --canvas: #10100e;
+    --mint: #171714;
+    --bg: #10100e;
+    --surface: #10100e;
+    --hover: #22221e;
+    --selected: #2c2c27;
+    --line: #2e2e29;
+    --line-strong: #606055;
+    --text: #ffffe3;
+    --text-2: #999989;
+    --text-3: #8c8c7d;
+    --primary: #ffffe3;
+    --primary-hover: #f0f0cc;
+    --tint: #22221e;
+    --tint-hover: #2c2c27;
+    --tint-line: #3a3a34;
+    --tint-text: #ffffe3;
+    --deep: #1a1a1a;
+    --deep-2: #262626;
+    --on-deep: #ffffe3;
+    --on-deep-2: #b8b8a6;
+    --ok: #4fbf7f;
+    --warn: #e8853a;
+    --bad: #f87171;
+    --shadow: none;
   }
   .site-head {
-    background: rgba(17, 19, 18, 0.92);
+    background: rgba(16, 16, 14, 0.92);
   }
   #como-funciona,
   #canais,
@@ -144,19 +164,30 @@ html.menu-open .site-head {
   #planos,
   #beneficios,
   #mensagem {
-    --line: #26332b;
-    --line-strong: #33433a;
+    --line: #2e2e29;
+    --line-strong: #3a3a34;
+  }
+  #tour,
+  .section-tight[aria-labelledby="metrics-title"],
+  #sigilo,
+  #seguranca {
+    --text: #ffffe3;
+    --text-3: #a3a394;
+    border-block: 1px solid #2e2e29;
+  }
+  .section-tight[aria-labelledby="metrics-title"] .numbers strong {
+    color: #ffffe3;
   }
   :is(#tour .tour, #sigilo .card, #seguranca .card, #sigilo .card-white, #seguranca .card-white) {
-    --text: #edf1ee;
-    --text-2: #a6b0aa;
-    --text-3: #78827c;
-    --line: #2b302d;
-    --line-strong: #3b413d;
-    --primary: #2fb873;
-    --tint-text: #86e0ae;
+    --text: #ffffe3;
+    --text-2: #999989;
+    --text-3: #8c8c7d;
+    --line: #2e2e29;
+    --line-strong: #606055;
+    --primary: #ffffe3;
+    --tint-text: #ffffe3;
   }
-  /* green fills carry dark ink in dark mode (white on #2fb873 is 2.4:1) */
+  /* cream fills carry dark ink (#10100e on #ffffe3 is 18:1) */
   .btn-primary,
   .ui-btn-primary,
   .ui-unread,
@@ -164,7 +195,7 @@ html.menu-open .site-head {
   .step-n,
   .saved .mini-pill,
   .flow-end .ico {
-    color: #06170e;
+    color: #10100e;
   }
   .card,
   .plan,
@@ -179,22 +210,22 @@ html.menu-open .site-head {
   }
   .focus-ico,
   .ob-alert {
-    background: #3a2a10;
-    border-color: #4a3816;
-    color: #f5c26b;
+    background: #2e1d10;
+    border-color: #4a2f19;
+    color: #f3b98a;
   }
   .ob-alert .ico,
   .focus-ico {
-    color: #f5c26b;
+    color: #f3b98a;
   }
   .mess-lines {
-    stroke: #5d6660;
+    stroke: #606055;
   }
   .mess-boxes li {
-    border-color: #5d6660;
+    border-color: #606055;
   }
   .hero.band .app,
   .phone-in {
-    border-color: #2b302d;
+    border-color: #2e2e29;
   }
 }

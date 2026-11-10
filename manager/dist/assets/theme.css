@@ -7,13 +7,15 @@
  * localStorage "wa-theme" (system | light | dark, default system = prefers-color-scheme). The upstream ThemeProvider
  * keeps toggling the .light/.dark classes; they are not used here.
  *
- * Instances page (ui-tables.css): its own sidebar (.wa-ut-side) gets the same deep green token set.
- * Palette (references: deep green bands and warm cream sections of messaging business sites; dark dashboards
- * with charcoal surfaces and saturated accents):
- *   light - canvas #f2f3ee (warm green-grey, never pure white), cards #ffffff, sidebar deep green #0f3b2c,
- *           ink #0f1f18 / #4d5953, primary #0e7a4d, bright accent #25d366 (decoration on deep green only).
- *   dark  - canvas #111312, cards #1a1d1b, raised #1f2321, sidebar #0c1712, ink #edf1ee / #a6b0aa,
- *           primary #2fb873 with dark text #06170e.
+ * Palette "Meu Tema Global" (monochrome, Geist, radius 0.25rem, no shadows):
+ *   light - base #f5f5f5, cards #ffffff, primary #1a1a1a / #ffffff, secondary #e0e0e0, accent #e9e9e9,
+ *           muted text #666666, borders #cccccc (fields #8f8f8f for 3:1), destructive #dc2626 (#ef4444 fails 4.5:1
+ *           with white text), sidebar #ffffff with #e9e9e9 active.
+ *   dark  - base and cards #10100e, cream #ffffe3 for text and primary, secondary #606055, muted text #8c8c7d,
+ *           borders #2e2e29 / #606055 (fields #6a6a5e for 3:1), destructive #ef4444 with dark text, sidebar #1a1a1a.
+ *   colour only carries meaning: green = confirmed/connected, amber = attention/pending, red = error/destructive;
+ *   every other chip (blue, purple, gray) is neutral grey and "info" is plain secondary text.
+ *   charts only (--m-chart-1..5): #2e8b57 #4682b4 #d2691e #8a2be2 #a0522d.
  * Tokens:
  *   --m-canvas page background · --m-bg cards, fields, menus (name kept from minimal.css) · --m-surface fills inside
  *   cards · --m-hover · --m-selected · --m-border(-strong) · --m-border-input (3:1, WCAG 1.4.11) · --m-text(-2,-3)
@@ -28,171 +30,197 @@
 /* ============================================================================================ tokens */
 :root {
   color-scheme: light;
-  --m-canvas: #f2f3ee;
+  --m-canvas: #f5f5f5;
   --m-bg: #ffffff;
   --m-card: #ffffff;
-  --m-surface: #f7f8f4;
-  --m-hover: #eef0ea;
-  --m-selected: #e4e8e1;
-  --m-border: #e1e4dc;
-  --m-border-strong: #d2d7cc;
-  --m-border-input: #8a948d;
-  --m-text: #0f1f18;
-  --m-text-2: #4d5953;
-  --m-text-3: #858f89;
-  --m-primary: #0e7a4d;
-  --m-primary-hover: #0b6b43;
+  --m-surface: #f5f5f5;
+  --m-hover: #e9e9e9;
+  --m-selected: #e5e5e5;
+  --m-border: #e0e0e0;
+  --m-border-strong: #cccccc;
+  --m-border-input: #8f8f8f;
+  --m-text: #1a1a1a;
+  --m-text-2: #5e5e5e;
+  --m-text-3: #666666;
+  --m-primary: #1a1a1a;
+  --m-primary-hover: #333333;
   --m-on-primary: #ffffff;
-  --m-tint: #e3f4ea;
-  --m-tint-hover: #d6efe0;
-  --m-tint-line: #c3e3d0;
-  --m-tint-text: #0a5a38;
-  --m-ok: #1a9e5c;
-  --m-warn: #b26d00;
-  --m-warn-text: #8a5300;
-  --m-bad: #d93025;
-  --m-info: #2563c9;
-  --m-out: #ddf3e4;
-  --m-wall: #efece3;
-  --m-chip-green: #e3f4ea;
-  --m-chip-green-text: #0a5a38;
-  --m-chip-blue: #e5eefc;
-  --m-chip-blue-text: #1d4fa3;
-  --m-chip-purple: #efe9fb;
-  --m-chip-purple-text: #5b36a8;
-  --m-chip-amber: #fdf1dc;
-  --m-chip-amber-text: #7f4c00;
-  --m-chip-red: #fde8e6;
-  --m-chip-red-text: #a5221a;
-  --m-chip-gray: #eceee9;
-  --m-chip-gray-text: #48524c;
-  --m-side-bg: #0f3b2c;
-  --m-side-hover: #174a38;
-  --m-side-active: #1d5a43;
-  --m-side-active-text: #ffffff;
-  --m-side-text: #e8f3ec;
-  --m-side-text-2: #a9c9b8;
-  --m-side-border: #1b4a39;
-  --m-deep: #0f3b2c;
+  --m-tint: #e9e9e9;
+  --m-tint-hover: #e0e0e0;
+  --m-tint-line: #cccccc;
+  --m-tint-text: #1a1a1a;
+  --m-ok: #15803d;
+  --m-warn: #b45309;
+  --m-warn-text: #92400e;
+  --m-bad: #dc2626;
+  --m-info: #5e5e5e;
+  --m-out: #e9e9e9;
+  --m-wall: #efefef;
+  --m-chip-green: #ecf5ef;
+  --m-chip-green-text: #166534;
+  --m-chip-blue: #eeeeee;
+  --m-chip-blue-text: #4d4d4d;
+  --m-chip-purple: #eeeeee;
+  --m-chip-purple-text: #4d4d4d;
+  --m-chip-amber: #fdf6e9;
+  --m-chip-amber-text: #92400e;
+  --m-chip-red: #fdecec;
+  --m-chip-red-text: #b91c1c;
+  --m-chip-gray: #eeeeee;
+  --m-chip-gray-text: #4d4d4d;
+  --m-side-bg: #ffffff;
+  --m-side-hover: #f5f5f5;
+  --m-side-active: #e9e9e9;
+  --m-side-active-text: #1a1a1a;
+  --m-side-text: #1a1a1a;
+  --m-side-text-2: #666666;
+  --m-side-border: #cccccc;
+  --m-deep: #1a1a1a;
   --m-on-deep: #ffffff;
-  --m-on-deep-2: #c3e3d0;
-  --m-lime: #c6f27c;
-  --m-gauge-track: #e6e9e2;
-  --m-warn-strip: #fdf1dc;
-  --m-warn-strip-text: #7f4c00;
-  --m-bad-strip: #fde8e6;
-  --m-bad-strip-text: #a5221a;
-  --m-shadow-card: 0 1px 2px rgba(15, 31, 24, 0.04);
-  --m-shadow-pop: 0 2px 4px rgba(15, 31, 24, 0.05), 0 0 4px rgba(15, 31, 24, 0.08);
-  --m-shadow-menu: 2px 4px 16px rgba(15, 31, 24, 0.12), 0 2px 4px rgba(15, 31, 24, 0.06);
+  --m-on-deep-2: #cccccc;
+  --m-lime: #1a1a1a;
+  --m-gauge-track: #e0e0e0;
+  --m-warn-strip: #fdf6e9;
+  --m-warn-strip-text: #92400e;
+  --m-bad-strip: #fdecec;
+  --m-bad-strip-text: #b91c1c;
+  --m-chart-1: #2e8b57;
+  --m-chart-2: #4682b4;
+  --m-chart-3: #d2691e;
+  --m-chart-4: #8a2be2;
+  --m-chart-5: #a0522d;
+  --m-shadow-card: none;
+  --m-shadow-pop: 0 0 0 1px var(--m-border-strong);
+  --m-shadow-menu: 0 0 0 1px var(--m-border-strong), 0 0.125px 0 rgba(0, 0, 0, 0.04);
+  --m-focus-halo: rgba(26, 26, 26, 0.14);
+  --m-veil: rgba(0, 0, 0, 0.32);
   --m-ring: 0 0 0 2px var(--m-bg), 0 0 0 4px var(--m-primary);
-  --m-focus-halo: rgba(14, 122, 77, 0.16);
-  --m-veil: rgba(15, 31, 24, 0.24);
 
   /* shadcn / Tailwind (index-DsIrum0U.css), HSL triplets */
-  --background: 72 17.2% 94.3%;
-  --foreground: 154 34.8% 9%;
+  --background: 0 0% 96.1%;
+  --foreground: 0 0% 10.2%;
   --card: 0 0% 100%;
-  --card-foreground: 154 34.8% 9%;
+  --card-foreground: 0 0% 10.2%;
   --popover: 0 0% 100%;
-  --popover-foreground: 154 34.8% 9%;
-  --muted: 80 16.7% 92.9%;
-  --muted-foreground: 150 7.2% 32.5%;
-  --border: 83 12.9% 87.8%;
-  --input: 87 12.1% 82.2%;
-  --primary: 155 79.4% 26.7%;
+  --popover-foreground: 0 0% 10.2%;
+  --muted: 0 0% 89.8%;
+  --muted-foreground: 0 0% 36.9%;
+  --border: 0 0% 87.8%;
+  --input: 0 0% 56.1%;
+  --primary: 0 0% 10.2%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 80 16.7% 92.9%;
-  --secondary-foreground: 154 34.8% 9%;
-  --accent: 80 16.7% 92.9%;
-  --accent-foreground: 154 34.8% 9%;
-  --destructive: 4 70.9% 49.8%;
+  --secondary: 0 0% 87.8%;
+  --secondary-foreground: 0 0% 10.2%;
+  --accent: 0 0% 91.4%;
+  --accent-foreground: 0 0% 10.2%;
+  --destructive: 0 72.2% 50.6%;
   --destructive-foreground: 0 0% 100%;
-  --ring: 155 79.4% 26.7%;
+  --ring: 0 0% 10.2%;
+  --radius: 0.25rem;
+  /* raio 0,25rem (4px): campos e itens 4px, cards e diálogos 8px; pílulas só nos status */
+  --m-radius-field: 4px;
+  --m-radius-item: 4px;
+  --m-radius-card: 8px;
+  --side-secondary: 0 0% 91.4%;
+  --side-muted-foreground: 0 0% 40%;
+  --side-foreground: 0 0% 10.2%;
+  --side-accent: 0 0% 96.1%;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --m-canvas: #111312;
-  --m-bg: #1a1d1b;
-  --m-card: #1a1d1b;
-  --m-surface: #1f2321;
-  --m-hover: #262a28;
-  --m-selected: #2e3330;
-  --m-border: #2b302d;
-  --m-border-strong: #3b413d;
-  --m-border-input: #6b756f;
-  --m-text: #edf1ee;
-  --m-text-2: #a6b0aa;
-  --m-text-3: #78827c;
-  --m-primary: #2fb873;
-  --m-primary-hover: #3fcb84;
-  --m-on-primary: #06170e;
-  --m-tint: #15291f;
-  --m-tint-hover: #1a3326;
-  --m-tint-line: #24442f;
-  --m-tint-text: #86e0ae;
-  --m-ok: #3fcf85;
-  --m-warn: #f0a53a;
-  --m-warn-text: #f3b862;
-  --m-bad: #ff6b5e;
-  --m-info: #6ea8ff;
-  --m-out: #173326;
-  --m-wall: #141716;
-  --m-chip-green: #163223;
-  --m-chip-green-text: #86e0ae;
-  --m-chip-blue: #172a44;
-  --m-chip-blue-text: #a3c6ff;
-  --m-chip-purple: #2a2140;
-  --m-chip-purple-text: #c9b6ff;
-  --m-chip-amber: #3a2a10;
-  --m-chip-amber-text: #f5c26b;
-  --m-chip-red: #3d1a17;
-  --m-chip-red-text: #ffa198;
-  --m-chip-gray: #262a28;
-  --m-chip-gray-text: #c3cbc6;
-  --m-side-bg: #0c1712;
-  --m-side-hover: #14241c;
-  --m-side-active: #183526;
-  --m-side-active-text: #b5f0cf;
-  --m-side-text: #e3ece6;
-  --m-side-text-2: #92a69a;
-  --m-side-border: #1a2a21;
-  --m-deep: #0f2e22;
-  --m-on-deep: #ffffff;
-  --m-on-deep-2: #b9dcc7;
-  --m-lime: #c6f27c;
-  --m-gauge-track: #2b302d;
-  --m-warn-strip: #3a2a10;
-  --m-warn-strip-text: #f5c26b;
-  --m-bad-strip: #3d1a17;
-  --m-bad-strip-text: #ffa198;
-  --m-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --m-shadow-pop: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 0 1px #2b302d;
-  --m-shadow-menu: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px #2b302d;
-  --m-focus-halo: rgba(47, 184, 115, 0.22);
-  --m-veil: rgba(0, 0, 0, 0.55);
+  --m-canvas: #10100e;
+  --m-bg: #10100e;
+  --m-card: #10100e;
+  --m-surface: #171714;
+  --m-hover: #22221e;
+  --m-selected: #2c2c27;
+  --m-border: #2e2e29;
+  --m-border-strong: #606055;
+  --m-border-input: #6a6a5e;
+  --m-text: #ffffe3;
+  --m-text-2: #999989;
+  --m-text-3: #8c8c7d;
+  --m-primary: #ffffe3;
+  --m-primary-hover: #f0f0cc;
+  --m-on-primary: #10100e;
+  --m-tint: #22221e;
+  --m-tint-hover: #2c2c27;
+  --m-tint-line: #3a3a34;
+  --m-tint-text: #ffffe3;
+  --m-ok: #5fcf8a;
+  --m-warn: #f5b041;
+  --m-warn-text: #fcd38d;
+  --m-bad: #f87171;
+  --m-info: #999989;
+  --m-out: #22221e;
+  --m-wall: #0b0b0a;
+  --m-chip-green: #12241a;
+  --m-chip-green-text: #86efac;
+  --m-chip-blue: #22221e;
+  --m-chip-blue-text: #c9c9b8;
+  --m-chip-purple: #22221e;
+  --m-chip-purple-text: #c9c9b8;
+  --m-chip-amber: #2a1f0c;
+  --m-chip-amber-text: #fcd38d;
+  --m-chip-red: #2d1414;
+  --m-chip-red-text: #fca5a5;
+  --m-chip-gray: #22221e;
+  --m-chip-gray-text: #c9c9b8;
+  --m-side-bg: #1a1a1a;
+  --m-side-hover: #262626;
+  --m-side-active: #303030;
+  --m-side-active-text: #f5f5f5;
+  --m-side-text: #f5f5f5;
+  --m-side-text-2: #a3a3a3;
+  --m-side-border: #404040;
+  --m-deep: #1a1a1a;
+  --m-on-deep: #ffffe3;
+  --m-on-deep-2: #b8b8a6;
+  --m-lime: #ffffe3;
+  --m-gauge-track: #2c2c27;
+  --m-warn-strip: #2a1f0c;
+  --m-warn-strip-text: #fcd38d;
+  --m-bad-strip: #2d1414;
+  --m-bad-strip-text: #fca5a5;
+  --m-chart-1: #2e8b57;
+  --m-chart-2: #4682b4;
+  --m-chart-3: #d2691e;
+  --m-chart-4: #8a2be2;
+  --m-chart-5: #a0522d;
+  --m-shadow-card: none;
+  --m-shadow-pop: 0 0 0 1px var(--m-border-strong);
+  --m-shadow-menu: 0 0 0 1px var(--m-border-strong);
+  --m-focus-halo: rgba(255, 255, 227, 0.18);
+  --m-veil: rgba(0, 0, 0, 0.6);
+  --m-ring: 0 0 0 2px var(--m-bg), 0 0 0 4px var(--m-primary);
 
-  --background: 140 5.5% 7.3%;
-  --foreground: 135 12.5% 93.7%;
-  --card: 140 5.5% 10.8%;
-  --card-foreground: 135 12.5% 93.7%;
-  --popover: 140 5.5% 10.8%;
-  --popover-foreground: 135 12.5% 93.7%;
-  --muted: 150 5% 15.7%;
-  --muted-foreground: 144 6% 67.1%;
-  --border: 144 5.5% 17.8%;
-  --input: 140 4.8% 24.3%;
-  --primary: 150 59.3% 45.3%;
-  --primary-foreground: 148 58.6% 5.7%;
-  --secondary: 150 5% 15.7%;
-  --secondary-foreground: 135 12.5% 93.7%;
-  --accent: 150 5% 15.7%;
-  --accent-foreground: 135 12.5% 93.7%;
-  --destructive: 5 100% 68.4%;
-  --destructive-foreground: 0 0% 7%;
-  --ring: 150 59.3% 45.3%;
+  /* shadcn / Tailwind (index-DsIrum0U.css), HSL triplets */
+  --background: 60 6.7% 5.9%;
+  --foreground: 60 100% 94.5%;
+  --card: 60 6.7% 5.9%;
+  --card-foreground: 60 100% 94.5%;
+  --popover: 60 6.7% 5.9%;
+  --popover-foreground: 60 100% 94.5%;
+  --muted: 60 6.2% 12.5%;
+  --muted-foreground: 60 7.3% 56.9%;
+  --border: 60 5.7% 17.1%;
+  --input: 60 6% 39.2%;
+  --primary: 60 100% 94.5%;
+  --primary-foreground: 60 6.7% 5.9%;
+  --secondary: 60 6.1% 35.5%;
+  --secondary-foreground: 60 100% 94.5%;
+  --accent: 60 6.2% 12.5%;
+  --accent-foreground: 60 100% 94.5%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 6.7% 5.9%;
+  --ring: 60 100% 94.5%;
+  --radius: 0.25rem;
   --toastify-color-light: var(--m-bg);
+  --side-secondary: 0 0% 18.8%;
+  --side-muted-foreground: 0 0% 63.9%;
+  --side-foreground: 0 0% 96.1%;
+  --side-accent: 0 0% 14.9%;
 }
 
 /* ============================================================================================== base */
@@ -251,7 +279,7 @@ button[role="checkbox"] {
 .wa-tw-cmd-backdrop {
   background: var(--m-veil);
 }
-/* primary buttons follow the token pair (white on #0e7a4d, dark ink on #2fb873) */
+/* primary buttons follow the token pair (white on #1a1a1a, #10100e ink on cream #ffffe3) */
 :where(button, a).ring-offset-background.bg-primary:not([data-wa-chat] *, [data-wa-home] *),
 [data-wa-home="instances"] .wa-list-actions .bg-primary,
 .wa-chat-unread,
@@ -282,7 +310,7 @@ button[role="checkbox"] {
   background: var(--m-warn);
 }
 
-/* ============================================================================ sidebar: deep green column */
+/* ============================================================================ sidebar column */
 /* the sidebar (and, on desktop, the strip of the top bar above it) gets its own token set, so every rule of
    minimal.css / dashboard-ui.css inside it follows without being rewritten */
 [data-wa-layout] [data-wa-sidebar],
@@ -301,11 +329,11 @@ button[role="checkbox"] {
   --m-border: var(--m-side-border);
   --m-border-strong: var(--m-side-border);
   --m-primary: var(--m-lime);
-  --secondary: 0 0% 100% / 0.08;
-  --muted-foreground: 146 23% 72.5%;
-  --foreground: 140 30% 93%;
-  --accent: 0 0% 100% / 0.08;
-  --accent-foreground: 140 30% 93%;
+  --secondary: var(--side-secondary);
+  --muted-foreground: var(--side-muted-foreground);
+  --foreground: var(--side-foreground);
+  --accent: var(--side-accent);
+  --accent-foreground: var(--side-foreground);
   background: var(--m-side-bg);
   color: var(--m-side-text);
   border-right-color: var(--m-side-border);
@@ -324,7 +352,7 @@ button[role="checkbox"] {
 [data-wa-layout] [data-wa-sidebar] [data-wa-nav] button:hover svg {
   color: var(--m-side-active-text);
 }
-/* the active page: a 2px lime mark on the left edge, like the stage marks of the timeline reference */
+/* the active page: a 2px mark on the left edge (ink in light, cream in dark) */
 [data-wa-layout] [data-wa-nav] > li > button.bg-secondary,
 [data-wa-layout] [data-wa-nav] > li > div > button.bg-secondary {
   box-shadow: inset 2px 0 0 var(--m-lime);
@@ -456,7 +484,7 @@ button[role="checkbox"] {
   background: var(--m-wall);
 }
 .wa-bubble {
-  box-shadow: 0 1px 1px rgba(15, 31, 24, 0.06);
+  box-shadow: none;
 }
 .wa-msg--out .wa-bubble-time {
   color: var(--m-tint-text);
@@ -476,8 +504,9 @@ a.wa-doc:hover {
 }
 .wa-chat-avatar .wa-chat-avatar-fallback,
 .wa-avatar-fallback {
-  background: var(--m-chip-green);
-  color: var(--m-chip-green-text);
+  /* initials are identity, not status: neutral */
+  background: var(--m-chip-gray);
+  color: var(--m-chip-gray-text);
 }
 .wa-chat-empty svg {
   color: var(--m-text-3);
@@ -567,10 +596,7 @@ a.wa-doc:hover {
   stroke: var(--m-bad);
 }
 .wt-gauge-today {
-  stroke: var(--m-lime);
-}
-:root:not([data-theme="dark"]) .wt-gauge-today {
-  stroke: #25a85a;
+  stroke: var(--m-chart-1);
 }
 .wt-gauge-center {
   position: absolute;
@@ -637,8 +663,7 @@ a.wa-doc:hover {
 .wt-gauge[data-tone="warn"] ~ .wt-legend .wt-dot[data-k="used"],
 .wt-usage[data-tone="warn"] .wt-dot[data-k="used"] { background: var(--m-warn); }
 .wt-usage[data-tone="bad"] .wt-dot[data-k="used"] { background: var(--m-bad); }
-.wt-dot[data-k="today"] { background: #25a85a; box-shadow: none; }
-:root[data-theme="dark"] .wt-dot[data-k="today"] { background: var(--m-lime); }
+.wt-dot[data-k="today"] { background: var(--m-chart-1); box-shadow: none; }
 /* warning strip ("90% da franquia usada"): a tinted full-width bar with an icon, amber at the alert percent and
    red at 100%, after the reference "90% full" */
 .wt-strip {
