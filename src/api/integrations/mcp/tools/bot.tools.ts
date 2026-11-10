@@ -1,4 +1,10 @@
 import { describeHumanPause, isHumanPaused, resolveHumanResumeMinutes, withManualPause } from '@utils/humanPause';
+import {
+  HISTORY_MESSAGES_MAX,
+  HISTORY_MESSAGES_MIN,
+  MAX_AUDIO_SECONDS_LIMIT,
+  MAX_DOCUMENT_MB_LIMIT,
+} from '@utils/openaiMedia';
 import { z } from 'zod';
 
 import { ResolvedInstance, resolveInstance } from '../mcp.instance';
@@ -101,6 +107,7 @@ export const getBotConfig = defineTool({
           timePerChar: settings.timePerChar ?? null,
           ignoreJids: settings.ignoreJids ?? null,
           tokenParam: settings.tokenParam ?? null,
+          ethicsProfile: settings.ethicsProfile ?? 'none',
           historyMessages: settings.historyMessages ?? null,
           fallbackBotId: settings.openaiIdFallback ?? null,
           credentialId: settings.openaiCredsId ?? null,
@@ -388,7 +395,7 @@ export const updateBotSettings = defineTool({
   name: 'update_bot_settings',
   title: 'Alterar o bot OpenAI',
   description:
-    'Altera campos do bot OpenAI de uma instância (lista fechada): prompt (mensagens de sistema), modelo, expire, minutos da pausa humana, palavra de encerramento e ativo/inativo. SUBSTITUI os valores atuais: confirme com o usuário. A resposta traz os valores anteriores para desfazer.',
+    'Altera campos do bot OpenAI de uma instância (lista fechada): prompt (mensagens de sistema), modelo, limite de tokens, memória da conversa, mídia (áudio, imagem, PDF), mensagem de falha, espera para juntar mensagens, expire, minutos da pausa humana, palavra de encerramento e ativo/inativo. SUBSTITUI os valores atuais: confirme com o usuário. A resposta traz os valores anteriores para desfazer.',
   input: {
     instance: instanceArg,
     bot_id: z.string().max(100).optional().describe('Bot a alterar (obrigatório se a instância tiver mais de um).'),
@@ -413,6 +420,60 @@ export const updateBotSettings = defineTool({
     pause_minutes: minutes('humanResumeMinutes: minutos até o bot voltar após a equipe responder (0 = só manual).'),
     keyword_finish: z.string().min(1).max(100).optional().describe('Palavra que encerra a sessão (ex.: #sair).'),
     enabled: z.boolean().optional().describe('Liga ou desliga o bot.'),
+    ethics_profile: z
+      .enum(['none', 'advocacia'])
+      .optional()
+      .describe(
+        'Regras éticas que o sistema coloca acima do prompt, para a instância toda: "advocacia" (Código de Ética e Disciplina da OAB e Provimento 205/2021: sem consulta jurídica, sem promessa de resultado, sem valores de honorários, sem captação, sigilo) ou "none".',
+      ),
+    max_tokens: z
+      .number()
+      .int()
+      .min(100)
+      .max(32000)
+      .optional()
+      .describe('Limite de tokens da resposta. Modelos de raciocínio (gpt-5.x, gpt-6, o-series) pedem 2000 ou mais.'),
+    token_param: z
+      .enum(['auto', 'max_tokens', 'max_completion_tokens'])
+      .optional()
+      .describe('Parâmetro do limite de tokens; deixe "auto".'),
+    history_messages: z
+      .number()
+      .int()
+      .min(HISTORY_MESSAGES_MIN)
+      .max(HISTORY_MESSAGES_MAX)
+      .optional()
+      .describe('Quantas mensagens anteriores a IA lembra (recomendado 30 a 40 em triagens).'),
+    transcribe_audio: z.boolean().optional().describe('Transcrever áudios do cliente.'),
+    max_audio_seconds: z
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_AUDIO_SECONDS_LIMIT)
+      .optional()
+      .describe('Áudio mais longo não é transcrito (0 = sem limite).'),
+    read_images: z.boolean().optional().describe('Ler fotos enviadas pelo cliente.'),
+    read_documents: z.boolean().optional().describe('Ler PDFs enviados pelo cliente.'),
+    max_document_mb: z
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_DOCUMENT_MB_LIMIT)
+      .optional()
+      .describe('Tamanho máximo do PDF lido pela IA, em MB.'),
+    unknown_message: z
+      .string()
+      .min(1)
+      .max(1000)
+      .optional()
+      .describe('Mensagem ao cliente quando a OpenAI falha (em português).'),
+    debounce_seconds: z
+      .number()
+      .int()
+      .min(0)
+      .max(120)
+      .optional()
+      .describe('Segundos esperando o cliente terminar de digitar antes de responder (recomendado ~10).'),
   },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
   run: async (args, ctx) => {
@@ -428,13 +489,46 @@ export const updateBotSettings = defineTool({
     if (args.pause_minutes !== undefined) changes.humanResumeMinutes = args.pause_minutes;
     if (args.keyword_finish !== undefined) changes.keywordFinish = args.keyword_finish;
     if (args.enabled !== undefined) changes.enabled = args.enabled;
+    const direct: [keyof typeof args, string][] = [
+      ['max_tokens', 'maxTokens'],
+      ['token_param', 'tokenParam'],
+      ['history_messages', 'historyMessages'],
+      ['transcribe_audio', 'transcribeAudio'],
+      ['max_audio_seconds', 'maxAudioSeconds'],
+      ['read_images', 'readImages'],
+      ['read_documents', 'readDocuments'],
+      ['max_document_mb', 'maxDocumentMB'],
+      ['unknown_message', 'unknownMessage'],
+      ['debounce_seconds', 'debounceTime'],
+    ];
+    for (const [arg, field] of direct) if (args[arg] !== undefined) changes[field] = args[arg];
 
-    if (!Object.keys(changes).length) throw new McpToolError('nenhum campo para alterar foi informado.');
+    if (!Object.keys(changes).length && args.ethics_profile === undefined)
+      throw new McpToolError('nenhum campo para alterar foi informado.');
     if (ctx.deps.openaiController?.integrationEnabled === false) {
       throw new McpToolError('a integração OpenAI está desativada neste servidor (OPENAI_ENABLED).');
     }
 
     const resolved = await resolveInstance(ctx, args.instance);
+
+    // instance-wide setting (default settings of the OpenAI bot): changed directly, the bot is not touched
+    let ethics: { before: string; after: string } | null = null;
+    if (args.ethics_profile !== undefined) {
+      const row = await ctx.deps.prisma.openaiSetting.findFirst({
+        where: { instanceId: resolved.id },
+        select: { id: true, ethicsProfile: true },
+      });
+      if (!row) throw new McpToolError('a instância ainda não tem as configurações padrão do bot OpenAI.');
+      await ctx.deps.prisma.openaiSetting.update({
+        where: { id: row.id },
+        data: { ethicsProfile: args.ethics_profile },
+      });
+      ethics = { before: row.ethicsProfile ?? 'none', after: args.ethics_profile };
+      if (!Object.keys(changes).length) {
+        return jsonResult({ updated: true, instance: resolved.name, changes: { ethicsProfile: ethics } });
+      }
+    }
+
     const bot = pickBot(await loadBots(ctx, resolved.id), args.bot_id);
 
     // The REST update (PUT /openai/update) takes the whole bot: send the current values with the changes on top
@@ -450,7 +544,12 @@ export const updateBotSettings = defineTool({
       ]),
     );
 
-    return jsonResult({ updated: true, instance: resolved.name, botId: bot.id, changes: diff });
+    return jsonResult({
+      updated: true,
+      instance: resolved.name,
+      botId: bot.id,
+      changes: ethics ? { ...diff, ethicsProfile: ethics } : diff,
+    });
   },
 });
 
