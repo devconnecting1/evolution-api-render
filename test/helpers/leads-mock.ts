@@ -133,6 +133,11 @@ export function createLeadsTables(options: { instances?: { id: string; name: str
       );
     },
     findFirst: async ({ where }: any = {}) => copy(leads.find((row) => matchRow(row, where))),
+    delete: async ({ where }: any) => {
+      const index = leads.findIndex((row) => row.id === where.id);
+      if (index < 0) throw Object.assign(new Error('not found'), { code: 'P2025' });
+      return copy(leads.splice(index, 1)[0]);
+    },
     findUnique: async ({ where }: any) =>
       copy(
         leads.find((row) =>

@@ -70,7 +70,7 @@ VERCEL_TOKEN="<token da Vercel>" npx -y vercel@65.2.0 deploy --prod --yes --arch
 
 ## 4. Painel, site e manual (build sem fonte)
 
-Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/*.py`: troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (hoje `?v=32`). Depois de qualquer patch: `python3 -I manager/patches/<nome>.py --check` em todos e `node --check` numa cópia `.mjs` do bundle. Se o manager for reconstruído do zero, reaplique todos.
+Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/*.py`: troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (hoje `?v=34`). Depois de qualquer patch: `python3 -I manager/patches/<nome>.py --check` em todos e `node --check` numa cópia `.mjs` do bundle. Se o manager for reconstruído do zero, reaplique todos.
 
 | Área | Patch / arquivos | O que faz |
 |---|---|---|
@@ -81,7 +81,7 @@ Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/in
 | Bot OpenAI | `openai-fields.py`, `openai-media.py` | `tokenParam`, pausa humana, estado da pausa por contato, mídia e memória (seções 12.1, 12.2, 12.9, 12.10) |
 | Nova instância | `db-mode.py` + `db-mode.css` | Escolha **Banco próprio / Compartilhado** com "Restam N de 100 projetos" |
 | Plano e limites | `usage-limits.py` + `usage-limits.css` | Página da instância e barra de uso na Visão Geral (seção 15) |
-| Leads | `leads.py` + `leads.css` | Página de triagem e linha Lead no painel do contato (seção 16) |
+| Leads | `leads.py` + `leads.css`, `leads-xlsx.py` | Página de triagem, linha Lead no painel do contato, "Ver planilha" (prévia no painel) e "Exportar planilha" em Excel (seção 16) |
 | Processos | `processos.py` + `processos.css` | Página com abas Processos, Publicações e Configurações (seção 17) |
 | Agenda | `agenda.py` + `agenda.css` | Semana/lista, novo agendamento, configurações, próximo agendamento no contato (seção 18) |
 | Observabilidade | `observability-ui.py`, `observability-grid.py`, `observability-alerts.py` | Página nativa com cartões por provedor e alertas (seção 10) |
@@ -284,6 +284,8 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 10/11/2026: **planos sem fidelidade** (mensalidade mês a mês), implantação única pelo valor antigo de 12 meses, todos os planos com 1 número e número adicional com os recursos e a franquia do plano: R$ 247 / R$ 447 / R$ 847 por mês, implantação R$ 490 / R$ 890 / a partir de R$ 1.490. Propostas enviadas antes mantêm os preços durante a validade.
 - 10/11/2026: **reajuste de 10%** em mensalidades, implantações e número adicional (seção 6): R$ 437 / R$ 767 / R$ 1.427 por mês, implantação R$ 1.640 / R$ 3.180 / a partir de R$ 5.820, número adicional R$ 287 / R$ 497 / R$ 927 (cerca de 65% da mensalidade) com implantação R$ 540 / R$ 980 / a partir de R$ 1.640. Excedente (R$ 49 por 1.000 respostas) e piloto (R$ 690) mantidos: o piloto é a porta de entrada e o excedente já cobre a OpenAI com folga.
 - 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
+- 10/11/2026: **Leads**: resposta da equipe detectada também pelas mensagens do número e pela pausa da sessão do bot (corrige "aguardando equipe" falso das conversas analisadas em lote), `refresh-waiting`, tipo de contato (novo caso, já é cliente, sem demanda jurídica), nome da pessoa do caso quando alguém fala por ela, e visualizador da planilha no painel. Migration aditiva `20261110130000_add_lead_contact_kind`.
+- 10/11/2026: **Leads em planilha Excel** (abas Leads e Resumo, gerada pela própria API sem biblioteca nova) e análise automática mais precisa: área classificada pelo assunto, cidade padronizada, prioridade com a data do fato (contagem, prazo vencido, audiência passada, data distante e problema já resolvido).
 - Avaliado e adiado: Neon Free → Supabase Free. O banco por instância no Neon já isola a cota de cada cliente; reavaliar se o limite de 100 projetos ou o custo do Neon pago pesar.
 - Planejado: Render Free → Starter (US$ 7/mês) ao ter cliente pagante; site e painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
@@ -753,6 +755,10 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `update_lead` | escrita | Altera status, prioridade, nome, área, cidade, próximo passo, resumo, parte contrária, advogado, o que falta saber. Cada campo alterado fica travado contra a IA. Marcada como destrutiva; devolve os valores anteriores |
 | `get_lead_settings` | leitura | Configurações da triagem: análise ligada, áreas, modelo, avisos para a equipe |
 | `update_lead_settings` | escrita | Altera essas configurações (campos ausentes não mudam). Marcada como destrutiva |
+| `analyze_leads` | escrita | Analisa com a IA da instância: `mode: "novas"` (conversas ainda sem ficha) ou `"todas"` (reanalisa as fichas existentes); `dry_run` (padrão) só conta |
+| `analyze_lead` | escrita | Cria ou atualiza a ficha de um contato agora |
+| `delete_lead` | escrita | Remove a ficha (a conversa fica). Marcada como destrutiva |
+| `refresh_leads_waiting` | escrita | Recalcula "aguardando equipe" pelas mensagens e pausas do bot, sem OpenAI |
 | `list_appointments` | leitura | Agendamentos da Agenda (padrão: hoje + 14 dias), filtro por contato |
 | `get_free_slots` | leitura | Horários livres por tipo de atendimento |
 | `create_appointment` | **envio** | Cria agendamento (só horário livre, salvo `outside_availability`) e envia a confirmação ao cliente (`notify_client`, padrão sim) |
@@ -882,14 +888,24 @@ Não existe nota numérica de lead. A IA só relata fatos; o servidor aplica reg
 
 | Campo | Regra |
 |---|---|
-| `priority` = `alta` | Só com fato explícito citado pelo cliente: prazo correndo, audiência marcada, intimação/citação, prisão, despejo/reintegração, corte ou suspensão de benefício/salário/serviço, liminar. `priorityReason` traz o fato (ex.: "audiência em 12/11") |
+| `priority` = `alta` | Só com fato explícito citado pelo cliente: prazo correndo, audiência marcada, intimação/citação, prisão, despejo/reintegração, corte ou suspensão de benefício/salário/serviço, liminar. `priorityReason` traz o fato e, quando o cliente disse a data, a contagem: "audiência em 13/11 (em 3 dias)", "(amanhã)", "Venceu há 5 dia(s): prazo de defesa" |
+| `priority` = `normal` com fato | O fato urgente **já resolvido** segundo o cliente ("Já resolvido: energia cortada"), a **audiência que já passou** e a data a mais de 30 dias ("audiência em 26/02/2027 (daqui a 108 dias)"): fica visível, mas não ocupa o topo da fila |
 | `priority` = `baixa` | Sem demanda jurídica (engano, propaganda, spam) ou área fora da lista do escritório (`Outro`) |
 | `priority` = `normal` | O resto ("Sem prazo ou fato urgente informado") |
+| `contactKind` | **Tipo de contato**: `novo_caso` (problema novo), `cliente_atual` (já é cliente e pergunta do processo, alvará, audiência) ou `nao_juridico`. Separa venda de retenção: cliente atual perguntando do processo também precisa de resposta, mas não é lead novo. Editável pela equipe |
+| `area` e `city` | A área é **classificada pelo assunto** descrito (conta de luz, banco, loja = Consumidor; demissão = Trabalhista; INSS/BPC = Previdenciário); null só quando o cliente ainda não disse o assunto. A cidade é gravada de um jeito só: município sem bairro, com erro de digitação corrigido pelos municípios do RJ ("Novo Iguaçu" e "Cabuçu, Nova Iguaçu" → "Nova Iguaçu"); fora do RJ fica com a UF ("Juiz de Fora - MG") |
 | `status` | A IA só muda de `novo` para `qualificado`, quando há nome + área do escritório + (cidade ou necessidade jurídica clara). Nunca rebaixa e **nunca altera um status definido pela equipe** (`statusSource: manual`) |
 | `missingInfo` | Primeiro o que falta entre nome, área e cidade; depois o que o modelo listou (ex.: "data da demissão", "tem contrato assinado?") |
-| `awaitingHumanSince` | Lead aberto (`novo`/`qualificado`) e acionável (qualificado ou prioridade alta) sem resposta de uma pessoa da equipe depois da última mensagem do cliente. Termina quando alguém da equipe escreve na conversa ou quando o status muda para em atendimento, cliente ou descartado |
+| `awaitingHumanSince` | A pessoa escreveu e ninguém da equipe respondeu depois. Vale para `qualificado`, `em_atendimento` e `cliente` (cliente perguntando do processo também espera resposta) e para `novo` só com prioridade alta; nunca para `descartado`. Termina quando alguém da equipe escreve na conversa ou o status vira descartado |
+| `attentionPoints` | **Pontos de atenção do atendimento** apontados pela própria IA da instância na mesma análise (sem custo a mais): pediu uma pessoa e não teve retorno, a assistente deu orientação jurídica, falou de valores ou pediu dado sensível, reclamou da demora, áudio não entendido, pergunta sem resposta. Nunca avalia a pessoa nem o caso. Aparecem na planilha (coluna própria e bloco no Resumo) |
+| `status` pela IA | `novo` → `qualificado` (regra acima) e, para quem já é cliente (`contactKind: cliente_atual`) em triagem, → `cliente`. Nunca muda um status definido pela equipe nem volta atrás |
 
-**Limitação do "aguardando equipe":** o banco não marca quem enviou cada mensagem (seção 13). A resposta da equipe é detectada pela **pausa humana do bot OpenAI** (mensagem `fromMe` que não é do bot, com `stopBotFromMe` ligado), o que inclui o celular, o WhatsApp Web e envios pela API/MCP. Respostas que não passam por esse caminho (Chatwoot, `stopBotFromMe` desligado, Cloud API sem Coexistence) não encerram a espera: mude o status para "Em atendimento". Depois de uma resposta da equipe, a espera só recomeça quando o bot voltar a responder (fim da pausa humana).
+**Como a resposta da equipe é detectada:** o banco não marca quem enviou cada mensagem (seção 13). São usados três sinais, o mais recente vale:
+1. a **pausa humana do bot** no momento em que acontece (mensagem do número que não é do bot, com `stopBotFromMe` ligado);
+2. a pausa registrada na **sessão do bot** (`parameters.humanLastMessageAt`), lida a cada análise;
+3. as **mensagens do número que não são respostas da IA** (comparadas com as respostas guardadas no histórico da sessão do bot; partes de resposta dividida contam como IA). Sem sessão do bot não dá para separar e esse sinal não é usado.
+
+Na transcrição enviada à análise, essas mensagens aparecem como `[equipe]`, para a IA não pedir de novo o que a equipe já resolveu. **`POST /leads/{instancia}/refresh-waiting`** recalcula a espera dos leads abertos com esses sinais, sem chamar a OpenAI (também roda sozinho ao fim de "Analisar conversas anteriores"): corrige leads criados pela análise de conversas antigas, que não viam as respostas da equipe dadas antes. Respostas por fora do WhatsApp (telefone, presencial, Chatwoot sem eco) não encerram a espera: mude o status para "Em atendimento".
 
 Campos editados pela equipe (painel, API ou MCP) ficam em `manualFields` e a IA não os altera mais.
 
@@ -898,8 +914,15 @@ Campos editados pela equipe (painel, API ou MCP) ficam em `manualFields` e a IA 
 - **Visões:** Todos · Aguardando equipe · Novos · Qualificados · Em atendimento · Clientes · Descartados, com contagem. **Filtro** (área, prioridade, período da última mensagem), **Ordenar** (padrão: prioridade alta primeiro e depois quem espera há mais tempo), busca por nome, cidade, resumo, parte contrária ou número.
 - **Tabela:** Nome, Telefone (mascarado), Área, Cidade, Prioridade, Status (muda na própria linha), Aguardando ("Aguardando há 3 h") e Última mensagem.
 - **Ficha (clique na linha):** resumo, falta saber, próximo passo, campos editáveis, documentos citados e quantidade de arquivos enviados, origem, datas, **"Abrir conversa"** e **"Abrir no WhatsApp"**. Com parte contrária informada aparece **"Verificar conflito de interesses"**.
-- **Exportar CSV:** UTF-8 com BOM, separado por `;` (abre direto no Excel em português), segue os filtros da tela, até 5.000 linhas.
+- **Exportar planilha** (Excel, `.xlsx`): segue as visões, filtros e ordem da tela, até 5.000 linhas.
+  - Aba **Leads**: nome limpo (sem emoji e sem CAIXA ALTA; contato sem número aparece como "Sem número (contato oculto)"), prioridade em vermelho quando alta, **"Aguardando equipe há"** ("4 d 7 h": âmbar acima de 24 h, vermelho acima de 3 dias), telefone que abre a conversa no WhatsApp, cidade padronizada, textos com quebra de linha, datas de verdade, filtros, cabeçalho e nome fixos, "Dias sem mensagem do cliente" (âmbar acima de 7 dias em aberto), "Falta saber" com "confirmar o nome" quando só há o nome do perfil, "Já tem advogado" com Sim/Não/Não informado. A coluna Origem só aparece quando algum contato tem origem.
+  - Aba **Resumo** (abre primeiro, no formato de relatório: faixas por seção com "Indicador · Quantidade · O que fazer" e, no fim, os principais achados com recomendações calculados pelos números): o que precisa de atenção agora (aguardando a equipe, há mais de 24 h, há mais de 3 dias, alta em aberto, sem mensagem há mais de 7 dias), contagens por status, prioridade, área e cidade, **casos parecidos** (mesma parte contrária, ex.: várias reclamações contra a mesma concessionária) e a qualidade da ficha (sem área, sem cidade, nome não confirmado, sem próximo passo, sem número).
+  - **Ver planilha** abre a mesma planilha dentro do painel, antes de baixar: grade com letras de coluna e números de linha, as cores, células mescladas e links do arquivo, abas Resumo e Leads embaixo, até 300 linhas por aba (`GET /leads/{instancia}/export.json`). O visual da grade é o do Excel (claro) nos dois temas, porque é a prévia do arquivo.
+  - A planilha também mostra **Tipo de contato**, **Analisado pela IA em** e **Mensagens do cliente lidas** (o que já foi analisado e com quantas mensagens); no Resumo, a contagem por tipo e as fichas analisadas há mais de 7 dias com mensagem nova depois (podem estar desatualizadas).
+  - O CSV continua na API (`export.csv`) para integrações.
 - **Analisar conversas anteriores:** conta antes (diálogo com a estimativa), depois analisa em segundo plano, 2 por vez, só conversas dos últimos 7/30/60 dias com 3+ mensagens do cliente e ainda sem análise (até 200 por vez). Uma execução por instância de cada vez.
+- **Reanalisar todas as fichas** (API `POST /leads/backfill/{instancia}` com `"reanalyze": true`, até 500, ou MCP `analyze_leads` com `mode: "todas"`): refaz as fichas que existem com as regras atuais, lendo a conversa inteira (cliente, IA e equipe), sem mexer no que a equipe editou. Uma chamada por conversa na conta OpenAI do cliente.
+- **Analisar um contato agora** (`POST /leads/{instancia}/analyze` `{ "contact": "5521…" }` ou MCP `analyze_lead`): cria ou atualiza a ficha mesmo com poucas mensagens. **Remover** (`DELETE /leads/{instancia}/{id}` ou MCP `delete_lead`): apaga só a ficha; para tirar da fila sem apagar, use o status Descartado.
 - **Configurações:** análise automática, áreas do escritório (padrão: Trabalhista, Previdenciário (BPC/INSS), Família, Consumidor, Cível, Criminal, Outro), modelo e aviso para a equipe.
 
 ### 16.4 Aviso para a equipe (desligado por padrão)
@@ -931,7 +954,8 @@ curl -X PATCH "$SERVER_URL/leads/$INSTANCE/$LEAD_ID" -H "apikey: $APIKEY" -H "Co
   -d '{"status":"em_atendimento","nextStep":"Ligar na terça à tarde"}'
 # Campos: status, priority, priorityReason, name, area, city, nextStep, summary, opposingParty, hasLawyer, missingInfo
 
-curl "$SERVER_URL/leads/$INSTANCE/export.csv?status=qualificado" -H "apikey: $APIKEY" -o leads.csv
+curl "$SERVER_URL/leads/$INSTANCE/export.xlsx?status=aguardando" -H "apikey: $APIKEY" -o leads.xlsx   # planilha formatada
+curl "$SERVER_URL/leads/$INSTANCE/export.csv?status=qualificado" -H "apikey: $APIKEY" -o leads.csv     # CSV para integrações
 
 curl "$SERVER_URL/leads/settings/$INSTANCE" -H "apikey: $APIKEY"
 curl -X POST "$SERVER_URL/leads/settings/$INSTANCE" -H "apikey: $APIKEY" -H "Content-Type: application/json" \
@@ -944,7 +968,7 @@ curl -X POST "$SERVER_URL/leads/backfill/$INSTANCE" -H "apikey: $APIKEY" -H "Con
 curl "$SERVER_URL/leads/backfill/$INSTANCE" -H "apikey: $APIKEY"
 ```
 
-MCP: `list_leads`, `get_lead`, `update_lead`, `get_lead_settings`, `update_lead_settings` (seção 14.2). Observabilidade: o card **Plano e uso** ganha uma linha por instância ("Leads · nome: X novos nas últimas 24 h, Y qualificados em 7 dias, Z aguardando equipe").
+MCP: `list_leads`, `get_lead`, `update_lead`, `get_lead_settings`, `update_lead_settings`, `analyze_leads`, `analyze_lead`, `delete_lead`, `refresh_leads_waiting` (seção 14.2). **O escritório pode ter o próprio assistente:** conecte o ChatGPT, o Claude ou o Cursor ao MCP com o **token da instância** (seção 14.1): ele vê e mexe só nos Leads, conversas, Agenda e Processos daquela instância. Observabilidade: o card **Plano e uso** ganha uma linha por instância ("Leads · nome: X novos nas últimas 24 h, Y qualificados em 7 dias, Z aguardando equipe").
 
 ### 16.6 Custo e armazenamento
 

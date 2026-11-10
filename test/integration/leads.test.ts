@@ -148,7 +148,8 @@ describe('leads (integration)', { skip: SKIP_INTEGRATION }, () => {
     assert.equal((await leads.list(id, { search: 'ESPERA' })).total, 3, 'case-insensitive search');
 
     const target = list.leads.find((lead: any) => lead.name === 'Espera Longa');
-    const edited = await leads.update(id, target.id, { status: 'em_atendimento' });
+    // em_atendimento keeps waiting now; descartado is the status that leaves the queue
+    const edited = await leads.update(id, target.id, { status: 'descartado' });
     assert.equal(edited?.lead.awaitingHumanSince, null);
     assert.equal((await leads.list(id, { status: 'aguardando' })).total, 2);
 
