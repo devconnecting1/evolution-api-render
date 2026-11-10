@@ -61,6 +61,18 @@ export class LeadsController {
     return { name: row.name, csv };
   }
 
+  public async exportPreview(instance: InstanceDto, query: Record<string, any>) {
+    const row = await this.instanceOf(instance);
+    const sheets = await this.guard(() => this.leads.exportPreview(row.id, row.name, query));
+    return { instance: row.name, sheets };
+  }
+
+  public async refreshWaiting(instance: InstanceDto) {
+    const row = await this.instanceOf(instance);
+    const result = await this.guard(() => this.leads.refreshWaiting(row.id));
+    return { instance: row.name, ...result };
+  }
+
   public async exportXlsx(instance: InstanceDto, query: Record<string, any>) {
     const row = await this.instanceOf(instance);
     const file = await this.guard(() => this.leads.exportXlsx(row.id, row.name, query));

@@ -402,3 +402,103 @@ export function buildXlsx(sheets: XlsxSheet[], meta: { title?: string; creator?:
   text('xl/styles.xml', styles.xml());
   return zip(files);
 }
+
+// ---------------------------------------------------------------------------------------------------- preview
+
+export interface XlsxPreviewCell {
+  text: string;
+  /** CSS hints for the panel viewer: b, wrap, num, center, fill-<fill>, c-<color>, big, title */
+  cls?: string;
+  link?: string;
+  span?: number;
+  skip?: true;
+}
+
+export interface XlsxPreviewSheet {
+  name: string;
+  header: boolean;
+  columns: { width: number; letter: string }[];
+  rows: XlsxPreviewCell[][];
+  totalRows: number;
+}
+
+function previewText(value: XlsxValue): string {
+  if (value === null || value === undefined) return '';
+  if (value instanceof Date) {
+    if (!Number.isFinite(value.getTime())) return '';
+    const p = Object.fromEntries(
+      new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      })
+        .formatToParts(value)
+        .map((part) => [part.type, part.value]),
+    );
+    return `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute}`;
+  }
+  return typeof value === 'number' ? value.toLocaleString('pt-BR') : String(value);
+}
+
+/**
+ * The same sheets as plain JSON for the panel viewer: the text as Excel shows it (dates in São Paulo time), style
+ * hints as CSS classes, links and horizontal merges (span/skip). At most `maxRows` data rows per table sheet.
+ */
+export function sheetsToPreview(sheets: XlsxSheet[], maxRows = 300): XlsxPreviewSheet[] {
+  return sheets.map((sheet) => {
+    const header = !sheet.noHeader;
+    // the cap is for tables (one row per record); a report sheet is always shown whole
+    const data = header ? sheet.rows.slice(0, maxRows) : sheet.rows;
+    const all: (XlsxValue | XlsxCell)[][] = header ? [sheet.columns.map((c) => c.header), ...data] : data;
+    const spans = new Map<string, number>();
+    const skips = new Set<string>();
+    for (const ref of sheet.merges ?? []) {
+      const m = /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/.exec(ref);
+      if (!m || m[2] !== m[4]) continue;
+      const toIndex = (letters: string) => [...letters].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0) - 1;
+      const row = Number(m[2]) - 1;
+      const from = toIndex(m[1]);
+      const to = toIndex(m[3]);
+      spans.set(`${row}:${from}`, to - from + 1);
+      for (let c = from + 1; c <= to; c++) skips.add(`${row}:${c}`);
+    }
+    const rows = all.map((row, r) =>
+      Array.from({ length: Math.max(row.length, 1) }, (_, c): XlsxPreviewCell => {
+        if (skips.has(`${r}:${c}`)) return { text: '', skip: true };
+        const raw = row[c];
+        const cell: XlsxCell = isCell(raw) ? raw : { value: raw as XlsxValue };
+        const style =
+          header && r === 0 ? { bold: true, fill: 'header' as XlsxFill, color: 'white' as const } : (cell.style ?? {});
+        const cls = [
+          style.bold ? 'b' : '',
+          style.wrap ? 'wrap' : '',
+          typeof cell.value === 'number' || cell.value instanceof Date ? 'num' : '',
+          style.align === 'center' ? 'center' : '',
+          style.fill ? `fill-${style.fill}` : '',
+          style.color ? `c-${style.color}` : '',
+          style.size && style.size >= 16 ? 'title' : style.size && style.size > 11 ? 'big' : '',
+          sheet.grid && !(header && r === 0) ? 'grid' : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+        const out: XlsxPreviewCell = { text: previewText(cell.value) };
+        if (cls) out.cls = cls;
+        if (cell.link) out.link = cell.link;
+        const span = spans.get(`${r}:${c}`);
+        if (span) out.span = span;
+        return out;
+      }),
+    );
+    return {
+      name: sheet.name,
+      header,
+      columns: sheet.columns.map((col, i) => ({ width: col.width, letter: columnName(i) })),
+      rows,
+      totalRows: sheet.rows.length,
+    };
+  });
+}

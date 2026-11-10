@@ -55,6 +55,25 @@ export class LeadsRouter extends RouterBroker {
         });
         res.status(response?.started ? HttpStatus.CREATED : HttpStatus.OK).json(response);
       })
+      .post('/:instanceName/refresh-waiting', ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => leadsController.refreshWaiting(instance),
+        });
+        res.status(HttpStatus.OK).json(response);
+      })
+      .get('/:instanceName/export.json', ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => leadsController.exportPreview(instance, query(req)),
+        });
+        res.set('Cache-Control', 'no-store');
+        res.status(HttpStatus.OK).json(response);
+      })
       .get('/:instanceName/export.csv', ...guards, async (req, res) => {
         const response = await this.dataValidate<InstanceDto>({
           request: req,

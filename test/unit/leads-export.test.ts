@@ -13,8 +13,9 @@ import {
   leadsToXlsxSheets,
   normalizeCity,
   parseExtraction,
+  teamReplyAt,
 } from '@utils/leads';
-import { buildXlsx, columnName, excelSerial } from '@utils/xlsx';
+import { buildXlsx, columnName, excelSerial, sheetsToPreview } from '@utils/xlsx';
 
 /** Files of a zip built by buildXlsx (local headers in order, deflate). */
 function unzip(buf: Buffer): Map<string, string> {
@@ -149,13 +150,14 @@ describe('leads: Excel export', () => {
     assert.equal(summary.name, 'Resumo');
     const first = sheet.rows[0] as any[];
     assert.deepEqual(first[0], { value: 'Maria Souza', style: { bold: true, wrap: true } });
-    assert.equal(first[3].value, '3 d 8 h');
-    assert.equal(first[3].style.fill, 'red', 'more than 3 days waiting');
-    assert.equal(first[4].link, 'https://wa.me/5521999990000');
-    assert.equal(first[6], 'Nova Iguaçu');
-    assert.equal(first[10].value, 'confirmar o nome, data do corte');
-    assert.equal(first[12], 'Não informado');
-    assert.equal((sheet.rows[1] as any[])[4].value, 'Sem número (contato oculto)');
+    assert.equal(first[3], 'Não classificado');
+    assert.equal(first[4].value, '3 d 8 h');
+    assert.equal(first[4].style.fill, 'red', 'more than 3 days waiting');
+    assert.equal(first[5].link, 'https://wa.me/5521999990000');
+    assert.equal(first[7], 'Nova Iguaçu');
+    assert.equal(first[11].value, 'confirmar o nome, data do corte');
+    assert.equal(first[13], 'Não informado');
+    assert.equal((sheet.rows[1] as any[])[5].value, 'Sem número (contato oculto)');
     const text = JSON.stringify(summary.rows);
     assert.match(text, /Aguardando resposta da equipe/);
     assert.match(
@@ -187,7 +189,7 @@ describe('leads: Excel export', () => {
     }
     const sheet = files.get('xl/worksheets/sheet2.xml')!;
     assert.match(sheet, /&amp; &lt;corte&gt;/);
-    assert.match(sheet, /<autoFilter ref="A1:R3"\/>/);
+    assert.match(sheet, /<autoFilter ref="A1:U3"\/>/);
     assert.match(sheet, /state="frozen"/);
     assert.match(files.get('xl/worksheets/_rels/sheet2.xml.rels')!, /https:\/\/wa\.me\/5521999990000/);
     assert.match(files.get('xl/styles.xml')!, /dd\/mm\/yyyy hh:mm/);
@@ -205,5 +207,62 @@ describe('leads: Excel export', () => {
     assert.equal(formatWait(26 * 3_600_000), '1 d 2 h');
     const csv = leadsToCsv(leads);
     assert.match(csv, /Maria Souza;55 \(21\) 99999-0000;Consumidor;Nova Iguaçu/);
+  });
+});
+
+describe('leads: team replies and contact kind', () => {
+  test('a message of the number that is not an AI answer is the team (split answers included)', () => {
+    const bot = [
+      'Já encaminhei seus dados para nossa equipe verificar o andamento do processo. Alguém retornará em breve.',
+    ];
+    const entries = [
+      { fromMe: false, text: 'Como está o processo?', timestamp: 100 },
+      {
+        fromMe: true,
+        text: 'Já encaminhei seus dados para nossa equipe verificar o andamento do processo.',
+        timestamp: 110,
+      },
+      { fromMe: true, text: 'Alguém retornará em breve.', timestamp: 111 },
+    ];
+    assert.equal(teamReplyAt(entries, bot), null, 'only AI answers');
+    const withTeam = [
+      ...entries,
+      { fromMe: true, text: 'Dona Sueli, o processo está aguardando o alvará', timestamp: 300 },
+    ];
+    assert.equal(teamReplyAt(withTeam, bot)?.getTime(), 300_000);
+    assert.equal(teamReplyAt([{ fromMe: true, text: '*Oi*, tudo bem?', timestamp: 5 }], ['Oi, tudo bem?']), null);
+  });
+
+  test('contactKind: parsed from the model, falls back to nao_juridico when there is no legal need', () => {
+    assert.equal(parseExtraction(JSON.stringify({ contactKind: 'cliente_atual' }), [])?.contactKind, 'cliente_atual');
+    assert.equal(parseExtraction(JSON.stringify({ noLegalNeed: true }), [])?.contactKind, 'nao_juridico');
+    assert.equal(parseExtraction(JSON.stringify({ contactKind: 'vip' }), [])?.contactKind, null);
+  });
+});
+
+describe('leads: panel preview of the workbook', () => {
+  test('same sheets as the file: text as shown, style hints, links, merges and a row cap', () => {
+    const leads = Array.from({ length: 5 }, (_, i) => ({
+      name: `Pessoa ${i}`,
+      remoteJid: `552199999000${i}@s.whatsapp.net`,
+      priority: i === 0 ? 'alta' : 'normal',
+      status: 'novo',
+      lastMessageAt: new Date('2026-11-10T13:05:00Z'),
+    }));
+    const [summary, sheet] = sheetsToPreview(leadsToXlsxSheets(leads, { instanceName: 'X', now: NOW }), 3);
+    assert.equal(summary.name, 'Resumo');
+    assert.equal(summary.header, false);
+    assert.equal(summary.rows[0][0].span, 3, 'title merged across A:C');
+    const band = summary.rows.find((row) => row[0].text === 'PRECISA DE ATENÇÃO AGORA')!;
+    assert.equal(band[0].span, 3);
+    assert.equal(band[1].skip, true, 'merged cells are skipped in the grid');
+    assert.equal(sheet.header, true);
+    assert.equal(sheet.rows.length, 4, 'header + 3 rows (cap)');
+    assert.equal(sheet.totalRows, 5);
+    assert.match(sheet.rows[0][0].cls ?? '', /fill-header/);
+    assert.match(sheet.rows[1][1].cls ?? '', /fill-red/);
+    assert.equal(sheet.rows[1][5].link, 'https://wa.me/5521999990000');
+    assert.equal(sheet.rows[1][17].text, '10/11/2026 10:05', 'dates in São Paulo time');
+    assert.equal(sheet.columns[0].letter, 'A');
   });
 });

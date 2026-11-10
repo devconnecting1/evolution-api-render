@@ -33,6 +33,7 @@ import {
   leadsToCsv,
   leadsToXlsxSheets,
   LIMITS,
+  markTeamEntries,
   mergeExtraction,
   mergeLeadSettings,
   normalizeLeadSettings,
@@ -45,12 +46,13 @@ import {
   PRIORITY_RANK,
   shouldExtract,
   shouldNotify,
+  teamReplyAt,
   TranscriptEntry,
   validateLeadPatch,
   validateLeadSettings,
   validateLeadSettingsInput,
 } from '@utils/leads';
-import { buildXlsx } from '@utils/xlsx';
+import { buildXlsx, sheetsToPreview } from '@utils/xlsx';
 import OpenAI from 'openai';
 
 const SETTINGS_TTL_MS = 30_000;
@@ -142,6 +144,7 @@ export function leadView(row: any) {
     nextStep: row.nextStep ?? null,
     opposingParty: row.opposingParty ?? null,
     hasLawyer: typeof row.hasLawyer === 'boolean' ? row.hasLawyer : null,
+    contactKind: row.contactKind ?? null,
     documentsMentioned: list(row.documentsMentioned),
     mediaCount: Number(row.mediaCount) || 0,
     source: row.source ?? null,
@@ -361,6 +364,62 @@ export class LeadsService {
     }
   }
 
+  /**
+   * What the OpenAI bot sessions of the contact know about the team: the last human message that paused the bot
+   * (parameters.humanLastMessageAt) and the AI answers kept in the history (to tell AI messages from team messages).
+   * botTexts is null when there is no session: then a message of the number cannot be told apart and is not used.
+   */
+  private async botSignals(
+    instanceId: string,
+    jids: string[],
+  ): Promise<{ pausedAt: Date | null; botTexts: string[] | null }> {
+    try {
+      const sessions: any[] =
+        (await this.prisma.integrationSession.findMany({
+          where: { instanceId, remoteJid: { in: jids } },
+          orderBy: { updatedAt: 'desc' },
+          take: 5,
+          select: { parameters: true, context: true },
+        })) ?? [];
+      if (!sessions.length) return { pausedAt: null, botTexts: null };
+      let paused = 0;
+      const botTexts: string[] = [];
+      for (const session of sessions) {
+        const params = typeof session.parameters === 'string' ? JSON.parse(session.parameters) : session.parameters;
+        const at = Date.parse(params?.humanLastMessageAt ?? '');
+        if (Number.isFinite(at) && at > paused) paused = at;
+        const context = typeof session.context === 'string' ? JSON.parse(session.context) : session.context;
+        for (const item of Array.isArray(context?.history) ? context.history : []) {
+          if (item?.role !== 'assistant') continue;
+          const content =
+            typeof item.content === 'string'
+              ? item.content
+              : Array.isArray(item.content)
+                ? item.content.map((part: any) => (part?.type === 'text' ? part.text : '')).join('\n')
+                : '';
+          if (content) botTexts.push(content);
+        }
+      }
+      return { pausedAt: paused ? new Date(paused) : null, botTexts };
+    } catch {
+      return { pausedAt: null, botTexts: null };
+    }
+  }
+
+  /** The latest team reply known from the bot pause and from the messages themselves. */
+  private latestTeamReply(
+    entries: TranscriptEntry[],
+    signals: { pausedAt: Date | null; botTexts: string[] | null },
+    known?: Date | string | null,
+  ) {
+    const candidates = [
+      known ? new Date(known) : null,
+      signals.pausedAt,
+      signals.botTexts ? teamReplyAt(entries, signals.botTexts) : null,
+    ].filter((date): date is Date => !!date && Number.isFinite(date.getTime()));
+    return candidates.sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+  }
+
   private async findLead(instanceId: string, jids: string[]) {
     const rows: any[] =
       (await this.prisma.lead.findMany({ where: { instanceId, remoteJid: { in: jids } }, take: 2 })) ?? [];
@@ -449,7 +508,10 @@ export class LeadsService {
 
     const lead = await this.findLead(instanceId, jids);
     const records: any[] = await this.loadMessages(instanceId, jids, LIMITS.transcriptMessages);
-    const entries: TranscriptEntry[] = records.map((record) => this.entryOf(record));
+    const signals = await this.botSignals(instanceId, jids);
+    const rawEntries: TranscriptEntry[] = records.map((record) => this.entryOf(record));
+    const entries: TranscriptEntry[] = signals.botTexts ? markTeamEntries(rawEntries, signals.botTexts) : rawEntries;
+    const lastTeamReply = this.latestTeamReply(entries, signals, lead?.lastHumanReplyAt);
 
     const lastExtracted = lead?.lastExtractedAt ? new Date(lead.lastExtractedAt).getTime() / 1000 : -Infinity;
     const clientEntries = entries.filter((entry) => !entry.fromMe);
@@ -538,10 +600,11 @@ export class LeadsService {
         status: merged.status,
         priority: merged.priority,
         current: lead?.awaitingHumanSince,
-        lastHumanReplyAt: lead?.lastHumanReplyAt,
+        lastHumanReplyAt: lastTeamReply,
         lastClientAt,
         clientTimes,
       }),
+      lastHumanReplyAt: lastTeamReply,
       lastExtractedAt: now,
       extractedFromCount: transcript.clientMessages,
     };
@@ -865,11 +928,66 @@ export class LeadsService {
     return { previous: leadView(row), lead: leadView(saved) };
   }
 
+  /**
+   * Recomputes "aguardando equipe" of the open leads from the messages and the bot pauses, without calling OpenAI.
+   * Fixes leads created by the backfill, which could not see the team replies sent before they existed.
+   */
+  public async refreshWaiting(instanceId: string): Promise<{ checked: number; cleared: number; changed: number }> {
+    const leads: any[] =
+      (await this.prisma.lead.findMany({
+        where: { instanceId, status: { in: OPEN_STATUSES } },
+        take: EXPORT_MAX,
+      })) ?? [];
+    let cleared = 0;
+    let changed = 0;
+    for (const lead of leads) {
+      const jids = [lead.remoteJid];
+      const records: any[] = await this.loadMessages(instanceId, jids, LIMITS.transcriptMessages);
+      const entries = records.map((record) => this.entryOf(record));
+      const signals = await this.botSignals(instanceId, jids);
+      const lastTeamReply = this.latestTeamReply(entries, signals, lead.lastHumanReplyAt);
+      const clientTimes = entries.filter((entry) => !entry.fromMe).map((entry) => entry.timestamp * 1000);
+      const lastClientMs = clientTimes.length ? Math.max(...clientTimes) : null;
+      const awaiting = deriveAwaitingSince({
+        status: lead.status,
+        priority: lead.priority,
+        current: null,
+        lastHumanReplyAt: lastTeamReply,
+        lastClientAt: lastClientMs
+          ? new Date(lastClientMs)
+          : lead.lastClientMessageAt
+            ? new Date(lead.lastClientMessageAt)
+            : null,
+        clientTimes,
+      });
+      const before = lead.awaitingHumanSince ? new Date(lead.awaitingHumanSince).getTime() : null;
+      const after = awaiting ? awaiting.getTime() : null;
+      const replyBefore = lead.lastHumanReplyAt ? new Date(lead.lastHumanReplyAt).getTime() : null;
+      const replyAfter = lastTeamReply ? lastTeamReply.getTime() : null;
+      if (before === after && replyBefore === replyAfter) continue;
+      await this.prisma.lead.update({
+        where: { id: lead.id },
+        data: { awaitingHumanSince: awaiting, lastHumanReplyAt: lastTeamReply },
+      });
+      changed++;
+      if (before !== null && after === null) cleared++;
+    }
+    return { checked: leads.length, cleared, changed };
+  }
+
   public async exportCsv(instanceId: string, query: Record<string, any> = {}) {
     const where = this.listWhere(instanceId, query);
     const sort = (SORTS as readonly string[]).includes(query.sort) ? query.sort : 'priority';
     const rows = await this.prisma.lead.findMany({ where, orderBy: this.orderBy(sort), take: EXPORT_MAX });
     return leadsToCsv((rows ?? []).map(leadView));
+  }
+
+  /** The workbook as JSON for the panel viewer (same sheets, first rows of each). */
+  public async exportPreview(instanceId: string, instanceName: string, query: Record<string, any> = {}) {
+    const where = this.listWhere(instanceId, query);
+    const sort = (SORTS as readonly string[]).includes(query.sort) ? query.sort : 'priority';
+    const rows = await this.prisma.lead.findMany({ where, orderBy: this.orderBy(sort), take: EXPORT_MAX });
+    return sheetsToPreview(leadsToXlsxSheets((rows ?? []).map(leadView), { instanceName }));
   }
 
   /** The same list as a formatted Excel workbook (sheets "Leads" and "Resumo"), in the order of the panel. */
@@ -1022,12 +1140,13 @@ export class LeadsService {
         state.done++;
       }
     };
-    const run = Promise.all(
-      Array.from({ length: Math.min(BACKFILL_CONCURRENCY, candidates.length || 1) }, worker),
-    ).finally(() => {
-      state.running = false;
-      state.finishedAt = this.now().toISOString();
-    });
+    const run = Promise.all(Array.from({ length: Math.min(BACKFILL_CONCURRENCY, candidates.length || 1) }, worker))
+      // the team replies sent before the leads existed are only seen now: recompute the waiting time
+      .then(() => this.refreshWaiting(instanceId).catch(() => undefined))
+      .finally(() => {
+        state.running = false;
+        state.finishedAt = this.now().toISOString();
+      });
     this.track(run);
     return { started: true, days, max, candidates: candidates.length, model: creds.model, status: state };
   }

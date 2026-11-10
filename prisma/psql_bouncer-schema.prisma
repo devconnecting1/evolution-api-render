@@ -985,6 +985,7 @@ model Lead {
   awaitingHumanSince  DateTime? @db.Timestamp
   lastExtractedAt     DateTime? @db.Timestamp
   extractedFromCount  Int       @default(0) @db.Integer
+  contactKind         String?   @db.VarChar(20)
   notifiedAt          DateTime? @db.Timestamp
   createdAt           DateTime  @default(now()) @db.Timestamp
   updatedAt           DateTime  @updatedAt @db.Timestamp
