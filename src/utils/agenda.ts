@@ -20,7 +20,9 @@ import {
 } from './usageLimits';
 
 export type AgendaMode = 'presencial' | 'online' | 'telefone';
-export type AppointmentStatus = 'agendado' | 'confirmado' | 'cancelado' | 'realizado' | 'faltou';
+export type AppointmentStatus = 'pendente' | 'agendado' | 'confirmado' | 'cancelado' | 'realizado' | 'faltou';
+/** Where the appointments live. Only 'internal' today; the Google Calendar adapter plugs in later. */
+export type AgendaProviderName = 'internal';
 export type AppointmentSource = 'ia' | 'manual' | 'mcp';
 
 export type AppointmentType = {
@@ -48,16 +50,40 @@ export type AgendaSettings = {
   appointmentTypes: AppointmentType[];
   reminders: { enabled: boolean; hoursBefore: number[] };
   confirmation: { enabled: boolean };
-  aiPermissions: { canBook: boolean; canCancel: boolean; canReschedule: boolean };
+  provider: AgendaProviderName;
+  /** Enforced in the tool handlers (server side), not only in the prompt. A tool that is off is not offered. */
+  aiPermissions: AiPermissions;
   notifyNumbers: string[];
   icsToken: string | null;
   updatedAt: string | null;
 };
 
+export type AiPermissions = {
+  allowBook: boolean;
+  allowReschedule: boolean;
+  allowCancel: boolean;
+  /** Always true: a contact only sees and changes appointments linked to its own number. */
+  onlyOwnAppointments: true;
+  /** Bookings of the AI are created as "pendente" and the team approves them. */
+  requireTeamApproval: boolean;
+  /** false: the AI only sees free/busy. true: it may also see the type of the other appointments (never names). */
+  showOtherEventDetails: boolean;
+};
+
 export type Interval = { start: Date; end: Date; id?: string };
 
 export const AGENDA_MODES: AgendaMode[] = ['presencial', 'online', 'telefone'];
-export const APPOINTMENT_STATUSES: AppointmentStatus[] = ['agendado', 'confirmado', 'cancelado', 'realizado', 'faltou'];
+export const AGENDA_PROVIDERS: AgendaProviderName[] = ['internal'];
+export const APPOINTMENT_STATUSES: AppointmentStatus[] = [
+  'pendente',
+  'agendado',
+  'confirmado',
+  'cancelado',
+  'realizado',
+  'faltou',
+];
+/** Future appointments that hold a slot for the contact (also the AI per-contact cap and meus_agendamentos). */
+export const HOLDING_STATUSES: AppointmentStatus[] = ['pendente', 'agendado', 'confirmado'];
 /** Appointments that still get reminders and can be confirmed, rescheduled or cancelled by the client. */
 export const ACTIVE_STATUSES: AppointmentStatus[] = ['agendado', 'confirmado'];
 export const SLOT_MINUTES = [10, 15, 20, 30, 40, 45, 60, 90, 120];
@@ -116,7 +142,15 @@ export function defaultAgendaSettings(): AgendaSettings {
     appointmentTypes: defaultAppointmentTypes(),
     reminders: { enabled: true, hoursBefore: [24, 2] },
     confirmation: { enabled: true },
-    aiPermissions: { canBook: true, canCancel: true, canReschedule: true },
+    provider: 'internal',
+    aiPermissions: {
+      allowBook: true,
+      allowReschedule: true,
+      allowCancel: true,
+      onlyOwnAppointments: true,
+      requireTeamApproval: false,
+      showOtherEventDetails: false,
+    },
     notifyNumbers: [],
     icsToken: null,
     updatedAt: null,
@@ -254,10 +288,14 @@ export function normalizeAgendaSettings(row: any): AgendaSettings {
       hoursBefore: reminders.hoursBefore === undefined ? [24, 2] : normalizeHoursBefore(reminders.hoursBefore),
     },
     confirmation: { enabled: flag(confirmation.enabled, true) },
+    provider: AGENDA_PROVIDERS.includes(row.provider) ? row.provider : 'internal',
     aiPermissions: {
-      canBook: flag(ai.canBook, true),
-      canCancel: flag(ai.canCancel, true),
-      canReschedule: flag(ai.canReschedule, true),
+      allowBook: flag(ai.allowBook, flag(ai.canBook, true)),
+      allowReschedule: flag(ai.allowReschedule, flag(ai.canReschedule, true)),
+      allowCancel: flag(ai.allowCancel, flag(ai.canCancel, true)),
+      onlyOwnAppointments: true,
+      requireTeamApproval: flag(ai.requireTeamApproval, false),
+      showOtherEventDetails: flag(ai.showOtherEventDetails, false),
     },
     notifyNumbers: normalizeNotifyNumbers(row.notifyNumbers),
     icsToken: typeof row.icsToken === 'string' && row.icsToken ? row.icsToken : null,
@@ -271,6 +309,15 @@ export function normalizeAgendaSettings(row: any): AgendaSettings {
 export function validateAgendaInput(input: any): string[] {
   const errors: string[] = [];
   if (!input || typeof input !== 'object') return ['Corpo inválido.'];
+
+  if (input.provider !== undefined && !AGENDA_PROVIDERS.includes(input.provider)) {
+    errors.push(
+      `Provedor de agenda indisponível: "${String(input.provider).slice(0, 30)}". Hoje só existe "internal" (agenda do WhatsAI).`,
+    );
+  }
+  if (input.aiPermissions?.onlyOwnAppointments === false) {
+    errors.push('"onlyOwnAppointments" não pode ser desligado: o cliente só vê e altera os próprios agendamentos.');
+  }
 
   if (input.timezone !== undefined && !isValidTimeZone(input.timezone)) {
     errors.push(
@@ -731,10 +778,11 @@ export function rescheduledAckText(appointment: MessageAppointment, type: Appoin
   ].join('\n');
 }
 
-export type TeamEvent = 'novo' | 'cancelado' | 'remarcado' | 'pedido';
+export type TeamEvent = 'novo' | 'pendente' | 'cancelado' | 'remarcado' | 'pedido';
 
 const TEAM_TITLES: Record<TeamEvent, string> = {
   novo: 'Novo agendamento',
+  pendente: 'Pedido de agendamento, aguarda aprovação no painel',
   cancelado: 'Agendamento cancelado',
   remarcado: 'Agendamento remarcado',
   pedido: 'Cliente pediu para remarcar/cancelar',

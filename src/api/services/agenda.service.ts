@@ -15,6 +15,7 @@
 import { Logger } from '@config/logger.config';
 import {
   ACTIVE_STATUSES,
+  AgendaProviderName,
   AgendaSettings,
   AI_MAX_ACTIVE_PER_CONTACT,
   APPOINTMENT_STATUSES,
@@ -30,6 +31,7 @@ import {
   findType,
   formatSlot,
   generateSlots,
+  HOLDING_STATUSES,
   Interval,
   isBookableSlot,
   MAX_REMINDER_HOURS,
@@ -50,6 +52,8 @@ import {
 import { normalizeUserJid } from '@utils/lidJid';
 import { zonedParts } from '@utils/usageLimits';
 import { randomBytes } from 'crypto';
+
+import { AgendaProvider, InternalAgendaProvider } from './agenda.provider';
 
 const CACHE_TTL_MS = 30_000;
 const TICK_INTERVAL_MS = 60_000;
@@ -79,6 +83,8 @@ type AgendaOptions = {
   cacheTtlMs?: number;
   /** Sends a WhatsApp text from the instance; false when it could not (instance not connected). */
   sendText?: SendText;
+  /** Storage adapters by name (default: the internal one over Prisma). */
+  providers?: Partial<Record<AgendaProviderName, AgendaProvider>>;
 };
 
 export type CreateInput = {
@@ -138,12 +144,20 @@ export class AgendaService {
   private timer: NodeJS.Timeout | null = null;
   private running = false;
   private nextRunAt = 0;
+  private readonly providers: Record<string, AgendaProvider>;
 
   constructor(
     private readonly prisma: any,
     private readonly waMonitor?: { waInstances: Record<string, any> },
     private readonly options: AgendaOptions = {},
-  ) {}
+  ) {
+    this.providers = { internal: new InternalAgendaProvider(prisma), ...(options.providers ?? {}) };
+  }
+
+  /** The storage of this agenda (settings.provider); unknown names fall back to the internal one. */
+  public providerFor(settings: AgendaSettings): AgendaProvider {
+    return this.providers[settings.provider] ?? this.providers.internal;
+  }
 
   private now(): Date {
     return new Date((this.options.now ?? Date.now)());
@@ -197,7 +211,15 @@ export class AgendaService {
     const previous = row ? normalizeAgendaSettings(row) : null;
     const base: any = previous ?? defaultAgendaSettings();
     const merged: any = { ...base };
-    const simple = ['enabled', 'timezone', 'slotMinutes', 'bufferMinutes', 'minNoticeHours', 'maxDaysAhead'];
+    const simple = [
+      'enabled',
+      'timezone',
+      'provider',
+      'slotMinutes',
+      'bufferMinutes',
+      'minNoticeHours',
+      'maxDaysAhead',
+    ];
     for (const key of [...simple, 'availability', 'blocks', 'appointmentTypes', 'notifyNumbers']) {
       if (input[key] !== undefined) merged[key] = input[key];
     }
@@ -215,6 +237,7 @@ export class AgendaService {
     const data = {
       enabled: settings.enabled,
       timezone: settings.timezone,
+      provider: settings.provider,
       slotMinutes: settings.slotMinutes,
       bufferMinutes: settings.bufferMinutes,
       minNoticeHours: settings.minNoticeHours,
@@ -250,14 +273,20 @@ export class AgendaService {
 
   // -------------------------------------------------------------------------------------------- reading
 
-  private async busy(instanceId: string, from: Date, to: Date, db: any = this.prisma): Promise<Interval[]> {
-    const rows: any[] =
-      (await db.appointment.findMany({
-        where: { instanceId, status: { not: 'cancelado' }, startsAt: { lt: to }, endsAt: { gt: from } },
-        select: { id: true, startsAt: true, endsAt: true },
-        take: 2000,
-      })) ?? [];
-    return rows.map((row) => ({ id: row.id, start: new Date(row.startsAt), end: new Date(row.endsAt) }));
+  private async busy(instanceId: string, from: Date, to: Date, db?: any): Promise<Interval[]> {
+    const settings = await this.getSettings(instanceId);
+    return this.providerFor(settings).getBusy(instanceId, { from, to }, db);
+  }
+
+  /**
+   * Future appointments of ONE contact (every address of it). The only listing the AI ever gets: a contact never
+   * sees appointments of other people (onlyOwnAppointments is always on).
+   */
+  public async listOwnAppointments(instanceId: string, contactJids: string[], limit = 10) {
+    const settings = await this.getSettings(instanceId);
+    const jids = [...new Set(contactJids.map(normalizeUserJid).filter(Boolean))];
+    const rows = await this.providerFor(settings).listOwnEvents(instanceId, jids, { from: this.now(), limit });
+    return rows.map((row) => serializeAppointment(row, settings.timezone));
   }
 
   public async listAppointments(
@@ -357,7 +386,7 @@ export class AgendaService {
 
         if (input.source === 'ia') {
           const active = await tx.appointment.count({
-            where: { instanceId, remoteJid: { in: jids }, status: { in: ACTIVE_STATUSES }, startsAt: { gt: now } },
+            where: { instanceId, remoteJid: { in: jids }, status: { in: HOLDING_STATUSES }, startsAt: { gt: now } },
           });
           if (active >= AI_MAX_ACTIVE_PER_CONTACT) {
             throw new AgendaError(
@@ -382,21 +411,24 @@ export class AgendaService {
           throw new AgendaError('Já existe um agendamento nesse horário.', 'conflict');
         }
 
-        const row = await tx.appointment.create({
-          data: {
-            instanceId,
+        // AI bookings wait for the team when requireTeamApproval is on (the slot is held meanwhile)
+        const pending = input.source === 'ia' && settings.aiPermissions.requireTeamApproval;
+        const row = await this.providerFor(settings).createEvent(
+          instanceId,
+          {
             remoteJid,
             contactName: input.contactName?.trim().slice(0, 120) || null,
             typeName: type.name,
             mode: type.mode,
             startsAt: start,
             endsAt: end,
-            status: 'agendado',
+            status: pending ? 'pendente' : 'agendado',
             notes: input.notes?.trim().slice(0, 2000) || null,
             source: input.source,
             remindersSent: {},
           },
-        });
+          tx,
+        );
         return { row, created: true };
       },
       { timeout: 15_000 },
@@ -407,7 +439,14 @@ export class AgendaService {
       if (input.notifyClient) {
         await this.safeSend(instanceId, remoteJid, bookingConfirmationText(result.row, type, settings.timezone));
       }
-      if (input.source !== 'manual') await this.notifyTeam(instanceId, 'novo', result.row, input.source);
+      if (input.source !== 'manual') {
+        await this.notifyTeam(
+          instanceId,
+          result.row.status === 'pendente' ? 'pendente' : 'novo',
+          result.row,
+          input.source,
+        );
+      }
     }
     return { appointment: serializeAppointment(result.row, settings.timezone), created: result.created, type };
   }
@@ -477,18 +516,31 @@ export class AgendaService {
           ) {
             throw new AgendaError('Já existe um agendamento nesse horário.', 'conflict');
           }
-          return tx.appointment.update({ where: { id: current.id }, data });
+          return this.providerFor(settings).updateEvent(instanceId, current.id, data, tx);
         },
         { timeout: 15_000 },
       );
     } else {
-      row = await this.prisma.appointment.update({ where: { id: current.id }, data });
+      const provider = this.providerFor(settings);
+      row =
+        data.status === 'cancelado'
+          ? await provider.cancelEvent(instanceId, current.id, data)
+          : await provider.updateEvent(instanceId, current.id, data);
     }
     this.nextRunAt = 0;
 
     const by = input.by ?? 'manual';
     const cancelled = data.status === 'cancelado' && current.status !== 'cancelado';
+    // The team approved a booking request of the AI: the client gets the booking confirmation
+    const approved = current.status === 'pendente' && ACTIVE_STATUSES.includes(row.status);
     const future = new Date(row.startsAt).getTime() > now.getTime();
+    if (approved && !rescheduled && input.notifyClient && new Date(row.startsAt).getTime() > now.getTime()) {
+      await this.safeSend(
+        instanceId,
+        row.remoteJid,
+        bookingConfirmationText(row, findType(settings, row.typeName), settings.timezone),
+      );
+    }
     if (cancelled) {
       if (input.notifyClient && future)
         await this.safeSend(instanceId, row.remoteJid, cancelledAckText(row, settings.timezone));
@@ -604,7 +656,7 @@ export class AgendaService {
 
     const ai = settings.aiPermissions;
     const ack = changeRequestAckText(row, settings.timezone);
-    if (ai.canCancel || ai.canReschedule) {
+    if (ai.allowCancel || ai.allowReschedule) {
       return {
         note:
           `[Resposta ao lembrete: o cliente quer remarcar ou cancelar o agendamento ${row.id} ` +

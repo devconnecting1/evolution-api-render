@@ -10,6 +10,7 @@ import {
   MAX_TOOL_ROUNDS,
   runToolLoop,
 } from '@api/integrations/chatbot/openai/agenda-ai';
+import { InternalAgendaProvider } from '@api/services/agenda.provider';
 import { AgendaError, AgendaService } from '@api/services/agenda.service';
 import {
   buildIcs,
@@ -428,7 +429,7 @@ describe('agenda: service', () => {
     assert.match(withAi!.note!, /quer remarcar ou cancelar/);
     assert.match(withAi!.fallback!, /A equipe vai falar com você/);
 
-    await agenda.saveSettings('inst-a', { aiPermissions: { canCancel: false, canReschedule: false } });
+    await agenda.saveSettings('inst-a', { aiPermissions: { allowCancel: false, allowReschedule: false } });
     setNow(sp('2026-11-12T12:01'));
     await agenda.tick();
     const noAi = await agenda.handleReminderReply('inst-a', [CLIENT], 'quero remarcar');
@@ -498,7 +499,7 @@ describe('agenda: AI tools and the bounded loop', () => {
   test('tools follow the AI permissions', () => {
     const names = (patch: any) => agendaTools(settings({ aiPermissions: patch })).map((tool) => tool.function.name);
     assert.deepEqual(names({}), ['consultar_horarios', 'meus_agendamentos', 'agendar', 'remarcar', 'cancelar']);
-    assert.deepEqual(names({ canBook: false, canCancel: false, canReschedule: false }), [
+    assert.deepEqual(names({ allowBook: false, allowCancel: false, allowReschedule: false }), [
       'consultar_horarios',
       'meus_agendamentos',
     ]);
@@ -604,5 +605,132 @@ describe('agenda: AI tools and the bounded loop', () => {
     );
     assert.equal(isToolsUnsupportedError({ status: 400, message: 'Invalid image' }), false);
     assert.equal(isToolsUnsupportedError({ status: 500, message: 'tools not supported' }), false);
+  });
+});
+
+// ------------------------------------------------------------------- permissions and provider (server side)
+
+describe('agenda: permission flags are enforced in the tool handlers', () => {
+  test('a tool that is off is neither offered nor executed, even if the model calls it', async () => {
+    const { agenda, ready, prisma } = service(NOW, {
+      aiPermissions: { allowBook: false, allowReschedule: false, allowCancel: false },
+    });
+    await ready;
+    const ctx = (await buildAgendaContext(agenda, 'inst-a', CLIENT))!;
+    assert.deepEqual(
+      ctx.tools.map((tool) => tool.function.name),
+      ['consultar_horarios', 'meus_agendamentos'],
+    );
+    assert.match(ctx.systemPrompt, /NÃO pode marcar/);
+    const booked = await ctx.execute('agendar', { inicio_iso: '2026-11-10T14:00' });
+    assert.equal(booked.erro, 'sem_permissao');
+    assert.equal(prisma.appointment.rows.size, 0);
+
+    const own = await agenda.createAppointment('inst-a', {
+      remoteJid: CLIENT,
+      startsAt: sp('2026-11-10T15:00'),
+      source: 'manual',
+      enforceAvailability: false,
+    });
+    assert.equal(
+      (await ctx.execute('remarcar', { agendamento: 'proximo', novo_inicio_iso: '2026-11-10T16:00' })).erro,
+      'sem_permissao',
+    );
+    assert.equal((await ctx.execute('cancelar', { agendamento: own.appointment.id })).erro, 'sem_permissao');
+    assert.equal(prisma.appointment.rows.get(own.appointment.id).status, 'agendado');
+  });
+
+  test('requireTeamApproval: the AI creates "pendente", no reminder, the team approves and the client is told', async () => {
+    const { agenda, ready, prisma, sent, setNow } = service(sp('2026-11-01T10:00'), {
+      aiPermissions: { requireTeamApproval: true },
+    });
+    await ready;
+    const ctx = (await buildAgendaContext(agenda, 'inst-a', CLIENT))!;
+    assert.match(ctx.systemPrompt, /PENDENTE até a equipe aprovar/);
+    const result = await ctx.execute('agendar', { inicio_iso: '2026-11-12T14:00' });
+    assert.equal(result.pendente_aprovacao, true);
+    const row = [...prisma.appointment.rows.values()][0];
+    assert.equal(row.status, 'pendente');
+    assert.ok(sent.some((item) => /aguarda aprovação/.test(item.text)));
+    // The pending request holds the slot
+    await assert.rejects(
+      agenda.createAppointment('inst-a', {
+        remoteJid: OTHER,
+        startsAt: sp('2026-11-12T14:00'),
+        source: 'ia',
+        enforceAvailability: true,
+      }),
+      (error: any) => error.code === 'conflict',
+    );
+    setNow(sp('2026-11-11T14:05'));
+    assert.equal(((await agenda.tick()) as any).sent, 0);
+
+    const before = sent.length;
+    await agenda.updateAppointment('inst-a', row.id, { status: 'agendado', notifyClient: true });
+    assert.match(sent[before].text, /Seu agendamento está marcado/);
+    assert.equal(sent[before].jid, CLIENT);
+  });
+
+  test('showOtherEventDetails: off = only free slots; on = time and type of others, never names or numbers', async () => {
+    const { agenda, ready } = service();
+    await ready;
+    await agenda.createAppointment('inst-a', {
+      remoteJid: OTHER,
+      contactName: 'Pessoa Sigilosa',
+      startsAt: sp('2026-11-10T10:00'),
+      notes: 'assunto confidencial',
+      source: 'manual',
+      enforceAvailability: false,
+    });
+    const off = (await buildAgendaContext(agenda, 'inst-a', CLIENT))!;
+    const hidden = JSON.stringify(await off.execute('consultar_horarios', { data_inicio: '2026-11-10', dias: 1 }));
+    assert.doesNotMatch(hidden, /ocupados|Sigilosa|confidencial|77776666/);
+
+    await agenda.saveSettings('inst-a', { aiPermissions: { showOtherEventDetails: true } });
+    const on = (await buildAgendaContext(agenda, 'inst-a', CLIENT))!;
+    const shown = await on.execute('consultar_horarios', { data_inicio: '2026-11-10', dias: 1 });
+    assert.deepEqual(shown.ocupados, [{ quando: 'ter, 10/11 às 10:00', tipo: 'Atendimento inicial' }]);
+    assert.doesNotMatch(JSON.stringify(shown), /Sigilosa|confidencial|77776666/);
+  });
+
+  test('onlyOwnAppointments cannot be turned off; unknown providers are refused; a custom provider is used', async () => {
+    const { agenda, ready } = service();
+    await ready;
+    await assert.rejects(
+      agenda.saveSettings('inst-a', { aiPermissions: { onlyOwnAppointments: false } }),
+      /não pode ser desligado/,
+    );
+    assert.equal(
+      normalizeAgendaSettings({ aiPermissions: { onlyOwnAppointments: false } }).aiPermissions.onlyOwnAppointments,
+      true,
+    );
+    await assert.rejects(agenda.saveSettings('inst-a', { provider: 'google' }), /Provedor de agenda indisponível/);
+
+    const prisma = createAgendaTables();
+    const calls: string[] = [];
+    const internal = new InternalAgendaProvider(prisma);
+    const spy: any = {
+      name: 'internal',
+      getBusy: (...args: any[]) => (calls.push('getBusy'), (internal.getBusy as any)(...args)),
+      createEvent: (...args: any[]) => (calls.push('createEvent'), (internal.createEvent as any)(...args)),
+      updateEvent: (...args: any[]) => (calls.push('updateEvent'), (internal.updateEvent as any)(...args)),
+      cancelEvent: (...args: any[]) => (calls.push('cancelEvent'), (internal.cancelEvent as any)(...args)),
+      listOwnEvents: (...args: any[]) => (calls.push('listOwnEvents'), (internal.listOwnEvents as any)(...args)),
+    };
+    const custom = new AgendaService(prisma, undefined, {
+      now: () => NOW.getTime(),
+      cacheTtlMs: 0,
+      providers: { internal: spy },
+    });
+    await custom.saveSettings('inst-a', { enabled: true });
+    const { appointment } = await custom.createAppointment('inst-a', {
+      remoteJid: CLIENT,
+      startsAt: sp('2026-11-10T14:00'),
+      source: 'ia',
+      enforceAvailability: true,
+    });
+    await custom.listOwnAppointments('inst-a', [CLIENT]);
+    await custom.cancelAppointment('inst-a', appointment.id);
+    assert.deepEqual([...new Set(calls)].sort(), ['cancelEvent', 'createEvent', 'getBusy', 'listOwnEvents']);
   });
 });

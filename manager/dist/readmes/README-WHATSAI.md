@@ -64,7 +64,7 @@ Só existe `manager/dist` (bundle Vite). Patches já aplicados:
 4. **Aba README**: item na sidebar (acima de Documentação) que abre um painel **dentro do dashboard** (mesma aba, sidebar visível) com um resumo operacional em um único card; `/readme` também funciona como acesso direto. Conteúdo: `readmes/RESUMO.md`, com links para o guia comercial e o manual interno. Arquivos: `assets/readme-tab.js`, `assets/readme-tab.css`, `assets/marked.min.js` e `readmes/` (gerado por `scripts/sync-readmes.sh`). Para atualizar o conteúdo, rode o sync antes do deploy.
 5. **Observabilidade**: item na sidebar e no cabeçalho do dashboard (`/manager/observability` e `/manager/instance/:instanceId/observability`), página React nativa usando os componentes do projeto (`Card`, `Button`, `Badge`, `Alert`). Consulta `GET /observability` com a chave global do localStorage. A rota antiga `/observability` redireciona para a página nativa.
 6. **Plano e limites**: item na sidebar da instância, logo abaixo de Conversas (`/manager/instance/:instanceId/usage`), e uma barra de uso no fim da Visão Geral. Patch `manager/patches/usage-limits.py` (aceita `--check`, roda depois de todos os outros) + `assets/usage-limits.css` (só tokens do `minimal.css`). Detalhes na seção 15.
-7. **Agenda**: item na sidebar da instância, antes de Plano e limites (`/manager/instance/:instanceId/agenda`), atalho no menu de comandos e "Próximo agendamento" no painel do contato em Conversas. Patch `manager/patches/agenda.py` (aceita `--check`, roda depois de `root-redirect.py`; bundle `?v=24`) + `assets/agenda.css` (só tokens `--m-*`). Detalhes na seção 17.
+7. **Agenda**: item na sidebar da instância, antes de Plano e limites (`/manager/instance/:instanceId/agenda`), atalho no menu de comandos e "Próximo agendamento" no painel do contato em Conversas. Patch `manager/patches/agenda.py` (aceita `--check`, roda depois de `root-redirect.py` e dos patches de Leads; bundle `?v=27`) + `assets/agenda.css` (só tokens `--m-*`). Detalhes na seção 17.
 
 Campos do bot OpenAI no Manager: `manager/patches/openai-fields.py` (tokenParam, pausa humana, descrições), `manager/patches/responsive.py` (celular/tablet) e `manager/patches/openai-media.py` (seção Mídia e memória da conversa, seção 12.10), aplicados nessa ordem; cada um aceita `--check`.
 
@@ -869,6 +869,8 @@ Agenda própria do WhatsAI, por instância: a IA consulta horários e agenda pel
 ### 17.1 Como a IA agenda
 
 - Com a Agenda ligada, cada resposta do bot OpenAI (`chatCompletion`) recebe uma nota curta de sistema (data e hora atuais no fuso da agenda, tipos de atendimento, regras) e as ferramentas: `consultar_horarios(data_inicio?, dias?, tipo?)` (até 6 horários, ex. "qui, 07/11 às 14:00"), `meus_agendamentos()`, `agendar(inicio_iso, tipo, nome?)`, `remarcar(agendamento, novo_inicio_iso)` e `cancelar(agendamento)` (`agendamento` = id ou `proximo`). Agendar, remarcar e cancelar só aparecem se permitidos nas configurações.
+- **Permissões (no servidor, não só no prompt)**, em `aiPermissions`: `allowBook`, `allowReschedule`, `allowCancel` (padrão ligados; desligado = a ferramenta nem é oferecida e, se o modelo tentar mesmo assim, o servidor recusa com `sem_permissao` e a IA diz que a equipe vai cuidar disso); `onlyOwnAppointments` (sempre ligado, não configurável: o contato só vê e altera agendamentos do próprio número); `requireTeamApproval` (padrão desligado; ligado = o pedido da IA vira `pendente`, segura o horário, não recebe lembrete, a equipe aprova no painel e só então o cliente recebe a confirmação); `showOtherEventDetails` (padrão desligado = a IA só vê horários livres; ligado = também horário e tipo dos outros agendamentos, nunca nome, número ou observações).
+- **Provedor:** `provider` = `internal` (a agenda do WhatsAI, único hoje). Todo acesso aos agendamentos passa pela interface `AgendaProvider` (`src/api/services/agenda.provider.ts`: `getBusy`, `createEvent`, `updateEvent`, `cancelEvent`, `listOwnEvents`), onde o Google Calendar vai entrar como outro provedor.
 - Regras da nota: confirmar dia, hora e tipo com o cliente antes de agendar; nunca inventar horários; só ver os agendamentos do próprio contato; se nenhum horário servir, oferecer os próximos ou dizer que a equipe vai entrar em contato; sem valores, sem promessa de resultado, sem orientação jurídica.
 - **Validação no servidor:** o horário pedido pelo modelo é conferido de novo na hora (disponibilidade, bloqueios, antecedência mínima, dias à frente, intervalo e outros agendamentos). Agendar é idempotente por contato + horário. A IA pode manter no máximo 2 agendamentos futuros por contato. As ferramentas só enxergam o contato da conversa (telefone ou LID).
 - **Laço limitado:** no máximo 3 rodadas de ferramentas por resposta; a última chamada proíbe ferramentas e sempre devolve texto. Uma resposta com ferramentas conta **uma** resposta do plano (seção 15), como qualquer outra. Pausa humana e limites valem igual (a verificação acontece antes).
@@ -909,7 +911,8 @@ curl -X POST "$SERVER_URL/agenda/settings/$INSTANCE" -H "apikey: $APIKEY" -H "Co
   "appointmentTypes": [{ "name": "Atendimento inicial", "minutes": 30, "mode": "presencial",
                          "location": "Endereço do escritório", "instructions": "Documento com foto" }],
   "reminders": { "enabled": true, "hoursBefore": [24, 2] }, "confirmation": { "enabled": true },
-  "aiPermissions": { "canBook": true, "canCancel": true, "canReschedule": true },
+  "aiPermissions": { "allowBook": true, "allowReschedule": true, "allowCancel": true,
+                    "requireTeamApproval": false, "showOtherEventDetails": false },
   "notifyNumbers": ["5521999999999"] }'
 
 curl "$SERVER_URL/agenda/$INSTANCE?from=2026-11-09&to=2026-11-16" -H "apikey: $APIKEY"          # lista (contact=, status=)
@@ -923,7 +926,7 @@ curl -X POST "$SERVER_URL/agenda/settings/$INSTANCE/ics-token" -H "apikey: $APIK
 curl -X POST "$SERVER_URL/agenda/tick" -H "apikey: $CHAVE_GLOBAL"
 ```
 
-`startsAt` sem fuso é lido no fuso da agenda. Status: `agendado`, `confirmado`, `cancelado`, `realizado`, `faltou`. Origem: `ia`, `manual`, `mcp`. MCP: seção 14.2.
+`startsAt` sem fuso é lido no fuso da agenda. Status: `pendente` (pedido da IA aguardando a equipe), `agendado`, `confirmado`, `cancelado`, `realizado`, `faltou`. Aprovar: `PATCH {"status":"agendado","notifyClient":true}`. Origem: `ia`, `manual`, `mcp`. MCP: seção 14.2.
 
 ### 17.6 Limites, segurança e deploy
 

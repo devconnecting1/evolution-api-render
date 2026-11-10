@@ -53,7 +53,7 @@ export function agendaTools(settings: AgendaSettings): any[] {
     fn('meus_agendamentos', 'Agendamentos futuros DESTE cliente (o contato desta conversa).', {}),
   ];
   const ai = settings.aiPermissions;
-  if (ai.canBook) {
+  if (ai.allowBook) {
     tools.push(
       fn(
         'agendar',
@@ -70,7 +70,7 @@ export function agendaTools(settings: AgendaSettings): any[] {
       ),
     );
   }
-  if (ai.canReschedule) {
+  if (ai.allowReschedule) {
     tools.push(
       fn(
         'remarcar',
@@ -83,7 +83,7 @@ export function agendaTools(settings: AgendaSettings): any[] {
       ),
     );
   }
-  if (ai.canCancel) {
+  if (ai.allowCancel) {
     tools.push(
       fn('cancelar', 'Cancela um agendamento deste cliente, depois que ele confirmar.', { agendamento: which }, [
         'agendamento',
@@ -101,9 +101,9 @@ export function agendaSystemPrompt(settings: AgendaSettings, now: Date): string 
     .join('; ');
   const ai = settings.aiPermissions;
   const limits = [
-    ai.canBook ? null : 'Você NÃO pode marcar horários: diga que a equipe vai entrar em contato para agendar.',
-    ai.canReschedule ? null : 'Você NÃO pode remarcar: diga que a equipe vai entrar em contato.',
-    ai.canCancel ? null : 'Você NÃO pode cancelar: diga que a equipe vai entrar em contato.',
+    ai.allowBook ? null : 'Você NÃO pode marcar horários: diga que a equipe vai entrar em contato para agendar.',
+    ai.allowReschedule ? null : 'Você NÃO pode remarcar: diga que a equipe vai entrar em contato.',
+    ai.allowCancel ? null : 'Você NÃO pode cancelar: diga que a equipe vai entrar em contato.',
   ].filter(Boolean);
   return [
     'Agenda (ferramentas disponíveis nesta conversa):',
@@ -116,6 +116,11 @@ export function agendaSystemPrompt(settings: AgendaSettings, now: Date): string 
     '- Se nenhum horário servir, ofereça os próximos dias ou diga que a equipe vai entrar em contato.',
     '- Ao confirmar, informe dia, hora, tipo e o local ou link que a ferramenta devolver. Não fale de valores, não prometa resultados e não dê orientação jurídica.',
     ...limits.map((text) => `- ${text}`),
+    ...(ai.requireTeamApproval
+      ? [
+          '- Todo agendamento seu fica PENDENTE até a equipe aprovar: diga isso ao cliente e não confirme o horário como definitivo.',
+        ]
+      : []),
   ].join('\n');
 }
 
@@ -157,15 +162,9 @@ export async function buildAgendaContext(
   if (!jids.length) return null;
   const tz = settings.timezone;
 
+  // onlyOwnAppointments (always on): the only listing the model gets is the one of this contact
   const mine = async () =>
-    (
-      await agenda.listAppointments(instanceId, {
-        from: now,
-        contactJids: jids,
-        status: ['agendado', 'confirmado'],
-        limit: 10,
-      })
-    ).map((item) => ({
+    (await agenda.listOwnAppointments(instanceId, jids, 10)).map((item) => ({
       id: item.id,
       tipo: item.typeName,
       quando: item.label,
@@ -188,6 +187,25 @@ export async function buildAgendaContext(
     return result.slots.map((slot) => ({ inicio_iso: toLocalIso(new Date(slot.startsAt), tz), quando: slot.label }));
   };
 
+  // showOtherEventDetails: off (default) = the model only sees free slots. On = also when other appointments are and
+  // their type. Never names, numbers or notes of other people.
+  const occupied = async (fromDay?: string, days?: number) => {
+    const today = await agenda.today(instanceId);
+    const first =
+      /^\d{4}-\d{2}-\d{2}$/.test(String(fromDay ?? '')) && String(fromDay) > today ? String(fromDay) : today;
+    const from = parseStart(`${first}T00:00`, tz) ?? now;
+    const to = new Date(from.getTime() + Math.max(1, Math.min(Number(days) || 7, 14)) * 86_400_000);
+    const list = await agenda.listAppointments(instanceId, {
+      from,
+      to,
+      status: ['pendente', 'agendado', 'confirmado'],
+      limit: 60,
+    });
+    return list
+      .filter((item) => !jids.includes(item.remoteJid))
+      .map((item) => ({ quando: item.label, tipo: item.typeName }));
+  };
+
   const execute = async (name: string, args: any): Promise<any> => {
     try {
       switch (name) {
@@ -196,8 +214,11 @@ export async function buildAgendaContext(
           if (args?.tipo && !type)
             return failure('tipo_desconhecido', `Tipos: ${settings.appointmentTypes.map((t) => t.name).join(', ')}.`);
           const list = await slots(args?.data_inicio, args?.dias, type?.name);
+          const extra = settings.aiPermissions.showOtherEventDetails
+            ? { ocupados: await occupied(args?.data_inicio, args?.dias) }
+            : {};
           return list.length
-            ? { ok: true, tipo: type?.name, horarios: list }
+            ? { ok: true, tipo: type?.name, horarios: list, ...extra }
             : {
                 ok: true,
                 tipo: type?.name,
@@ -209,7 +230,7 @@ export async function buildAgendaContext(
         case 'meus_agendamentos':
           return { ok: true, agendamentos: await mine() };
         case 'agendar': {
-          if (!settings.aiPermissions.canBook)
+          if (!settings.aiPermissions.allowBook)
             return failure('sem_permissao', 'A equipe vai entrar em contato para agendar.');
           const start = parseStart(args?.inicio_iso, tz);
           if (!start) return failure('data_invalida', 'Use o inicio_iso exatamente como veio de consultar_horarios.');
@@ -225,9 +246,14 @@ export async function buildAgendaContext(
             source: 'ia',
             enforceAvailability: true,
           });
+          const pending = result.appointment.status === 'pendente';
           return {
             ok: true,
             ja_existia: !result.created,
+            pendente_aprovacao: pending,
+            mensagem: pending
+              ? 'Pedido registrado: a equipe precisa aprovar. Diga ao cliente que ele recebe a confirmação assim que a equipe aprovar; NÃO diga que está confirmado.'
+              : undefined,
             id: result.appointment.id,
             tipo: result.type.name,
             quando: result.appointment.label,
@@ -237,7 +263,7 @@ export async function buildAgendaContext(
           };
         }
         case 'remarcar': {
-          if (!settings.aiPermissions.canReschedule)
+          if (!settings.aiPermissions.allowReschedule)
             return failure('sem_permissao', 'A equipe vai entrar em contato para remarcar.');
           const { found, list } = await pick(args?.agendamento);
           if (!found)
@@ -259,7 +285,7 @@ export async function buildAgendaContext(
           };
         }
         case 'cancelar': {
-          if (!settings.aiPermissions.canCancel)
+          if (!settings.aiPermissions.allowCancel)
             return failure('sem_permissao', 'A equipe vai entrar em contato para cancelar.');
           const { found, list } = await pick(args?.agendamento);
           if (!found)

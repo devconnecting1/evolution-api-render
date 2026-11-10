@@ -3,6 +3,7 @@ CREATE TABLE `AgendaSettings` (
     `id` VARCHAR(191) NOT NULL,
     `enabled` BOOLEAN NOT NULL DEFAULT false,
     `timezone` VARCHAR(64) NOT NULL DEFAULT 'America/Sao_Paulo',
+    `provider` VARCHAR(20) NOT NULL DEFAULT 'internal',
     `slotMinutes` INTEGER NOT NULL DEFAULT 30,
     `bufferMinutes` INTEGER NOT NULL DEFAULT 0,
     `minNoticeHours` INTEGER NOT NULL DEFAULT 2,

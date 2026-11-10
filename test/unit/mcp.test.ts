@@ -675,11 +675,11 @@ describe('MCP: tools', () => {
       instance: 'escritorio',
       enabled: true,
       availability: always,
-      ai_permissions: { can_cancel: false },
+      ai_permissions: { allow_cancel: false },
     });
     assert.equal(saved.json.updated, true);
     assert.equal(saved.json.previous, null);
-    assert.equal(saved.json.settings.aiPermissions.canCancel, false);
+    assert.equal(saved.json.settings.aiPermissions.allowCancel, false);
     assert.equal(saved.json.settings.enabled, true);
 
     const slots = await callTool(h.url, 'get_free_slots', { instance: 'escritorio', days: 3, limit: 2 });

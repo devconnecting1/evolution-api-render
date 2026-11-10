@@ -1406,7 +1406,7 @@ const WaAgenda=(()=>{
   const h=(t,p,...c)=>{const{key,...r}=p||{};const kids=c.flat().filter(x=>x!==null&&x!==void 0&&x!==!1);return kids.length>1?i.jsxs(t,{...r,children:kids},key):i.jsx(t,kids.length?{...r,children:kids[0]}:r,key)};
   const DAYS=[['mon','Segunda','seg'],['tue','Terça','ter'],['wed','Quarta','qua'],['thu','Quinta','qui'],['fri','Sexta','sex'],['sat','Sábado','sáb'],['sun','Domingo','dom']];
   const WD=['dom','seg','ter','qua','qui','sex','sáb'];
-  const STATUS=[['agendado','Agendado'],['confirmado','Confirmado'],['realizado','Realizado'],['faltou','Faltou'],['cancelado','Cancelado']];
+  const STATUS=[['pendente','Pendente (aprovar)'],['agendado','Agendado'],['confirmado','Confirmado'],['realizado','Realizado'],['faltou','Faltou'],['cancelado','Cancelado']];
   const SL=Object.fromEntries(STATUS);
   const MODES=[['presencial','Presencial'],['online','Online'],['telefone','Telefone']];
   const SOURCES={ia:'IA no WhatsApp',manual:'Painel',mcp:'MCP'};
@@ -1526,6 +1526,8 @@ const WaAgenda=(()=>{
         h('div',{className:'wag-actions-row'},
           h(Fu,{to:'/manager/instance/'+instance.id+'/chat/'+enc(appt.remoteJid),className:'wag-btn wag-btn-ghost'},svg('chat',14),'Abrir conversa'),
           phone&&!appt.remoteJid.endsWith('@lid')?h('a',{href:'https://wa.me/'+phone,target:'_blank',rel:'noopener noreferrer',className:'wag-btn wag-btn-ghost'},svg('ext',14),'Abrir no WhatsApp'):null),
+        appt.status==='pendente'?h('div',{className:'wag-callout',role:'status'},h('p',null,'Pedido feito pela IA: aguarda aprovação da equipe. Ao aprovar, o cliente recebe a confirmação pelo WhatsApp.'),
+          h('button',{type:'button',className:'wag-btn wag-btn-primary wag-btn-sm',disabled:!!busy,onClick:()=>patch({status:'agendado',notifyClient:!0},'approve','Agendamento aprovado.')},busy==='approve'?'Aprovando…':'Aprovar')):null,
         h(Field,{id:'wag-d-status',label:'Status'},h('div',{className:'wag-inline'},h('select',{id:'wag-d-status',className:'wag-input',value:status,onChange:e=>setStatus(e.target.value)},STATUS.filter(s=>s[0]!=='cancelado'||appt.status==='cancelado').map(([v,l])=>h('option',{key:v,value:v},l))),
           h('button',{type:'button',className:'wag-btn',disabled:status===appt.status||!!busy,onClick:()=>patch({status},'status','Status atualizado.')},busy==='status'?'Salvando…':'Salvar'))),
         appt.status==='cancelado'?null:h('fieldset',{className:'wag-fieldset'},h('legend',{className:'wag-label'},'Remarcar'),
@@ -1544,14 +1546,14 @@ const WaAgenda=(()=>{
     const week={};for(const[k]of DAYS){const r=(s.availability||{})[k]||[];week[k]={open:r.length>0,a:r[0]?r[0][0]:'09:00',b:r[0]?r[0][1]:'12:00',c:r[1]?r[1][0]:'',d:r[1]?r[1][1]:''}}
     return{enabled:!!s.enabled,timezone:s.timezone,slotMinutes:String(s.slotMinutes),bufferMinutes:String(s.bufferMinutes),minNoticeHours:String(s.minNoticeHours),maxDaysAhead:String(s.maxDaysAhead),week,
       blocks:(s.blocks||[]).map(b=>({...b,end:b.end||b.start,from:b.from||'',to:b.to||'',reason:b.reason||''})),types:(s.appointmentTypes||[]).map(t=>({...t,minutes:String(t.minutes),location:t.location||'',instructions:t.instructions||''})),
-      remOn:s.reminders?.enabled!==!1,hours:(s.reminders?.hoursBefore||[]).join(', '),confirm:s.confirmation?.enabled!==!1,canBook:s.aiPermissions?.canBook!==!1,canCancel:s.aiPermissions?.canCancel!==!1,canReschedule:s.aiPermissions?.canReschedule!==!1,numbers:(s.notifyNumbers||[]).join(', ')};
+      remOn:s.reminders?.enabled!==!1,hours:(s.reminders?.hoursBefore||[]).join(', '),confirm:s.confirmation?.enabled!==!1,allowBook:s.aiPermissions?.allowBook!==!1,allowCancel:s.aiPermissions?.allowCancel!==!1,allowReschedule:s.aiPermissions?.allowReschedule!==!1,requireTeamApproval:s.aiPermissions?.requireTeamApproval===!0,showOtherEventDetails:s.aiPermissions?.showOtherEventDetails===!0,provider:s.provider||'internal',numbers:(s.notifyNumbers||[]).join(', ')};
   }
   function toBody(f){
     return{enabled:f.enabled,timezone:f.timezone,slotMinutes:Number(f.slotMinutes),bufferMinutes:Number(f.bufferMinutes)||0,minNoticeHours:Number(f.minNoticeHours)||0,maxDaysAhead:Number(f.maxDaysAhead)||30,
       availability:Object.fromEntries(DAYS.map(([k])=>{const d=f.week[k];return[k,d.open?[[d.a,d.b],...(d.c&&d.d?[[d.c,d.d]]:[])]:[]]})),
       blocks:f.blocks.filter(b=>b.start).map(b=>({start:b.start,end:b.end||b.start,from:b.from||null,to:b.to||null,reason:b.reason||null})),
       appointmentTypes:f.types.map(t=>({name:t.name.trim(),minutes:Number(t.minutes),mode:t.mode||'presencial',location:t.location.trim()||null,instructions:t.instructions.trim()||null})),
-      reminders:{enabled:f.remOn,hoursBefore:f.hours.split(/[,;\s]+/).filter(Boolean).map(Number)},confirmation:{enabled:f.confirm},aiPermissions:{canBook:f.canBook,canCancel:f.canCancel,canReschedule:f.canReschedule},
+      reminders:{enabled:f.remOn,hoursBefore:f.hours.split(/[,;\s]+/).filter(Boolean).map(Number)},confirmation:{enabled:f.confirm},aiPermissions:{allowBook:f.allowBook,allowCancel:f.allowCancel,allowReschedule:f.allowReschedule,requireTeamApproval:f.requireTeamApproval,showOtherEventDetails:f.showOtherEventDetails},provider:f.provider,
       notifyNumbers:f.numbers.split(/[,;\s]+/).map(x=>x.replace(/\D/g,'')).filter(Boolean)};
   }
   function problems(f){const e=[];
@@ -1610,8 +1612,12 @@ const WaAgenda=(()=>{
           h(Field,{id:'wag-s-hours',label:'Horas antes',hint:'Até 3, separadas por vírgula. Nunca entre 21h e 8h: o lembrete de um horário antes das 10h vai na véspera às 20h.'},h('input',{id:'wag-s-hours',className:'wag-input',value:f.hours,onChange:e=>set({hours:e.target.value})})),
           h('label',{className:'wag-check'},h('input',{type:'checkbox',checked:f.confirm,onChange:e=>set({confirm:e.target.checked})}),h('span',null,'Pedir confirmação no lembrete ("Responda 1 para confirmar ou 2 para remarcar/cancelar")'))),
         h('section',{className:'wag-sec'},h('h3',{className:'wag-sec-title'},'O que a IA pode fazer'),
-          [['canBook','Agendar'],['canReschedule','Remarcar'],['canCancel','Cancelar']].map(([k,l])=>h('label',{key:k,className:'wag-check'},h('input',{type:'checkbox',checked:f[k],onChange:e=>set({[k]:e.target.checked})}),h('span',null,l))),
-          h('p',{className:'wag-hint'},'A IA sempre confirma dia e hora com o cliente antes, só vê os agendamentos do próprio contato e nunca fala de valores.')),
+          h('p',{className:'wag-hint'},'Valem no servidor: o que estiver desligado nem é oferecido à IA, e ela diz que a equipe vai cuidar disso.'),
+          [['allowBook','Agendar'],['allowReschedule','Remarcar'],['allowCancel','Cancelar'],['requireTeamApproval','Pedidos da IA precisam de aprovação da equipe (ficam "Pendente" até aprovar aqui)'],['showOtherEventDetails','A IA pode ver horário e tipo dos outros agendamentos (nunca nomes, números ou observações)']].map(([k,l])=>h('label',{key:k,className:'wag-check'},h('input',{type:'checkbox',checked:f[k],onChange:e=>set({[k]:e.target.checked})}),h('span',null,l))),
+          h('label',{className:'wag-check'},h('input',{type:'checkbox',checked:!0,disabled:!0}),h('span',null,'O cliente só vê e altera os próprios agendamentos (sempre ligado)')),
+          h('p',{className:'wag-hint'},'A IA sempre confirma dia e hora com o cliente antes e nunca fala de valores.')),
+        h('section',{className:'wag-sec'},h('h3',{className:'wag-sec-title'},'Onde a agenda fica'),
+          h(Field,{id:'wag-s-prov',label:'Provedor',hint:'Hoje só a agenda interna do WhatsAI. O Google Calendar entra como outro provedor em uma próxima versão.'},h('select',{id:'wag-s-prov',className:'wag-input',value:f.provider,onChange:e=>set({provider:e.target.value})},h('option',{value:'internal'},'Agenda do WhatsAI (interna)')))),
         h('section',{className:'wag-sec'},h('h3',{className:'wag-sec-title'},'Avisos para a equipe'),
           h(Field,{id:'wag-s-num',label:'Números da equipe',hint:'Recebem um aviso quando a IA agenda, remarca ou cancela. Vazio: usa os números dos avisos de Leads, se houver.'},h('input',{id:'wag-s-num',className:'wag-input',inputMode:'tel',placeholder:'5511999998888, 5511988887777',value:f.numbers,onChange:e=>set({numbers:e.target.value})}))),
         h('section',{className:'wag-sec'},h('h3',{className:'wag-sec-title'},'Calendário (Google, Apple, Outlook)'),

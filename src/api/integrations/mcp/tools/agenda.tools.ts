@@ -20,7 +20,7 @@ export const listAppointments = defineTool({
   name: 'list_appointments',
   title: 'Listar agendamentos',
   description:
-    'Lista os agendamentos da Agenda da instância (horários no fuso da agenda, rótulo como "qui, 07/11 às 14:00", contato, tipo, status agendado/confirmado/cancelado/realizado/faltou, origem ia/manual/mcp). Padrão: de hoje até 14 dias. As observações internas vêm junto: são da equipe, não repasse ao cliente.',
+    'Lista os agendamentos da Agenda da instância (horários no fuso da agenda, rótulo como "qui, 07/11 às 14:00", contato, tipo, status pendente/agendado/confirmado/cancelado/realizado/faltou, origem ia/manual/mcp). Padrão: de hoje até 14 dias. As observações internas vêm junto: são da equipe, não repasse ao cliente.',
   input: {
     instance: instanceArg,
     from: dayArg,
@@ -40,7 +40,7 @@ export const listAppointments = defineTool({
       from: start,
       to: end,
       contactJids: contact ? [normalizeContactJid(contact)] : undefined,
-      status: include_cancelled ? undefined : ['agendado', 'confirmado', 'realizado', 'faltou'],
+      status: include_cancelled ? undefined : ['pendente', 'agendado', 'confirmado', 'realizado', 'faltou'],
       limit: 300,
     });
     return jsonResult({
@@ -195,11 +195,17 @@ export const updateAgendaSettings = defineTool({
     confirmation_enabled: z.boolean().optional(),
     ai_permissions: z
       .object({
-        can_book: z.boolean().optional(),
-        can_cancel: z.boolean().optional(),
-        can_reschedule: z.boolean().optional(),
+        allow_book: z.boolean().optional(),
+        allow_reschedule: z.boolean().optional(),
+        allow_cancel: z.boolean().optional(),
+        require_team_approval: z.boolean().optional().describe('Pedidos da IA ficam pendentes até a equipe aprovar.'),
+        show_other_event_details: z
+          .boolean()
+          .optional()
+          .describe('A IA vê também horário e tipo dos outros agendamentos (nunca nomes). Padrão: não.'),
       })
-      .optional(),
+      .optional()
+      .describe('O cliente sempre vê só os próprios agendamentos (não configurável).'),
     notify_numbers: z.array(z.string().max(30)).max(5).optional(),
   },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
@@ -225,11 +231,18 @@ export const updateAgendaSettings = defineTool({
     }
     if (args.confirmation_enabled !== undefined) input.confirmation = { enabled: args.confirmation_enabled };
     if (args.ai_permissions) {
-      const ai = args.ai_permissions;
+      const map: [string, string][] = [
+        ['allow_book', 'allowBook'],
+        ['allow_reschedule', 'allowReschedule'],
+        ['allow_cancel', 'allowCancel'],
+        ['require_team_approval', 'requireTeamApproval'],
+        ['show_other_event_details', 'showOtherEventDetails'],
+      ];
       input.aiPermissions = {};
-      if (ai.can_book !== undefined) input.aiPermissions.canBook = ai.can_book;
-      if (ai.can_cancel !== undefined) input.aiPermissions.canCancel = ai.can_cancel;
-      if (ai.can_reschedule !== undefined) input.aiPermissions.canReschedule = ai.can_reschedule;
+      for (const [arg, field] of map) {
+        if ((args.ai_permissions as any)[arg] !== undefined)
+          input.aiPermissions[field] = (args.ai_permissions as any)[arg];
+      }
     }
     if (!Object.keys(input).length) throw new McpToolError('nenhum campo para alterar foi informado.');
 

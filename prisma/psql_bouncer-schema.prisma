@@ -892,6 +892,8 @@ model AgendaSettings {
   id               String    @id @default(cuid())
   enabled          Boolean   @default(false) @db.Boolean
   timezone         String    @default("America/Sao_Paulo") @db.VarChar(64)
+  /// internal (the WhatsAI agenda). Google Calendar comes as another provider later.
+  provider         String    @default("internal") @db.VarChar(20)
   slotMinutes      Int       @default(30) @db.Integer
   bufferMinutes    Int       @default(0) @db.Integer
   minNoticeHours   Int       @default(2) @db.Integer

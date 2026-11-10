@@ -19,8 +19,8 @@ const int = (label: string, min: number, max: number): JSONSchema7 => ({
 const bool = (label: string): JSONSchema7 => ({ type: 'boolean', description: `"${label}" deve ser true ou false.` });
 const status: JSONSchema7 = {
   type: 'string',
-  enum: ['agendado', 'confirmado', 'cancelado', 'realizado', 'faltou'],
-  description: '"status" deve ser agendado, confirmado, cancelado, realizado ou faltou.',
+  enum: ['pendente', 'agendado', 'confirmado', 'cancelado', 'realizado', 'faltou'],
+  description: '"status" deve ser pendente, agendado, confirmado, cancelado, realizado ou faltou.',
 };
 const startsAt: JSONSchema7 = {
   type: 'string',
@@ -75,6 +75,11 @@ export const agendaSettingsSchema: JSONSchema7 = {
   properties: {
     enabled: bool('enabled'),
     timezone: { type: 'string', minLength: 1, maxLength: 64, description: '"timezone" deve ser um fuso IANA.' },
+    provider: {
+      type: 'string',
+      enum: ['internal'],
+      description: '"provider": hoje só "internal" (agenda do WhatsAI).',
+    },
     slotMinutes: int('slotMinutes', 5, 240),
     bufferMinutes: int('bufferMinutes', 0, 240),
     minNoticeHours: int('minNoticeHours', 0, 720),
@@ -136,7 +141,17 @@ export const agendaSettingsSchema: JSONSchema7 = {
     confirmation: { type: 'object', properties: { enabled: bool('confirmation.enabled') } },
     aiPermissions: {
       type: 'object',
-      properties: { canBook: bool('canBook'), canCancel: bool('canCancel'), canReschedule: bool('canReschedule') },
+      properties: {
+        allowBook: bool('allowBook'),
+        allowReschedule: bool('allowReschedule'),
+        allowCancel: bool('allowCancel'),
+        onlyOwnAppointments: {
+          const: true,
+          description: '"onlyOwnAppointments" é sempre true: o cliente só vê os próprios agendamentos.',
+        },
+        requireTeamApproval: bool('requireTeamApproval'),
+        showOtherEventDetails: bool('showOtherEventDetails'),
+      },
     },
     notifyNumbers: {
       type: 'array',
