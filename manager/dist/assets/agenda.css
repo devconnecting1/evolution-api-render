@@ -1,0 +1,775 @@
+/*
+ * WhatsAI Manager: "Agenda" page (WaAgenda, manager/patches/agenda.py). Linked after the other patch stylesheets.
+ * Only the design tokens of minimal.css (var(--m-*)): no colour is defined here. Twenty-like: 32px controls,
+ * 1px borders, small radii, quiet surfaces.
+ */
+
+.wag-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 0 32px;
+  color: var(--m-text);
+  font-size: 14px;
+}
+.wag-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wag-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+}
+.wag-head-actions,
+.wag-inline,
+.wag-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.wag-hint {
+  display: block;
+  margin: 2px 0 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+.wag-mono {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------------------------------- buttons */
+.wag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--m-control);
+  padding: 0 12px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+}
+.wag-btn:hover:not(:disabled) {
+  background: var(--m-hover);
+}
+.wag-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.wag-btn:focus-visible,
+.wag-ibtn:focus-visible,
+.wag-appt:focus-visible,
+.wag-row:focus-visible,
+.wag-seg button:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wag-btn-sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+.wag-btn-primary {
+  border-color: var(--m-primary);
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+}
+.wag-btn-primary:hover:not(:disabled) {
+  background: var(--m-primary-hover);
+}
+.wag-btn-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+.wag-btn-danger {
+  border-color: var(--m-bad);
+  background: var(--m-bad);
+  color: var(--m-on-primary);
+}
+.wag-btn-danger-ghost {
+  align-self: flex-start;
+  border-color: transparent;
+  background: transparent;
+  color: var(--m-bad);
+}
+.wag-ibtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  cursor: pointer;
+}
+.wag-ibtn:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+
+/* ---------------------------------------------------------------------------------------- toolbar */
+.wag-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--m-border);
+}
+.wag-seg {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+}
+.wag-seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.wag-seg button[aria-pressed='true'] {
+  background: var(--m-bg);
+  color: var(--m-text);
+  box-shadow: var(--m-shadow-pop);
+}
+.wag-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.wag-range {
+  margin-left: 6px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.wag-count {
+  margin-left: auto;
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------------------------------------- week */
+.wag-week {
+  --wag-hours-w: 52px;
+  overflow: auto;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+}
+.wag-week-head,
+.wag-week-body {
+  display: grid;
+  grid-template-columns: var(--wag-hours-w) repeat(var(--wag-cols), minmax(110px, 1fr));
+  min-width: calc(var(--wag-hours-w) + var(--wag-cols) * 110px);
+}
+.wag-week-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid var(--m-border);
+  background: var(--m-bg);
+}
+.wag-dayhead {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 10px;
+  border-left: 1px solid var(--m-border);
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wag-dayhead[data-today='true'] .wag-daynum {
+  padding: 0 6px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+}
+.wag-dayname {
+  text-transform: capitalize;
+}
+.wag-daynum {
+  color: var(--m-text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.wag-week-body {
+  position: relative;
+}
+.wag-hours {
+  position: relative;
+}
+.wag-hours span {
+  position: absolute;
+  right: 8px;
+  transform: translateY(-50%);
+  color: var(--m-text-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.wag-hours span:first-child {
+  transform: none;
+}
+.wag-col {
+  position: relative;
+  border-left: 1px solid var(--m-border);
+  cursor: copy;
+}
+.wag-col[data-today='true'] {
+  background: var(--m-surface);
+}
+.wag-col:hover {
+  background: var(--m-hover);
+}
+.wag-line {
+  position: absolute;
+  right: 0;
+  left: 0;
+  border-top: 1px solid var(--m-border);
+  pointer-events: none;
+}
+.wag-closed {
+  position: absolute;
+  right: 0;
+  left: 0;
+  background: repeating-linear-gradient(135deg, transparent 0 6px, var(--m-border) 6px 7px);
+  pointer-events: none;
+}
+.wag-blocked {
+  position: absolute;
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  border-left: 2px solid var(--m-warn);
+  background: var(--m-selected);
+  pointer-events: none;
+}
+.wag-blocked-text {
+  display: block;
+  padding: 2px 6px;
+  color: var(--m-text-2);
+  font-size: 11px;
+}
+.wag-appt {
+  position: absolute;
+  right: 4px;
+  left: 4px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  padding: 2px 6px;
+  border: 1px solid var(--m-tint-line);
+  border-left: 3px solid var(--m-primary);
+  border-radius: var(--m-radius-item);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.wag-appt:hover {
+  background: var(--m-tint-hover);
+}
+.wag-appt[data-status='pendente'] {
+  border-style: dashed;
+  border-left-style: solid;
+  border-left-color: var(--m-warn);
+  background: var(--m-bg);
+}
+.wag-chip[data-status='pendente'] {
+  background: var(--m-bg);
+  box-shadow: inset 0 0 0 1px var(--m-warn);
+  color: var(--m-text);
+}
+.wag-appt[data-status='confirmado'] {
+  border-left-color: var(--m-ok);
+}
+.wag-appt[data-status='realizado'],
+.wag-appt[data-status='faltou'] {
+  border-color: var(--m-border-strong);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+}
+.wag-appt[data-status='faltou'] {
+  border-left-color: var(--m-bad);
+}
+.wag-appt-line {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.wag-appt-time {
+  flex: none;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.wag-appt-name,
+.wag-appt-type {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.wag-appt-type {
+  opacity: 0.8;
+}
+
+/* ------------------------------------------------------------------------------------------- list */
+.wag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.wag-list-title {
+  margin: 0 0 6px;
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+.wag-rows {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  list-style: none;
+}
+.wag-rows li + li {
+  border-top: 1px solid var(--m-border);
+}
+.wag-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 0;
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.wag-row:hover {
+  background: var(--m-hover);
+}
+.wag-row[data-status='cancelado'] .wag-row-name,
+.wag-row[data-status='cancelado'] .wag-row-time {
+  color: var(--m-text-3);
+  text-decoration: line-through;
+}
+.wag-row-time {
+  width: 92px;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.wag-row-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.wag-row-name {
+  font-weight: 500;
+}
+.wag-chip {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-selected);
+  color: var(--m-text-2);
+  font-size: 12px;
+}
+.wag-chip[data-status='agendado'] {
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+}
+.wag-chip[data-status='confirmado'] {
+  background: var(--m-ok);
+  color: var(--m-on-primary);
+}
+.wag-chip[data-status='faltou'] {
+  background: var(--m-bad);
+  color: var(--m-on-primary);
+}
+.wag-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 48px 16px;
+  border: 1px dashed var(--m-border-strong);
+  border-radius: var(--m-radius-card);
+  text-align: center;
+}
+.wag-empty-ico {
+  color: var(--m-text-3);
+}
+.wag-empty-title {
+  margin: 4px 0 0;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------------------- callouts */
+.wag-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--m-tint-line);
+  border-radius: var(--m-radius-card);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+}
+.wag-callout p {
+  margin: 0;
+}
+.wag-callout[data-tone='bad'] {
+  border-color: var(--m-bad);
+  background: var(--m-bg);
+  color: var(--m-bad);
+}
+.wag-skeleton {
+  height: 420px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: linear-gradient(90deg, var(--m-surface), var(--m-hover), var(--m-surface));
+  background-size: 200% 100%;
+  animation: wag-pulse 1.4s ease-in-out infinite;
+}
+@keyframes wag-pulse {
+  to {
+    background-position: -200% 0;
+  }
+}
+.wag-error {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--m-bad);
+  border-radius: var(--m-radius-field);
+  color: var(--m-bad);
+  font-size: 13px;
+}
+.wag-error ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+/* ---------------------------------------------------------------------------------------- drawers */
+.wag-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.18);
+}
+.wag-drawer {
+  display: flex;
+  flex-direction: column;
+  width: min(420px, 100vw);
+  height: 100%;
+  border-left: 1px solid var(--m-border);
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+  outline: none;
+}
+.wag-drawer--wide {
+  width: min(640px, 100vw);
+}
+.wag-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px 10px 16px;
+  border-bottom: 1px solid var(--m-border);
+}
+.wag-drawer-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+.wag-drawer-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+.wag-drawer-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--m-border);
+}
+
+/* ------------------------------------------------------------------------------------------ forms */
+.wag-form,
+.wag-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.wag-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.wag-label {
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wag-input {
+  width: 100%;
+  min-width: 0;
+  height: var(--m-control);
+  padding: 0 10px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+}
+.wag-input:focus {
+  border-color: var(--m-primary);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--m-primary);
+}
+.wag-textarea {
+  height: auto;
+  padding: 8px 10px;
+  resize: vertical;
+}
+.wag-time {
+  width: 116px;
+}
+.wag-inline .wag-input {
+  flex: 1;
+}
+.wag-grid2,
+.wag-grid3 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.wag-grid3 {
+  grid-template-columns: minmax(0, 2fr) 90px minmax(0, 1fr);
+}
+.wag-check,
+.wag-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+}
+.wag-check input,
+.wag-switch input {
+  margin-top: 3px;
+  accent-color: var(--m-primary);
+}
+.wag-switch {
+  padding: 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-surface);
+}
+.wag-switch > span {
+  display: flex;
+  flex-direction: column;
+}
+.wag-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+}
+.wag-fieldset .wag-btn {
+  align-self: flex-start;
+}
+.wag-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--m-border);
+}
+.wag-sec-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+.wag-days {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+}
+.wag-day {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 10px;
+}
+.wag-day + .wag-day {
+  border-top: 1px solid var(--m-border);
+}
+.wag-day-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 92px;
+}
+.wag-day-name input {
+  accent-color: var(--m-primary);
+}
+.wag-day-times {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.wag-blockrow {
+  display: grid;
+  grid-template-columns: 140px 140px 96px 96px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 6px;
+}
+.wag-typerow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+}
+.wag-suggest {
+  margin: 2px 0 0;
+  padding: 4px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+  list-style: none;
+}
+.wag-suggest-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.wag-suggest-item:hover {
+  background: var(--m-hover);
+}
+.wag-detail-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+.wag-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+.wag-fields div {
+  display: flex;
+  gap: 8px;
+}
+.wag-fields dt {
+  width: 92px;
+  flex: none;
+  color: var(--m-text-2);
+}
+.wag-fields dd {
+  margin: 0;
+}
+.wag-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--m-bad);
+  border-radius: var(--m-radius-card);
+}
+.wag-confirm p {
+  margin: 0;
+}
+.wag-next {
+  color: var(--m-primary);
+  text-decoration: none;
+}
+.wag-next:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .wag-count {
+    display: none;
+  }
+  .wag-grid2,
+  .wag-grid3,
+  .wag-blockrow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wag-time {
+    width: 92px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wag-skeleton {
+    animation: none;
+  }
+}

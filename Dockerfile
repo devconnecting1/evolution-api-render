@@ -36,7 +36,9 @@ RUN chmod +x ./Docker/scripts/* && dos2unix ./Docker/scripts/*
 
 RUN ./Docker/scripts/generate_database.sh
 
-RUN npm run build
+# tsup bundles every file of src with its sourcemap: the default ~2 GB heap is no longer enough
+# (the Render build pipeline has 8 GB). Build stage only, the final image does not inherit it.
+RUN NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
 FROM node:24.22.2-alpine AS final
 
