@@ -1,4 +1,12 @@
-import { openaiController, prismaRepository, sendMessageController, usageService, waMonitor } from '@api/server.module';
+import {
+  leadsService,
+  openaiController,
+  prismaRepository,
+  processosService,
+  sendMessageController,
+  usageService,
+  waMonitor,
+} from '@api/server.module';
 import { observabilityService } from '@api/services/observability.service';
 import { Auth, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
@@ -20,6 +28,8 @@ export function defaultMcpDeps(): McpDeps {
     sendMessageController,
     observability: observabilityService,
     usage: usageService,
+    processos: processosService,
+    leads: leadsService,
     isBotMessageId,
     logger,
     config: {

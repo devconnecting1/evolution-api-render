@@ -1,0 +1,169 @@
+{
+ "took": 29990,
+ "timed_out": false,
+ "_shards": {
+  "total": 7,
+  "successful": 7,
+  "skipped": 0,
+  "failed": 0
+ },
+ "hits": {
+  "total": {
+   "value": 2,
+   "relation": "eq"
+  },
+  "max_score": 14.428171,
+  "hits": [
+   {
+    "_index": "api_publica_trf1",
+    "_id": "TRF1_JE_00008323520184013202",
+    "_score": 14.428171,
+    "_source": {
+     "id": "TRF1_JE_00008323520184013202",
+     "tribunal": "TRF1",
+     "grau": "JE",
+     "numeroProcesso": "00008323520184013202",
+     "dataAjuizamento": "20181029000000",
+     "nivelSigilo": 0,
+     "orgaoJulgador": {
+      "codigo": 16403,
+      "nome": "Tefé",
+      "codigoMunicipioIBGE": 5128
+     },
+     "classe": {
+      "codigo": 436,
+      "nome": "Procedimento do Juizado Especial Cível"
+     },
+     "sistema": {
+      "codigo": 1,
+      "nome": "PJe"
+     },
+     "formato": {
+      "codigo": 1,
+      "nome": "Eletrônico"
+     },
+     "dataHoraUltimaAtualizacao": "2026-06-08T14:55:23.378000Z",
+     "@timestamp": "2026-06-08T14:55:23.378000Z",
+     "movimentos": [
+      {
+       "codigo": 26,
+       "dataHora": "2018-10-30T14:06:24.000Z",
+       "nome": "Distribuição",
+       "complementosTabelados": [
+        {
+         "codigo": 2,
+         "descricao": "tipo_de_distribuicao_redistribuicao",
+         "valor": 1,
+         "nome": "competência exclusiva"
+        }
+       ],
+       "orgaoJulgador": {
+        "codigo": "16403",
+        "nome": "Tefé"
+       }
+      },
+      {
+       "codigo": 132,
+       "dataHora": "2018-10-31T13:47:44.000Z",
+       "nome": "Recebimento",
+       "orgaoJulgador": {
+        "codigo": "16403",
+        "nome": "Tefé"
+       }
+      },
+      {
+       "codigo": 581,
+       "dataHora": "2020-11-12T20:24:27.000Z",
+       "nome": "Documento",
+       "complementosTabelados": [
+        {
+         "codigo": 4,
+         "descricao": "tipo_de_documento",
+         "valor": 80,
+         "nome": "Outros documentos"
+        }
+       ],
+       "orgaoJulgador": {
+        "codigo": "17595",
+        "nome": "08ª  Vara JEF- Manaus"
+       }
+      },
+      {
+       "codigo": 246,
+       "dataHora": "2020-11-12T20:27:30.000Z",
+       "nome": "Definitivo",
+       "orgaoJulgador": {
+        "codigo": "17595",
+        "nome": "08ª  Vara JEF- Manaus"
+       }
+      },
+      {
+       "codigo": 11383,
+       "dataHora": "2024-07-03T09:05:34.000Z",
+       "nome": "Ato ordinatório",
+       "orgaoJulgador": {
+        "codigo": "17595",
+        "nome": "08ª  Vara JEF- Manaus"
+       }
+      }
+     ],
+     "assuntos": [
+      {
+       "codigo": 6177,
+       "nome": "Concessão"
+      }
+     ]
+    }
+   },
+   {
+    "_index": "api_publica_trf1",
+    "_id": "TRF1_JE_00008323520184013202_G2",
+    "_score": 14.428171,
+    "_source": {
+     "id": "TRF1_JE_00008323520184013202",
+     "tribunal": "TRF1",
+     "grau": "TR",
+     "numeroProcesso": "00008323520184013202",
+     "dataAjuizamento": "20181029000000",
+     "nivelSigilo": 0,
+     "orgaoJulgador": {
+      "codigo": 16403,
+      "nome": "Tefé",
+      "codigoMunicipioIBGE": 5128
+     },
+     "classe": {
+      "codigo": 436,
+      "nome": "Procedimento do Juizado Especial Cível"
+     },
+     "sistema": {
+      "codigo": 1,
+      "nome": "PJe"
+     },
+     "formato": {
+      "codigo": 1,
+      "nome": "Eletrônico"
+     },
+     "dataHoraUltimaAtualizacao": "2025-01-01T00:00:00.000Z",
+     "@timestamp": "2026-06-08T14:55:23.378000Z",
+     "movimentos": [
+      {
+       "codigo": 11383,
+       "dataHora": "2024-07-03T09:05:34.000Z",
+       "nome": "Ato ordinatório",
+       "orgaoJulgador": {
+        "codigo": "17595",
+        "nome": "08ª  Vara JEF- Manaus"
+       }
+      }
+     ],
+     "assuntos": [
+      {
+       "codigo": 6177,
+       "nome": "Concessão"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

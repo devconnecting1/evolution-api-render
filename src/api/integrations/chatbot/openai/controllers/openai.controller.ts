@@ -54,6 +54,11 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
   }
 
   // Human takeover (pause on human fromMe, paused session creation, resume after humanResumeMinutes)
+  /** "Leads (triagem)": the team answered, so the lead of this chat no longer waits for the team. */
+  protected onHumanReply(instance: InstanceDto, remoteJids: string[], at: Date): void {
+    this.openaiService.leads?.recordHumanReply(instance.instanceId, remoteJids, at);
+  }
+
   protected supportsHumanPause(): boolean {
     return true;
   }

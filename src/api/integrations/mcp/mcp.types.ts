@@ -39,6 +39,26 @@ export interface McpDeps {
     getSummary: (instanceId: string) => Promise<any>;
     saveLimits: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; limits: any }>;
   };
+  /** "Processos" (ProcessosService): court cases (DataJud) and DJEN publications. */
+  processos?: {
+    list: (instanceId: string, filters?: Record<string, any>) => Promise<any>;
+    get: (instanceId: string, id: string, movementsLimit?: number) => Promise<any>;
+    add: (instanceId: string, input: Record<string, any>) => Promise<any>;
+    listPublications: (instanceId: string, filters?: Record<string, any>) => Promise<any>;
+    manualSync: (instanceId: string, id: string) => Promise<any>;
+  };
+  /** "Leads (triagem)" (LeadsService): the same instance the REST routes and the bot use. */
+  leads: {
+    list: (instanceId: string, query: Record<string, any>, channel?: any) => Promise<any>;
+    get: (instanceId: string, id: string) => Promise<any>;
+    update: (
+      instanceId: string,
+      id: string,
+      input: Record<string, any>,
+    ) => Promise<{ previous: any; lead: any } | null>;
+    getStoredSettings: (instanceId: string) => Promise<{ configured: boolean; settings: any }>;
+    saveSettings: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; settings: any }>;
+  };
   isBotMessageId: (instanceId: string, messageId: string) => Promise<boolean>;
   config: McpConfig;
   logger: McpLogger;

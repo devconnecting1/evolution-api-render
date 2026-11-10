@@ -23,6 +23,8 @@ Bundle groups (each one is applied once and leaves a marker comment at the top o
   usage     - WaUsage.Bar ("Visão Geral"): semicircle gauge of the month (earlier days, today, remaining) with a
               legend (value | %) and, from the alert percent on, a warning strip "90% da franquia usada"
               (red at 100%). Same data as before (GET /usage/summary/:instance), no new request.
+  prio      - Leads: the priority chip gets class wt-prio and data-prio (alta / normal / baixa); theme.css draws
+              a three-bar priority icon (3, 2 or 1 bars filled) instead of the plain dot. Text stays the same.
 index.html group (marker: an HTML comment in <head>):
   html      - inline theme script, color-scheme "light dark", theme.css?v=1 linked last, bundle ?v=CACHE_VERSION.
 landing group (marker: an HTML comment in <head> of each page):
@@ -47,7 +49,7 @@ INDEX = os.path.join(DIST, 'index.html')
 LANDINGS = [os.path.join(DIST, 'landing', n) for n in ('index.html', 'advocacia.html', 'instagram.html')]
 CSS = [os.path.join(DIST, 'assets', 'theme.css'), os.path.join(DIST, 'assets', 'landing-theme.css')]
 REQUIRED = ('/*whatsai-patch:usage-limits:component*/', '/*whatsai-patch:twenty-layout:header*/',
-            '/*whatsai-patch:home-redesign:instances*/')
+            '/*whatsai-patch:home-redesign:instances*/', '/*whatsai-patch:leads:component*/')
 CACHE_VERSION = '29'
 SCRIPT_TAG = '<script type="module" crossorigin src="/assets/index-b29a5d7a.js?v='
 
@@ -192,7 +194,16 @@ def patch_usage(s):
     return rep(s, BAR_OLD, BAR_NEW, 'WaUsage.Bar')
 
 
-GROUPS = [('component', patch_component), ('header', patch_header), ('greeting', patch_greeting), ('usage', patch_usage)]
+PRIO_OLD = "function Prio({lead,long}){const p=lead.priority||'normal';return i.jsx('span',{className:'wl-chip','data-tone':"
+PRIO_NEW = "function Prio({lead,long}){const p=lead.priority||'normal';return i.jsx('span',{className:'wl-chip wt-prio','data-prio':p,'data-tone':"
+
+
+def patch_prio(s):
+    return rep(s, PRIO_OLD, PRIO_NEW, 'Leads priority chip (WaLeads Prio)')
+
+
+GROUPS = [('component', patch_component), ('header', patch_header), ('greeting', patch_greeting), ('usage', patch_usage),
+          ('prio', patch_prio)]
 
 
 def patch_html(h):

@@ -516,6 +516,37 @@ a.wa-doc:hover {
 .wt-chip[data-c="amber"] { background: var(--m-chip-amber); color: var(--m-chip-amber-text); }
 .wt-chip[data-c="red"] { background: var(--m-chip-red); color: var(--m-chip-red-text); }
 
+/* ============================================== Leads: priority bars (Alta 3 · Normal 2 · Baixa 1 filled) */
+.wl-chip.wt-prio {
+  --wt-on: var(--m-text-2);
+  --wt-off: var(--m-border-strong);
+  --wt-b1: var(--wt-on);
+  --wt-b2: var(--wt-off);
+  --wt-b3: var(--wt-off);
+  gap: 6px;
+}
+.wl-chip.wt-prio::before {
+  width: 11px;
+  height: 10px;
+  border-radius: 0;
+  background:
+    linear-gradient(var(--wt-b1), var(--wt-b1)) 0 100% / 3px 45% no-repeat,
+    linear-gradient(var(--wt-b2), var(--wt-b2)) 4px 100% / 3px 72% no-repeat,
+    linear-gradient(var(--wt-b3), var(--wt-b3)) 8px 100% / 3px 100% no-repeat;
+}
+.wl-chip.wt-prio[data-prio="normal"] {
+  --wt-on: var(--m-warn);
+  --wt-b2: var(--wt-on);
+}
+.wl-chip.wt-prio[data-prio="alta"] {
+  --wt-on: var(--m-bad);
+  --wt-b2: var(--wt-on);
+  --wt-b3: var(--wt-on);
+  border-color: transparent;
+  background: var(--m-chip-red);
+  color: var(--m-chip-red-text);
+}
+
 /* =================================================== Visão Geral: usage gauge + warning strip (WaUsage.Bar) */
 .wt-usage {
   display: grid;
