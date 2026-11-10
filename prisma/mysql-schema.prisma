@@ -933,3 +933,19 @@ model Appointment {
   @@index([instanceId, remoteJid, startsAt])
   @@index([status, startsAt])
 }
+
+/// Banco próprio por instância (plano de controle). Sem FK para Instance de propósito:
+/// o mapeamento sobrevive à remoção da instância (dados guardados no projeto Neon).
+model InstanceDatabase {
+  id                String    @id @default(cuid())
+  instanceId        String    @unique
+  provider          String    @default("neon") @db.VarChar(20)
+  externalProjectId String?   @db.VarChar(100)
+  region            String?   @db.VarChar(50)
+  connectionUri     String    @db.Text
+  status            String    @default("provisioning") @db.VarChar(20)
+  lastError         String?   @db.Text
+  migratedAt        DateTime? @db.Timestamp
+  createdAt         DateTime  @default(now()) @db.Timestamp
+  updatedAt         DateTime  @updatedAt @db.Timestamp
+}

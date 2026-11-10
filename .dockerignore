@@ -4,3 +4,5 @@
 .env
 node_modules
 dist
+# Cópia local da documentação de fornecedores (não vai para a imagem)
+docs/vendors

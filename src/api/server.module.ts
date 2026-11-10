@@ -41,6 +41,7 @@ import { EventManager } from './integrations/event/event.manager';
 import { S3Controller } from './integrations/storage/s3/controllers/s3.controller';
 import { S3Service } from './integrations/storage/s3/services/s3.service';
 import { ProviderFiles } from './provider/sessions';
+import { createInstanceDatabases, createRoutedRepository } from './repository/instance-db';
 import { PrismaRepository } from './repository/repository.service';
 import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
@@ -66,7 +67,12 @@ if (configService.get<ProviderSession>('PROVIDER').ENABLED) {
   providerFiles = new ProviderFiles(configService);
 }
 
-export const prismaRepository = new PrismaRepository(configService);
+// Banco principal (plano de controle) + roteamento para o banco próprio de cada instância.
+const controlPrisma = new PrismaRepository(configService);
+export const instanceDatabases = createInstanceDatabases(controlPrisma);
+export const prismaRepository: PrismaRepository = createRoutedRepository(controlPrisma, instanceDatabases, {
+  warn: (msg: string) => logger.warn(msg),
+});
 
 export const waMonitor = new WAMonitoringService(
   eventEmitter,
