@@ -1,0 +1,31 @@
+{
+  "status": "success",
+  "message": "Sucesso",
+  "count": 2,
+  "items": [
+    {
+      "id": 900000001,
+      "data_disponibilizacao": "2026-11-03",
+      "siglaTribunal": "TJRJ",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "1ª Vara Cível da Comarca Fictícia",
+      "texto": "<p>INTIMAÇÃO</p><p>Fica a parte autora intimada para se manifestar sobre o laudo&nbsp;pericial.</p><br>Prazo: 15 dias.",
+      "numero_processo": "00012340420268190001",
+      "numeroprocessocommascara": "0001234-04.2026.8.19.0001",
+      "link": "https://comunica.pje.jus.br/consulta/certidao/ficticia",
+      "hash": "abcFICTICIO1",
+      "meio": "D"
+    },
+    {
+      "id": 900000002,
+      "data_disponibilizacao": "2026-11-04",
+      "siglaTribunal": "TRT1",
+      "tipoComunicacao": "Edital",
+      "nomeOrgao": "Vara do Trabalho Fictícia",
+      "texto": "Texto &amp; edital <script>alert(1)</script>fictício.",
+      "numero_processo": "",
+      "link": "javascript:alert(1)",
+      "hash": "abcFICTICIO2"
+    }
+  ]
+}

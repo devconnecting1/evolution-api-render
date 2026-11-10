@@ -24,6 +24,7 @@ import { InstanceRouter } from './instance.router';
 import { LabelRouter } from './label.router';
 import { LeadsRouter } from './leads.router';
 import { ObservabilityRouter } from './observability.router';
+import { ProcessosRouter } from './processos.router';
 import { ProxyRouter } from './proxy.router';
 import { MessageRouter } from './sendMessage.router';
 import { SettingsRouter } from './settings.router';
@@ -239,6 +240,7 @@ router
   .use('/proxy', new ProxyRouter(...guards).router)
   .use('/label', new LabelRouter(...guards).router)
   .use('/usage', new UsageRouter(...guards).router)
+  .use('/processos', new ProcessosRouter(...guards).router)
   .use('/leads', new LeadsRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
   .use('', new ChannelRouter(configService, ...guards).router)
