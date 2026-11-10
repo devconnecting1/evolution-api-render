@@ -430,6 +430,8 @@ model IntegrationSession {
   parameters Json?
 
   botId String?
+
+  @@index([instanceId, remoteJid])
 }
 
 model Media {

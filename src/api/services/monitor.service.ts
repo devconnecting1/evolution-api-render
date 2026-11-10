@@ -1,4 +1,6 @@
 import { InstanceDto } from '@api/dto/instance.dto';
+import { forgetInstanceToken } from '@api/guards/instance-token-cache';
+import { EventController } from '@api/integrations/event/event.controller';
 import { ProviderFiles } from '@api/provider/sessions';
 import { getInstanceDatabases, runWithInstance } from '@api/repository/instance-db';
 import { PrismaRepository } from '@api/repository/repository.service';
@@ -234,6 +236,10 @@ export class WAMonitoringService {
     await this.prismaRepository.label.deleteMany({ where: { instanceId: instance.id } });
 
     await this.prismaRepository.instance.delete({ where: { name: instanceName } });
+
+    // Caches em memória (configuração de eventos e token) da instância removida.
+    EventController.forgetInstance(instance.id);
+    forgetInstanceToken(instanceName);
 
     // Solta o banco próprio da instância (o projeto Neon é mantido, salvo DB_PER_INSTANCE_DELETE_ON_REMOVE=true).
     await getInstanceDatabases()?.release(instance.id);
