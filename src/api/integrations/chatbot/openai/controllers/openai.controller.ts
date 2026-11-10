@@ -235,7 +235,9 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         expire: data.expire || 300,
         keywordFinish: data.keywordFinish || 'bye',
         delayMessage: data.delayMessage || 1000,
-        unknownMessage: data.unknownMessage || 'Sorry, I dont understand',
+        unknownMessage:
+          data.unknownMessage ||
+          'Desculpe, tive um problema para responder agora. Alguém da equipe vai falar com você em breve.',
         listeningFromMe: data.listeningFromMe !== undefined ? data.listeningFromMe : true,
         stopBotFromMe: data.stopBotFromMe !== undefined ? data.stopBotFromMe : true,
         keepOpen: data.keepOpen !== undefined ? data.keepOpen : false,

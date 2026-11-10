@@ -694,6 +694,32 @@ describe('MCP: tools', () => {
     assert.equal(h.calls.updateBot.length, before, 'the bot was not updated');
   });
 
+  test('update_bot_settings: tokens, memory, media, failure message and debounce', async () => {
+    const { json, result } = await callTool(h.url, 'update_bot_settings', {
+      instance: 'escritorio',
+      max_tokens: 2500,
+      history_messages: 30,
+      transcribe_audio: true,
+      read_documents: false,
+      max_document_mb: 15,
+      unknown_message: 'Desculpe, já te respondemos.',
+      debounce_seconds: 10,
+    });
+    assert.ok(!result.isError, JSON.stringify(result));
+    const call = h.calls.updateBot.at(-1);
+    assert.equal(call.data.maxTokens, 2500);
+    assert.equal(call.data.historyMessages, 30);
+    assert.equal(call.data.transcribeAudio, true);
+    assert.equal(call.data.readDocuments, false);
+    assert.equal(call.data.maxDocumentMB, 15);
+    assert.equal(call.data.unknownMessage, 'Desculpe, já te respondemos.');
+    assert.equal(call.data.debounceTime, 10);
+    assert.ok(json.changes.maxTokens);
+
+    const invalid = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio', token_param: 'turbo' });
+    assert.equal(invalid.result.isError, true);
+  });
+
   test('get_usage: no plan configured still shows the counted answers', async () => {
     const { json, result } = await callTool(h.url, 'get_usage', { instance: 'escritorio' });
     assert.ok(!result.isError, JSON.stringify(result));
