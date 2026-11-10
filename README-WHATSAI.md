@@ -106,6 +106,8 @@ Ordem recomendada:
 
 Atalho para WhatsApp Web: `EVOLUTION_API_KEY=<chave global> ./scripts/novo-cliente.sh <instância> <número> <essencial|profissional|premium> <prompt.md> [openai-key]` cria a instância, espera a conexão pelo QR code, cadastra a credencial, o bot (`gpt-6-luna`, `maxTokens` 2000, pausa humana de 60 min, memória de 30 mensagens, grupos ignorados), as settings e o plano.
 
+**Número adicional do mesmo cliente:** `COPIAR_DE=<instância-origem> EVOLUTION_API_KEY=<chave global> ./scripts/novo-cliente.sh <nova-instância> <número> <plano> - [openai-key]` (o `-` no lugar do prompt) cria a instância e copia da origem o prompt e os campos do bot (modelo, `maxTokens`, pausa humana, memória, gatilho; campos de texto vazios não são copiados), as settings do bot (inclusive o perfil ético), Leads (áreas e números de aviso) e Comportamento. Passe um arquivo de prompt no lugar do `-` para trocar só o prompt (ex.: filial com outro endereço). A chave OpenAI e o plano são informados de novo (a mesma chave pode ser usada com **Banco próprio**, que tem a sua tabela de credenciais); Agenda e Processos ficam desligados para configurar no painel, porque horários e OAB costumam mudar por número.
+
 ```bash
 # 1. Escreva o prompt do cliente
 cp prompts/exemplo-advocacia.md prompts/escritorio-silva.md
