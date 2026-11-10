@@ -1,5 +1,8 @@
 import { InstanceDto } from '@api/dto/instance.dto';
+import { forgetInstanceToken } from '@api/guards/instance-token-cache';
+import { EventController } from '@api/integrations/event/event.controller';
 import { ProviderFiles } from '@api/provider/sessions';
+import { getInstanceDatabases, runWithInstance } from '@api/repository/instance-db';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { channelController } from '@api/server.module';
 import { Events, Integration } from '@api/types/wa.types';
@@ -126,7 +129,12 @@ export class WAMonitoringService {
       },
     });
 
-    return instances;
+    // dbMode: "own" quando a instância tem banco próprio (projeto Neon), senão "shared".
+    const dbs = getInstanceDatabases();
+    return instances.map((instance) => ({
+      ...instance,
+      dbMode: dbs?.status(instance.id) === 'ready' ? 'own' : 'shared',
+    }));
   }
 
   public async instanceInfoById(instanceId?: string, number?: string) {
@@ -228,6 +236,13 @@ export class WAMonitoringService {
     await this.prismaRepository.label.deleteMany({ where: { instanceId: instance.id } });
 
     await this.prismaRepository.instance.delete({ where: { name: instanceName } });
+
+    // Caches em memória (configuração de eventos e token) da instância removida.
+    EventController.forgetInstance(instance.id);
+    forgetInstanceToken(instanceName);
+
+    // Solta o banco próprio da instância (o projeto Neon é mantido, salvo DB_PER_INSTANCE_DELETE_ON_REMOVE=true).
+    await getInstanceDatabases()?.release(instance.id);
   }
 
   public async loadInstance() {
@@ -303,7 +318,7 @@ export class WAMonitoringService {
       this.logger.info(
         `Auto-connecting instance "${instanceData.instanceName}" (status: ${instanceData.connectionStatus})`,
       );
-      await instance.connectToWhatsapp();
+      await runWithInstance(instanceData.instanceId, () => instance.connectToWhatsapp());
     } else {
       this.logger.info(
         `Skipping auto-connect for instance "${instanceData.instanceName}" (status: ${instanceData.connectionStatus || 'close'})`,
