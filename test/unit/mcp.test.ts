@@ -84,10 +84,24 @@ const matches = (row: any, where: any = {}) =>
     return row[key] === value;
   });
 
-type Calls = { sendText: any[]; changeStatus: any[]; updateBot: any[]; fetchMessages: any[]; sessionCreate: any[] };
+type Calls = {
+  sendText: any[];
+  changeStatus: any[];
+  updateBot: any[];
+  fetchMessages: any[];
+  sessionCreate: any[];
+  settingsUpdate: any[];
+};
 
 function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
-  const calls: Calls = { sendText: [], changeStatus: [], updateBot: [], fetchMessages: [], sessionCreate: [] };
+  const calls: Calls = {
+    sendText: [],
+    changeStatus: [],
+    updateBot: [],
+    fetchMessages: [],
+    sessionCreate: [],
+    settingsUpdate: [],
+  };
 
   const instances = [
     {
@@ -176,7 +190,11 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     },
     openaiBot: { findMany: async ({ where }: any) => bots.filter((row) => matches(row, where)) },
     openaiSetting: {
-      findFirst: async () => ({ instanceId: 'inst-a', humanResumeMinutes: 0, openaiCredsId: 'cred-1' }),
+      findFirst: async () => ({ id: 'set-1', instanceId: 'inst-a', humanResumeMinutes: 0, openaiCredsId: 'cred-1' }),
+      update: async ({ where, data }: any) => {
+        calls.settingsUpdate.push({ where, data });
+        return { id: where.id, ...data };
+      },
     },
     openaiCreds: {
       findMany: async ({ where }: any) =>
@@ -666,6 +684,44 @@ describe('MCP: tools', () => {
 
     const empty = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio' });
     assert.equal(empty.result.isError, true);
+  });
+
+  test('update_bot_settings: ethics profile of the instance (OAB) without touching the bot', async () => {
+    const before = h.calls.updateBot.length;
+    const { json, result } = await callTool(h.url, 'update_bot_settings', {
+      instance: 'escritorio',
+      ethics_profile: 'advocacia',
+    });
+    assert.ok(!result.isError, JSON.stringify(result));
+    assert.deepEqual(h.calls.settingsUpdate.at(-1), { where: { id: 'set-1' }, data: { ethicsProfile: 'advocacia' } });
+    assert.deepEqual(json.changes.ethicsProfile, { before: 'none', after: 'advocacia' });
+    assert.equal(h.calls.updateBot.length, before, 'the bot was not updated');
+  });
+
+  test('update_bot_settings: tokens, memory, media, failure message and debounce', async () => {
+    const { json, result } = await callTool(h.url, 'update_bot_settings', {
+      instance: 'escritorio',
+      max_tokens: 2500,
+      history_messages: 30,
+      transcribe_audio: true,
+      read_documents: false,
+      max_document_mb: 15,
+      unknown_message: 'Desculpe, já te respondemos.',
+      debounce_seconds: 10,
+    });
+    assert.ok(!result.isError, JSON.stringify(result));
+    const call = h.calls.updateBot.at(-1);
+    assert.equal(call.data.maxTokens, 2500);
+    assert.equal(call.data.historyMessages, 30);
+    assert.equal(call.data.transcribeAudio, true);
+    assert.equal(call.data.readDocuments, false);
+    assert.equal(call.data.maxDocumentMB, 15);
+    assert.equal(call.data.unknownMessage, 'Desculpe, já te respondemos.');
+    assert.equal(call.data.debounceTime, 10);
+    assert.ok(json.changes.maxTokens);
+
+    const invalid = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio', token_param: 'turbo' });
+    assert.equal(invalid.result.isError, true);
   });
 
   test('get_usage: no plan configured still shows the counted answers', async () => {

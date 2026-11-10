@@ -6,6 +6,7 @@ import { UsageGate, UsageService } from '@api/services/usage.service';
 import { Integration } from '@api/types/wa.types';
 import { ConfigService, Language, Openai as OpenaiConfig } from '@config/env.config';
 import { IntegrationSession, OpenaiBot, OpenaiSetting } from '@prisma/client';
+import { ethicsSystemPrompt } from '@utils/ethics';
 import { hasHumanWrittenSince, isHumanPaused } from '@utils/humanPause';
 import { openaiHealthRegistry } from '@utils/openai-health';
 import {
@@ -605,32 +606,22 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     this.logger.log(`Bot data - assistantMessages: ${JSON.stringify(openaiBot.assistantMessages || [])}`);
     this.logger.log(`Bot data - userMessages: ${JSON.stringify(openaiBot.userMessages || [])}`);
 
-    // Prepare system messages
-    const systemMessages: any = openaiBot.systemMessages || [];
-    const messagesSystem: any[] = systemMessages.map((message) => {
-      return {
-        role: 'system',
-        content: message,
-      };
-    });
+    // Fixed messages of the bot. Blank entries (the panel saves "" for an empty field) are not sent: an empty
+    // "user"/"assistant" turn before the conversation only confuses the model
+    const filled = (list: unknown): string[] =>
+      (Array.isArray(list) ? list : []).filter((item): item is string => typeof item === 'string' && !!item.trim());
 
-    // Prepare assistant messages
-    const assistantMessages: any = openaiBot.assistantMessages || [];
-    const messagesAssistant: any[] = assistantMessages.map((message) => {
-      return {
-        role: 'assistant',
-        content: message,
-      };
-    });
-
-    // Prepare user messages
-    const userMessages: any = openaiBot.userMessages || [];
-    const messagesUser: any[] = userMessages.map((message) => {
-      return {
-        role: 'user',
-        content: message,
-      };
-    });
+    // Ethics profile of the instance (e.g. the OAB rules of a law office): first, above the prompt of the client
+    const ethics = ethicsSystemPrompt((settings as any)?.ethicsProfile);
+    const messagesSystem: any[] = [
+      ...(ethics ? [{ role: 'system', content: ethics }] : []),
+      ...filled(openaiBot.systemMessages).map((message) => ({ role: 'system', content: message })),
+    ];
+    const messagesAssistant: any[] = filled(openaiBot.assistantMessages).map((message) => ({
+      role: 'assistant',
+      content: message,
+    }));
+    const messagesUser: any[] = filled(openaiBot.userMessages).map((message) => ({ role: 'user', content: message }));
 
     // Prepare current message (images as data URLs, PDFs as file inputs)
     const media = resolveOpenaiMediaOptions(openaiBot, settings);

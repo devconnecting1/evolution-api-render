@@ -72,6 +72,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
   protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
     return {
       tokenParam: bot?.tokenParam ?? settings?.tokenParam ?? 'auto',
+      ethicsProfile: settings?.ethicsProfile ?? 'none',
       ...resolveOpenaiMediaOptions(bot, settings),
     };
   }
@@ -234,7 +235,9 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         expire: data.expire || 300,
         keywordFinish: data.keywordFinish || 'bye',
         delayMessage: data.delayMessage || 1000,
-        unknownMessage: data.unknownMessage || 'Sorry, I dont understand',
+        unknownMessage:
+          data.unknownMessage ||
+          'Desculpe, tive um problema para responder agora. Alguém da equipe vai falar com você em breve.',
         listeningFromMe: data.listeningFromMe !== undefined ? data.listeningFromMe : true,
         stopBotFromMe: data.stopBotFromMe !== undefined ? data.stopBotFromMe : true,
         keepOpen: data.keepOpen !== undefined ? data.keepOpen : false,
@@ -448,6 +451,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         readDocuments: data.readDocuments,
         maxDocumentMB: data.maxDocumentMB,
         historyMessages: data.historyMessages,
+        ethicsProfile: data.ethicsProfile,
       };
 
       if (existingSettings) {
@@ -495,6 +499,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       ...settings,
       tokenParam: settings?.tokenParam ?? 'auto',
       humanResumeMinutes: settings?.humanResumeMinutes ?? 0,
+      ethicsProfile: settings?.ethicsProfile ?? 'none',
       ...resolveOpenaiMediaOptions(null, settings),
     };
   }

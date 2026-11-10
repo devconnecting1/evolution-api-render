@@ -6,12 +6,13 @@ MANAGER="${WHATS_AI_MANAGER_URL:-https://whatsaibr.vercel.app}"
 KEY="${EVOLUTION_API_KEY:-}"
 MODEL="${OPENAI_MODEL:-gpt-6-luna}"
 DB_MODE="${DB_MODE:-own}"   # own (banco próprio, padrão) ou shared
+ETICA="${ETICA:-none}"      # advocacia (Código de Ética da OAB acima do prompt) ou none
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
 usage() {
   echo "uso: EVOLUTION_API_KEY=... $0 <instancia> <numero-e164> <essencial|profissional|premium> <arquivo-prompt> [openai-key]"
-  echo "     opcionais: OPENAI_MODEL (padrao gpt-6-luna), DB_MODE=own|shared (padrao own)"
+  echo "     opcionais: OPENAI_MODEL (padrao gpt-6-luna), DB_MODE=own|shared (padrao own), ETICA=advocacia|none"
   exit 1
 }
 
@@ -129,7 +130,7 @@ fi
 echo "== 5/7 settings"
 # valores recomendados (secao 12.4): pausa quando a equipe responde, volta 60 min depois da ultima mensagem
 # dela, junta mensagens seguidas por 10 s, ignora grupos e avisa em PT-BR quando a OpenAI falha
-python3 - "$CREDS_ID" > "$TMP/settings.json" <<'PY'
+python3 - "$CREDS_ID" "$ETICA" > "$TMP/settings.json" <<'PY'
 import json, sys
 print(json.dumps({
   "openaiCredsId": sys.argv[1],
@@ -145,6 +146,7 @@ print(json.dumps({
   "tokenParam": "auto",
   "humanResumeMinutes": 60,
   "historyMessages": 30,
+  "ethicsProfile": sys.argv[2],
 }))
 PY
 RESP=$(api -X POST "$API/openai/settings/$INSTANCE" -d @"$TMP/settings.json")

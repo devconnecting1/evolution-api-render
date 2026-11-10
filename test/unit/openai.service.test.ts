@@ -226,6 +226,31 @@ describe('OpenaiService: token parameter sent to Chat Completions', { concurrenc
   });
 });
 
+describe('OpenaiService: ethics profile and fixed messages', { concurrency: true }, () => {
+  test('advocacia: the OAB rules go first, above the prompt of the client', async () => {
+    const t = setup({ settings: { ethicsProfile: 'advocacia' } });
+    t.openai.reply('ok');
+    await t.ask();
+    const [first, second] = t.openai.requests[0].messages;
+    assert.equal(first.role, 'system');
+    assert.match(first.content, /REGRAS ÉTICAS DA ADVOCACIA/);
+    assert.match(first.content, /Não informe valores, descontos, gratuidade/);
+    assert.equal(second.content, 'Você é a assistente do escritório.');
+  });
+
+  test('no profile: nothing added; blank fixed messages saved by the panel are not sent', async () => {
+    const t = setup({ bot: { assistantMessages: [''], userMessages: ['  '], systemMessages: ['Prompt', ''] } });
+    t.openai.reply('ok');
+    await t.ask('oi');
+    const messages = t.openai.requests[0].messages;
+    assert.deepEqual(
+      messages.map((message: any) => message.role),
+      ['system', 'user'],
+    );
+    assert.equal(messages[0].content, 'Prompt');
+  });
+});
+
 describe('OpenaiService: errors never reach the customer', { concurrency: true }, () => {
   const errorMessage = 'Incorrect API key provided: sk-proj-SECRET';
 
