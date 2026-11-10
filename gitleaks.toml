@@ -12,4 +12,5 @@ paths = [
   '''(^|/)node_modules/''',
   '''(^|/)manager/dist/assets/.*\.js$''',
   '''(^|/)Docker/swarm/''',
+  '''(^|/)docs/vendors/''',
 ]
