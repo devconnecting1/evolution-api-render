@@ -12,6 +12,7 @@
  * - Messages to the client: only booking confirmation, reminders and confirm/cancel/reschedule acknowledgments
  *   (src/utils/agenda.ts). The team numbers get short internal notices.
  */
+import { runWithInstance } from '@api/repository/instance-db';
 import { Logger } from '@config/logger.config';
 import {
   ACTIVE_STATUSES,
@@ -57,9 +58,10 @@ import { AgendaProvider, InternalAgendaProvider } from './agenda.provider';
 
 const CACHE_TTL_MS = 30_000;
 const TICK_INTERVAL_MS = 60_000;
-const TICK_MAX_SLEEP_MS = 30 * 60_000;
+/** Without anything due, the database is checked again after this (writes in this process reset it). */
+const TICK_MAX_SLEEP_MS = 6 * 3_600_000;
 /** Reminders reach at most 72 h + the evening shift before the start. */
-const TICK_HORIZON_MS = (MAX_REMINDER_HOURS + 24) * 3_600_000;
+const TICK_HORIZON_MS = (MAX_REMINDER_HOURS + 24) * 3_600_000 + TICK_MAX_SLEEP_MS;
 const TICK_BATCH = 500;
 const ICS_PAST_DAYS = 30;
 const ICS_FUTURE_DAYS = 180;
@@ -144,6 +146,9 @@ export class AgendaService {
   private timer: NodeJS.Timeout | null = null;
   private running = false;
   private nextRunAt = 0;
+  private dedicated = new Set<string>();
+  /** Dedicated databases whose agenda is off (cleared when the settings change in this process). */
+  private readonly knownOff = new Set<string>();
   private readonly providers: Record<string, AgendaProvider>;
 
   constructor(
@@ -199,6 +204,7 @@ export class AgendaService {
 
   public invalidate(instanceId: string): void {
     this.cache.delete(instanceId);
+    this.knownOff.delete(instanceId);
     this.nextRunAt = 0;
   }
 
@@ -375,63 +381,66 @@ export class AgendaService {
 
     await this.prisma.agendaSettings.upsert({ where: { instanceId }, create: { instanceId }, update: {} });
 
-    const result = await this.prisma.$transaction(
-      async (tx: any) => {
-        await tx.agendaSettings.update({ where: { instanceId }, data: { bookingSeq: { increment: 1 } } });
+    // runWithInstance: with "banco próprio por instância" the transaction opens on the database of the instance
+    const result = await runWithInstance(instanceId, () =>
+      this.prisma.$transaction(
+        async (tx: any) => {
+          await tx.agendaSettings.update({ where: { instanceId }, data: { bookingSeq: { increment: 1 } } });
 
-        const same = await tx.appointment.findFirst({
-          where: { instanceId, remoteJid: { in: jids }, startsAt: start, status: { not: 'cancelado' } },
-        });
-        if (same) return { row: same, created: false };
-
-        if (input.source === 'ia') {
-          const active = await tx.appointment.count({
-            where: { instanceId, remoteJid: { in: jids }, status: { in: HOLDING_STATUSES }, startsAt: { gt: now } },
+          const same = await tx.appointment.findFirst({
+            where: { instanceId, remoteJid: { in: jids }, startsAt: start, status: { not: 'cancelado' } },
           });
-          if (active >= AI_MAX_ACTIVE_PER_CONTACT) {
-            throw new AgendaError(
-              `Este contato já tem ${active} agendamentos futuros. Para marcar outro, a equipe precisa ajudar.`,
-              'forbidden',
-            );
-          }
-        }
+          if (same) return { row: same, created: false };
 
-        const margin = settings.bufferMinutes * 60_000;
-        const busy = await this.busy(
-          instanceId,
-          new Date(start.getTime() - margin - 86_400_000),
-          new Date(end.getTime() + margin + 86_400_000),
-          tx,
-        );
-        if (input.enforceAvailability !== false) {
-          if (!isBookableSlot(settings, start, type.minutes, busy, now)) {
-            throw new AgendaError('Esse horário não está disponível.', 'conflict');
+          if (input.source === 'ia') {
+            const active = await tx.appointment.count({
+              where: { instanceId, remoteJid: { in: jids }, status: { in: HOLDING_STATUSES }, startsAt: { gt: now } },
+            });
+            if (active >= AI_MAX_ACTIVE_PER_CONTACT) {
+              throw new AgendaError(
+                `Este contato já tem ${active} agendamentos futuros. Para marcar outro, a equipe precisa ajudar.`,
+                'forbidden',
+              );
+            }
           }
-        } else if (busy.some((item) => overlaps({ start, end }, item, settings.bufferMinutes))) {
-          throw new AgendaError('Já existe um agendamento nesse horário.', 'conflict');
-        }
 
-        // AI bookings wait for the team when requireTeamApproval is on (the slot is held meanwhile)
-        const pending = input.source === 'ia' && settings.aiPermissions.requireTeamApproval;
-        const row = await this.providerFor(settings).createEvent(
-          instanceId,
-          {
-            remoteJid,
-            contactName: input.contactName?.trim().slice(0, 120) || null,
-            typeName: type.name,
-            mode: type.mode,
-            startsAt: start,
-            endsAt: end,
-            status: pending ? 'pendente' : 'agendado',
-            notes: input.notes?.trim().slice(0, 2000) || null,
-            source: input.source,
-            remindersSent: {},
-          },
-          tx,
-        );
-        return { row, created: true };
-      },
-      { timeout: 15_000 },
+          const margin = settings.bufferMinutes * 60_000;
+          const busy = await this.busy(
+            instanceId,
+            new Date(start.getTime() - margin - 86_400_000),
+            new Date(end.getTime() + margin + 86_400_000),
+            tx,
+          );
+          if (input.enforceAvailability !== false) {
+            if (!isBookableSlot(settings, start, type.minutes, busy, now)) {
+              throw new AgendaError('Esse horário não está disponível.', 'conflict');
+            }
+          } else if (busy.some((item) => overlaps({ start, end }, item, settings.bufferMinutes))) {
+            throw new AgendaError('Já existe um agendamento nesse horário.', 'conflict');
+          }
+
+          // AI bookings wait for the team when requireTeamApproval is on (the slot is held meanwhile)
+          const pending = input.source === 'ia' && settings.aiPermissions.requireTeamApproval;
+          const row = await this.providerFor(settings).createEvent(
+            instanceId,
+            {
+              remoteJid,
+              contactName: input.contactName?.trim().slice(0, 120) || null,
+              typeName: type.name,
+              mode: type.mode,
+              startsAt: start,
+              endsAt: end,
+              status: pending ? 'pendente' : 'agendado',
+              notes: input.notes?.trim().slice(0, 2000) || null,
+              source: input.source,
+              remindersSent: {},
+            },
+            tx,
+          );
+          return { row, created: true };
+        },
+        { timeout: 15_000 },
+      ),
     );
 
     if (result.created) {
@@ -492,33 +501,36 @@ export class AgendaService {
     let row: any;
     if (newStart && (data.status ?? current.status) !== 'cancelado') {
       await this.prisma.agendaSettings.upsert({ where: { instanceId }, create: { instanceId }, update: {} });
-      row = await this.prisma.$transaction(
-        async (tx: any) => {
-          await tx.agendaSettings.update({ where: { instanceId }, data: { bookingSeq: { increment: 1 } } });
-          const busy = await this.busy(
-            instanceId,
-            new Date(newStart.getTime() - 2 * 86_400_000),
-            new Date(newStart.getTime() + 2 * 86_400_000),
-            tx,
-          );
-          if (input.enforceAvailability) {
-            if (
-              newStart.getTime() < now.getTime() ||
-              !isBookableSlot(settings, newStart, type.minutes, busy, now, current.id)
+      row = await runWithInstance(instanceId, () =>
+        this.prisma.$transaction(
+          async (tx: any) => {
+            await tx.agendaSettings.update({ where: { instanceId }, data: { bookingSeq: { increment: 1 } } });
+            const busy = await this.busy(
+              instanceId,
+              new Date(newStart.getTime() - 2 * 86_400_000),
+              new Date(newStart.getTime() + 2 * 86_400_000),
+              tx,
+            );
+            if (input.enforceAvailability) {
+              if (
+                newStart.getTime() < now.getTime() ||
+                !isBookableSlot(settings, newStart, type.minutes, busy, now, current.id)
+              ) {
+                throw new AgendaError('Esse horário não está disponível.', 'conflict');
+              }
+            } else if (
+              busy.some(
+                (item) =>
+                  item.id !== current.id &&
+                  overlaps({ start: newStart, end: data.endsAt }, item, settings.bufferMinutes),
+              )
             ) {
-              throw new AgendaError('Esse horário não está disponível.', 'conflict');
+              throw new AgendaError('Já existe um agendamento nesse horário.', 'conflict');
             }
-          } else if (
-            busy.some(
-              (item) =>
-                item.id !== current.id && overlaps({ start: newStart, end: data.endsAt }, item, settings.bufferMinutes),
-            )
-          ) {
-            throw new AgendaError('Já existe um agendamento nesse horário.', 'conflict');
-          }
-          return this.providerFor(settings).updateEvent(instanceId, current.id, data, tx);
-        },
-        { timeout: 15_000 },
+            return this.providerFor(settings).updateEvent(instanceId, current.id, data, tx);
+          },
+          { timeout: 15_000 },
+        ),
       );
     } else {
       const provider = this.providerFor(settings);
@@ -650,7 +662,7 @@ export class AgendaService {
     const kind = parseReminderReply(text);
     const data: any = { awaitingReplyAt: null };
     if (kind === 'confirm') Object.assign(data, { status: 'confirmado', confirmedAt: row.confirmedAt ?? now });
-    await this.prisma.appointment.update({ where: { id: row.id }, data });
+    await this.prisma.appointment.update({ where: { id: row.id, instanceId }, data });
     if (!kind) return null;
     if (kind === 'confirm') return { reply: confirmedAckText(row, settings.timezone) };
 
@@ -697,7 +709,7 @@ export class AgendaService {
     const stats = { running: false, checked: 0, sent: 0, skipped: 0, failed: 0, waiting: 0, nextRunAt: '' };
     let next = now.getTime() + TICK_MAX_SLEEP_MS;
     try {
-      const rows: any[] = (await this.prisma.agendaSettings.findMany({ where: { enabled: true }, take: 500 })) ?? [];
+      const rows: any[] = await this.enabledSettingsRows();
       const settingsById = new Map<string, AgendaSettings>();
       for (const row of rows) {
         const settings = normalizeAgendaSettings(row);
@@ -706,16 +718,20 @@ export class AgendaService {
       }
 
       if (settingsById.size) {
-        const appointments: any[] =
-          (await this.prisma.appointment.findMany({
-            where: {
-              instanceId: { in: [...settingsById.keys()] },
-              status: { in: ACTIVE_STATUSES },
-              startsAt: { gt: now, lte: new Date(now.getTime() + TICK_HORIZON_MS) },
-            },
-            orderBy: { startsAt: 'asc' },
-            take: TICK_BATCH,
-          })) ?? [];
+        const appointments: any[] = [];
+        for (const group of this.byDatabase([...settingsById.keys()])) {
+          appointments.push(
+            ...((await this.prisma.appointment.findMany({
+              where: {
+                instanceId: group.length === 1 ? group[0] : { in: group },
+                status: { in: ACTIVE_STATUSES },
+                startsAt: { gt: now, lte: new Date(now.getTime() + TICK_HORIZON_MS) },
+              },
+              orderBy: { startsAt: 'asc' },
+              take: TICK_BATCH,
+            })) ?? []),
+          );
+        }
 
         for (const appointment of appointments) {
           stats.checked++;
@@ -773,7 +789,7 @@ export class AgendaService {
           }
           // Only this exact state is overwritten (another writer wins: the next tick sees its update)
           await this.prisma.appointment.updateMany({
-            where: { id: appointment.id, updatedAt: appointment.updatedAt },
+            where: { id: appointment.id, instanceId: appointment.instanceId, updatedAt: appointment.updatedAt },
             data,
           });
           next = Math.min(next, now.getTime() + TICK_INTERVAL_MS);
@@ -786,6 +802,46 @@ export class AgendaService {
       stats.nextRunAt = new Date(this.nextRunAt).toISOString();
     }
     return stats;
+  }
+
+  // ----------------------------------------------------------------------- "banco próprio por instância"
+
+  /** Instances with their own database (control plane). Empty when the feature is off. */
+  private async dedicatedIds(): Promise<string[]> {
+    try {
+      const rows: any[] =
+        (await this.prisma.instanceDatabase?.findMany?.({
+          where: { status: 'ready' },
+          select: { instanceId: true },
+        })) ?? [];
+      this.dedicated = new Set(rows.map((row) => row.instanceId));
+    } catch {
+      this.dedicated = new Set();
+    }
+    return [...this.dedicated];
+  }
+
+  /** Instance ids grouped per database: the shared ones in one query, each dedicated one on its own. */
+  private byDatabase(ids: string[]): string[][] {
+    const shared = ids.filter((id) => !this.dedicated.has(id));
+    return [...(shared.length ? [shared] : []), ...ids.filter((id) => this.dedicated.has(id)).map((id) => [id])];
+  }
+
+  /**
+   * AgendaSettings rows with the agenda on, from the shared database and from every dedicated one (a dedicated
+   * database whose agenda is known to be off is not queried again: it can sleep).
+   */
+  private async enabledSettingsRows(): Promise<any[]> {
+    const dedicated = await this.dedicatedIds();
+    const shared: any[] = (await this.prisma.agendaSettings.findMany({ where: { enabled: true }, take: 500 })) ?? [];
+    const rows = shared.filter((row: any) => !this.dedicated.has(row.instanceId));
+    for (const instanceId of dedicated) {
+      if (this.knownOff.has(instanceId)) continue;
+      const row = await this.prisma.agendaSettings.findUnique({ where: { instanceId } }).catch((): any => null);
+      if (row?.enabled) rows.push(row);
+      else this.knownOff.add(instanceId);
+    }
+    return rows;
   }
 
   // ------------------------------------------------------------------------------------------------ ICS
@@ -838,7 +894,15 @@ export class AgendaService {
   /** The feed of the instance whose token matches; null when no instance has it. */
   public async icsByToken(token: string): Promise<string | null> {
     if (!/^[a-f0-9]{32,64}$/.test(String(token ?? ''))) return null;
-    const row = await this.prisma.agendaSettings.findUnique({ where: { icsToken: token } });
+    let row = await this.prisma.agendaSettings.findUnique({ where: { icsToken: token } });
+    if (!row) {
+      for (const instanceId of await this.dedicatedIds()) {
+        row = await this.prisma.agendaSettings
+          .findFirst({ where: { instanceId, icsToken: token } })
+          .catch((): any => null);
+        if (row) break;
+      }
+    }
     return row ? this.icsFor(row.instanceId) : null;
   }
 

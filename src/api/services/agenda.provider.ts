@@ -46,8 +46,9 @@ export class InternalAgendaProvider implements AgendaProvider {
     return db.appointment.create({ data: { ...data, instanceId } });
   }
 
-  updateEvent(_instanceId: string, id: string, data: Record<string, any>, db: any = this.prisma) {
-    return db.appointment.update({ where: { id }, data });
+  updateEvent(instanceId: string, id: string, data: Record<string, any>, db: any = this.prisma) {
+    // instanceId in the where: routed to the database of the instance ("banco próprio por instância")
+    return db.appointment.update({ where: { id, instanceId }, data });
   }
 
   cancelEvent(instanceId: string, id: string, data: Record<string, any>, db: any = this.prisma) {
