@@ -4,76 +4,107 @@
 
 Plataforma própria de atendimento automatizado: Evolution API (WhatsApp Web via Baileys ou Cloud API oficial da Meta) + agente OpenAI por instância + painel WhatsAI. Cada número = 1 instância com seu próprio agente.
 
-> Este README é o manual operacional do projeto. Atualizado em 09/11/2026.
+> Este README é o manual operacional do projeto. Atualizado em 10/11/2026 (revisão geral contra o código).
 >
 > **Canais:** os planos Essencial e Profissional usam **WhatsApp Web** (`WHATSAPP-BAILEYS`, QR code); o Premium usa a **Cloud API** (`WHATSAPP-BUSINESS`). O escritório de advocacia em produção usa Baileys. A **pausa humana** está validada em produção no Baileys. Na Cloud API ela funciona pelos ecos da **Coexistence** (`smb_message_echoes`), já tratados no código, mas **ainda não validados com um número real** (seção 12.7).
 
 ## 1. Arquitetura
 
 ```
-WhatsApp do cliente
-   │  (Cloud API oficial via token/webhook)
+WhatsApp do cliente (WhatsApp Web via Baileys, ou Cloud API oficial da Meta)
+   │
    ▼
-Evolution API 2.3.7 — Render (Ohio)          Manager WhatsAI — Vercel
-   ├── Neon Postgres (instâncias, contatos, chats, mensagens, sessões)
-   ├── Redis (cache) — Render Key Value
-   └── OpenAI (agente por instância)  ◄── cron-job.org (ping 5 min)
+API WhatsAI (Evolution API 2.3.7) — Render, Ohio, 1 serviço para todas as instâncias
+   ├── Neon (principal): lista de instâncias, mapeamento dos bancos e dados das instâncias antigas
+   ├── Neon (1 projeto por instância nova): mensagens, contatos, bot, Leads, Agenda, Processos daquela instância
+   ├── Redis (cache) — Render Key Value Free, sem persistência (chaves do WhatsApp também ficam no Postgres)
+   ├── OpenAI: chave de cada cliente, um bot por instância
+   └── MCP em /mcp: operar o projeto por assistentes de IA (seção 14)
+
+Site, painel e manual — Vercel (arquivos estáticos de manager/dist)
+cron-job.org — GET / a cada 5 min (keep-alive) e, opcionais, POST /agenda/tick e /processos/tick
 ```
 
 | Recurso | Endereço |
 |---|---|
 | API | URL do serviço web, configurada no painel do Render |
-| Manager | `https://whatsaibr.vercel.app` |
-| Banco Postgres | host e banco configurados no painel do provedor (Neon hoje) |
-| Keep-alive | job no cron-job.org, configurado no painel do provedor (GET `/` a cada 5 min) |
-| Repo | repositório privado do projeto no GitHub (remote `render`) |
+| Site | `https://whatsaibr.vercel.app/` (+ `/advocacia` e `/instagram`) |
+| Painel | `https://whatsaibr.vercel.app/manager` (login com a chave global) |
+| Manual | `https://whatsaibr.vercel.app/readme` (também no item **Manual** do painel) |
+| Banco | Neon: projeto principal + um projeto por instância com banco próprio (`docs/arquitetura/banco-por-instancia.md`) |
+| Keep-alive | job no cron-job.org (GET `/` a cada 5 min), configurado no painel do provedor |
+| Repo | repositório privado do projeto no GitHub (`origin`); o `main` publica no Render e na Vercel (seção 3) |
 
 ## 2. Segredos e acessos
 
 - **API key global** (`AUTHENTICATION_API_KEY`): definida somente no painel do Render (`sync: false`), fora do Git. É super-admin — **nunca** compartilhar com cliente. Se houver suspeita de exposição, rotacione-a.
 - **Banco**: URI de conexão configurada no painel do Render (`DATABASE_CONNECTION_URI`, `sync: false`). Não commitar.
 - **Tokens de deploy** (Vercel, cron-job.org): guardados fora do repositório, com o operador. Se sumirem, gerar novos no painel do provedor. No GitHub, o secret `VERCEL_TOKEN` alimenta o workflow de deploy do manager.
-- **Manager**: acesso somente do operador (você). Cliente usa apenas o WhatsApp.
+- **Banco por instância:** `NEON_API_KEY` (chave da organização, cria os projetos) e `DB_PER_INSTANCE_SECRET` (criptografa a URL de cada banco; **nunca trocar**, senão os bancos ficam ilegíveis), só no painel do Render.
+- **Chaves dos clientes:** a página **Chaves e credenciais** do painel (só chave global) lista as chaves de cada instância mascaradas e mostra uma por vez depois de digitar a chave global de novo; o MCP só devolve versões mascaradas (`list_credentials`).
+- **Painel**: acesso somente do operador (você), com a chave global. Hoje o cliente usa apenas o WhatsApp: pausar uma conversa, ver Leads, Agenda ou Processos é feito pela nossa equipe a pedido dele (ou pelo próprio WhatsApp, respondendo o contato, o que pausa a IA).
 
 ## 3. Deploy
 
-```bash
-# API (o remote "origin" é o upstream EvolutionAPI — NÃO usar para push)
-git push render main          # dispara deploy automático no Render
+O repositório no GitHub (`origin`) é a fonte de tudo, e o `main` publica sozinho:
 
-# Manager: deploy automático via GitHub Actions ao alterar manager/dist/**
-# Fallback manual:
-./scripts/sync-readmes.sh     # copia os READMEs para o manager
+| O que muda | Para onde vai | Como |
+|---|---|---|
+| API (`src/`, `prisma/`, `Dockerfile`, `render.yaml`) | Render | Deploy automático a cada commit no `main` (`autoDeployTrigger: commit`). A API fica ~4 min fora e reconecta as instâncias: faça fora do horário comercial dos clientes |
+| Site, painel e manual (`manager/dist/**`) | Vercel | Workflow **Deploy Manager** (GitHub Actions, secret `VERCEL_TOKEN`) a cada push no `main` que muda `manager/dist/**` |
+
+- **Fluxo:** branch → PR → CI verde → squash no `main`. Quando o PR só mexe em `manager/dist`, documentação ou READMEs, ponha `[skip render]` no título do commit de merge: o Render não reinicia a API à toa.
+- **Manuais:** depois de editar `README-WHATSAI.md` ou `readmes/*.md`, rode `./scripts/sync-readmes.sh` (copia para `manager/dist/readmes/` e gera o índice) e commite as cópias junto.
+- **Fallback manual do painel:**
+
+```bash
+./scripts/sync-readmes.sh
 cd manager/dist
-VERCEL_TOKEN="<token da Vercel>" \
-  npx -y vercel@65.2.0 deploy --prod --yes --archive=tgz
+VERCEL_TOKEN="<token da Vercel>" npx -y vercel@65.2.0 deploy --prod --yes --archive=tgz
 ```
 
 - Mudanças de env no `render.yaml` são aplicadas no deploy seguinte (Blueprint auto-sync). Se não aplicar: Render > Blueprint > **Sync**.
-- Deploy reinicia a API (~4 min) e reconecta as instâncias automaticamente. Evite durante horário comercial dos clientes.
-- CI: `Check Code Quality` roda lint/build; `Security` roda Gitleaks + `npm audit` (report-only); Dependabot abre atualizações semanais. O deploy do manager usa o secret `VERCEL_TOKEN`.
-- **Build:** o `tsup` empacota cada arquivo de `src` com sourcemap e já passa do heap padrão do Node (~2 GB). O `Dockerfile` (estágio de build) e o CI usam `NODE_OPTIONS=--max-old-space-size=4096`; localmente rode `NODE_OPTIONS=--max-old-space-size=4096 npm run build`. O pipeline Starter do Render tem 8 GB.
+- **CI:** `Check Code Quality` roda lint, build, `npm run test:types` e os testes unitários e de integração (Postgres local); `Security` roda Gitleaks + `npm audit` (só relatório); Dependabot abre atualizações semanais.
+- **Testes locais:** `npm run test:unit`; integração com `npm run test:db:start` e depois `npm run test:integration` (veja `test/scripts/local-postgres.sh`).
+- **Build:** o `tsup` empacota cada arquivo de `src` com sourcemap e já passa do heap padrão do Node (~2 GB). O `Dockerfile` (estágio de build) e o CI usam `NODE_OPTIONS=--max-old-space-size=4096`; localmente rode `NODE_OPTIONS=--max-old-space-size=4096 npm run build`. Para `git push` com o hook de pre-push (que faz o build), use `NODE_OPTIONS=--max-old-space-size=6144 git push`.
 
-## 4. Manager (build sem fonte)
+## 4. Painel, site e manual (build sem fonte)
 
-Só existe `manager/dist` (bundle Vite). Patches já aplicados:
+Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/*.py`: troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (hoje `?v=32`). Depois de qualquer patch: `python3 -I manager/patches/<nome>.py --check` em todos e `node --check` numa cópia `.mjs` do bundle. Se o manager for reconstruído do zero, reaplique todos.
 
-1. **Marca WhatsAI**: `<title>`, textos "WhatsAI", logos SVG locais (`assets/images/whatsai-logo-white.svg` / `whatsai-logo-dark.svg`).
-2. **Server URL padrão** no login = URL do Render.
-3. **Favicon local** (`assets/images/favicon.svg`).
-4. **Aba README**: item na sidebar (acima de Documentação) que abre um painel **dentro do dashboard** (mesma aba, sidebar visível) com um resumo operacional em um único card; `/readme` também funciona como acesso direto. Conteúdo: `readmes/RESUMO.md`, com links para o guia comercial e o manual interno. Arquivos: `assets/readme-tab.js`, `assets/readme-tab.css`, `assets/marked.min.js` e `readmes/` (gerado por `scripts/sync-readmes.sh`). Para atualizar o conteúdo, rode o sync antes do deploy.
-5. **Observabilidade**: item na sidebar e no cabeçalho do dashboard (`/manager/observability` e `/manager/instance/:instanceId/observability`), página React nativa usando os componentes do projeto (`Card`, `Button`, `Badge`, `Alert`). Consulta `GET /observability` com a chave global do localStorage. A rota antiga `/observability` redireciona para a página nativa.
-6. **Plano e limites**: item na sidebar da instância, logo abaixo de Conversas (`/manager/instance/:instanceId/usage`), e uma barra de uso no fim da Visão Geral. Patch `manager/patches/usage-limits.py` (aceita `--check`, roda depois de todos os outros) + `assets/usage-limits.css` (só tokens do `minimal.css`). Detalhes na seção 15.
-7. **Processos**: item na sidebar da instância, depois dos itens do topo (`/manager/instance/:instanceId/processos`), com a contagem de novidades não vistas. Patch `manager/patches/processos.py` (aceita `--check`, roda depois de `root-redirect.py`) + `assets/processos.css`. Detalhes na seção 17.
-8. **Agenda**: item na sidebar da instância, antes de Plano e limites (`/manager/instance/:instanceId/agenda`), atalho no menu de comandos e "Próximo agendamento" no painel do contato em Conversas. Patch `manager/patches/agenda.py` (aceita `--check`, roda depois de `root-redirect.py` e dos patches de Leads; bundle `?v=28`) + `assets/agenda.css` (só tokens `--m-*`). Detalhes na seção 18.
+| Área | Patch / arquivos | O que faz |
+|---|---|---|
+| Idioma e marca | `ptbr-only.py`, `login-clean.py`, `favicon-wa.py`, `render-style.py`, `home-redesign.py` | Painel só em PT-BR, login limpo, wordmark em texto, fonte Geist, telas de entrada |
+| Cores e tema | `theme.py` + `assets/theme.css?v=3` | Paleta "Meu Tema Global" (monocromática, raio 4 px, sem sombras), tema **Claro / Escuro / Sistema** (padrão Sistema, guardado em `localStorage` `wa-theme`). Cor só com significado: verde ok, âmbar atenção, vermelho erro |
+| Layout | `minimal.py`, `twenty-layout.py`, `ui-tables.py`, `dashboard-ui.py`, `responsive.py`, `panel-polish.py` | Barra de visão, painel lateral do contato, menu de comandos (Ctrl K), tabelas, "Primeiros passos", celular/tablet. Na lista de instâncias, a lateral mostra só Instâncias, Observabilidade, Chaves e credenciais, Manual e Sair |
+| Conversas | `chat-ui.py`, `chat-guards.py` | Lista, balões, mídia sob demanda, páginas antigas; correção de dois travamentos |
+| Bot OpenAI | `openai-fields.py`, `openai-media.py` | `tokenParam`, pausa humana, estado da pausa por contato, mídia e memória (seções 12.1, 12.2, 12.9, 12.10) |
+| Nova instância | `db-mode.py` + `db-mode.css` | Escolha **Banco próprio / Compartilhado** com "Restam N de 100 projetos" |
+| Plano e limites | `usage-limits.py` + `usage-limits.css` | Página da instância e barra de uso na Visão Geral (seção 15) |
+| Leads | `leads.py` + `leads.css` | Página de triagem e linha Lead no painel do contato (seção 16) |
+| Processos | `processos.py` + `processos.css` | Página com abas Processos, Publicações e Configurações (seção 17) |
+| Agenda | `agenda.py` + `agenda.css` | Semana/lista, novo agendamento, configurações, próximo agendamento no contato (seção 18) |
+| Observabilidade | `observability-ui.py`, `observability-grid.py`, `observability-alerts.py` | Página nativa com cartões por provedor e alertas (seção 10) |
+| Chaves e credenciais | `credentials-vault.py` + `credentials-vault.css` | Só chave global: chaves de cada instância mascaradas e "mostrar" uma por vez (seção 2) |
+| Rotas | `root-redirect.py`, `manager/dist/vercel.json` | A home antiga nunca aparece; rotas SPA e `/observability` com rewrites antes do catch-all |
+| Manual | `assets/readme-tab.js`, `readme-tab.css`, `marked.min.js`, `readmes/` | Item **Manual** da lateral e `/readme`: resumo operacional (`readmes/RESUMO.md`) com links para o guia comercial e este manual |
 
-Campos do bot OpenAI no Manager: `manager/patches/openai-fields.py` (tokenParam, pausa humana, descrições), `manager/patches/responsive.py` (celular/tablet) e `manager/patches/openai-media.py` (seção Mídia e memória da conversa, seção 12.10), aplicados nessa ordem; cada um aceita `--check`.
-
-Se o manager for reconstruído do zero, reaplicar esses patches. Rotas SPA via `manager/dist/vercel.json`; `/observability` tem rewrites explícitos antes do catch-all para a página de redirect.
+**Site** (`manager/dist/landing/`: `index.html`, `advocacia.html`, `instagram.html`): HTML e CSS escritos à mão (`landing.css`, `segment.css`, `landing-theme.css`, `landing-plus.css`) e `landing.js` / `landing-pixels.js` (fundo de pixels do plano Premium, parado com "reduzir movimento"). Sem logos ou nomes de terceiros, fonte Geist, sem animação de rolagem, dados de exemplo fictícios. Preços iguais aos da seção 6 (inclusive no JSON-LD); ao mudar um preço, mude as três páginas, a seção 6, o guia comercial e o resumo. Em `/advocacia`, a linguagem segue a seção 16.7 (triagem, nunca captação; sem nota numérica para pessoas).
 
 ## 5. Onboarding de cliente (runbook)
 
-Dados necessários: nome da instância (slug, ex. `escritorio-silva`), número E.164 (`5521...`), plano, chave OpenAI (sua, embutida no preço, ou do cliente), informações do negócio para o prompt.
+Dados necessários: nome da instância (slug, ex. `escritorio-silva`), número E.164 (`5521...`), plano, chave OpenAI (um *project key* por instância, sua, embutida no preço, ou do cliente), informações do negócio para o prompt.
+
+Ordem recomendada:
+
+1. **Prompt** a partir de `prompts/exemplo-advocacia.md` (abaixo).
+2. **Instância:** painel > **Nova instância**, com **Banco próprio** (padrão; cada cliente com a sua cota no Neon) ou **Compartilhado** (testes, ou quando acabar a cota de projetos). WhatsApp Web: leia o QR code. Cloud API: payload abaixo.
+3. **OpenAI:** credencial, settings e bot (seção 12.4, ou `scripts/novo-cliente.sh`). Depois teste a chave: `POST /openai-health/<instância>/test` (ou o cartão OpenAI da Observabilidade) — mostra se a chave é válida, se o modelo está liberado e se há crédito.
+4. **Plano e limites:** plano, horário de atendimento e mensagens (seção 15).
+5. **Opcional, conforme o plano:** Leads (seção 16), Agenda (seção 18), Processos (seção 17).
+6. **Checklist de entrega** (abaixo).
+
+Atalho para WhatsApp Web: `EVOLUTION_API_KEY=<chave global> ./scripts/novo-cliente.sh <instância> <número> <essencial|profissional|premium> <prompt.md> [openai-key]` cria a instância, espera a conexão pelo QR code, cadastra a credencial, o bot (`gpt-6-luna`, `maxTokens` 2000, pausa humana de 60 min, memória de 30 mensagens, grupos ignorados), as settings e o plano.
 
 ```bash
 # 1. Escreva o prompt do cliente
@@ -96,6 +127,8 @@ cp prompts/exemplo-advocacia.md prompts/escritorio-silva.md
 
 Depois de criar a instância, configure a credencial OpenAI e o agente pelos endpoints abaixo. Teste mandando "oi" de outro número e acompanhe em Integrações > OpenAI > Sessões.
 
+Com o banco por instância ligado, `POST /instance/create` aceita `"dbMode": "own"` (padrão) ou `"shared"`; sem cota de projetos, `own` é recusado com mensagem clara e nada é criado (`GET /admin/database-quota` mostra quantos restam).
+
 ### Endpoints usados (referência)
 
 | Ação | Endpoint |
@@ -108,12 +141,16 @@ Depois de criar a instância, configure a credencial OpenAI e o agente pelos end
 | Settings do agente | `POST /openai/settings/{instancia}` |
 | Pausar/retomar por contato | `POST /openai/changeStatus/{instancia}` (`opened`, `paused`, `closed`, `delete`) |
 | Sessões | `GET /openai/fetchSessions/{openaiId}/{instancia}` |
+| Saúde da chave OpenAI / testar agora | `GET /openai-health/{instancia}` / `POST /openai-health/{instancia}/test` |
+| Plano e limites | `POST /usage/limits/{instancia}` (seção 15.3) |
+| Cota de bancos próprios (só chave global) | `GET /admin/database-quota` |
 
 Header de autenticação: `apikey: <chave>`.
 
 ### Checklist de entrega
 
-- [ ] Instância `open` e perfil correto
+- [ ] Instância `open`, perfil correto e banco (Próprio/Compartilhado) conferido na lista
+- [ ] Chave OpenAI testada: "Funcionando" e modelo liberado (`/openai-health`)
 - [ ] (Oficial) Meta Business verificado, WABA, Phone Number ID, token permanente e cartão cadastrados
 - [ ] (Oficial) Webhook `/webhook/meta` ativo com os campos `messages` e `smb_message_echoes` (Coexistence) e templates aprovados (se houver envio fora da janela de 24 h)
 - [ ] Agente responde "oi" com o tom do cliente
@@ -121,6 +158,8 @@ Header de autenticação: `apikey: <chave>`.
 - [ ] Pedido de pessoa: a IA avisa que a equipe vai continuar (é só instrução do prompt; não há aviso automático à equipe). A equipe responde e a IA pausa
 - [ ] Pausa e retomada testadas (teste com `humanResumeMinutes` = 2 e depois volte ao combinado)
 - [ ] Áudio transcrito (`transcribeAudio`), foto e PDF lidos com o modelo do bot (PDF no gpt-6-luna ainda não validado: se o modelo recusar, a IA recebe só a descrição do arquivo)
+- [ ] Plano e limites configurados (franquia do plano, horário de atendimento, `outsideHoursMessage`)
+- [ ] `unknownMessage` em PT-BR e grupos ignorados (`ignoreJids: ["@g.us"]`)
 - [ ] Cliente avisado sobre políticas/limites da Meta e fair use
 - [ ] Termo de serviço e de tratamento de dados aceitos + cobrança da implantação
 
@@ -160,14 +199,16 @@ Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implant
 - Advocacia: sigilo profissional — não solicitar documentos sensíveis pelo chat; usar link seguro.
 - **Cloud API oficial**: conexão via token permanente, WABA e Phone Number ID. A Meta pode limitar por qualidade/política, exige templates fora da janela de 24 h e cartão do cliente cadastrado; não prometa isenção de bloqueio por violação de política.
 - Manager e chave global são do operador. Cliente nunca recebe a chave global.
-- Uma credencial OpenAI não pode ser cadastrada em duas instâncias (a API recusa chave repetida). Para cliente com 2 números, gerar 2 project keys (uma por instância); não compartilhe a mesma key entre clientes.
+- Uma credencial OpenAI não pode ser cadastrada em duas instâncias (a API recusa chave repetida). Para cliente com número adicional, gere um project key por instância, com limite de gasto no projeto da OpenAI; não compartilhe a mesma key entre clientes.
+- O log de boot **não** mostra mais a `DATABASE_URL` (o script de migration imprime só host e banco). Logs antigos do Render podem ter a URL completa: se alguém de fora viu esses logs, troque a senha do banco no Neon.
 
 ## 8. Manutenção
 
 - **Keep-alive**: job no cron-job.org, configurado no painel do provedor (5 min). Sem ele, o free dorme em 15 min.
 - **Atualizações**: `git push render main` (revisar changelog do upstream antes).
-- **Backup**: snapshots do Neon + `pg_dump` mensal para storage externo.
-- **Monitorar**: uso de tokens OpenAI, sessões travadas, instâncias `close`, erros no log do Render; no oficial, qualidade/limites e billing da Meta.
+- **Backup**: snapshots do Neon + `pg_dump` mensal para storage externo, **do projeto principal e de cada projeto de instância** (cada banco próprio é um projeto separado).
+- **Monitorar** (diário, pela Observabilidade): cartão **OpenAI** (chave sem crédito, inválida ou modelo indisponível vira alerta crítico), **Plano e uso** (franquia acima do alerta), instâncias `close`, sessões travadas, erros no log do Render; no oficial, qualidade/limites e billing da Meta.
+- **Neon acordando de madrugada:** `GET /admin/db-activity` (ou MCP `get_database_info`) mostra cada "acordada" do banco principal e as consultas que a causaram (só tabela e tipo de SQL). Use antes de mexer em consultas para economizar CU-h.
 - **Rotação**: chave global, tokens Vercel/cron e chaves OpenAI dos clientes em caso de vazamento.
 
 ## 9. Troubleshooting
@@ -186,6 +227,10 @@ Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implant
 | Erro `400 Unsupported parameter: 'max_tokens'` | Modelo de raciocínio (gpt-5, o-series, gpt-6) exige `max_completion_tokens`; deixe `tokenParam: "auto"` (seção 12.1) |
 | Card Sistema com "Falhas ao salvar mensagens" ou log `not stored (P1001)` | Banco inacessível (Neon acordando do scale-to-zero). A mensagem ainda vai para o bot, mas não fica salva. Use o endpoint *pooled* do Neon com `connect_timeout=15&pool_timeout=20` na `DATABASE_CONNECTION_URI` |
 | Cliente não recebe nada quando a OpenAI falha | Esperado se `unknownMessage` estiver vazio; configure em PT-BR (seção 12.5) |
+| IA parou de responder em todos os contatos de uma instância | Veja o cartão **OpenAI** da Observabilidade ou `GET /openai-health/{instancia}`: "Sem crédito na conta OpenAI" (adicionar crédito em Billing), "Chave inválida ou revogada" (gerar outra), "Modelo do bot indisponível" (liberar o modelo no projeto). Depois, `POST .../test` confirma. Se estiver ok, confira o **Plano e limites** (franquia com `pause`, limite diário, horário) |
+| "Banco próprio" desabilitado na Nova instância | Cota de projetos do Neon no fim (`NEON_PROJECT_LIMIT`, padrão 100) ou `DB_PER_INSTANCE_ENABLED` desligado. Crie como Compartilhado ou libere projetos |
+| Instância com banco próprio sem dados / erro de conexão | O projeto Neon da instância pode ter esgotado as 100 CU-h do mês (só ela fica sem banco até o mês virar). Veja o consumo no Neon Console |
+| DJEN com erro "HTTP 403" em Processos | Bloqueio geográfico (Render em Ohio); configure `DJEN_BASE_URL` com um repasse no Brasil (seção 17.1) |
 
 ## 10. Observabilidade
 
@@ -211,12 +256,13 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - **Vercel:** plano Hobby; builds são inferidos dos deploys. O endpoint oficial `/v1/usage` exige Pro/Enterprise, então alguns números ficam parciais.
 - **GitHub:** minutos de Actions via billing API quando o token tem `manage_billing:read`; sem isso, o card fica parcial.
 - A página atualiza a cada 60 s e tem botão **Atualizar**. Cards sem chave aparecem como **Não configurado**; 401/403 indicam chave inválida ou sessão expirada.
+- **Cartões próprios:** **OpenAI** (seção 12.11: chaves funcionando, alerta crítico para sem crédito/inválida/modelo indisponível; testa sozinho a chave que ficou 6 h sem sinal), **Plano e uso** (seção 15.4, com a linha de Leads da seção 16.5) e **WhatsApp** (última mensagem recebida por instância).
 - Segurança: os tokens ficam somente no backend; o browser usa apenas a chave global já existente no login. Se um token vazar, rotacione no provedor e no Render.
 
 ## 11. Registro de decisões
 
 - Plano Render free por opção de custo; upgrade para Starter quando houver clientes pagantes.
-- Manager sem fonte: patches aplicados direto no bundle (documentados na seção 4).
+- Manager sem fonte: patches aplicados direto no bundle (seção 4).
 - Integrações habilitadas em `render.yaml`.
 - Marca WhatsAI aplicada ao manager (título, logos, textos).
 - ~~Conexão oficial (Cloud API) é a única oferta a clientes.~~ Substituído em 02/11/2026: Essencial e Profissional usam WhatsApp Web (Baileys), com aviso de risco nos termos; o Premium usa a Cloud API.
@@ -224,16 +270,21 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - Cloud API: a pausa humana passou a funcionar pelos ecos da Coexistence (`smb_message_echoes`, PR #2). Falta validar com um número real.
 - 02/11/2026: preços fixos aprovados (seção 6) e auditoria do que a landing promete contra o código (seção 13).
 - 03/11/2026: servidor MCP embutido em `/mcp` para operar o projeto por assistentes de IA (seção 14).
-- 03/11/2026: reajuste da implantação e dos adicionais (seção 6); mensalidades e excedente mantidos. Contratos e propostas enviados antes mantêm seus preços durante a validade.
-- 10/11/2026: fim do prazo mínimo e do contrato de 6/12 meses (mensalidade mês a mês, sem fidelidade); implantação única pelo valor antigo de 12 meses; todos os planos com 1 número; número adicional com os recursos e a franquia do plano: R$ 247 / R$ 447 / R$ 847 por mês, implantação R$ 490 / R$ 890 / a partir de R$ 1.490.
+- 03/11/2026: reajuste da implantação e dos adicionais (seção 6); mensalidades e excedente mantidos.
 - 03/11/2026: chaves Signal do WhatsApp gravadas também no Postgres (tabela `AuthStateKey`, migration `20261103120000_add_auth_state_key`), com backfill do Redis no start: o Redis grátis não tem persistência.
 - 03/11/2026: correções de robustez vindas das issues do upstream (branch `fix/upstream-hardening`): o bot responde uma vez por mensagem mesmo quando o WhatsApp reentrega o mesmo id (cache de 24 h); mensagens temporárias, de visualização única e documentos com legenda são lidos pelo conteúdo real; uma mensagem com erro não derruba as outras do lote; edições, exclusões e o aviso de "mensagens temporárias" não viram mensagem nova para a IA; `msgCall` só sai com `rejectCall` ligado; o token de uma instância não acessa outra pela query (`?instanceName=`); com o banco fora do ar a mensagem ainda vai para o bot e a falha aparece na Observabilidade; o card WhatsApp mostra a última mensagem recebida por instância. Paliativo da CVE do Baileys (GHSA-qvv5-jq5g-4cgg) até o upgrade: respostas de "placeholder resend" só são aceitas para ids que a própria API pediu. Nova migration `20261103120000_message_key_id_index` (só um índice, aplicada no start do container). O upgrade do Baileys continua pendente: testar antes num número descartável.
 - 03/11/2026: **Plano e limites** (seção 15): contagem automática das respostas da IA, franquia, limites diários e horário de atendimento por instância. Sem plano configurado, nada muda no atendimento.
+- 04/11/2026: **Leads** (seção 16): ficha de triagem por conversa, sem nota numérica; aviso opcional à equipe.
 - 09/11/2026: **Processos** (seção 17): andamentos do DataJud e intimações do DJEN por OAB, avisos à equipe, aviso neutro opcional ao cliente e contexto opcional (só datas) para a IA. Migration aditiva `20261109120000_add_processos`.
-- 09/11/2026: **Agenda** própria (seção 17): a IA consulta horários, agenda, remarca e cancela pelo WhatsApp (ferramentas do Chat Completions), lembretes com confirmação, página no painel, feed ICS e ferramentas MCP. Desligada por padrão. Sem Google Calendar.
+- 09/11/2026: **Agenda** própria (seção 18): a IA consulta horários, agenda, remarca e cancela pelo WhatsApp (ferramentas do Chat Completions), lembretes com confirmação, página no painel, feed ICS e ferramentas MCP. Desligada por padrão. Sem Google Calendar.
+- 09/11/2026: **banco próprio por instância** (um projeto Neon por instância nova, `docs/arquitetura/banco-por-instancia.md`): a cota de 100 CU-h do Free passa a ser de cada cliente. O Render continua um serviço só (as 750 h grátis são por workspace).
 - 10/11/2026: "Nova instância" com escolha **Banco próprio / Compartilhado** e contador de projetos do Neon; registro das "acordadas" do banco (`GET /admin/db-activity`, MCP `get_database_info`); chaves do WhatsApp que não existem deixam de ser procuradas no banco a cada pedido; MCP ganhou `update_appointment`, `get_agenda_settings`, `get_process_settings` e `update_process_settings`.
-- 10/11/2026: **Saúde das chaves OpenAI** sem entrar na conta de cada cliente: cada resposta do bot registra se a chave funcionou (sem crédito, inválida, modelo indisponível, limite por minuto); teste ativo em `POST /openai-health/<instância>/test` (chave válida? modelo liberado? tem crédito?); cartão **OpenAI** na Observabilidade com alerta; MCP `get_openai_health`. O saldo em dólares não é exposto pela OpenAI para chaves comuns.
-- Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
+- 10/11/2026: **Saúde das chaves OpenAI** sem entrar na conta de cada cliente (seção 12.11); cartão **OpenAI** na Observabilidade com alerta; MCP `get_openai_health`. O saldo em dólares não é exposto pela OpenAI para chaves comuns.
+- 10/11/2026: tema **"Meu Tema Global"** no painel e no site (claro, escuro e Sistema, padrão Sistema; lateral escura na mesma paleta), lateral da lista de instâncias só com os itens globais, cabeçalho do celular sem estourar a tela; site com módulos, assistente de IA, números com mini-gráficos e barra fixa de contato no celular.
+- 10/11/2026: **planos sem fidelidade** (mensalidade mês a mês), implantação única pelo valor antigo de 12 meses, todos os planos com 1 número e número adicional com os recursos e a franquia do plano: R$ 247 / R$ 447 / R$ 847 por mês, implantação R$ 490 / R$ 890 / a partir de R$ 1.490. Propostas enviadas antes mantêm os preços durante a validade.
+- 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
+- Avaliado e adiado: Neon Free → Supabase Free. O banco por instância no Neon já isola a cota de cada cliente; reavaliar se o limite de 100 projetos ou o custo do Neon pago pesar.
+- Planejado: Render Free → Starter (US$ 7/mês) ao ter cliente pagante; site e painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
 
@@ -384,7 +435,7 @@ As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa
 
 ### 12.7 Limitações conhecidas
 
-- **Manager (bundle sem fonte):** não mostra nem edita `tokenParam` e `humanResumeMinutes`; só pela API. Salvar um bot/settings no Manager **não apaga** os valores definidos por API.
+- **Painel:** `tokenParam`, `humanResumeMinutes` e os campos de mídia e memória aparecem no formulário do bot e nas Configurações Padrão (patches `openai-fields.py` e `openai-media.py`). Como na API, um campo do bot não volta a "herdar das settings" depois de definido.
 - **Cloud API (WHATSAPP-BUSINESS):** a pausa humana depende da **Coexistence** e **ainda não foi validada com um número real**.
   - Sem Coexistence, o número só existe na API: não há app para a equipe responder e, portanto, não há eco. A equipe precisaria de outro canal (ex.: Chatwoot, que conta como humano) ou da pausa manual (`changeStatus`).
   - Com Coexistence, a Meta envia `smb_message_echoes` com as mensagens que o dono manda pelo app WhatsApp Business ou dispositivo vinculado; a API trata esses ecos como `fromMe` e pausa o bot como no Baileys. WhatsApp para Windows e WearOS **não** geram eco, e a Meta descreve o eco como "best-effort".
@@ -395,7 +446,7 @@ As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa
 - Envios pela API REST (n8n, CRM, painel próprio) **não** pausam o bot; só mensagens digitadas no WhatsApp (celular/Web/Desktop) ou respostas de atendente pelo Chatwoot. Para pausar a partir de um painel, use `changeStatus` `paused`.
 - Mensagens do cliente durante a pausa não são guardadas para responder depois.
 - Só o bot OpenAI tem retomada por `humanResumeMinutes`; Typebot, Dify etc. mantêm o comportamento anterior.
-- **Modo `assistant` indisponível:** a OpenAI desligou a Assistants API em 26/08/2026. Bots com `botType: "assistant"` (e o `functionUrl`, que só existia nesse modo) não respondem mais; use `chatCompletion`. A **Agenda** própria usa ferramentas do Chat Completions (seção 17); planilha ou CRM continuam como serviço sob medida (webhook/n8n).
+- **Modo `assistant` indisponível:** a OpenAI desligou a Assistants API em 26/08/2026. Bots com `botType: "assistant"` (e o `functionUrl`, que só existia nesse modo) não respondem mais; use `chatCompletion`. A **Agenda** própria usa ferramentas do Chat Completions (seção 18); planilha ou CRM continuam como serviço sob medida (webhook/n8n).
 
 ### 12.8 Deploy e atualização
 
@@ -403,7 +454,7 @@ As imagens do cliente vão para a OpenAI como **data URL** (base64): a API baixa
 2. A migration `20261029120000_add_openai_token_param_human_resume` é **aditiva** (colunas novas nullable ou com default) e roda no start do container (`Docker/scripts/deploy_database.sh` > `prisma migrate deploy`). O default `auto` preserva o comportamento do gpt-4o. **Atenção:** com `humanResumeMinutes = 0` (default) uma sessão pausada não reabre mais sozinha na mensagem seguinte do cliente (antes reabria, engolindo essa mensagem); logo após o deploy defina `humanResumeMinutes` pela API (settings e/ou bot) com o valor combinado com o escritório.
 3. O merge na `main` dispara deploy automático no Render; a API fica ~4 min fora. Faça fora do horário comercial do escritório.
 4. **Rollback:** reverter o merge e deixar o Render redeployar. As colunas extras permanecem no banco e são ignoradas pelo código antigo.
-5. O script de migration imprime a `DATABASE_URL` no log de boot: não compartilhe esse trecho do log.
+5. O script de migration imprime só o host e o banco no log de boot (a URL completa, com senha, deixou de aparecer em 10/11/2026).
 
 ### 12.9 Ver o estado da pausa por contato
 
@@ -560,6 +611,26 @@ curl -X PUT "$SERVER_URL/openai/update/<openaiBotId>/$INSTANCE" \
 
 Limitações: na Cloud API o WhatsApp não informa a duração do áudio (o limite de `maxAudioSeconds` não se aplica) nem sempre o tamanho do documento (a checagem é feita após o download); com `debounceTime`, só a **última** mensagem da rajada tem a mídia baixada (áudios/imagens anteriores da mesma rajada viram descrição); como nos outros campos, não dá para voltar um campo do bot a "herdar" depois de definido.
 
+### 12.11 Saúde das chaves OpenAI (sem entrar na conta do cliente)
+
+Cada resposta do bot registra, em memória, se a chave funcionou; o teste ativo confirma na hora. Nada é gravado no banco.
+
+| Situação | Quando aparece | O que fazer |
+|---|---|---|
+| Funcionando | Última resposta ou teste deu certo | Nada |
+| Sem crédito na conta OpenAI | OpenAI respondeu `insufficient_quota` | Adicionar crédito em Billing da conta do cliente |
+| Chave inválida ou revogada | 401 `invalid_api_key` | Gerar outra chave (API keys) e atualizar a credencial |
+| Modelo do bot indisponível para esta chave | 404 `model_not_found` ou o modelo do bot fora da lista da chave | Liberar o modelo no projeto da OpenAI ou trocar o modelo do bot |
+| Limite de uso por minuto atingido | 429 `rate_limit_exceeded` | Passa sozinho; se repetir, subir o tier da conta |
+| Chave sem permissão / OpenAI instável / Sem resposta da OpenAI | 403, 5xx, rede ou tempo esgotado | Conferir o projeto da chave; erros 5xx e de rede costumam passar |
+| Ainda sem uso nem teste | Nenhuma resposta nem teste desde o último restart | Rodar o teste |
+
+- **Teste ativo** (`POST /openai-health/{instancia}/test`, botão no cartão ou MCP `get_openai_health` com `test=true`): `GET /v1/models` (de graça; diz se a chave vale e se o modelo do bot está liberado) e um embedding de 1 token (`text-embedding-3-small`, ~US$ 0,00000002; diz se há crédito). Se o projeto bloquear embeddings, confirma com uma resposta mínima do modelo do bot. No máximo 1 teste a cada 30 s por chave. Também devolve os limites por minuto do tier da conta.
+- `GET /openai-health/{instancia}`: situação de cada credencial da instância, chave mascarada (`sk-…WXYZ`), modelo do bot, último erro e último teste. Aceita chave global ou token da instância.
+- A Observabilidade testa sozinha as chaves sem sinal há 6 h (no máximo 6 em paralelo).
+- **Limite:** a OpenAI não informa o saldo em dólares para chaves comuns; "sem crédito" só aparece quando acaba. Recomende ao cliente ligar a recarga automática ou um alerta de gasto na conta.
+- O estado fica em memória: zera no restart (vira "Ainda sem uso nem teste" até a próxima resposta ou teste).
+
 ## 13. O que é automático e o que é serviço (auditoria de 02/11/2026)
 
 Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`, `src/utils/humanPause.ts`, `src/utils/openaiMedia.ts`, `channel/meta/**`, `observability*`). Use esta lista para não prometer o que não existe.
@@ -576,7 +647,7 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | Tempo de resposta | Medido | ~10 s de espera + ~18–26 s da OpenAI = **~30–40 s**. Não prometa "resposta na hora" nem "em 18 s" |
 | Pausa quando a equipe responde | Automático (WhatsApp Web); a validar (Cloud API) | Cloud API só com Coexistence (seção 12.7) |
 | Retomada após X minutos | Automático | `humanResumeMinutes`; a IA volta na **próxima** mensagem do cliente depois do prazo |
-| Pausa e reativação manual | Serviço | Pelo painel ou `changeStatus`. **O cliente não acessa o painel** (seção 2): é feito pela nossa equipe |
+| Pausa e reativação manual | Serviço | Pelo painel ou `changeStatus`. **O cliente não acessa o painel** (seção 2): é feito pela nossa equipe. A equipe do cliente pausa a IA respondendo pelo WhatsApp |
 | Ignorar grupos | Configuração | `groupsIgnore` da instância e/ou `ignoreJids: ["@g.us"]` |
 | Falha técnica | Automático | Erro cru nunca vai ao cliente; ele recebe o `unknownMessage` (configure em PT-BR) ou nada |
 | "Passa para uma pessoa quando o cliente pede" | **Só instrução do prompt** | Não há aviso para a equipe nem pausa automática no pedido. `#sair` (`keywordFinish`) com `keepOpen=false` apaga a sessão e a próxima mensagem abre outra, ou seja, a IA volta a responder |
@@ -587,14 +658,15 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | Integrações (planilha, CRM, Google Calendar) | **Serviço sob medida** | Via webhook (`MESSAGES_UPSERT`, `OPENAI_CHANGE_STATUS`) e n8n. O `functionUrl` e o modo Assistants **não estão disponíveis**: a OpenAI desligou a Assistants API em 26/08/2026. A Agenda exporta um feed ICS (somente leitura) para assinar no Google/Apple |
 | Relatório mensal | **Serviço manual** | Não existe relatório automático. Fonte: uso do project key na OpenAI, sessões e Observabilidade |
 | Contagem da franquia de respostas | Automático (desde 03/11/2026) | Contador por instância, dia e contato (seção 15). As mensagens em si continuam sem marcação de origem no banco |
-| Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela; não envia aviso por e-mail ou WhatsApp |
+| Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela (inclusive chave OpenAI sem crédito); não envia aviso por e-mail ou WhatsApp |
+| Saúde da chave OpenAI do cliente | Automático (desde 10/11/2026) | Situação pela última resposta + teste ativo; sem saldo em dólares (seção 12.11) |
 | Lembretes de consulta | Automático com a Agenda ligada | WhatsApp Web (Baileys). Na Cloud API só funcionam dentro da janela de 24 h (fora dela exigiriam template pago, não implementado) |
 | Retenção de 90 dias | **Processo manual** | Não há expurgo automático (seção 7) |
 | Acompanhamento de processos (DataJud/DJEN) | Automático, opcional (desde 09/11/2026) | Aviso à equipe por WhatsApp; ao cliente só a frase neutra, se ligado. Não é tempo real e não substitui os canais oficiais de intimação (seção 17) |
 | Triagem de leads (ficha por conversa) | Automático (desde 04/11/2026) | Uma análise em segundo plano a partir da 3ª mensagem do cliente, com a chave OpenAI da instância; uso interno da equipe, nada vai ao cliente (seção 16) |
 | Aviso de lead para a equipe | Configuração (desligado por padrão) | Uma mensagem de WhatsApp para os números da equipe, uma vez por lead (seção 16) |
 
-Recomendações de produto, em ordem: (1) marcar no banco quais mensagens foram da IA e quais da equipe (contagem de franquia, relatório e auditoria); (2) quando o cliente pedir uma pessoa, pausar a sessão e avisar a equipe (mensagem para um número interno ou webhook); (3) relatório mensal gerado a partir dessa marcação; (4) expurgo automático pela retenção do contrato; (5) validar PDF e foto no gpt-6-luna e a pausa da Cloud API com um número em Coexistence.
+Recomendações de produto, em ordem: (1) marcar no banco quais mensagens foram da IA e quais da equipe (contagem de franquia, relatório e auditoria); (2) quando o cliente pedir uma pessoa, pausar a sessão e avisar a equipe (mensagem para um número interno ou webhook); (3) relatório mensal gerado a partir dessa marcação; (4) expurgo automático pela retenção combinada no termo de tratamento de dados; (5) validar PDF e foto no gpt-6-luna e a pausa da Cloud API com um número em Coexistence; (6) acesso do cliente ao painel com o token da instância (Leads, Agenda e pausa por contato, sem as páginas globais), que o site já sugere como "um painel só"; (7) aviso por WhatsApp ao operador quando um alerta crítico aparece (chave sem crédito, franquia esgotada, instância desconectada).
 
 ## 14. MCP (Claude, ChatGPT, Cursor)
 
@@ -689,6 +761,7 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `update_agenda_settings` | escrita | Liga/desliga e altera a Agenda (listas substituem as atuais). Marcada como destrutiva; devolve os valores anteriores |
 | `get_openai_health` | leitura | Chaves OpenAI de cada cliente: funcionando, sem crédito, inválida ou modelo indisponível, com o que fazer. `test=true` testa agora (custo ~US$ 0,00000002; 1 vez a cada 30 s por chave) |
 | `get_database_info` | leitura | Cota de projetos do Neon (banco próprio por instância) e as últimas "acordadas" do banco com as consultas que as causaram. Responde da memória, sem consultar o banco (só chave global) |
+| `list_credentials` | leitura | Chaves guardadas de cada instância (OpenAI, token, webhook, Dify, Chatwoot etc.) **sempre mascaradas** e se a instância usa a chave OpenAI global. Para ver um valor, use a página Chaves e credenciais (só chave global) |
 
 Na coluna de remetente, `bot` só é identificado nos últimos 10 minutos (o banco não marca a origem das mensagens, seção 13); depois aparece como `me` (número da instância).
 
@@ -950,7 +1023,7 @@ curl -X POST "$SERVER_URL/processos/$INSTANCE/oab" -H "apikey: $APIKEY" -H "Cont
   -d '{ "numeroOab": "123456", "ufOab": "RJ", "label": "Dra. Fulana" }'
 ```
 
-MCP: `list_processes`, `get_process`, `add_process`, `list_publications`, `sync_process`.
+MCP: `list_processes`, `get_process`, `add_process`, `list_publications`, `sync_process`, `get_process_settings`, `update_process_settings`.
 
 **O escritório precisa informar:** número(s) e UF da OAB de cada advogado (e as variações com letra, se houver), a lista de processos (pode colar como vier), os números da equipe que recebem avisos, e, para cada processo em que o cliente deve ser avisado ou a IA pode responder, o WhatsApp do cliente (com a autorização dele).
 
@@ -1026,5 +1099,5 @@ curl -X POST "$SERVER_URL/agenda/tick" -H "apikey: $CHAVE_GLOBAL"
 - Horários gravados em UTC (`timestamptz`); disponibilidade, bloqueios, silêncio e textos no fuso da agenda, com horário de verão (um horário que não existe no dia da mudança é pulado).
 - Duas tabelas: `AgendaSettings` (uma linha opcional por instância) e `Appointment` (índices `instanceId+startsAt`, `instanceId+remoteJid+startsAt`, `status+startsAt`). Migration `20261104130000_add_agenda` (postgresql e mysql), **aditiva**; roda no start do container. Rollback: reverter o merge; as tabelas ficam e são ignoradas.
 - O cache das configurações (30 s), o ticker e a memória de modelos sem ferramentas são por processo (1 réplica, como o resto do bot).
-- **Banco próprio por instância** (seção do #31): as tabelas da Agenda ficam no banco da instância. O ticker consulta o banco principal e cada banco próprio com a Agenda ligada; um banco próprio com a Agenda desligada não é consultado de novo (pode dormir). Sem nada pendente, o ticker volta ao banco no máximo a cada 6 h.
+- **Banco próprio por instância** (`docs/arquitetura/banco-por-instancia.md`): as tabelas da Agenda ficam no banco da instância. O ticker consulta o banco principal e cada banco próprio com a Agenda ligada; um banco próprio com a Agenda desligada não é consultado de novo (pode dormir). Sem nada pendente, o ticker volta ao banco no máximo a cada 6 h.
 - **A validar em produção** antes de vender como pronto: agendamento real pela IA com o modelo do bot (gpt-6-luna) e lembretes num número de teste.
