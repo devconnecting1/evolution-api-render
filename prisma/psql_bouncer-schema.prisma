@@ -115,6 +115,8 @@ model Instance {
   EvoaiSetting            EvoaiSetting?
   InstanceLimits          InstanceLimits?
   UsageCounter            UsageCounter[]
+  Lead                    Lead[]
+  LeadSettings            LeadSettings?
 }
 
 model Session {
@@ -829,6 +831,60 @@ model UsageCounter {
   Instance    Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@id([instanceId, type, period, remoteJid])
+}
+
+/// "Leads (triagem)": one structured lead per private conversation of an instance (filled by the AI extraction).
+model Lead {
+  id                  String    @id @default(cuid())
+  remoteJid           String    @db.VarChar(100)
+  pushName            String?   @db.VarChar(100)
+  name                String?   @db.VarChar(120)
+  area                String?   @db.VarChar(60)
+  city                String?   @db.VarChar(80)
+  summary             String?   @db.VarChar(600)
+  status              String    @default("novo") @db.VarChar(20)
+  statusSource        String    @default("ai") @db.VarChar(10)
+  manualFields        Json?     @db.JsonB
+  priority            String    @default("normal") @db.VarChar(10)
+  priorityRank        Int       @default(1) @db.Integer
+  priorityReason      String?   @db.VarChar(160)
+  missingInfo         Json?     @db.JsonB
+  nextStep            String?   @db.VarChar(200)
+  opposingParty       String?   @db.VarChar(120)
+  hasLawyer           Boolean?  @db.Boolean
+  documentsMentioned  Json?     @db.JsonB
+  mediaCount          Int       @default(0) @db.Integer
+  source              String?   @db.VarChar(60)
+  firstMessageAt      DateTime? @db.Timestamp
+  lastMessageAt       DateTime? @db.Timestamp
+  lastClientMessageAt DateTime? @db.Timestamp
+  lastHumanReplyAt    DateTime? @db.Timestamp
+  awaitingHumanSince  DateTime? @db.Timestamp
+  lastExtractedAt     DateTime? @db.Timestamp
+  extractedFromCount  Int       @default(0) @db.Integer
+  notifiedAt          DateTime? @db.Timestamp
+  createdAt           DateTime  @default(now()) @db.Timestamp
+  updatedAt           DateTime  @updatedAt @db.Timestamp
+  Instance            Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId          String
+
+  @@unique([instanceId, remoteJid])
+  @@index([instanceId, status, updatedAt])
+}
+
+/// "Leads (triagem)": optional settings per instance (no row = extraction on, notifications off).
+model LeadSettings {
+  id              String    @id @default(cuid())
+  enabled         Boolean   @default(true) @db.Boolean
+  areas           Json?     @db.JsonB
+  extractionModel String?   @db.VarChar(100)
+  notifyEnabled   Boolean   @default(false) @db.Boolean
+  notifyNumbers   Json?     @db.JsonB
+  notifyOn        String    @default("ambos") @db.VarChar(12)
+  createdAt       DateTime? @default(now()) @db.Timestamp
+  updatedAt       DateTime  @updatedAt @db.Timestamp
+  Instance        Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId      String    @unique
 }
 
 /// Banco próprio por instância (plano de controle). Sem FK para Instance de propósito:

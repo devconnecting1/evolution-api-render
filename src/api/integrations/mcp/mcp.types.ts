@@ -39,6 +39,18 @@ export interface McpDeps {
     getSummary: (instanceId: string) => Promise<any>;
     saveLimits: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; limits: any }>;
   };
+  /** "Leads (triagem)" (LeadsService): the same instance the REST routes and the bot use. */
+  leads: {
+    list: (instanceId: string, query: Record<string, any>, channel?: any) => Promise<any>;
+    get: (instanceId: string, id: string) => Promise<any>;
+    update: (
+      instanceId: string,
+      id: string,
+      input: Record<string, any>,
+    ) => Promise<{ previous: any; lead: any } | null>;
+    getStoredSettings: (instanceId: string) => Promise<{ configured: boolean; settings: any }>;
+    saveSettings: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; settings: any }>;
+  };
   isBotMessageId: (instanceId: string, messageId: string) => Promise<boolean>;
   config: McpConfig;
   logger: McpLogger;
