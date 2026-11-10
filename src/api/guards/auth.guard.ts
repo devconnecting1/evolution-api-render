@@ -1,5 +1,6 @@
 import { InstanceDto } from '@api/dto/instance.dto';
 import { cachedInstanceToken } from '@api/guards/instance-token-cache';
+import { safeEqual } from '@api/integrations/mcp/mcp.auth';
 import { prismaRepository } from '@api/server.module';
 import { Auth, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
@@ -55,4 +56,27 @@ async function apikey(req: Request, _: Response, next: NextFunction) {
   throw new UnauthorizedException();
 }
 
-export const authGuard = { apikey };
+/**
+ * Admin-only routes ("Chaves e credenciais"): ONLY the global AUTHENTICATION_API_KEY passes, compared in constant
+ * time. Any other key gets 403, a valid instance token included, and the instance tokens are never even looked up
+ * (no oracle telling a valid token from an invalid one). No key at all: 401, as in `apikey`.
+ */
+export function createAdminOnlyGuard(globalKey: () => string | undefined) {
+  return function adminOnlyGuard(req: Request, _: Response, next: NextFunction) {
+    const key = req.get('apikey');
+
+    if (!key) {
+      throw new UnauthorizedException();
+    }
+
+    if (safeEqual(key, globalKey())) {
+      return next();
+    }
+
+    throw new ForbiddenException('Apenas o administrador (chave global) tem acesso.');
+  };
+}
+
+export const adminOnlyGuard = createAdminOnlyGuard(() => configService.get<Auth>('AUTHENTICATION').API_KEY.KEY);
+
+export const authGuard = { apikey, adminOnly: adminOnlyGuard };
