@@ -117,6 +117,12 @@ export interface KeyHealth {
 /** Estado em memória por credencial (id de OpenaiCreds, ou "global" para a chave global). */
 export class OpenaiHealthRegistry {
   private readonly byKey = new Map<string, KeyHealth>();
+  private readonly errorListeners: ((credsId: string, info: OpenaiErrorInfo) => void)[] = [];
+
+  /** Chamado a cada erro real registrado (ex.: avisos ao administrador). Um ouvinte que falha não afeta o resto. */
+  onError(listener: (credsId: string, info: OpenaiErrorInfo) => void): void {
+    this.errorListeners.push(listener);
+  }
 
   constructor(private readonly now: () => number = Date.now) {}
 
@@ -143,6 +149,13 @@ export class OpenaiHealthRegistry {
     const e = this.entry(credsId);
     e.lastError = { ...info, at: this.now(), model: model ?? null };
     e.errorCount++;
+    for (const listener of this.errorListeners) {
+      try {
+        listener(credsId, info);
+      } catch {
+        // ouvinte com erro não pode derrubar a resposta da IA
+      }
+    }
     return info;
   }
 

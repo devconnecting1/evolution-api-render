@@ -67,7 +67,12 @@ export type UsageSnapshotItem = {
   blocks1000: number;
 };
 
-type UsageOptions = { now?: () => number; cacheTtlMs?: number };
+type UsageOptions = {
+  now?: () => number;
+  cacheTtlMs?: number;
+  /** Na primeira resposta da IA de cada dia de cada instância (ex.: retenção das mensagens). */
+  onDaily?: (instanceId: string) => void;
+};
 
 /** Fields accepted by saveLimits (REST and MCP). Absent = unchanged; null = cleared. */
 const LIMIT_FIELDS = [
@@ -300,6 +305,11 @@ export class UsageService {
   private cleanupOncePerDay(instanceId: string, today: string): void {
     if (this.cleanedOn.get(instanceId) === today) return;
     this.cleanedOn.set(instanceId, today);
+    try {
+      this.options.onDaily?.(instanceId);
+    } catch (error) {
+      this.logger.warn(`Daily hook failed for ${instanceId}: ${error?.message ?? error}`);
+    }
 
     void Promise.resolve()
       .then(() =>

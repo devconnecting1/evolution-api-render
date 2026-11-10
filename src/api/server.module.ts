@@ -2,6 +2,7 @@ import { CacheEngine } from '@cache/cacheengine';
 import { Chatwoot, configService, Database, Processos, ProviderSession } from '@config/env.config';
 import { eventEmitter } from '@config/event.config';
 import { Logger } from '@config/logger.config';
+import { openaiHealthRegistry } from '@utils/openai-health';
 import { setProcessAiContextProvider } from '@utils/processos/aiContext';
 
 import { AgendaController } from './controllers/agenda.controller';
@@ -45,6 +46,7 @@ import { S3Service } from './integrations/storage/s3/services/s3.service';
 import { ProviderFiles } from './provider/sessions';
 import { createInstanceDatabases, createRoutedRepository } from './repository/instance-db';
 import { PrismaRepository } from './repository/repository.service';
+import { adminAlertsConfigFromEnv, AdminAlertsService } from './services/admin-alerts.service';
 import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
@@ -53,6 +55,7 @@ import { WAMonitoringService } from './services/monitor.service';
 import { OpenaiHealthService } from './services/openai-health.service';
 import { ProcessosService } from './services/processos.service';
 import { ProxyService } from './services/proxy.service';
+import { retentionDaysFromEnv, RetentionService } from './services/retention.service';
 import { SettingsService } from './services/settings.service';
 import { TemplateService } from './services/template.service';
 import { UsageService } from './services/usage.service';
@@ -134,7 +137,16 @@ export const metaController = new MetaController(prismaRepository, waMonitor);
 export const baileysController = new BaileysController(waMonitor);
 
 // "Plano e limites": one instance, so the limits cache invalidated by the REST routes is the one the bot reads
-export const usageService = new UsageService(prismaRepository);
+const retentionLogger = new Logger('Retention');
+/** Retenção das mensagens (LGPD): MESSAGE_RETENTION_DAYS (0 = desligada, mínimo 30). */
+export const retentionService = new RetentionService({
+  prisma: prismaRepository,
+  days: retentionDaysFromEnv(),
+  logger: { log: (m) => retentionLogger.log(m), warn: (m) => retentionLogger.warn(m) },
+});
+export const usageService = new UsageService(prismaRepository, {
+  onDaily: (instanceId) => retentionService.runOncePerDay(instanceId),
+});
 /** "Acesso do cliente": códigos de acesso do cliente com módulos escolhidos (src/utils/client-access.ts). */
 export const clientAccessService = new ClientAccessService({ prisma: prismaRepository });
 export const usageController = new UsageController(usageService, prismaRepository);
@@ -178,6 +190,23 @@ export const openaiController = new OpenaiController(openaiService, prismaReposi
 
 // Saúde das chaves OpenAI de cada cliente (só memória + leitura das credenciais quando alguém pede)
 export const openaiHealthService = new OpenaiHealthService({ prisma: prismaRepository });
+
+const adminAlertsLogger = new Logger('AdminAlerts');
+/** Avisos ao administrador pelo WhatsApp (ADMIN_ALERT_NUMBERS + ADMIN_ALERT_INSTANCE; sem eles, desligado). */
+export const adminAlertsService = new AdminAlertsService({
+  prisma: prismaRepository,
+  monitor: waMonitor,
+  config: adminAlertsConfigFromEnv(),
+  logger: {
+    log: (m) => adminAlertsLogger.log(m),
+    warn: (m) => adminAlertsLogger.warn(m),
+    error: (m) => adminAlertsLogger.error(m),
+  },
+});
+openaiHealthRegistry.onError((credsId, info) => {
+  void adminAlertsService.openaiProblem(credsId, info);
+});
+adminAlertsService.start();
 
 // chatbots
 const typebotService = new TypebotService(waMonitor, configService, prismaRepository, openaiService);
