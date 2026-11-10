@@ -40,6 +40,25 @@ export class EventController {
   private integrationStatus: boolean;
   private integrationName: string;
 
+  /**
+   * Cache em memória da configuração de evento (webhook, websocket...) por instância.
+   * Sem ele, CADA evento do WhatsApp (presença, entregue/lido, contato) fazia uma consulta ao banco,
+   * o que mantinha o Neon acordado a noite toda. Invalida em toda escrita feita pela API (set) e na
+   * remoção da instância; o TTL só cobre edições feitas direto no banco.
+   */
+  private static readonly configCache = new Map<string, { value: any; at: number }>();
+  public static CONFIG_TTL_MS = 60 * 60_000;
+
+  public static forgetInstance(instanceId?: string) {
+    if (!instanceId) {
+      EventController.configCache.clear();
+      return;
+    }
+    for (const key of [...EventController.configCache.keys()]) {
+      if (key.endsWith(`:${instanceId}`)) EventController.configCache.delete(key);
+    }
+  }
+
   constructor(
     prismaRepository: PrismaRepository,
     waMonitor: WAMonitoringService,
@@ -50,6 +69,17 @@ export class EventController {
     this.monitor = waMonitor;
     this.status = integrationStatus;
     this.name = integrationName;
+
+    // Envolve o set() (inclusive os sobrescritos nas subclasses) para atualizar o cache.
+    const originalSet = this.set.bind(this);
+    this.set = async (instanceName: string, data: any) => {
+      const instanceId = this.monitor?.waInstances?.[instanceName]?.instanceId;
+      try {
+        return await originalSet(instanceName, data);
+      } finally {
+        if (instanceId) EventController.configCache.delete(`${this.name}:${instanceId}`);
+      }
+    };
   }
 
   public set prisma(prisma: PrismaRepository) {
@@ -122,11 +152,20 @@ export class EventController {
       return null;
     }
 
+    const instanceId = this.monitor.waInstances[instanceName].instanceId;
+    const cacheKey = `${this.name}:${instanceId}`;
+    const cached = EventController.configCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < EventController.CONFIG_TTL_MS) {
+      return cached.value;
+    }
+
     const data = await this.prisma[this.name].findUnique({
       where: {
-        instanceId: this.monitor.waInstances[instanceName].instanceId,
+        instanceId,
       },
     });
+
+    EventController.configCache.set(cacheKey, { value: data ?? null, at: Date.now() });
 
     if (!data) {
       return null;

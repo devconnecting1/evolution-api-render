@@ -1,4 +1,5 @@
 import { InstanceDto } from '@api/dto/instance.dto';
+import { cachedInstanceToken } from '@api/guards/instance-token-cache';
 import { prismaRepository } from '@api/server.module';
 import { Auth, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
@@ -6,6 +7,13 @@ import { ForbiddenException, UnauthorizedException } from '@exceptions';
 import { NextFunction, Request, Response } from 'express';
 
 const logger = new Logger('GUARD');
+
+async function instanceToken(name: string): Promise<string | undefined> {
+  return cachedInstanceToken(
+    name,
+    async (n) => (await prismaRepository.instance.findUnique({ where: { name: n } }))?.token,
+  );
+}
 
 async function apikey(req: Request, _: Response, next: NextFunction) {
   const env = configService.get<Auth>('AUTHENTICATION').API_KEY;
@@ -27,10 +35,7 @@ async function apikey(req: Request, _: Response, next: NextFunction) {
 
   try {
     if (param?.instanceName) {
-      const instance = await prismaRepository.instance.findUnique({
-        where: { name: param.instanceName },
-      });
-      if (instance.token === key) {
+      if ((await instanceToken(param.instanceName)) === key) {
         return next();
       }
     } else {
