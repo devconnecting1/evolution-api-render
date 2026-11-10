@@ -11,7 +11,7 @@ Uma implantação, cobrada uma vez, e uma mensalidade fixa, **mês a mês e sem 
 | Fidelidade | Nenhuma | Nenhuma | Nenhuma |
 | Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
 | Números de WhatsApp incluídos | 1 | 1 | 1 |
-| Número adicional | R$ 247/mês | R$ 247/mês | R$ 247/mês + aprovação da Meta |
+| Número adicional, com os mesmos recursos e a mesma franquia | R$ 247/mês | R$ 447/mês | R$ 847/mês + aprovação da Meta |
 | Conexão | WhatsApp Web (QR code) | WhatsApp Web (QR code) | API oficial da Meta (Cloud API) |
 | Áudio, foto e PDF | Sim | Sim | Sim |
 | Leads: triagem das conversas para a equipe | Sim | Sim | Sim |
@@ -69,7 +69,9 @@ No Premium, o valor final depende das integrações e dos modelos de mensagem ne
 
 | Item | Implantação | Mensalidade |
 |---|---|---|
-| Número adicional (outra instância da mesma empresa; inclui 1.000 respostas da IA, servidor e banco de dados próprios) | R$ 890 | R$ 247 |
+| Número adicional no Essencial (2.000 respostas) | R$ 490 | R$ 247 |
+| Número adicional no Profissional (5.000 respostas) | R$ 890 | R$ 447 |
+| Número adicional no Premium (10.000 respostas; aprovação da Meta) | a partir de R$ 1.490 | R$ 847 |
 | Integração adicional (agenda, planilha, CRM, sistema próprio) | a partir de R$ 1.200, após diagnóstico | incluída no suporte |
 | Bloco de 1.000 respostas acima da franquia | – | R$ 49 |
 | Treinamento extra ou ajuste fora da franquia (novo fluxo, novo setor) | R$ 180 por hora | – |
@@ -85,7 +87,7 @@ No Premium, o valor final depende das integrações e dos modelos de mensagem ne
 | Quando a equipe responde | A IA pausa sozinha naquela conversa | Com Coexistence (app WhatsApp Business e API no mesmo número), a IA pausa quando a equipe responde pelo app. Esse recurso é novo e é testado na implantação. A Coexistence depende de aprovação da Meta para o número |
 | Celular | Abra o WhatsApp no celular pelo menos a cada 14 dias para a conexão não expirar | Não depende do celular |
 
-Cada número é uma instância separada: tem a própria IA, as próprias instruções, o próprio banco de dados e um espaço no servidor. Por isso o número adicional tem mensalidade, que cobre esse consumo. No Premium, cada número adicional também passa pela aprovação da Meta.
+Cada número é uma instância separada, com os mesmos recursos e a mesma franquia de respostas do plano: tem a própria IA, as próprias instruções, o próprio banco de dados e um espaço no servidor. Por isso o número adicional tem mensalidade, que cobre esse consumo, e custa cerca de 35% menos que um plano novo, porque o treinamento, o suporte e as integrações são da empresa e não se repetem. No Premium, cada número adicional também passa pela aprovação da Meta.
 
 ## Pagamento e condições
 

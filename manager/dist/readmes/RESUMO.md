@@ -6,13 +6,13 @@
 | Implantação, cobrada uma vez | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
 | Respostas da IA por mês | 2.000 | 5.000 | 10.000 |
 | Números incluídos | 1 | 1 | 1 |
-| Número adicional | R$ 247/mês + R$ 890 | R$ 247/mês + R$ 890 | R$ 247/mês + R$ 890 + Meta |
+| Número adicional (mesmos recursos e franquia) | R$ 247/mês + R$ 490 | R$ 447/mês + R$ 890 | R$ 847/mês + a partir de R$ 1.490 + Meta |
 | Ajustes nas instruções por mês | 2 | 4 | 8 |
 | Áudio, foto e PDF | Sim | Sim | Sim |
 
 - **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 690, abatido da implantação.
 - **Sem fidelidade:** mês a mês, cancelamento com 30 dias de aviso e sem multa. Anual antecipado: 10% de desconto.
-- **Número adicional = outra instância** (IA, banco Neon e espaço no Render próprios): R$ 247/mês com 1.000 respostas.
+- **Número adicional = outra instância** (IA, banco Neon e espaço no Render próprios), com os recursos e a franquia do plano: ~65% da mensalidade.
 - Detalhes para o cliente no **Guia comercial**. Custos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora deste manual.
 
 ## O que é automático e o que é serviço

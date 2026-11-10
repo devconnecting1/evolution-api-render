@@ -134,7 +134,7 @@ Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implant
 | Implantação, cobrada uma vez | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
 | Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
 | Números incluídos | 1 | 1 | 1 |
-| Número adicional (outra instância) | R$ 247/mês + R$ 890 | R$ 247/mês + R$ 890 | R$ 247/mês + R$ 890 + aprovação da Meta |
+| Número adicional (outra instância, mesmos recursos e franquia) | R$ 247/mês + R$ 490 | R$ 447/mês + R$ 890 | R$ 847/mês + a partir de R$ 1.490 + aprovação da Meta |
 | Ajustes nas instruções por mês | 2 | 4 | 8 |
 | Integrações sob medida incluídas | – | 1 | 2 |
 | Áudio, foto e PDF | Sim | Sim | Sim |
@@ -143,7 +143,7 @@ Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implant
 | Processos (seção 17) e assistente de IA (MCP, seção 14) | – | Sim | Sim |
 
 - **Sem fidelidade:** mensalidade mês a mês; cancelamento com 30 dias de aviso, sem multa. A implantação não é devolvida. Pagamento anual antecipado: 10% de desconto na mensalidade.
-- **Número adicional:** cada número é uma instância própria (IA, instruções, banco por instância e espaço no servidor), por isso tem mensalidade: R$ 247 com 1.000 respostas da IA incluídas, mais R$ 890 de implantação (conexão, instruções e testes). A mensalidade cobre a OpenAI dessas respostas, a parte do Render e o projeto Neon da instância; revise o valor se o custo por instância mudar.
+- **Número adicional:** cada número é uma instância própria (IA, instruções, banco por instância e espaço no servidor) com **os mesmos recursos e a mesma franquia de respostas do plano**, por isso o preço acompanha o plano: cerca de 65% da mensalidade (treinamento, suporte e integrações são da empresa e não se repetem). Cobre a OpenAI da franquia, a parte do Render e o projeto Neon da instância; revise se o custo por instância mudar (por exemplo, Neon pago acima de 100 projetos).
 - **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 690, abatido da implantação.
 - **Franquia:** medida automaticamente por instância e visível no painel em **Plano e limites** (seção 15). Configure o plano de cada cliente na implantação.
 
@@ -225,7 +225,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 02/11/2026: preços fixos aprovados (seção 6) e auditoria do que a landing promete contra o código (seção 13).
 - 03/11/2026: servidor MCP embutido em `/mcp` para operar o projeto por assistentes de IA (seção 14).
 - 03/11/2026: reajuste da implantação e dos adicionais (seção 6); mensalidades e excedente mantidos. Contratos e propostas enviados antes mantêm seus preços durante a validade.
-- 10/11/2026: fim do prazo mínimo e do contrato de 6/12 meses (mensalidade mês a mês, sem fidelidade); implantação única pelo valor antigo de 12 meses; todos os planos com 1 número; número adicional R$ 247/mês + R$ 890.
+- 10/11/2026: fim do prazo mínimo e do contrato de 6/12 meses (mensalidade mês a mês, sem fidelidade); implantação única pelo valor antigo de 12 meses; todos os planos com 1 número; número adicional com os recursos e a franquia do plano: R$ 247 / R$ 447 / R$ 847 por mês, implantação R$ 490 / R$ 890 / a partir de R$ 1.490.
 - 03/11/2026: chaves Signal do WhatsApp gravadas também no Postgres (tabela `AuthStateKey`, migration `20261103120000_add_auth_state_key`), com backfill do Redis no start: o Redis grátis não tem persistência.
 - 03/11/2026: correções de robustez vindas das issues do upstream (branch `fix/upstream-hardening`): o bot responde uma vez por mensagem mesmo quando o WhatsApp reentrega o mesmo id (cache de 24 h); mensagens temporárias, de visualização única e documentos com legenda são lidos pelo conteúdo real; uma mensagem com erro não derruba as outras do lote; edições, exclusões e o aviso de "mensagens temporárias" não viram mensagem nova para a IA; `msgCall` só sai com `rejectCall` ligado; o token de uma instância não acessa outra pela query (`?instanceName=`); com o banco fora do ar a mensagem ainda vai para o bot e a falha aparece na Observabilidade; o card WhatsApp mostra a última mensagem recebida por instância. Paliativo da CVE do Baileys (GHSA-qvv5-jq5g-4cgg) até o upgrade: respostas de "placeholder resend" só são aceitas para ids que a própria API pediu. Nova migration `20261103120000_message_key_id_index` (só um índice, aplicada no start do container). O upgrade do Baileys continua pendente: testar antes num número descartável.
 - 03/11/2026: **Plano e limites** (seção 15): contagem automática das respostas da IA, franquia, limites diários e horário de atendimento por instância. Sem plano configurado, nada muda no atendimento.
