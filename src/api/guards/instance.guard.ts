@@ -1,4 +1,5 @@
 import { InstanceDto } from '@api/dto/instance.dto';
+import { runWithInstance } from '@api/repository/instance-db/instance-context';
 import { cache, prismaRepository, waMonitor } from '@api/server.module';
 import { CacheConf, configService } from '@config/env.config';
 import { BadRequestException, ForbiddenException, InternalServerErrorException, NotFoundException } from '@exceptions';
@@ -36,6 +37,9 @@ export async function instanceExistsGuard(req: Request, _: Response, next: NextF
     throw new NotFoundException(`The "${param.instanceName}" instance does not exist`);
   }
 
+  // Contexto da instância para o roteamento de banco (consultas sem instanceId nos argumentos).
+  const instanceId = waMonitor.waInstances[param.instanceName]?.instanceId;
+  if (instanceId) return runWithInstance(instanceId, () => next());
   next();
 }
 

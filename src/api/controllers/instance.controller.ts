@@ -1,6 +1,7 @@
 import { InstanceDto, SetPresenceDto } from '@api/dto/instance.dto';
 import { ChatwootService } from '@api/integrations/chatbot/chatwoot/services/chatwoot.service';
 import { ProviderFiles } from '@api/provider/sessions';
+import { getInstanceDatabases } from '@api/repository/instance-db';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { channelController, eventManager } from '@api/server.module';
 import { CacheService } from '@api/services/cache.service';
@@ -71,6 +72,18 @@ export class InstanceController {
         businessId: instanceData.businessId,
         status: instanceData.status,
       });
+
+      // Banco próprio (projeto Neon) da instância, quando DB_PER_INSTANCE_ENABLED=true.
+      // Se falhar, desfaz a criação para não misturar dados no banco principal.
+      const instanceDatabases = getInstanceDatabases();
+      if (instanceDatabases?.enabled) {
+        try {
+          await instanceDatabases.provision(instanceId, instanceData.instanceName);
+        } catch (error) {
+          await this.prismaRepository.instance.delete({ where: { id: instanceId } }).catch(() => undefined);
+          throw new BadRequestException(error instanceof Error ? error.message : String(error));
+        }
+      }
 
       instance.setInstance({
         instanceName: instanceData.instanceName,

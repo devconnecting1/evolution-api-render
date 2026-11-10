@@ -47,8 +47,8 @@
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=2" />
-    <link rel="stylesheet" href="/assets/landing.css?v=8" />
-    <script src="/assets/landing.js?v=4" defer></script>
+    <link rel="stylesheet" href="/assets/landing.css?v=9" />
+    <script src="/assets/landing.js?v=5" defer></script>
 
     <script type="application/ld+json">
       {
@@ -81,7 +81,7 @@
       }
     </script>
   </head>
-  <body>
+  <body data-wa-origin="site">
     <!-- ícones de linha (traço 1.5, cantos arredondados), desenhados à mão -->
     <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -155,8 +155,9 @@
         <nav class="nav" id="menu" aria-label="Principal" data-nav>
           <ul class="nav-links">
             <li><a href="#como-funciona">Como funciona</a></li>
-            <li><a href="#recursos">Recursos</a></li>
+            <li class="nav-opt"><a href="#recursos">Recursos</a></li>
             <li><a href="#segmentos">Segmentos</a></li>
+            <li><a href="/advocacia" data-keep-utm>Advocacia</a></li>
             <li><a href="#planos">Planos</a></li>
             <li><a href="#duvidas">Dúvidas</a></li>
           </ul>
@@ -1018,6 +1019,7 @@
                 <li>“Tem horário na quinta à tarde?”</li>
               </ul>
               <p class="muted">Triagem e agendamento, sem prometer resultado, conforme as regras da OAB.</p>
+              <a class="link segment-more" href="/advocacia" data-keep-utm>Ver a página para escritórios</a>
             </li>
             <li class="card segment">
               <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-bag" /></svg></span>
@@ -1287,7 +1289,7 @@
           <nav class="foot-col" aria-labelledby="fc3">
             <h2 id="fc3" class="foot-h">Segmentos</h2>
             <ul>
-              <li><a href="#segmentos">Advocacia</a></li>
+              <li><a href="/advocacia" data-keep-utm>Advocacia</a></li>
               <li><a href="#segmentos">Clínicas</a></li>
               <li><a href="#segmentos">Lojas</a></li>
               <li><a href="#segmentos">Imobiliárias</a></li>
