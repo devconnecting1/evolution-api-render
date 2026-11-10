@@ -1,4 +1,5 @@
 import { ToolSpec } from '../mcp.tool';
+import { agendaTools } from './agenda.tools';
 import { botTools } from './bot.tools';
 import { chatTools } from './chat.tools';
 import { credentialsTools } from './credentials.tools';
@@ -20,6 +21,7 @@ export const allTools: ToolSpec<any>[] = [
   ...leadTools,
   ...processosTools,
   ...credentialsTools,
+  ...agendaTools,
 ];
 
 export const TOOL_NAMES = allTools.map((tool) => tool.name);

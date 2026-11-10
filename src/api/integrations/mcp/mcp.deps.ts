@@ -1,4 +1,5 @@
 import {
+  agendaService,
   leadsService,
   openaiController,
   prismaRepository,
@@ -30,6 +31,7 @@ export function defaultMcpDeps(): McpDeps {
     usage: usageService,
     processos: processosService,
     leads: leadsService,
+    agenda: agendaService,
     isBotMessageId,
     logger,
     config: {

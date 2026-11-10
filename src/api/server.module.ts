@@ -4,6 +4,7 @@ import { eventEmitter } from '@config/event.config';
 import { Logger } from '@config/logger.config';
 import { setProcessAiContextProvider } from '@utils/processos/aiContext';
 
+import { AgendaController } from './controllers/agenda.controller';
 import { BusinessController } from './controllers/business.controller';
 import { CallController } from './controllers/call.controller';
 import { ChatController } from './controllers/chat.controller';
@@ -44,6 +45,7 @@ import { S3Service } from './integrations/storage/s3/services/s3.service';
 import { ProviderFiles } from './provider/sessions';
 import { createInstanceDatabases, createRoutedRepository } from './repository/instance-db';
 import { PrismaRepository } from './repository/repository.service';
+import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
 import { LeadsService } from './services/leads.service';
 import { WAMonitoringService } from './services/monitor.service';
@@ -155,7 +157,19 @@ export const leadsService = new LeadsService(prismaRepository, usageService, waM
 });
 export const leadsController = new LeadsController(leadsService, prismaRepository, waMonitor);
 
-const openaiService = new OpenaiService(waMonitor, prismaRepository, configService, usageService, leadsService);
+// "Agenda": one instance shared by the REST routes, the MCP and the bot (settings cache + reminder ticker)
+export const agendaService = new AgendaService(prismaRepository, waMonitor);
+export const agendaController = new AgendaController(agendaService, prismaRepository);
+if (process.env.NODE_ENV !== 'test') agendaService.start();
+
+const openaiService = new OpenaiService(
+  waMonitor,
+  prismaRepository,
+  configService,
+  usageService,
+  leadsService,
+  agendaService,
+);
 export const openaiController = new OpenaiController(openaiService, prismaRepository, waMonitor);
 
 // chatbots
