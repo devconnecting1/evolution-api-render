@@ -268,6 +268,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 
 - No `render.yaml`, os IDs ficam versionados e os tokens usam `sync: false`; preencha os valores no painel do Render (Service > Environment) e faça o deploy. Não commite tokens.
 - **Neon:** storage soma o `logical_size` das branches contra 1 GB do Free; compute em CU-horas contra 100; egress estimado contra 5 GB; branches contra 10. Ajuste os limites se o plano mudar.
+- **Bancos próprios (Neon):** cada instância com **Banco próprio** aparece como uma linha extra no card do Neon ("Banco próprio · <instância>"): compute em CU-h e armazenamento contra a cota do **próprio** projeto (100 CU-h/mês no Free, separada do projeto principal), período e última atividade, com botão para abrir o projeto no Neon Console. A partir de 80% gera alerta no topo da página; a 100% de compute a linha fica "suspenso" (só aquela instância fica sem banco até o período virar). Lê no máximo 40 projetos por atualização (2 chamadas cada, cache de 60 s); usa a mesma `NEON_API_KEY` (chave da organização).
 - **Render:** mostra serviços, último deploy, CPU/memória/rede e uma **estimativa** de instance hours contra 750 h. O consumo oficial de bandwidth/build minutes só existe no dashboard.
 - **Vercel:** plano Hobby; builds são inferidos dos deploys. O endpoint oficial `/v1/usage` exige Pro/Enterprise, então alguns números ficam parciais.
 - **GitHub:** minutos de Actions via billing API quando o token tem `manage_billing:read`; sem isso, o card fica parcial.

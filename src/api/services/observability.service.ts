@@ -81,7 +81,46 @@ export type ObservabilityOptions = {
   /** null disables the local provider (tests of the external providers). */
   system?: SystemProbe | null;
   providerTimeoutMs?: number;
+  /**
+   * Instances with their own Neon project ("Banco próprio", docs/arquitetura/banco-por-instancia.md), listed on the
+   * Neon card. Default: read from the control database, unless the test passes its own `system`.
+   */
+  ownDatabases?: (() => Promise<OwnDatabase[]>) | null;
 };
+
+/** One "Banco próprio": the Neon project of an instance. */
+export type OwnDatabase = { instanceId: string; instanceName: string; projectId: string; status: string };
+
+/** Pill text of an own database (the Manager colours "suspenso" and "failed" red, "ok" green). */
+function ownStatus(status: string, compute: Metric, disk: Metric): string {
+  if (status !== 'ready') return status;
+  if ((compute.percent ?? 0) >= 100) return 'suspenso';
+  return worstStatus([compute, disk]) === 'ok' ? 'ok' : 'perto do limite';
+}
+
+/** At most this many own projects are read per refresh (2 Neon calls each). */
+const OWN_DB_MAX = 40;
+
+async function readOwnDatabases(): Promise<OwnDatabase[]> {
+  const repo = prismaRepository as any;
+  const rows: any[] = await repo.instanceDatabase.findMany({
+    where: { externalProjectId: { not: null } },
+    select: { instanceId: true, externalProjectId: true, status: true },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (!rows.length) return [];
+  const instances: any[] = await repo.instance.findMany({
+    where: { id: { in: rows.map((row) => row.instanceId) } },
+    select: { id: true, name: true },
+  });
+  const names = new Map(instances.map((item) => [item.id, item.name]));
+  return rows.map((row) => ({
+    instanceId: row.instanceId,
+    instanceName: names.get(row.instanceId) ?? 'instância removida',
+    projectId: row.externalProjectId,
+    status: row.status,
+  }));
+}
 
 type RenderSeries = {
   unit?: string;
@@ -219,9 +258,16 @@ export class ObservabilityService {
   private systemProbe: SystemProbe | null | undefined;
 
   private readonly openaiCard: ObservabilityOptions['openai'];
+  private readonly ownDatabases: ObservabilityOptions['ownDatabases'];
 
   constructor(private readonly options: ObservabilityOptions = {}) {
     this.systemProbe = options.system;
+    this.ownDatabases =
+      options.ownDatabases !== undefined
+        ? options.ownDatabases
+        : options.system !== undefined
+          ? null
+          : readOwnDatabases;
     this.openaiCard =
       options.openai !== undefined ? options.openai : options.system !== undefined ? null : openaiHealthService;
   }
@@ -464,6 +510,8 @@ export class ObservabilityService {
     }
 
     const lastActive = formatDate(project.compute_last_active_at);
+    const own = await this.neonOwnDatabases(client, isFree);
+    notes.push(...own.notes);
 
     return {
       id: 'neon',
@@ -491,13 +539,126 @@ export class ObservabilityService {
             .filter(Boolean)
             .join(' · '),
         },
+        ...own.resources,
       ],
+      extraAlerts: own.alerts.length ? own.alerts : undefined,
       notes,
       links: [
         { label: 'Abrir Neon', url: `https://console.neon.tech/app/projects/${projectId}` },
         { label: 'Ver branches', url: `https://console.neon.tech/app/projects/${projectId}/branches` },
       ],
     };
+  }
+
+  /**
+   * "Banco próprio": every instance with its own Neon project gets a line on the Neon card (compute and storage of
+   * that project against its own Free quota, which is separate from the main project) and an alert from 80%. When a
+   * project runs out of compute only that client loses its database until the period resets.
+   */
+  private async neonOwnDatabases(
+    client: HttpClient,
+    isFree: boolean,
+  ): Promise<{ resources: Resource[]; alerts: Alert[]; notes: string[] }> {
+    const empty = { resources: [] as Resource[], alerts: [] as Alert[], notes: [] as string[] };
+    if (!this.ownDatabases) return empty;
+    let list: OwnDatabase[];
+    try {
+      list = await this.ownDatabases();
+    } catch {
+      return { ...empty, notes: ['Não foi possível listar os bancos próprios das instâncias.'] };
+    }
+    if (!list.length) return empty;
+
+    const shown = list.slice(0, OWN_DB_MAX);
+    const results = await Promise.allSettled(
+      shown.map(async (db) => {
+        const id = encodeURIComponent(db.projectId);
+        const [projectRes, branchesRes] = await Promise.allSettled([
+          client.get(`/projects/${id}`),
+          client.get(`/projects/${id}/branches`),
+        ]);
+        if (projectRes.status === 'rejected') throw projectRes.reason;
+        const project = projectRes.value.data?.project ?? projectRes.value.data;
+        const branches: any[] = branchesRes.status === 'fulfilled' ? (branchesRes.value.data?.branches ?? []) : [];
+        return { db, project, branches, branchesOk: branchesRes.status === 'fulfilled' };
+      }),
+    );
+
+    const resources: Resource[] = [];
+    const alerts: Alert[] = [];
+    let failed = 0;
+    results.forEach((result, index) => {
+      const db = shown[index];
+      const name = `Banco próprio · ${db.instanceName}`;
+      const url = `https://console.neon.tech/app/projects/${encodeURIComponent(db.projectId)}`;
+      if (result.status === 'rejected' || !result.value.project?.id) {
+        failed++;
+        resources.push({
+          id: db.projectId,
+          name,
+          type: 'Postgres (instância)',
+          url,
+          detail: 'Sem leitura do Neon agora',
+        });
+        return;
+      }
+      const { project, branches, branchesOk } = result.value;
+      const cuHours = (finite(project.compute_time_seconds) ?? 0) / 3600;
+      const cuLimit = isFree ? NEON_FREE.computeCuHours : null;
+      const storage = branchesOk
+        ? branches.reduce((total, branch) => total + (finite(branch.logical_size) ?? 0), 0)
+        : null;
+      const storageLimit = finite(project.branch_logical_size_limit_bytes) ?? (isFree ? NEON_FREE.storageBytes : null);
+      const compute = buildMetric('compute', 'Compute', cuHours, cuLimit, 'cu_hours');
+      const disk = buildMetric('storage', 'Armazenamento', storage, storageLimit, 'bytes');
+      const periodEnd = formatDate(project.consumption_period_end);
+      const lastActive = formatDate(project.compute_last_active_at);
+
+      const pct = (value: number | null) => (value === null ? '' : ` (${formatNumber(value, 0)}%)`);
+      resources.push({
+        id: project.id,
+        name,
+        type: `Postgres ${project.pg_version ?? ''} (instância)`.trim(),
+        status: ownStatus(db.status, compute, disk),
+        region: project.region_id,
+        url,
+        detail: [
+          `Compute ${formatNumber(cuHours, 1)}${cuLimit ? ` de ${cuLimit} CU-h` : ' CU-h'}${pct(compute.percent)}`,
+          storage !== null
+            ? `armazenamento ${formatBytes(storage)}${storageLimit ? ` de ${formatBytes(storageLimit)}` : ''}${pct(disk.percent)}`
+            : null,
+          periodEnd ? `período até ${periodEnd}` : null,
+          lastActive ? `última atividade ${lastActive}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      });
+
+      for (const metric of [compute, disk]) {
+        if (metric.percent === null || metric.percent < ALERT_PERCENT) continue;
+        alerts.push({
+          provider: 'neon',
+          metric: `own_${metric.id}_${db.instanceId}`,
+          label: `${metric.label} do banco de ${db.instanceName}`,
+          percent: metric.percent,
+          status: metric.status,
+          message:
+            `Neon: ${metric.label.toLowerCase()} do banco próprio de ${db.instanceName} em ${formatNumber(metric.percent, 0)}% do limite` +
+            (metric.id === 'compute'
+              ? '; ao chegar em 100% só essa instância fica sem banco até o período virar.'
+              : '.'),
+        });
+      }
+    });
+
+    const notes = [
+      `Bancos próprios: ${list.length} instância(s) com projeto Neon separado, cada uma com a sua cota${
+        isFree ? ` (${NEON_FREE.computeCuHours} CU-h/mês)` : ''
+      }. Os números acima são só do projeto principal.`,
+    ];
+    if (list.length > shown.length) notes.push(`Mostrando os ${shown.length} primeiros bancos próprios.`);
+    if (failed) notes.push(`${failed} banco(s) próprio(s) sem leitura do Neon agora.`);
+    return { resources, alerts, notes };
   }
 
   /**
