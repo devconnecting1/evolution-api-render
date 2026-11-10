@@ -46,6 +46,8 @@ export type ProviderView = {
   resources: Resource[];
   notes: string[];
   links: ProviderLink[];
+  /** Alerts the provider raises itself (not from a metric percent), e.g. an OpenAI key without credit. */
+  extraAlerts?: Alert[];
   /** Only for `status: 'missing'`: the environment variables that are not set (all of them are needed). */
   missingEnv?: string[];
   error?: string;

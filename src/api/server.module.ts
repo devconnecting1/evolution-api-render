@@ -49,6 +49,7 @@ import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
 import { LeadsService } from './services/leads.service';
 import { WAMonitoringService } from './services/monitor.service';
+import { OpenaiHealthService } from './services/openai-health.service';
 import { ProcessosService } from './services/processos.service';
 import { ProxyService } from './services/proxy.service';
 import { SettingsService } from './services/settings.service';
@@ -171,6 +172,9 @@ const openaiService = new OpenaiService(
   agendaService,
 );
 export const openaiController = new OpenaiController(openaiService, prismaRepository, waMonitor);
+
+// Saúde das chaves OpenAI de cada cliente (só memória + leitura das credenciais quando alguém pede)
+export const openaiHealthService = new OpenaiHealthService({ prisma: prismaRepository });
 
 // chatbots
 const typebotService = new TypebotService(waMonitor, configService, prismaRepository, openaiService);

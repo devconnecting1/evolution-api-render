@@ -77,6 +77,8 @@ export interface McpDeps {
     | 'cancelAppointment'
     | 'saveSettings'
   >;
+  /** Saúde das chaves OpenAI (OpenaiHealthService). Optional: tests without it get a clear error. */
+  openaiHealth?: Pick<import('@api/services/openai-health.service').OpenaiHealthService, 'overview' | 'test'>;
   isBotMessageId: (instanceId: string, messageId: string) => Promise<boolean>;
   config: McpConfig;
   logger: McpLogger;

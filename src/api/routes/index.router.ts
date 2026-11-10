@@ -27,6 +27,7 @@ import { InstanceRouter } from './instance.router';
 import { LabelRouter } from './label.router';
 import { LeadsRouter } from './leads.router';
 import { ObservabilityRouter } from './observability.router';
+import { OpenaiHealthRouter } from './openai-health.router';
 import { ProcessosRouter } from './processos.router';
 import { ProxyRouter } from './proxy.router';
 import { MessageRouter } from './sendMessage.router';
@@ -247,6 +248,7 @@ router
   .use('/processos', new ProcessosRouter(...guards).router)
   .use('/leads', new LeadsRouter(...guards).router)
   .use('/agenda', new AgendaRouter(...guards).router)
+  .use('/openai-health', new OpenaiHealthRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
   // Neon project quota and database wake log: global key only, never touch the database
   .use('/admin', new AdminDbRouter().router)

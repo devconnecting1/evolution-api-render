@@ -7,6 +7,7 @@ import { Integration } from '@api/types/wa.types';
 import { ConfigService, Language, Openai as OpenaiConfig } from '@config/env.config';
 import { IntegrationSession, OpenaiBot, OpenaiSetting } from '@prisma/client';
 import { hasHumanWrittenSince, isHumanPaused } from '@utils/humanPause';
+import { openaiHealthRegistry } from '@utils/openai-health';
 import {
   countPdfPages,
   describeDocument,
@@ -1311,6 +1312,24 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
    * In "auto" mode the working parameter is remembered per model; in forced mode it is not.
    */
   private async createChatCompletion(
+    client: OpenAI,
+    openaiBot: OpenaiBot,
+    messages: any[],
+    tokenParam: { mode: TokenParamMode; param: TokenParamName },
+    extra: Record<string, any> = {},
+  ) {
+    // Saúde da chave do cliente (só em memória): cada resposta real diz se a chave funciona ou por que falhou
+    try {
+      const completion = await this.requestChatCompletion(client, openaiBot, messages, tokenParam, extra);
+      openaiHealthRegistry.recordOk(openaiBot.openaiCredsId, openaiBot.model);
+      return completion;
+    } catch (error) {
+      openaiHealthRegistry.recordError(openaiBot.openaiCredsId, error, openaiBot.model);
+      throw error;
+    }
+  }
+
+  private async requestChatCompletion(
     client: OpenAI,
     openaiBot: OpenaiBot,
     messages: any[],
