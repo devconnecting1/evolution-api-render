@@ -137,7 +137,8 @@ export type CredentialsInstance = {
   name: string;
   connectionStatus: string;
   integration: string | null;
-  dbMode: string | null;
+  /** "own" (own Neon database ready), "shared" (main database), null when the deployment has no per-instance DBs. */
+  dbMode: 'own' | 'shared' | null;
   /** The OpenAI bot of this instance answers with OPENAI_API_KEY_GLOBAL (no own key stored). */
   openaiGlobalFallback: boolean;
   items: CredentialItem[];
@@ -180,6 +181,28 @@ async function rowsOf(deps: CredentialsDeps, spec: KindSpec, instanceIds: string
   }
 }
 
+/**
+ * Status of the own database of each instance (InstanceDatabase, same rule as the monitor: "own" once ready). Only
+ * the status is read: the encrypted connection URI never leaves the table. Null when the table does not exist.
+ */
+async function databaseModes(deps: CredentialsDeps, instanceIds: string[]): Promise<Map<string, string> | null> {
+  const delegate = deps.prisma?.instanceDatabase;
+  if (!delegate?.findMany) return null;
+
+  try {
+    const rows: any[] = instanceIds.length
+      ? await delegate.findMany({
+          where: { instanceId: { in: instanceIds } },
+          select: { instanceId: true, status: true },
+        })
+      : [];
+    return new Map((rows ?? []).map((row) => [row.instanceId, String(row.status)]));
+  } catch (error) {
+    deps.logger?.error(`credentials: instanceDatabase unavailable: ${error?.message ?? error}`);
+    return null;
+  }
+}
+
 /** Every instance of the deployment with its secrets masked. Nothing here ever returns a full secret. */
 export async function listCredentials(deps: CredentialsDeps): Promise<CredentialsOverview> {
   const instances: any[] =
@@ -208,7 +231,7 @@ export async function listCredentials(deps: CredentialsDeps): Promise<Credential
       name: row.name,
       connectionStatus: liveState(deps, row),
       integration: row.integration ?? null,
-      dbMode: typeof row.dbMode === 'string' ? row.dbMode : null,
+      dbMode: null,
       openaiGlobalFallback: false,
       items,
     });
@@ -216,7 +239,13 @@ export async function listCredentials(deps: CredentialsDeps): Promise<Credential
 
   const ids = [...byId.keys()];
   const kinds = CREDENTIAL_KIND_NAMES.filter((kind) => kind !== 'instance_token');
-  const results = await Promise.all(kinds.map((kind) => rowsOf(deps, CREDENTIAL_KINDS[kind], ids)));
+  const [results, databases] = await Promise.all([
+    Promise.all(kinds.map((kind) => rowsOf(deps, CREDENTIAL_KINDS[kind], ids))),
+    databaseModes(deps, ids),
+  ]);
+  if (databases) {
+    for (const instance of byId.values()) instance.dbMode = databases.get(instance.id) === 'ready' ? 'own' : 'shared';
+  }
 
   kinds.forEach((kind, index) => {
     const spec = CREDENTIAL_KINDS[kind];

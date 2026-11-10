@@ -67,6 +67,9 @@ function fakePrisma() {
       { id: 'n8n-1', instanceId: 'inst-b', description: 'Fluxo', webhookUrl: null, basicAuthPass: N8N_PASS },
     ]),
     flowise: table([{ id: 'fw-1', instanceId: 'inst-b', description: 'vazio', apiKey: '' }]),
+    instanceDatabase: table([
+      { id: 'db-1', instanceId: 'inst-a', status: 'ready', connectionUri: 'enc:fictional-encrypted-uri-0000' },
+    ]),
     setting: {
       findMany: async () => {
         throw new Error('table missing');
@@ -133,6 +136,9 @@ describe('credentials: service', () => {
     const [a, b] = overview.instances;
     assert.equal(a.connectionStatus, 'open', 'live state of the loaded instance wins');
     assert.equal(b.connectionStatus, 'open');
+    assert.equal(a.dbMode, 'own');
+    assert.equal(b.dbMode, 'shared');
+    assert.ok(!text.includes('fictional-encrypted-uri'));
     assert.equal(a.openaiGlobalFallback, false, 'own OpenAI key');
     assert.equal(b.openaiGlobalFallback, true, 'no own key + OPENAI_API_KEY_GLOBAL');
 
