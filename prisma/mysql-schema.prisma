@@ -120,6 +120,7 @@ model Instance {
   Publication             Publication[]
   Lead                    Lead[]
   LeadSettings            LeadSettings?
+  ClientAccess            ClientAccess?
   AgendaSettings          AgendaSettings?
   Appointment             Appointment[]
 }
@@ -1074,4 +1075,19 @@ model InstanceDatabase {
   migratedAt        DateTime? @db.Timestamp
   createdAt         DateTime  @default(now()) @db.Timestamp
   updatedAt         DateTime  @updatedAt @db.Timestamp
+}
+
+/// "Acesso do cliente": código de acesso próprio do cliente (só o hash), com os módulos que ele pode usar.
+/// Fica no banco principal (plano de controle) porque o código é procurado antes de saber a instância.
+model ClientAccess {
+  id         String    @id @default(cuid())
+  enabled    Boolean   @default(true)
+  modules    Json      @db.Json
+  keyHash    String    @unique @db.VarChar(64)
+  keyHint    String    @db.VarChar(12)
+  lastUsedAt DateTime? @db.Timestamp
+  createdAt  DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp
+  updatedAt  DateTime  @updatedAt @db.Timestamp
+  Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId String    @unique
 }

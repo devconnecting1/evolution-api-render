@@ -1,7 +1,8 @@
 import { RouterBroker } from '@api/abstract/abstract.router';
 import { InstanceDto, SetPresenceDto } from '@api/dto/instance.dto';
-import { instanceController } from '@api/server.module';
+import { clientAccessService, instanceController, waMonitor } from '@api/server.module';
 import { ConfigService } from '@config/env.config';
+import { clientInstanceView, isClientKey } from '@utils/client-access';
 import { instanceSchema, presenceOnlySchema } from '@validate/validate.schema';
 import { RequestHandler, Router } from 'express';
 
@@ -56,6 +57,13 @@ export class InstanceRouter extends RouterBroker {
       })
       .get(this.routerPath('fetchInstances', false), ...guards, async (req, res) => {
         const key = req.get('apikey');
+
+        // "Acesso do cliente": only its own instance, without the instance token or integration secrets
+        if (isClientKey(key)) {
+          const grant = await clientAccessService.resolve(key);
+          const list = grant ? await waMonitor.instanceInfo([grant.instanceName]) : [];
+          return res.status(HttpStatus.OK).json((list ?? []).map((item: any) => clientInstanceView(item, key)));
+        }
 
         const response = await this.dataValidate<InstanceDto>({
           request: req,

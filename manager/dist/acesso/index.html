@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#10100e" media="(prefers-color-scheme: dark)" />
+    <meta name="robots" content="noindex" />
+    <!-- Entrada do cliente ("Acesso do cliente"): só o código de acesso, que o administrador cria no painel. -->
+    <meta name="wa-api" content="https://evolution-api-x93o.onrender.com" />
+    <title>Entrar · WhatsAI</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg?v=3" />
+    <link rel="manifest" href="/acesso/acesso.webmanifest" />
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=3" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="WhatsAI" />
+    <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/geist.css?v=2" />
+    <style>
+      :root {
+        --bg: #f5f5f5;
+        --surface: #ffffff;
+        --text: #1a1a1a;
+        --text-2: #5e5e5e;
+        --line: #e0e0e0;
+        --line-strong: #cccccc;
+        --primary: #1a1a1a;
+        --on-primary: #ffffff;
+        --bad: #c0392b;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #10100e;
+          --surface: #171714;
+          --text: #ffffe3;
+          --text-2: #b8b8a6;
+          --line: #2e2e29;
+          --line-strong: #606055;
+          --primary: #ffffe3;
+          --on-primary: #10100e;
+          --bad: #f87171;
+          color-scheme: dark;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      header {
+        padding: 20px 16px;
+        padding-top: max(20px, env(safe-area-inset-top));
+      }
+      .brand {
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+      }
+      main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+      .card {
+        width: 100%;
+        max-width: 400px;
+        padding: 28px 24px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--surface);
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+      .lead {
+        margin: 0 0 20px;
+        color: var(--text-2);
+        font-size: 14px;
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      input {
+        width: 100%;
+        min-height: 44px;
+        padding: 0 12px;
+        border: 1px solid var(--line-strong);
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 14px;
+      }
+      button {
+        width: 100%;
+        min-height: 44px;
+        margin-top: 16px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--primary);
+        color: var(--on-primary);
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+      input:focus-visible,
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--text);
+        outline-offset: 2px;
+      }
+      .error {
+        min-height: 1.4em;
+        margin: 10px 0 0;
+        color: var(--bad);
+        font-size: 14px;
+      }
+      .note {
+        margin: 18px 0 0;
+        color: var(--text-2);
+        font-size: 13px;
+      }
+      .install[hidden] {
+        display: none;
+      }
+      .install {
+        margin-top: 10px;
+        background: transparent;
+        border: 1px solid var(--line-strong);
+        color: var(--text);
+      }
+      footer {
+        padding: 16px;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        text-align: center;
+      }
+      footer a {
+        color: var(--text-2);
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header><a class="brand" href="/">WhatsAI</a></header>
+    <main>
+      <section class="card" aria-labelledby="t">
+        <h1 id="t">Entrar</h1>
+        <p class="lead" id="lead">Use o código de acesso que você recebeu.</p>
+        <form id="f" novalidate>
+          <label for="code">Código de acesso</label>
+          <input id="code" name="code" type="password" autocomplete="current-password" spellcheck="false" autocapitalize="off" required aria-describedby="err" />
+          <p class="error" id="err" role="alert"></p>
+          <button id="go" type="submit">Entrar</button>
+          <button id="install" class="install" type="button" hidden>Instalar o app</button>
+        </form>
+        <p class="note">No computador ou no celular, você pode instalar como app: no Chrome ou Edge, "Instalar app"; no iPhone, Compartilhar e depois "Adicionar à Tela de Início".</p>
+      </section>
+    </main>
+    <footer><a href="/manager/login" id="admin">Entrar como administrador</a></footer>
+    <script>
+      (function () {
+        'use strict';
+        var API = document.querySelector('meta[name="wa-api"]').content.replace(/\/+$/, '');
+        var NAV_OF = { conversas: 'chat', leads: 'leads', agenda: 'agenda', processos: 'processos', plano: 'usage', conexao: 'conexao' };
+        function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+        function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+        function home(me) {
+          var first = (me.modules || []).map(function (m) { return NAV_OF[m]; }).filter(Boolean)[0] || 'conexao';
+          return '/manager/instance/' + me.instance.id + '/' + first;
+        }
+
+        // already in: straight to the panel
+        var saved = null;
+        try { saved = JSON.parse(get('wa-portal') || 'null'); } catch (e) {}
+        if (/^wac_/.test(get('token') || '') && saved && saved.instanceId) {
+          location.replace(home({ instance: { id: saved.instanceId }, modules: saved.modules }));
+          return;
+        }
+        if (/saiu=1/.test(location.search)) document.getElementById('lead').textContent = 'Seu acesso mudou. Entre de novo com o código atual.';
+
+        var form = document.getElementById('f');
+        var input = document.getElementById('code');
+        var err = document.getElementById('err');
+        var go = document.getElementById('go');
+
+        function call(method, path, key) {
+          return fetch(API + path, { method: method, headers: key ? { apikey: key } : {}, cache: 'no-store' }).then(function (r) {
+            return r.json().catch(function () { return null; }).then(function (data) {
+              if (!r.ok) { var e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
+              return data;
+            });
+          });
+        }
+
+        form.addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          var key = input.value.trim();
+          err.textContent = '';
+          if (!/^wac_[A-Za-z0-9_-]{20,}$/.test(key)) { err.textContent = 'Confira o código: ele começa com "wac_".'; input.focus(); return; }
+          go.disabled = true;
+          go.textContent = 'Entrando…';
+          Promise.all([call('GET', '/'), call('GET', '/client-access/me', key)]).then(function (res) {
+            var server = res[0] || {};
+            var me = res[1];
+            if (!me || !me.client) throw Object.assign(new Error('not client'), { status: 401 });
+            set('apiUrl', API);
+            set('token', key);
+            set('version', server.version || '2');
+            if (server.clientName) set('clientName', server.clientName);
+            set('instanceId', me.instance.id);
+            set('wa-portal', JSON.stringify({ instanceId: me.instance.id, instanceName: me.instance.name, modules: me.modules }));
+            location.replace(home(me));
+          }).catch(function (e) {
+            err.textContent = e.status === 401 || e.status === 403 ? 'Código inválido ou desativado. Peça um novo a quem configurou o seu atendimento.' : 'Não foi possível falar com o servidor agora. Tente de novo em alguns segundos.';
+            go.disabled = false;
+            go.textContent = 'Entrar';
+          });
+        });
+
+        document.getElementById('admin').addEventListener('click', function () { del('wa-portal'); });
+
+        var deferred = null;
+        var install = document.getElementById('install');
+        window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; install.hidden = false; });
+        install.addEventListener('click', function () { if (deferred) { deferred.prompt(); deferred = null; install.hidden = true; } });
+      })();
+    </script>
+  </body>
+</html>
