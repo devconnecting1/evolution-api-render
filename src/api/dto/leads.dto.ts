@@ -28,4 +28,10 @@ export class LeadBackfillDto {
   days?: number;
   max?: number;
   dryRun?: boolean;
+  /** Analyse again the leads that exist, with the current rules (up to 500) */
+  reanalyze?: boolean;
+}
+
+export class LeadAnalyzeDto {
+  contact?: string;
 }

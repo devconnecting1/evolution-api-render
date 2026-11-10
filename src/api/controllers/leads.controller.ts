@@ -61,6 +61,24 @@ export class LeadsController {
     return { name: row.name, csv };
   }
 
+  public async exportPreview(instance: InstanceDto, query: Record<string, any>) {
+    const row = await this.instanceOf(instance);
+    const sheets = await this.guard(() => this.leads.exportPreview(row.id, row.name, query));
+    return { instance: row.name, sheets };
+  }
+
+  public async refreshWaiting(instance: InstanceDto) {
+    const row = await this.instanceOf(instance);
+    const result = await this.guard(() => this.leads.refreshWaiting(row.id));
+    return { instance: row.name, ...result };
+  }
+
+  public async exportXlsx(instance: InstanceDto, query: Record<string, any>) {
+    const row = await this.instanceOf(instance);
+    const file = await this.guard(() => this.leads.exportXlsx(row.id, row.name, query));
+    return { name: row.name, file };
+  }
+
   public async getSettings(instance: InstanceDto) {
     const row = await this.instanceOf(instance);
     const { configured, settings } = await this.leads.getStoredSettings(row.id);
@@ -86,6 +104,18 @@ export class LeadsController {
   public async backfill(instance: InstanceDto, data: LeadBackfillDto) {
     const row = await this.instanceOf(instance);
     return { instance: row.name, ...(await this.guard(() => this.leads.backfill(row.id, row.name, { ...data }))) };
+  }
+
+  public async analyzeOne(instance: InstanceDto, contact: string) {
+    const row = await this.instanceOf(instance);
+    return { instance: row.name, ...(await this.guard(() => this.leads.analyzeOne(row.id, row.name, contact))) };
+  }
+
+  public async remove(instance: InstanceDto, id: string) {
+    const row = await this.instanceOf(instance);
+    const lead = await this.guard(() => this.leads.remove(row.id, id));
+    if (!lead) throw new NotFoundException('Lead não encontrado.');
+    return { instance: row.name, removed: true, lead };
   }
 
   public async backfillStatus(instance: InstanceDto) {

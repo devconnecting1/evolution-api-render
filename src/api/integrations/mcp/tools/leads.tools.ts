@@ -175,4 +175,92 @@ export const updateLeadSettings = defineTool({
   },
 });
 
-export const leadTools = [listLeads, getLead, updateLead, getLeadSettings, updateLeadSettings];
+export const analyzeLeads = defineTool({
+  name: 'analyze_leads',
+  title: 'Analisar conversas (leads) com a IA do cliente',
+  description:
+    'Roda a análise da triagem com a chave OpenAI e o modelo da própria instância. mode "novas": conversas dos últimos N dias que ainda não viraram lead. mode "todas": refaz todas as fichas que existem com as regras atuais (tipo de contato, pontos de atenção, mensagens da equipe), sem mexer no que a equipe editou. Use dry_run=true (padrão) para só contar; com dry_run=false roda em segundo plano (veja o progresso chamando de novo com dry_run=true ou em list_leads). Gasta tokens da conta OpenAI do cliente (pouco: uma chamada por conversa). Nada é enviado ao cliente.',
+  input: {
+    instance: instanceArg,
+    mode: z.enum(['novas', 'todas']).default('novas').describe('"novas" ou "todas" (reanalisar as fichas existentes).'),
+    days: z.number().int().min(1).max(60).optional().describe('Para "novas": últimos N dias (padrão 30).'),
+    max: z.number().int().min(1).max(500).optional().describe('Máximo de conversas (padrão 50; até 500 em "todas").'),
+    dry_run: z.boolean().default(true).describe('true = só conta; false = roda.'),
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  run: async (args, ctx) => {
+    const resolved = await resolveInstance(ctx, args.instance);
+    const result = await userErrors(() =>
+      ctx.deps.leads.backfill(resolved.id, resolved.name, {
+        days: args.days,
+        max: args.max ?? (args.mode === 'todas' ? 500 : 50),
+        dryRun: args.dry_run !== false,
+        reanalyze: args.mode === 'todas',
+      }),
+    );
+    return jsonResult({
+      instance: resolved.name,
+      mode: args.mode,
+      ...result,
+      progress: ctx.deps.leads.backfillStatus(resolved.id),
+    });
+  },
+});
+
+export const analyzeLead = defineTool({
+  name: 'analyze_lead',
+  title: 'Analisar a conversa de um contato agora',
+  description:
+    'Cria ou atualiza a ficha de lead de um contato analisando a conversa agora (IA da instância), mesmo com poucas mensagens. Use para incluir alguém na triagem ou atualizar uma ficha antiga. Nada é enviado ao cliente.',
+  input: {
+    instance: instanceArg,
+    contact: z.string().min(3).max(120).describe('Número com DDI e DDD (ex.: 5521999998888) ou JID do contato.'),
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  run: async (args, ctx) => {
+    const resolved = await resolveInstance(ctx, args.instance);
+    const result = await userErrors(() => ctx.deps.leads.analyzeOne(resolved.id, resolved.name, args.contact));
+    return jsonResult({ instance: resolved.name, ...result });
+  },
+});
+
+export const deleteLead = defineTool({
+  name: 'delete_lead',
+  title: 'Remover um lead',
+  description:
+    'Remove a ficha de lead (só a triagem; a conversa não é apagada). Uma mensagem nova do contato pode criar a ficha de novo; para tirar da fila sem apagar, prefira update_lead com status "descartado". Destrutiva: confirme com o usuário. Devolve a ficha removida.',
+  input: { instance: instanceArg, id: z.string().min(1).max(64).describe('id do lead.') },
+  annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  run: async (args, ctx) => {
+    const resolved = await resolveInstance(ctx, args.instance);
+    const lead = await userErrors(() => ctx.deps.leads.remove(resolved.id, args.id));
+    if (!lead) throw new McpToolError('lead não encontrado nesta instância.');
+    return jsonResult({ removed: true, instance: resolved.name, lead });
+  },
+});
+
+export const refreshLeadsWaiting = defineTool({
+  name: 'refresh_leads_waiting',
+  title: 'Recalcular "aguardando equipe"',
+  description:
+    'Recalcula quem está aguardando resposta da equipe a partir das mensagens e das pausas do bot, sem chamar a OpenAI. Corrige fichas criadas pela análise de conversas antigas. Devolve quantas mudaram.',
+  input: { instance: instanceArg },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  run: async (args, ctx) => {
+    const resolved = await resolveInstance(ctx, args.instance);
+    const result = await userErrors(() => ctx.deps.leads.refreshWaiting(resolved.id));
+    return jsonResult({ instance: resolved.name, ...result });
+  },
+});
+
+export const leadTools = [
+  listLeads,
+  getLead,
+  updateLead,
+  getLeadSettings,
+  updateLeadSettings,
+  analyzeLeads,
+  analyzeLead,
+  deleteLead,
+  refreshLeadsWaiting,
+];

@@ -1,8 +1,8 @@
 import { RouterBroker } from '@api/abstract/abstract.router';
 import { InstanceDto } from '@api/dto/instance.dto';
-import { LeadBackfillDto, LeadPatchDto, LeadSettingsDto } from '@api/dto/leads.dto';
+import { LeadAnalyzeDto, LeadBackfillDto, LeadPatchDto, LeadSettingsDto } from '@api/dto/leads.dto';
 import { leadsController } from '@api/server.module';
-import { leadBackfillSchema, leadPatchSchema, leadSettingsSchema } from '@validate/validate.schema';
+import { leadAnalyzeSchema, leadBackfillSchema, leadPatchSchema, leadSettingsSchema } from '@validate/validate.schema';
 import { RequestHandler, Router } from 'express';
 
 import { HttpStatus } from './index.router';
@@ -55,6 +55,34 @@ export class LeadsRouter extends RouterBroker {
         });
         res.status(response?.started ? HttpStatus.CREATED : HttpStatus.OK).json(response);
       })
+      .post('/:instanceName/analyze', ...guards, async (req, res) => {
+        const response = await this.dataValidate<LeadAnalyzeDto>({
+          request: req,
+          schema: leadAnalyzeSchema,
+          ClassRef: LeadAnalyzeDto,
+          execute: (instance, data) => leadsController.analyzeOne(instance, data.contact),
+        });
+        res.status(HttpStatus.OK).json(response);
+      })
+      .post('/:instanceName/refresh-waiting', ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => leadsController.refreshWaiting(instance),
+        });
+        res.status(HttpStatus.OK).json(response);
+      })
+      .get('/:instanceName/export.json', ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => leadsController.exportPreview(instance, query(req)),
+        });
+        res.set('Cache-Control', 'no-store');
+        res.status(HttpStatus.OK).json(response);
+      })
       .get('/:instanceName/export.csv', ...guards, async (req, res) => {
         const response = await this.dataValidate<InstanceDto>({
           request: req,
@@ -68,6 +96,20 @@ export class LeadsRouter extends RouterBroker {
         res.set('Content-Type', 'text/csv; charset=utf-8');
         res.set('Content-Disposition', `attachment; filename="${file}"`);
         res.status(HttpStatus.OK).send(response.csv);
+      })
+      .get('/:instanceName/export.xlsx', ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => leadsController.exportXlsx(instance, query(req)),
+        });
+        const day = new Date().toISOString().slice(0, 10);
+        const file = `leads-${String(response.name).replace(/[^\w.-]+/g, '-')}-${day}.xlsx`;
+        res.set('Cache-Control', 'no-store');
+        res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.set('Content-Disposition', `attachment; filename="${file}"`);
+        res.status(HttpStatus.OK).send(response.file);
       })
       .get('/:instanceName', ...guards, async (req, res) => {
         const response = await this.dataValidate<InstanceDto>({
@@ -95,6 +137,15 @@ export class LeadsRouter extends RouterBroker {
           schema: leadPatchSchema,
           ClassRef: LeadPatchDto,
           execute: (instance, data) => leadsController.update(instance, req.params.id, data),
+        });
+        res.status(HttpStatus.OK).json(response);
+      })
+      .delete('/:instanceName/:id', ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => leadsController.remove(instance, req.params.id),
         });
         res.status(HttpStatus.OK).json(response);
       });
