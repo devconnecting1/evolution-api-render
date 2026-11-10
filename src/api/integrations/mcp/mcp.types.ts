@@ -18,6 +18,8 @@ export interface McpConfig {
   clientName?: string;
   /** DATABASE_PROVIDER: postgresql | mysql. */
   dbProvider: string;
+  /** Whether OPENAI_API_KEY_GLOBAL is set (the value itself never reaches the MCP server). */
+  openaiGlobalKeySet?: boolean;
   /** Folders searched for the Markdown manuals exposed as resources, in order of preference. */
   docsDirs: string[];
 }

@@ -7,8 +7,8 @@ import { EventRouter } from '@api/integrations/event/event.router';
 import { defaultMcpDeps } from '@api/integrations/mcp/mcp.deps';
 import { createMcpRouter } from '@api/integrations/mcp/mcp.router';
 import { StorageRouter } from '@api/integrations/storage/storage.router';
-import { waMonitor } from '@api/server.module';
-import { configService, Database, Facebook } from '@config/env.config';
+import { prismaRepository, waMonitor } from '@api/server.module';
+import { Auth, configService, Database, Facebook, Openai } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
 import { NextFunction, Request, Response, Router } from 'express';
@@ -19,6 +19,7 @@ import path from 'path';
 import { BusinessRouter } from './business.router';
 import { CallRouter } from './call.router';
 import { ChatRouter } from './chat.router';
+import { AdminCredentialsRouter } from './credentials.router';
 import { GroupRouter } from './group.router';
 import { InstanceRouter } from './instance.router';
 import { LabelRouter } from './label.router';
@@ -48,6 +49,7 @@ const databaseConfig = configService.get<Database>('DATABASE');
 const guards = [instanceExistsGuard, instanceLoggedGuard, authGuard['apikey']];
 
 const telemetry = new Telemetry();
+const credentialsLogger = new Logger('CREDENTIALS');
 
 const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 
@@ -243,6 +245,21 @@ router
   .use('/processos', new ProcessosRouter(...guards).router)
   .use('/leads', new LeadsRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
+  // "Chaves e credenciais": only the global key (adminOnlyGuard), never an instance token
+  .use(
+    '/admin/credentials',
+    new AdminCredentialsRouter({
+      apiKey: () => configService.get<Auth>('AUTHENTICATION').API_KEY.KEY,
+      deps: () => ({
+        prisma: prismaRepository,
+        waMonitor,
+        clientName: databaseConfig.CONNECTION.CLIENT_NAME,
+        openaiGlobalKeySet: !!configService.get<Openai>('OPENAI').API_KEY_GLOBAL,
+        logger: credentialsLogger,
+      }),
+      logger: credentialsLogger,
+    }).router,
+  )
   .use('', new ChannelRouter(configService, ...guards).router)
   .use('', new EventRouter(configService, ...guards).router)
   .use('', new ChatbotRouter(...guards).router)
