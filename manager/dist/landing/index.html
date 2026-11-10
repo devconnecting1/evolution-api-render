@@ -51,6 +51,7 @@
     <link rel="stylesheet" href="/assets/landing.css?v=9" />
     <!-- whatsai-patch:theme:landing -->
     <link rel="stylesheet" href="/assets/landing-theme.css?v=2" />
+    <link rel="stylesheet" href="/assets/landing-plus.css?v=1" />
     <script src="/assets/landing.js?v=5" defer></script>
 
     <script type="application/ld+json">
@@ -981,16 +982,92 @@
         </div>
       </section>
 
+      <!-- === tudo num lugar só: módulos do produto (lista em cartão) -->
+      <section class="section" id="modulos" aria-labelledby="mod-title">
+        <div class="wrap mod-wrap">
+          <div class="section-head mod-head">
+            <p class="eyebrow">Tudo num lugar só</p>
+            <h2 id="mod-title" class="h2">Do primeiro “oi” ao cliente atendido, <span class="soft">sem trocar de ferramenta.</span></h2>
+            <p class="section-lead">O WhatsApp, a IA, a triagem e a agenda conversam entre si. A equipe abre um painel só.</p>
+          </div>
+          <div class="mod-card">
+            <p class="mod-label">Atendimento e operação</p>
+            <ul class="mod-list">
+              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-bot" /></svg></span><span class="mod-txt"><strong>Atendimento com IA</strong><span>Responde, entende áudio, foto e PDF</span></span></li>
+              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-filter" /></svg></span><span class="mod-txt"><strong>Leads</strong><span>Triagem das conversas para a equipe</span></span></li>
+              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg><span class="mod-new">Novo</span></span><span class="mod-txt"><strong>Agenda</strong><span>Agenda, remarca e lembra pelo WhatsApp</span></span></li>
+              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-scale" /></svg><span class="mod-new">Novo</span></span><span class="mod-txt"><strong>Processos</strong><span>Andamentos e intimações, para escritórios</span></span></li>
+              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-pause" /></svg></span><span class="mod-txt"><strong>Equipe no controle</strong><span>A IA pausa quando alguém responde</span></span></li>
+              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-gauge" /></svg></span><span class="mod-txt"><strong>Plano e limites</strong><span>Respostas da IA sob controle, sem surpresa</span></span></li>
+              <li class="mod-item mod-more"><span class="mod-ico mod-ico-more">+3</span><span class="mod-txt"><strong>E mais</strong><span>Observabilidade, banco próprio por cliente, assistente de IA</span></span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- === pergunte em português (MCP): o dono pergunta, o assistente responde com os dados do painel -->
+      <section class="section" id="pergunte" aria-labelledby="ask-title">
+        <div class="wrap ask-wrap">
+          <div class="ask-copy">
+            <p class="eyebrow">Assistente de IA</p>
+            <h2 id="ask-title" class="h2">Pergunte do seu jeito. <span class="soft">O painel responde.</span></h2>
+            <p class="section-lead">Conecte o WhatsAI ao seu assistente de IA (MCP) e peça em português o que levaria vários cliques.</p>
+            <ul class="checks ask-checks">
+              <li>Ações que mudam algo pedem confirmação</li>
+              <li>Chaves e senhas nunca aparecem por inteiro</li>
+            </ul>
+          </div>
+          <div class="ask-chat" role="img" aria-label="Exemplo de conversa com o assistente: pergunta quais leads esperam resposta e recebe três nomes com o tempo de espera (ilustrativo)">
+            <p class="ask-bubble ask-me">Quais leads estão esperando resposta da equipe?</p>
+            <div class="ask-answer">
+              <p class="ask-answer-h"><svg class="ico" aria-hidden="true"><use href="#i-sparkle" /></svg>3 aguardando há mais de 1 hora</p>
+              <ul>
+                <li><span>Mariana E. · Trabalhista</span><span class="ask-tag">há 3 h</span></li>
+                <li><span>Roberto F. · Previdenciário</span><span class="ask-tag">há 1 h</span></li>
+                <li><span>Clara D. · Família</span><span class="ask-tag">há 7 h</span></li>
+              </ul>
+            </div>
+            <p class="ask-bubble ask-me">E o que tem na agenda de amanhã?</p>
+            <p class="ask-bubble ask-me ask-faded">Quantas respostas a IA deu este mês?</p>
+          </div>
+          <p class="fine ask-fine">Ilustrativo · dados de exemplo</p>
+        </div>
+      </section>
+
       <!-- === números -->
       <section class="section section-tight" aria-labelledby="metrics-title">
         <div class="wrap">
           <h2 id="metrics-title" class="h2 h2-sm">O produto em números</h2>
-          <dl class="numbers">
-            <div><dt>Atendimento</dt><dd><strong>24 h</strong>por dia, 7 dias por semana</dd></div>
-            <div><dt>Memória da conversa</dt><dd><strong>até 100</strong>mensagens lembradas</dd></div>
-            <div><dt>Documentos</dt><dd><strong>20 páginas</strong>por PDF, até 10 MB</dd></div>
-            <div><dt>Áudios</dt><dd><strong>5 min</strong>transcritos no WhatsApp Web</dd></div>
-          </dl>
+          <ul class="stats">
+            <li class="stat">
+              <div class="stat-top"><strong class="stat-n">24 h</strong>
+                <svg class="stat-viz" viewBox="0 0 112 44" aria-hidden="true"><g class="v-bars"><rect x="2" y="4" width="12" height="28" rx="3"/><rect x="18" y="4" width="12" height="28" rx="3"/><rect x="34" y="4" width="12" height="28" rx="3"/><rect x="50" y="4" width="12" height="28" rx="3"/><rect x="66" y="4" width="12" height="28" rx="3"/><rect x="82" y="4" width="12" height="28" rx="3"/><rect x="98" y="4" width="12" height="28" rx="3"/></g><g class="v-lbl"><text x="8" y="43">S</text><text x="24" y="43">T</text><text x="40" y="43">Q</text><text x="56" y="43">Q</text><text x="72" y="43">S</text><text x="88" y="43">S</text><text x="104" y="43">D</text></g></svg>
+              </div>
+              <p class="stat-t">Atendimento todos os dias</p>
+              <p class="stat-d">Madrugada, fim de semana e feriado: ninguém fica sem resposta.</p>
+            </li>
+            <li class="stat">
+              <div class="stat-top"><strong class="stat-n">100</strong>
+                <svg class="stat-viz" viewBox="0 0 112 44" aria-hidden="true"><g class="v-lines"><rect x="40" y="4" width="70" height="8" rx="4"/><rect x="2" y="18" width="62" height="8" rx="4" class="v-dim"/><rect x="30" y="32" width="80" height="8" rx="4"/></g></svg>
+              </div>
+              <p class="stat-t">Mensagens de memória</p>
+              <p class="stat-d">A IA lembra do que o cliente já disse. Ninguém repete a história.</p>
+            </li>
+            <li class="stat">
+              <div class="stat-top"><strong class="stat-n">20 pág.</strong>
+                <svg class="stat-viz" viewBox="0 0 112 44" aria-hidden="true"><g class="v-docs"><rect x="58" y="2" width="30" height="38" rx="4" class="v-dim"/><rect x="68" y="5" width="30" height="38" rx="4"/><path d="M74 15h18M74 22h18M74 29h12" class="v-ink"/></g></svg>
+              </div>
+              <p class="stat-t">PDF lido de ponta a ponta</p>
+              <p class="stat-d">Contrato, laudo ou orçamento: a IA entende e resume, até 10 MB.</p>
+            </li>
+            <li class="stat">
+              <div class="stat-top"><strong class="stat-n">5 min</strong>
+                <svg class="stat-viz" viewBox="0 0 112 44" aria-hidden="true"><g class="v-wave"><rect x="2" y="18" width="5" height="8" rx="2.5"/><rect x="11" y="12" width="5" height="20" rx="2.5"/><rect x="20" y="6" width="5" height="32" rx="2.5"/><rect x="29" y="14" width="5" height="16" rx="2.5"/><rect x="38" y="9" width="5" height="26" rx="2.5"/><rect x="47" y="16" width="5" height="12" rx="2.5"/><rect x="56" y="4" width="5" height="36" rx="2.5"/><rect x="65" y="12" width="5" height="20" rx="2.5"/><rect x="74" y="17" width="5" height="10" rx="2.5"/><rect x="83" y="10" width="5" height="24" rx="2.5"/><rect x="92" y="15" width="5" height="14" rx="2.5"/><rect x="101" y="19" width="5" height="6" rx="2.5"/></g></svg>
+              </div>
+              <p class="stat-t">De áudio transcrito</p>
+              <p class="stat-d">O cliente manda áudio, a IA entende e responde por escrito.</p>
+            </li>
+          </ul>
           <p class="fine">Limites padrão do produto, ajustáveis na configuração de cada número.</p>
         </div>
       </section>
@@ -1313,5 +1390,11 @@
         </div>
       </div>
     </footer>
+    <!-- barra fixa de contato, só no celular (landing-plus.css) -->
+    <div class="sticky-cta">
+      <span class="sticky-ico" aria-hidden="true"><svg class="ico"><use href="#i-chat" /></svg></span>
+      <span class="sticky-txt"><strong>Demonstração do WhatsAI</strong><span><i class="sticky-dot" aria-hidden="true"></i>Sem compromisso</span></span>
+      <a class="btn btn-primary sticky-btn" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar</a>
+    </div>
   </body>
 </html>

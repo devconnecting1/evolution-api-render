@@ -1,0 +1,381 @@
+/*
+ * WhatsAI: blocos novos das páginas públicas (carregado depois de landing-theme.css). Mesma paleta monocromática;
+ * cor só com significado. Sem animação de rolagem.
+ *   - faixas do hero e do CTA final sem o verde antigo (brilho creme sutil sobre grafite);
+ *   - ✓ das listas na cor do texto;
+ *   - "Tudo num lugar só": lista de módulos em cartão;
+ *   - "Pergunte do seu jeito": balões de pergunta e a resposta do assistente;
+ *   - números com mini-gráficos;
+ *   - barra fixa de contato no celular.
+ */
+
+/* ------------------------------------------------------------------ faixas sem o verde antigo */
+.hero.band::before {
+  background:
+    radial-gradient(900px 420px at 50% -8%, rgba(255, 255, 227, 0.08), transparent 70%),
+    radial-gradient(720px 520px at 96% 100%, rgba(255, 255, 255, 0.04), transparent 70%),
+    var(--deep);
+}
+.cta-in.band {
+  background:
+    radial-gradient(640px 360px at 100% 0%, rgba(255, 255, 227, 0.08), transparent 70%),
+    var(--deep);
+}
+.checks li::before {
+  background: none;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 16px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 16px no-repeat;
+  background-color: currentColor;
+}
+
+.eyebrow {
+  margin-bottom: 12px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ módulos */
+.mod-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 48px;
+  align-items: center;
+}
+.mod-head {
+  margin: 0;
+  text-align: left;
+}
+.mod-card {
+  padding: 24px 28px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.mod-label {
+  margin-bottom: 8px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.mod-list {
+  display: grid;
+}
+.mod-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.mod-item:first-child {
+  border-top: 0;
+}
+.mod-ico {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--tint);
+  color: var(--text);
+}
+.mod-ico .ico {
+  width: 22px;
+  height: 22px;
+}
+.mod-new {
+  position: absolute;
+  top: -8px;
+  left: -6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--bg);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+}
+.mod-txt {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.mod-txt strong {
+  font-size: 17px;
+  font-weight: 500;
+}
+.mod-txt span {
+  color: var(--text-2);
+  font-size: 15px;
+}
+.mod-more .mod-ico-more {
+  border: 1px dashed var(--line-strong);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 15px;
+}
+.mod-more strong {
+  color: var(--text-2);
+}
+
+/* ------------------------------------------------------------------ pergunte do seu jeito */
+.ask-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+}
+.ask-chat {
+  display: grid;
+  gap: 12px;
+  padding: 28px;
+  border-radius: 16px;
+  background: var(--deep);
+  color: var(--on-deep);
+}
+.ask-bubble {
+  justify-self: end;
+  max-width: 85%;
+  padding: 14px 18px;
+  border-radius: 18px 18px 4px 18px;
+  background: var(--lime);
+  color: var(--deep);
+  font-size: 16px;
+  line-height: 1.4;
+}
+.ask-faded {
+  opacity: 0.55;
+}
+.ask-answer {
+  justify-self: start;
+  width: min(100%, 420px);
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px 18px 18px 4px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.ask-answer-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.ask-answer-h .ico {
+  width: 16px;
+  height: 16px;
+}
+.ask-answer li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--on-deep-2);
+  font-size: 14px;
+}
+.ask-tag {
+  flex: none;
+  color: var(--on-deep);
+  font-variant-numeric: tabular-nums;
+}
+.ask-fine {
+  grid-column: 2;
+  margin-top: -36px;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ números com mini-gráficos */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+.stat {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.stat-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.stat-n {
+  color: var(--text);
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.stat-viz {
+  width: 112px;
+  height: 44px;
+  flex: none;
+}
+.stat-viz rect,
+.stat-viz .v-ink {
+  fill: var(--lime);
+  stroke: none;
+}
+.stat-viz .v-dim {
+  fill: rgba(255, 255, 255, 0.22);
+}
+.stat-viz .v-ink {
+  fill: none;
+  stroke: var(--deep);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.stat-viz .v-lbl text {
+  fill: var(--on-deep-2);
+  font-size: 8px;
+  text-anchor: middle;
+}
+.stat-t {
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 500;
+}
+.stat-d {
+  color: var(--on-deep-2);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------ barra fixa de contato (celular) */
+.sticky-cta {
+  display: none;
+}
+@media (max-width: 760px) {
+  .sticky-cta {
+    position: fixed;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 12px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 8px 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--bg);
+  }
+  .sticky-ico {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--tint);
+    color: var(--text);
+  }
+  .sticky-ico .ico {
+    width: 20px;
+    height: 20px;
+  }
+  .sticky-txt {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    line-height: 1.25;
+  }
+  .sticky-txt strong {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .sticky-txt > span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+    color: var(--text-2);
+    font-size: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .sticky-dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ok);
+  }
+  .sticky-btn {
+    flex: none;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 12px;
+  }
+  /* espaço para a barra não cobrir o rodapé */
+  body:has(.sticky-cta) {
+    padding-bottom: 84px;
+  }
+}
+
+/* ------------------------------------------------------------------ responsivo */
+@media (max-width: 960px) {
+  .mod-wrap,
+  .ask-wrap {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  .ask-fine {
+    grid-column: auto;
+    margin-top: -16px;
+  }
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .mod-card {
+    padding: 16px 18px;
+  }
+  .ask-chat {
+    padding: 20px;
+  }
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stat-n {
+    font-size: 38px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .mod-card {
+    background: #171714;
+  }
+  .ask-chat {
+    border: 1px solid #2e2e29;
+  }
+}
+
+/* ajustes de ritmo */
+.mod-wrap {
+  align-items: start;
+}
+.mod-head {
+  padding-top: 24px;
+}
+.section-tight[aria-labelledby="metrics-title"] {
+  padding-bottom: 72px;
+}
