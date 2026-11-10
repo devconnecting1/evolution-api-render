@@ -1,0 +1,696 @@
+/*
+ * WhatsAI Manager: colour system with a light and a dark theme. Linked LAST in manager/dist/index.html by
+ * manager/patches/theme.py. Written by hand; only redefines the --m-* tokens of minimal.css (and the shadcn HSL
+ * triplets) per theme, plus the few rules whose colours were literal values.
+ *
+ * Theme: <html data-theme="light|dark">, set before the first paint by an inline script of index.html from
+ * localStorage "wa-theme" (system | light | dark, default system = prefers-color-scheme). The upstream ThemeProvider
+ * keeps toggling the .light/.dark classes; they are not used here.
+ *
+ * Palette (references: deep green bands and warm cream sections of messaging business sites; dark dashboards
+ * with charcoal surfaces and saturated accents):
+ *   light - canvas #f2f3ee (warm green-grey, never pure white), cards #ffffff, sidebar deep green #0f3b2c,
+ *           ink #0f1f18 / #4d5953, primary #0e7a4d, bright accent #25d366 (decoration on deep green only).
+ *   dark  - canvas #111312, cards #1a1d1b, raised #1f2321, sidebar #0c1712, ink #edf1ee / #a6b0aa,
+ *           primary #2fb873 with dark text #06170e.
+ * Tokens:
+ *   --m-canvas page background · --m-bg cards, fields, menus (name kept from minimal.css) · --m-surface fills inside
+ *   cards · --m-hover · --m-selected · --m-border(-strong) · --m-border-input (3:1, WCAG 1.4.11) · --m-text(-2,-3)
+ *   --m-primary(-hover) · --m-on-primary · --m-tint(-hover,-line,-text) · --m-ok/warn/bad/info · --m-warn-text
+ *   --m-chip-{green,blue,purple,amber,red,gray}(-text) · --m-side-* (sidebar) · --m-deep, --m-on-deep(-2), --m-lime
+ *   (greeting band) · --m-wall (conversation background) · --m-gauge-track · --m-{warn,bad}-strip(-text).
+ * Contrast (WCAG AA, checked by a script on this file): every text pair >= 4.5:1, borders of fields and
+ * status marks >= 3:1, in both themes.
+ * Motion: colour transitions only, none with prefers-reduced-motion: reduce.
+ */
+
+/* ============================================================================================ tokens */
+:root {
+  color-scheme: light;
+  --m-canvas: #f2f3ee;
+  --m-bg: #ffffff;
+  --m-card: #ffffff;
+  --m-surface: #f7f8f4;
+  --m-hover: #eef0ea;
+  --m-selected: #e4e8e1;
+  --m-border: #e1e4dc;
+  --m-border-strong: #d2d7cc;
+  --m-border-input: #8a948d;
+  --m-text: #0f1f18;
+  --m-text-2: #4d5953;
+  --m-text-3: #858f89;
+  --m-primary: #0e7a4d;
+  --m-primary-hover: #0b6b43;
+  --m-on-primary: #ffffff;
+  --m-tint: #e3f4ea;
+  --m-tint-hover: #d6efe0;
+  --m-tint-line: #c3e3d0;
+  --m-tint-text: #0a5a38;
+  --m-ok: #1a9e5c;
+  --m-warn: #b26d00;
+  --m-warn-text: #8a5300;
+  --m-bad: #d93025;
+  --m-info: #2563c9;
+  --m-out: #ddf3e4;
+  --m-wall: #efece3;
+  --m-chip-green: #e3f4ea;
+  --m-chip-green-text: #0a5a38;
+  --m-chip-blue: #e5eefc;
+  --m-chip-blue-text: #1d4fa3;
+  --m-chip-purple: #efe9fb;
+  --m-chip-purple-text: #5b36a8;
+  --m-chip-amber: #fdf1dc;
+  --m-chip-amber-text: #7f4c00;
+  --m-chip-red: #fde8e6;
+  --m-chip-red-text: #a5221a;
+  --m-chip-gray: #eceee9;
+  --m-chip-gray-text: #48524c;
+  --m-side-bg: #0f3b2c;
+  --m-side-hover: #174a38;
+  --m-side-active: #1d5a43;
+  --m-side-active-text: #ffffff;
+  --m-side-text: #e8f3ec;
+  --m-side-text-2: #a9c9b8;
+  --m-side-border: #1b4a39;
+  --m-deep: #0f3b2c;
+  --m-on-deep: #ffffff;
+  --m-on-deep-2: #c3e3d0;
+  --m-lime: #c6f27c;
+  --m-gauge-track: #e6e9e2;
+  --m-warn-strip: #fdf1dc;
+  --m-warn-strip-text: #7f4c00;
+  --m-bad-strip: #fde8e6;
+  --m-bad-strip-text: #a5221a;
+  --m-shadow-card: 0 1px 2px rgba(15, 31, 24, 0.04);
+  --m-shadow-pop: 0 2px 4px rgba(15, 31, 24, 0.05), 0 0 4px rgba(15, 31, 24, 0.08);
+  --m-shadow-menu: 2px 4px 16px rgba(15, 31, 24, 0.12), 0 2px 4px rgba(15, 31, 24, 0.06);
+  --m-ring: 0 0 0 2px var(--m-bg), 0 0 0 4px var(--m-primary);
+  --m-focus-halo: rgba(14, 122, 77, 0.16);
+  --m-veil: rgba(15, 31, 24, 0.24);
+
+  /* shadcn / Tailwind (index-DsIrum0U.css), HSL triplets */
+  --background: 72 17.2% 94.3%;
+  --foreground: 154 34.8% 9%;
+  --card: 0 0% 100%;
+  --card-foreground: 154 34.8% 9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 154 34.8% 9%;
+  --muted: 80 16.7% 92.9%;
+  --muted-foreground: 150 7.2% 32.5%;
+  --border: 83 12.9% 87.8%;
+  --input: 87 12.1% 82.2%;
+  --primary: 155 79.4% 26.7%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 80 16.7% 92.9%;
+  --secondary-foreground: 154 34.8% 9%;
+  --accent: 80 16.7% 92.9%;
+  --accent-foreground: 154 34.8% 9%;
+  --destructive: 4 70.9% 49.8%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 155 79.4% 26.7%;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --m-canvas: #111312;
+  --m-bg: #1a1d1b;
+  --m-card: #1a1d1b;
+  --m-surface: #1f2321;
+  --m-hover: #262a28;
+  --m-selected: #2e3330;
+  --m-border: #2b302d;
+  --m-border-strong: #3b413d;
+  --m-border-input: #6b756f;
+  --m-text: #edf1ee;
+  --m-text-2: #a6b0aa;
+  --m-text-3: #78827c;
+  --m-primary: #2fb873;
+  --m-primary-hover: #3fcb84;
+  --m-on-primary: #06170e;
+  --m-tint: #15291f;
+  --m-tint-hover: #1a3326;
+  --m-tint-line: #24442f;
+  --m-tint-text: #86e0ae;
+  --m-ok: #3fcf85;
+  --m-warn: #f0a53a;
+  --m-warn-text: #f3b862;
+  --m-bad: #ff6b5e;
+  --m-info: #6ea8ff;
+  --m-out: #173326;
+  --m-wall: #141716;
+  --m-chip-green: #163223;
+  --m-chip-green-text: #86e0ae;
+  --m-chip-blue: #172a44;
+  --m-chip-blue-text: #a3c6ff;
+  --m-chip-purple: #2a2140;
+  --m-chip-purple-text: #c9b6ff;
+  --m-chip-amber: #3a2a10;
+  --m-chip-amber-text: #f5c26b;
+  --m-chip-red: #3d1a17;
+  --m-chip-red-text: #ffa198;
+  --m-chip-gray: #262a28;
+  --m-chip-gray-text: #c3cbc6;
+  --m-side-bg: #0c1712;
+  --m-side-hover: #14241c;
+  --m-side-active: #183526;
+  --m-side-active-text: #b5f0cf;
+  --m-side-text: #e3ece6;
+  --m-side-text-2: #92a69a;
+  --m-side-border: #1a2a21;
+  --m-deep: #0f2e22;
+  --m-on-deep: #ffffff;
+  --m-on-deep-2: #b9dcc7;
+  --m-lime: #c6f27c;
+  --m-gauge-track: #2b302d;
+  --m-warn-strip: #3a2a10;
+  --m-warn-strip-text: #f5c26b;
+  --m-bad-strip: #3d1a17;
+  --m-bad-strip-text: #ffa198;
+  --m-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --m-shadow-pop: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 0 1px #2b302d;
+  --m-shadow-menu: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px #2b302d;
+  --m-focus-halo: rgba(47, 184, 115, 0.22);
+  --m-veil: rgba(0, 0, 0, 0.55);
+
+  --background: 140 5.5% 7.3%;
+  --foreground: 135 12.5% 93.7%;
+  --card: 140 5.5% 10.8%;
+  --card-foreground: 135 12.5% 93.7%;
+  --popover: 140 5.5% 10.8%;
+  --popover-foreground: 135 12.5% 93.7%;
+  --muted: 150 5% 15.7%;
+  --muted-foreground: 144 6% 67.1%;
+  --border: 144 5.5% 17.8%;
+  --input: 140 4.8% 24.3%;
+  --primary: 150 59.3% 45.3%;
+  --primary-foreground: 148 58.6% 5.7%;
+  --secondary: 150 5% 15.7%;
+  --secondary-foreground: 135 12.5% 93.7%;
+  --accent: 150 5% 15.7%;
+  --accent-foreground: 135 12.5% 93.7%;
+  --destructive: 5 100% 68.4%;
+  --destructive-foreground: 0 0% 7%;
+  --ring: 150 59.3% 45.3%;
+  --toastify-color-light: var(--m-bg);
+}
+
+/* ============================================================================================== base */
+html,
+body {
+  background: var(--m-canvas);
+  color: var(--m-text);
+}
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  [data-wa-header],
+  [data-wa-sidebar] {
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+[data-wa-header] {
+  background: var(--m-canvas);
+}
+div:has(> main > [data-wa-home="instances"]) > [data-wa-header],
+div:has(> main .wo-page) > [data-wa-header] {
+  border-bottom-color: var(--m-border);
+}
+#root .rounded-lg.border.bg-card,
+#root .rounded-xl.border.bg-card,
+.wa-metric,
+.wu-card,
+.wu-bar,
+[data-wa-home] .wa-instance-card {
+  box-shadow: var(--m-shadow-card);
+}
+/* field borders: 3:1 against the card (minimal.css used fixed greys) */
+#root :is(input, textarea).border-input:not(.wa-composer-input):hover,
+#root button[role="combobox"].border-input:hover,
+[data-wa-home="login"] input:hover {
+  border-color: var(--m-border-input);
+}
+#root :is(input, textarea, button[role="combobox"]):not(.wa-composer-input):focus-visible,
+[data-wa-home="login"] input:focus-visible,
+.wa-chat-search input:focus-visible {
+  box-shadow: 0 0 0 1px var(--m-primary), 0 0 0 4px var(--m-focus-halo);
+}
+:is(input, textarea).border-input::placeholder,
+[data-wa-home="login"] input::placeholder {
+  color: var(--m-text-2);
+}
+button[role="switch"][data-state="unchecked"],
+button[role="switch"][data-state="unchecked"]:not([data-wa-chat] *) {
+  background-color: var(--m-border-input);
+}
+button[role="checkbox"] {
+  border-color: var(--m-border-input);
+}
+.wa-overlay,
+.fixed.inset-0.grid.place-items-center.overflow-y-auto.backdrop-blur-sm,
+.wa-tw-backdrop,
+.wa-tw-cmd-backdrop {
+  background: var(--m-veil);
+}
+/* primary buttons follow the token pair (white on #0e7a4d, dark ink on #2fb873) */
+:where(button, a).ring-offset-background.bg-primary:not([data-wa-chat] *, [data-wa-home] *),
+[data-wa-home="instances"] .wa-list-actions .bg-primary,
+.wa-chat-unread,
+.wa-composer .wa-chat-send {
+  color: var(--m-on-primary);
+}
+:where(button, a).ring-offset-background.bg-primary:not([data-wa-chat] *, [data-wa-home] *):hover {
+  background: var(--m-primary-hover);
+}
+.wa-composer .wa-chat-send:disabled {
+  background: var(--m-hover);
+  color: var(--m-text-3);
+}
+.wa-sk,
+.wa-chat-sk,
+.wa-chat-sk--bubble {
+  background: var(--m-hover);
+}
+.wa-msg--out .wa-chat-sk--bubble {
+  background: var(--m-tint);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wa-sk {
+    background: linear-gradient(90deg, var(--m-hover) 0%, var(--m-surface) 45%, var(--m-hover) 90%) 0 0 / 300% 100%;
+  }
+}
+.wo-metric[data-status="warning"] .wo-bar > span {
+  background: var(--m-warn);
+}
+
+/* ============================================================================ sidebar: deep green column */
+/* the sidebar (and, on desktop, the strip of the top bar above it) gets its own token set, so every rule of
+   minimal.css / dashboard-ui.css inside it follows without being rewritten */
+[data-wa-layout] [data-wa-sidebar],
+[data-wa-layout] > [data-wa-header]::before {
+  --m-surface: var(--m-side-bg);
+  --m-bg: var(--m-side-bg);
+  --m-text: var(--m-side-text);
+  --m-text-2: var(--m-side-text-2);
+  --m-text-3: var(--m-side-text-2);
+  --m-hover: var(--m-side-hover);
+  --m-selected: var(--m-side-active);
+  --m-tint: var(--m-side-active);
+  --m-tint-hover: var(--m-side-active);
+  --m-tint-text: var(--m-side-active-text);
+  --m-border: var(--m-side-border);
+  --m-border-strong: var(--m-side-border);
+  --m-primary: var(--m-lime);
+  --secondary: 0 0% 100% / 0.08;
+  --muted-foreground: 146 23% 72.5%;
+  --foreground: 140 30% 93%;
+  --accent: 0 0% 100% / 0.08;
+  --accent-foreground: 140 30% 93%;
+  background: var(--m-side-bg);
+  color: var(--m-side-text);
+  border-right-color: var(--m-side-border);
+}
+@media (min-width: 1024px) {
+  [data-wa-layout] > [data-wa-header] > a .wa-wordmark,
+  [data-wa-layout] > [data-wa-header] > a:first-of-type {
+    color: var(--m-side-text);
+  }
+}
+[data-wa-layout] [data-wa-sidebar] svg {
+  color: var(--m-side-text-2);
+}
+[data-wa-layout] [data-wa-sidebar] [data-wa-nav] button.bg-secondary svg,
+[data-wa-layout] [data-wa-sidebar] [data-wa-nav] button:hover svg {
+  color: var(--m-side-active-text);
+}
+/* the active page: a 2px lime mark on the left edge, like the stage marks of the timeline reference */
+[data-wa-layout] [data-wa-nav] > li > button.bg-secondary,
+[data-wa-layout] [data-wa-nav] > li > div > button.bg-secondary {
+  box-shadow: inset 2px 0 0 var(--m-lime);
+}
+[data-wa-layout] [data-wa-sidebar] :focus-visible {
+  outline-color: var(--m-lime);
+}
+
+/* ============================================================================================ theme menu */
+.wa-theme {
+  position: relative;
+}
+.wa-theme-btn {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--m-radius-pill);
+  background: transparent;
+  color: var(--m-text);
+  cursor: pointer;
+}
+.wa-theme-btn:hover,
+.wa-theme-btn[aria-expanded="true"] {
+  background: var(--m-hover);
+}
+.wa-theme-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  display: grid;
+  min-width: 184px;
+  gap: 2px;
+  padding: 4px;
+  margin: 0;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+  list-style: none;
+}
+.wa-theme-label {
+  padding: 6px 8px 4px;
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 16px;
+}
+.wa-theme-item {
+  display: flex;
+  height: 32px;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.wa-theme-item:hover,
+.wa-theme-item:focus-visible {
+  background: var(--m-hover);
+  outline: none;
+}
+.wa-theme-item[aria-checked="true"] {
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+  font-weight: 500;
+}
+.wa-theme-item .wa-theme-check {
+  margin-left: auto;
+  visibility: hidden;
+}
+.wa-theme-item[aria-checked="true"] .wa-theme-check {
+  visibility: visible;
+}
+
+/* ================================================================== instance list: greeting band (deep) */
+[data-wa-home="instances"] .wa-list-head {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 28px 28px 24px;
+  border-radius: 16px;
+  background: var(--m-deep);
+  color: var(--m-on-deep);
+}
+[data-wa-home="instances"] .wa-list-head::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(520px 260px at 100% 0%, rgba(198, 242, 124, 0.14), transparent 70%),
+    radial-gradient(420px 260px at 0% 120%, rgba(37, 211, 102, 0.18), transparent 70%);
+  pointer-events: none;
+}
+[data-wa-home="instances"] .wa-list-head .wa-eyebrow {
+  color: var(--m-lime);
+  font-weight: 500;
+}
+[data-wa-home="instances"] .wa-list-head .wa-list-title {
+  color: var(--m-on-deep);
+}
+[data-wa-home="instances"] .wa-list-head .wa-list-sub {
+  color: var(--m-on-deep-2);
+}
+#root [data-wa-home="instances"] .wa-list-head .wa-list-actions > button:not(.bg-primary) {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--m-on-deep);
+}
+#root [data-wa-home="instances"] .wa-list-head .wa-list-actions > button:not(.bg-primary):hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+[data-wa-home="instances"] .wa-list-head .wa-list-actions .bg-primary {
+  background: var(--m-lime);
+  color: #0f3b2c;
+}
+[data-wa-home="instances"] .wa-list-head .wa-list-actions .bg-primary:hover {
+  background: #b5e566;
+}
+[data-wa-home="instances"] .wa-list-head :focus-visible {
+  outline-color: var(--m-lime);
+}
+@media (max-width: 639px) {
+  [data-wa-home="instances"] .wa-list-head {
+    padding: 20px;
+    border-radius: 12px;
+  }
+}
+
+/* ========================================================================== conversations: warm wall */
+.wa-conv-scroll {
+  background: var(--m-wall);
+}
+.wa-bubble {
+  box-shadow: 0 1px 1px rgba(15, 31, 24, 0.06);
+}
+.wa-msg--out .wa-bubble-time {
+  color: var(--m-tint-text);
+}
+.wa-bubble a {
+  color: var(--m-info);
+}
+.wa-bubble .bg-muted,
+.wa-doc {
+  background: var(--m-hover);
+}
+a.wa-doc:hover {
+  background: var(--m-selected);
+}
+.wa-doc-icon {
+  color: var(--m-bad);
+}
+.wa-chat-avatar .wa-chat-avatar-fallback,
+.wa-avatar-fallback {
+  background: var(--m-chip-green);
+  color: var(--m-chip-green-text);
+}
+.wa-chat-empty svg {
+  color: var(--m-text-3);
+}
+
+/* ============================================================================ chips (shared palette) */
+.wt-chip {
+  display: inline-flex;
+  height: 22px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-chip-gray);
+  color: var(--m-chip-gray-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+.wt-chip[data-c="green"] { background: var(--m-chip-green); color: var(--m-chip-green-text); }
+.wt-chip[data-c="blue"] { background: var(--m-chip-blue); color: var(--m-chip-blue-text); }
+.wt-chip[data-c="purple"] { background: var(--m-chip-purple); color: var(--m-chip-purple-text); }
+.wt-chip[data-c="amber"] { background: var(--m-chip-amber); color: var(--m-chip-amber-text); }
+.wt-chip[data-c="red"] { background: var(--m-chip-red); color: var(--m-chip-red-text); }
+
+/* =================================================== Visão Geral: usage gauge + warning strip (WaUsage.Bar) */
+.wt-usage {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) 1fr;
+  align-items: center;
+  gap: 8px 32px;
+}
+.wt-gauge {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+}
+.wt-gauge svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.wt-gauge-track {
+  stroke: var(--m-gauge-track);
+}
+.wt-gauge-fill {
+  stroke: var(--m-primary);
+}
+.wt-gauge[data-tone="warn"] .wt-gauge-fill {
+  stroke: var(--m-warn);
+}
+.wt-gauge[data-tone="bad"] .wt-gauge-fill {
+  stroke: var(--m-bad);
+}
+.wt-gauge-today {
+  stroke: var(--m-lime);
+}
+:root:not([data-theme="dark"]) .wt-gauge-today {
+  stroke: #25a85a;
+}
+.wt-gauge-center {
+  position: absolute;
+  inset: auto 0 2px;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+.wt-gauge-num {
+  color: var(--m-text);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 36px;
+  font-variant-numeric: tabular-nums;
+}
+.wt-gauge-cap {
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+.wt-legend {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+.wt-legend > div {
+  display: grid;
+  grid-template-columns: 10px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  border-bottom: 1px solid var(--m-border);
+  font-size: 14px;
+}
+.wt-legend > div:last-child {
+  border-bottom: 0;
+}
+.wt-legend dt {
+  color: var(--m-text);
+}
+.wt-legend dd {
+  margin: 0;
+  color: var(--m-text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.wt-legend dd + dd {
+  min-width: 52px;
+  padding-left: 10px;
+  border-left: 1px solid var(--m-border);
+  color: var(--m-text-2);
+  font-weight: 400;
+}
+.wt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-gauge-track);
+  box-shadow: inset 0 0 0 1px var(--m-border-strong);
+}
+.wt-dot[data-k="used"] { background: var(--m-primary); box-shadow: none; }
+.wt-gauge[data-tone="warn"] ~ .wt-legend .wt-dot[data-k="used"],
+.wt-usage[data-tone="warn"] .wt-dot[data-k="used"] { background: var(--m-warn); }
+.wt-usage[data-tone="bad"] .wt-dot[data-k="used"] { background: var(--m-bad); }
+.wt-dot[data-k="today"] { background: #25a85a; box-shadow: none; }
+:root[data-theme="dark"] .wt-dot[data-k="today"] { background: var(--m-lime); }
+/* warning strip ("90% da franquia usada"): a tinted full-width bar with an icon, amber at the alert percent and
+   red at 100%, after the reference "90% full" */
+.wt-strip {
+  position: relative;
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  margin-top: 16px;
+  padding: 8px 12px;
+  border-radius: var(--m-radius-field);
+  background: var(--m-warn-strip);
+  color: var(--m-warn-strip-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+.wt-strip[data-tone="bad"] {
+  background: var(--m-bad-strip);
+  color: var(--m-bad-strip-text);
+}
+.wt-strip > svg {
+  flex: none;
+}
+.wt-strip-sub {
+  color: inherit;
+  font-weight: 400;
+  opacity: 0.92;
+}
+/* the meter of "Plano e limites" in the same language: tinted track when close to or over the franchise */
+.wu-meter[data-tone="warn"] {
+  background: var(--m-warn-strip);
+}
+.wu-meter[data-tone="bad"] {
+  background: var(--m-bad-strip);
+}
+@media (max-width: 719px) {
+  .wt-usage {
+    grid-template-columns: 1fr;
+  }
+  .wt-gauge {
+    max-width: 232px;
+  }
+}
+
+/* ============================================================================ Manual (readme-tab.css) */
+#whatsai-readme {
+  --wr-bg: var(--m-bg);
+  --wr-surface: var(--m-surface);
+  --wr-hover: var(--m-hover);
+  --wr-selected: var(--m-selected);
+  --wr-line: var(--m-border);
+  --wr-line-2: var(--m-border-strong);
+  --wr-text: var(--m-text);
+  --wr-text-2: var(--m-text-2);
+  --wr-text-3: var(--m-text-3);
+  --wr-ok: var(--m-ok);
+  --wr-primary: var(--m-primary);
+  --wr-primary-hover: var(--m-primary-hover);
+  --wr-tint: var(--m-tint);
+  --wr-tint-line: var(--m-tint-line);
+  --wr-tint-text: var(--m-tint-text);
+  --wr-warn: var(--m-warn);
+  --wr-bad: var(--m-bad);
+}
+#whatsai-readme .wr-btn-ink {
+  color: var(--m-on-primary);
+}
+/* wordmark is text only (no square mark) */
+#whatsai-readme .wr-wordmark::before {
+  content: none;
+  display: none;
+}
