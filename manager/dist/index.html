@@ -2,8 +2,9 @@
 <html lang="pt-BR" class="light">
   <head>
     <meta charset="UTF-8" />
-    <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f2f3ee" />
+    <script>(function(){var p="system",d=document.documentElement;try{p=localStorage.getItem("wa-theme")||"system"}catch(e){}var k=p==="dark"||(p!=="light"&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);d.setAttribute("data-theme",k?"dark":"light");d.setAttribute("data-theme-pref",p==="light"||p==="dark"?p:"system");var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",k?"#111312":"#f2f3ee")})()</script>
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg?v=3" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>WhatsAI</title>
@@ -46,7 +47,9 @@
     <link rel="stylesheet" href="/assets/processos.css?v=1" />
     <!-- whatsai-patch:agenda:html -->
     <link rel="stylesheet" href="/assets/agenda.css?v=1" />
-    <script type="module" crossorigin src="/assets/index-b29a5d7a.js?v=28"></script>
+    <!-- whatsai-patch:theme:html -->
+    <link rel="stylesheet" href="/assets/theme.css?v=1" />
+    <script type="module" crossorigin src="/assets/index-b29a5d7a.js?v=29"></script>
     <script src="/assets/marked.min.js" defer></script>
     <script src="/assets/readme-tab.js?v=13" defer></script>
   </head>
