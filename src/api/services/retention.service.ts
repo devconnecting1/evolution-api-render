@@ -1,5 +1,6 @@
 /**
- * Retenção das mensagens (LGPD): apaga as mensagens com mais de MESSAGE_RETENTION_DAYS dias. As atualizações de
+ * Retenção das mensagens (LGPD): apaga do banco do WhatsAI as mensagens com mais de MESSAGE_RETENTION_DAYS dias.
+ * Nunca apaga nada no WhatsApp (nenhuma chamada ao Baileys/Meta): o celular do escritório e o do contato guardam tudo. As atualizações de
  * status e a mídia de cada mensagem saem junto (FK com cascade). Conversas, contatos, leads, agendamentos,
  * processos e contadores ficam.
  *
