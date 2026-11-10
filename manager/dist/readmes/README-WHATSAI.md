@@ -227,6 +227,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 09/11/2026: **Processos** (seção 17): andamentos do DataJud e intimações do DJEN por OAB, avisos à equipe, aviso neutro opcional ao cliente e contexto opcional (só datas) para a IA. Migration aditiva `20261109120000_add_processos`.
 - 09/11/2026: **Agenda** própria (seção 17): a IA consulta horários, agenda, remarca e cancela pelo WhatsApp (ferramentas do Chat Completions), lembretes com confirmação, página no painel, feed ICS e ferramentas MCP. Desligada por padrão. Sem Google Calendar.
 - 10/11/2026: "Nova instância" com escolha **Banco próprio / Compartilhado** e contador de projetos do Neon; registro das "acordadas" do banco (`GET /admin/db-activity`, MCP `get_database_info`); chaves do WhatsApp que não existem deixam de ser procuradas no banco a cada pedido; MCP ganhou `update_appointment`, `get_agenda_settings`, `get_process_settings` e `update_process_settings`.
+- 10/11/2026: **Saúde das chaves OpenAI** sem entrar na conta de cada cliente: cada resposta do bot registra se a chave funcionou (sem crédito, inválida, modelo indisponível, limite por minuto); teste ativo em `POST /openai-health/<instância>/test` (chave válida? modelo liberado? tem crédito?); cartão **OpenAI** na Observabilidade com alerta; MCP `get_openai_health`. O saldo em dólares não é exposto pela OpenAI para chaves comuns.
 - Planejado: banco Neon Free → Supabase Free; Render Free → Starter (US$ 7/mês) ao ter cliente pagante; landing/painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
 
 ## 12. Bot OpenAI: modelos, pausa humana e limitações
@@ -681,6 +682,7 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `cancel_appointment` | escrita | Cancela (status `cancelado`) e avisa o cliente (`notify_client`, padrão sim). Marcada como destrutiva |
 | `get_agenda_settings` | leitura | Configurações da Agenda: horários, tipos, lembretes, permissões da IA, números da equipe |
 | `update_agenda_settings` | escrita | Liga/desliga e altera a Agenda (listas substituem as atuais). Marcada como destrutiva; devolve os valores anteriores |
+| `get_openai_health` | leitura | Chaves OpenAI de cada cliente: funcionando, sem crédito, inválida ou modelo indisponível, com o que fazer. `test=true` testa agora (custo ~US$ 0,00000002; 1 vez a cada 30 s por chave) |
 | `get_database_info` | leitura | Cota de projetos do Neon (banco próprio por instância) e as últimas "acordadas" do banco com as consultas que as causaram. Responde da memória, sem consultar o banco (só chave global) |
 
 Na coluna de remetente, `bot` só é identificado nos últimos 10 minutos (o banco não marca a origem das mensagens, seção 13); depois aparece como `me` (número da instância).

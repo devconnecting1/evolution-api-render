@@ -396,6 +396,39 @@ describe('observability: Sistema provider', () => {
 
 // ------------------------------------------------------------------------------- overview behavior
 
+describe('observability: OpenAI card', () => {
+  test('the card is listed and its own alert (key without credit) reaches the overview alerts', async () => {
+    const card = {
+      providerView: async (description: string) => ({
+        id: 'openai',
+        name: 'OpenAI',
+        description,
+        configured: true,
+        plan: null,
+        status: 'partial' as const,
+        updatedAt: new Date(NOW).toISOString(),
+        metrics: [],
+        resources: [],
+        notes: [],
+        links: [],
+        extraAlerts: [
+          {
+            provider: 'openai',
+            metric: 'key:c1',
+            label: 'Escritório',
+            percent: 100,
+            status: 'critical' as const,
+            message: 'OpenAI · Escritório: Sem crédito na conta OpenAI.',
+          },
+        ],
+      }),
+    };
+    const overview = await service({}, {}, [], { openai: card }).getOverview();
+    assert.ok(overview.providers.some((p) => p.id === 'openai'));
+    assert.ok(overview.alerts.some((a) => a.provider === 'openai' && /Sem crédito/.test(a.message)));
+  });
+});
+
 describe('observability: overview without keys, cache and isolation', () => {
   test('without any key every external provider is "missing" with the exact variables and where to create them', async () => {
     const calls: Call[] = [];

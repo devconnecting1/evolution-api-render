@@ -1,4 +1,4 @@
-import { leadsService, prismaRepository, usageService, waMonitor } from '@api/server.module';
+import { leadsService, openaiHealthService, prismaRepository, usageService, waMonitor } from '@api/server.module';
 import { redisClient } from '@cache/rediscache.client';
 import { CacheConf, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
@@ -23,6 +23,8 @@ import { RedisState, SystemDeps, SystemProbe } from './observability.system';
 export type { Alert, Metric, ProviderView, Resource } from './observability.shared';
 
 const logger = new Logger('ObservabilityService');
+
+const OPENAI_DESCRIPTION = 'Chaves OpenAI de cada cliente: funcionando, sem crédito ou inválida';
 
 const CACHE_TTL_MS = 60_000;
 /** A forced refresh within this window reuses the overview just built (double clicks, several tabs). */
@@ -71,6 +73,8 @@ export type HttpClient = { get: (path: string, config?: { params?: Record<string
 export type HttpFactory = (baseURL: string, headers: Record<string, string>) => HttpClient;
 
 export type ObservabilityOptions = {
+  /** Cartão "OpenAI" (saúde das chaves). Default: the real service, unless the test passes its own `system`. */
+  openai?: { providerView(description: string): Promise<ProviderView> } | null;
   http?: HttpFactory;
   env?: NodeJS.ProcessEnv;
   now?: () => number;
@@ -214,8 +218,12 @@ export class ObservabilityService {
   private inFlight: Promise<Overview> | null = null;
   private systemProbe: SystemProbe | null | undefined;
 
+  private readonly openaiCard: ObservabilityOptions['openai'];
+
   constructor(private readonly options: ObservabilityOptions = {}) {
     this.systemProbe = options.system;
+    this.openaiCard =
+      options.openai !== undefined ? options.openai : options.system !== undefined ? null : openaiHealthService;
   }
 
   public async getOverview(force = false): Promise<Overview> {
@@ -251,6 +259,13 @@ export class ObservabilityService {
                   ),
                 ]
               : []),
+          ]
+        : []),
+      ...(this.openaiCard
+        ? [
+            this.loadProvider('openai', 'OpenAI', OPENAI_DESCRIPTION, () =>
+              this.openaiCard!.providerView(OPENAI_DESCRIPTION),
+            ),
           ]
         : []),
       this.loadProvider('neon', 'Neon', SETUP.neon.description, () => this.getNeon()),
@@ -1118,7 +1133,7 @@ export class ObservabilityService {
           `Atenção: ${own.map((alert) => `${alert.label} em ${formatNumber(alert.percent, 0)}%`).join(', ')} do limite.`,
         );
       }
-      alerts.push(...own);
+      alerts.push(...own, ...(provider.extraAlerts ?? []));
     }
     return alerts.sort((a, b) => b.percent - a.percent);
   }

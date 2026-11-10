@@ -64,6 +64,7 @@ const EXPECTED_TOOLS = [
   'get_agenda_settings',
   'update_agenda_settings',
   'get_database_info',
+  'get_openai_health',
 ];
 
 // --------------------------------------------------------------------------------------------- fakes
