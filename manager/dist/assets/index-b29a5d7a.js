@@ -2371,7 +2371,7 @@ const WaTheme=(()=>{
   function read(){try{const v=localStorage.getItem(KEY);return v==='light'||v==='dark'?v:'system'}catch(e){return 'system'}}
   function isDark(p){return p==='dark'||(p==='system'&&!!mq&&mq.matches)}
   function apply(p){const d=document.documentElement,dark=isDark(p);d.setAttribute('data-theme',dark?'dark':'light');d.setAttribute('data-theme-pref',p);
-    const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#111312':'#f2f3ee');}
+    const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#10100e':'#f5f5f5');}
   function set(p){try{localStorage.setItem(KEY,p)}catch(e){}apply(p);subs.forEach(f=>f(p));}
   if(mq){const on=()=>{const p=read();if(p==='system'){apply(p);subs.forEach(f=>f(p))}};if(mq.addEventListener)mq.addEventListener('change',on);else if(mq.addListener)mq.addListener(on);}
   try{apply(read())}catch(e){}

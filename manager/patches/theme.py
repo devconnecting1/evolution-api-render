@@ -26,9 +26,9 @@ Bundle groups (each one is applied once and leaves a marker comment at the top o
   prio      - Leads: the priority chip gets class wt-prio and data-prio (alta / normal / baixa); theme.css draws
               a three-bar priority icon (3, 2 or 1 bars filled) instead of the plain dot. Text stays the same.
 index.html group (marker: an HTML comment in <head>):
-  html      - inline theme script, color-scheme "light dark", theme.css?v=1 linked last, bundle ?v=CACHE_VERSION.
+  html      - inline theme script, color-scheme "light dark", theme.css?v=2 linked last, bundle ?v=CACHE_VERSION.
 landing group (marker: an HTML comment in <head> of each page):
-  landing   - landing-theme.css?v=1 after landing.css / segment.css, color-scheme "light dark".
+  landing   - landing-theme.css?v=2 after landing.css / segment.css, color-scheme "light dark".
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: groups whose marker is present are skipped.
@@ -84,7 +84,7 @@ COMPONENT = r'''const WaTheme=(()=>{
   function read(){try{const v=localStorage.getItem(KEY);return v==='light'||v==='dark'?v:'system'}catch(e){return 'system'}}
   function isDark(p){return p==='dark'||(p==='system'&&!!mq&&mq.matches)}
   function apply(p){const d=document.documentElement,dark=isDark(p);d.setAttribute('data-theme',dark?'dark':'light');d.setAttribute('data-theme-pref',p);
-    const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#111312':'#f2f3ee');}
+    const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#10100e':'#f5f5f5');}
   function set(p){try{localStorage.setItem(KEY,p)}catch(e){}apply(p);subs.forEach(f=>f(p));}
   if(mq){const on=()=>{const p=read();if(p==='system'){apply(p);subs.forEach(f=>f(p))}};if(mq.addEventListener)mq.addEventListener('change',on);else if(mq.addListener)mq.addListener(on);}
   try{apply(read())}catch(e){}
@@ -178,7 +178,7 @@ BAR_NEW = r'''  function Bar({instance}){
 THEME_SCRIPT = ('    <script>(function(){var p="system",d=document.documentElement;try{p=localStorage.getItem("wa-theme")||"system"}catch(e){}'
                 'var k=p==="dark"||(p!=="light"&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);'
                 'd.setAttribute("data-theme",k?"dark":"light");d.setAttribute("data-theme-pref",p==="light"||p==="dark"?p:"system");'
-                'var m=document.querySelector(\'meta[name="theme-color"]\');if(m)m.setAttribute("content",k?"#111312":"#f2f3ee")})()</script>\n')
+                'var m=document.querySelector(\'meta[name="theme-color"]\');if(m)m.setAttribute("content",k?"#10100e":"#f5f5f5")})()</script>\n')
 
 
 def patch_component(s):
@@ -217,9 +217,9 @@ def patch_html(h):
     h = rep(h, '<meta name="color-scheme" content="light" />', '<meta name="color-scheme" content="light dark" />',
             'index.html color-scheme')
     h = rep(h, '<meta name="theme-color" content="#ffffff" />',
-            '<meta name="theme-color" content="#f2f3ee" />\n' + THEME_SCRIPT.rstrip('\n'), 'index.html theme-color')
+            '<meta name="theme-color" content="#f5f5f5" />\n' + THEME_SCRIPT.rstrip('\n'), 'index.html theme-color')
     anchor = '    <script type="module" crossorigin'
-    h = rep(h, anchor, '    ' + html_marker('html') + '\n    <link rel="stylesheet" href="/assets/theme.css?v=1" />\n' + anchor,
+    h = rep(h, anchor, '    ' + html_marker('html') + '\n    <link rel="stylesheet" href="/assets/theme.css?v=2" />\n' + anchor,
             'index.html bundle script')
     i = h.index(SCRIPT_TAG) + len(SCRIPT_TAG)
     j = h.index('"', i)
@@ -234,7 +234,7 @@ def patch_landing(h, name):
             '    <meta name="theme-color" content="#0f1311" media="(prefers-color-scheme: dark)" />', name + ' theme-color')
     seg = '<link rel="stylesheet" href="/assets/segment.css?v=1" />'
     anchor = seg if seg in h else '<link rel="stylesheet" href="/assets/landing.css?v=9" />'
-    return rep(h, anchor, anchor + '\n    ' + html_marker('landing') + '\n    <link rel="stylesheet" href="/assets/landing-theme.css?v=1" />',
+    return rep(h, anchor, anchor + '\n    ' + html_marker('landing') + '\n    <link rel="stylesheet" href="/assets/landing-theme.css?v=2" />',
                name + ' stylesheet')
 
 
