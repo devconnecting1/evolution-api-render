@@ -2366,7 +2366,7 @@ const WaTheme=(()=>{
   const KEY='wa-theme',OPTS=[['system','Sistema'],['light','Claro'],['dark','Escuro']];
   const mq=typeof window!=='undefined'&&window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
   const subs=new Set();
-  function read(){try{const v=localStorage.getItem(KEY);return v==='light'||v==='dark'?v:'system'}catch(e){return 'system'}}
+  function read(){try{const v=localStorage.getItem(KEY);return v==='light'||v==='system'?v:'dark'}catch(e){return 'dark'}}
   function isDark(p){return p==='dark'||(p==='system'&&!!mq&&mq.matches)}
   function apply(p){const d=document.documentElement,dark=isDark(p);d.setAttribute('data-theme',dark?'dark':'light');d.setAttribute('data-theme-pref',p);
     const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#10100e':'#f5f5f5');}

@@ -9,7 +9,7 @@ The styles live in two plain files edited by hand:
   manager/dist/assets/landing-theme.css - landing, /advocacia, /instagram: cream canvas, alternating cream / mint /
                                           deep green sections, dark version through prefers-color-scheme.
 
-Theme of the panel: localStorage "wa-theme" = system | light | dark (default system = prefers-color-scheme). An
+Theme of the panel: localStorage "wa-theme" = system | light | dark (default dark; light and system stay available in the menu). An
 inline script in <head> sets <html data-theme> before the first paint (no flash); WaTheme keeps it in sync with
 the operating system while the preference is "system" and offers the "Tema" menu in the top bar.
 
@@ -81,7 +81,7 @@ COMPONENT = r'''const WaTheme=(()=>{
   const KEY='wa-theme',OPTS=[['system','Sistema'],['light','Claro'],['dark','Escuro']];
   const mq=typeof window!=='undefined'&&window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
   const subs=new Set();
-  function read(){try{const v=localStorage.getItem(KEY);return v==='light'||v==='dark'?v:'system'}catch(e){return 'system'}}
+  function read(){try{const v=localStorage.getItem(KEY);return v==='light'||v==='system'?v:'dark'}catch(e){return 'dark'}}
   function isDark(p){return p==='dark'||(p==='system'&&!!mq&&mq.matches)}
   function apply(p){const d=document.documentElement,dark=isDark(p);d.setAttribute('data-theme',dark?'dark':'light');d.setAttribute('data-theme-pref',p);
     const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#10100e':'#f5f5f5');}
@@ -175,7 +175,7 @@ BAR_NEW = r'''  function Bar({instance}){
 
 '''
 
-THEME_SCRIPT = ('    <script>(function(){var p="system",d=document.documentElement;try{p=localStorage.getItem("wa-theme")||"system"}catch(e){}'
+THEME_SCRIPT = ('    <script>(function(){var p="dark",d=document.documentElement;try{p=localStorage.getItem("wa-theme")||"dark"}catch(e){}'
                 'var k=p==="dark"||(p!=="light"&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);'
                 'd.setAttribute("data-theme",k?"dark":"light");d.setAttribute("data-theme-pref",p==="light"||p==="dark"?p:"system");'
                 'var m=document.querySelector(\'meta[name="theme-color"]\');if(m)m.setAttribute("content",k?"#10100e":"#f5f5f5")})()</script>\n')
@@ -217,7 +217,7 @@ def patch_html(h):
     h = rep(h, '<meta name="color-scheme" content="light" />', '<meta name="color-scheme" content="light dark" />',
             'index.html color-scheme')
     h = rep(h, '<meta name="theme-color" content="#ffffff" />',
-            '<meta name="theme-color" content="#f5f5f5" />\n' + THEME_SCRIPT.rstrip('\n'), 'index.html theme-color')
+            '<meta name="theme-color" content="#10100e" />\n' + THEME_SCRIPT.rstrip('\n'), 'index.html theme-color')
     anchor = '    <script type="module" crossorigin'
     h = rep(h, anchor, '    ' + html_marker('html') + '\n    <link rel="stylesheet" href="/assets/theme.css?v=2" />\n' + anchor,
             'index.html bundle script')
