@@ -565,6 +565,85 @@ describe('observability: Neon (real response shape)', () => {
     assert.equal(metric(view, 'compute').limit, 100);
   });
 
+  test('own databases ("Banco próprio"): one line each with its own quota, alert from 80%, failures isolated', async () => {
+    const own = (id: string, cuSeconds: number) => {
+      const project = structuredClone(fx.neonProject);
+      Object.assign(project.project as any, { id, name: id, compute_time_seconds: cuSeconds });
+      return project;
+    };
+    const ownDatabases = async () => [
+      { instanceId: 'i1', instanceName: 'Cliente Exemplo', projectId: 'own-ok-1', status: 'ready' },
+      { instanceId: 'i2', instanceName: 'Cliente Fictício', projectId: 'own-hot-2', status: 'ready' },
+      { instanceId: 'i3', instanceName: 'Cliente Teste', projectId: 'own-down-3', status: 'ready' },
+    ];
+    const routes = {
+      ...neonRoutes,
+      'console.neon.tech/api/v2/projects/own-ok-1': own('own-ok-1', 10 * 3600),
+      'console.neon.tech/api/v2/projects/own-ok-1/branches': fx.neonBranches,
+      'console.neon.tech/api/v2/projects/own-hot-2': own('own-hot-2', 92 * 3600),
+      'console.neon.tech/api/v2/projects/own-hot-2/branches': fx.neonBranches,
+      'console.neon.tech/api/v2/projects/own-down-3': httpError(500),
+    };
+    const overview = await service(fullEnv, routes, [], { ownDatabases }).getOverview();
+    const view = overview.providers.find((item) => item.id === 'neon');
+
+    // the main project stays first and its metrics are unchanged
+    assert.equal(view.resources[0].id, fx.neonProject.project.id);
+    assert.equal(Math.round(metric(view, 'compute').used * 100) / 100, 33.68);
+
+    const rows = view.resources.slice(1);
+    assert.deepEqual(
+      rows.map((row: any) => [row.name, row.status ?? null]),
+      [
+        ['Banco próprio · Cliente Exemplo', 'ok'],
+        ['Banco próprio · Cliente Fictício', 'perto do limite'],
+        ['Banco próprio · Cliente Teste', null],
+      ],
+    );
+    assert.match(rows[0].detail, /Compute 10 de 100 CU-h \(10%\) · armazenamento/);
+    assert.match(rows[0].url, /console\.neon\.tech\/app\/projects\/own-ok-1/);
+    assert.equal(rows[2].detail, 'Sem leitura do Neon agora');
+
+    const hot = overview.alerts.find((alert) => alert.metric === 'own_compute_i2');
+    assert.equal(hot.percent, 92);
+    assert.equal(hot.provider, 'neon');
+    assert.match(hot.message, /Cliente Fictício em 92%.*só essa instância fica sem banco/);
+    assert.ok(!overview.alerts.some((alert) => alert.metric === 'own_compute_i1'));
+    assert.ok(view.notes.some((note) => /Bancos próprios: 3 instância\(s\)/.test(note)));
+    assert.ok(view.notes.some((note) => /1 banco\(s\) próprio\(s\) sem leitura/.test(note)));
+  });
+
+  test('own databases: a project at 100% of compute is "suspenso"; a listing failure only adds a note', async () => {
+    const project = structuredClone(fx.neonProject);
+    Object.assign(project.project as any, { id: 'own-full', compute_time_seconds: 100 * 3600 });
+    const full = await service(
+      fullEnv,
+      {
+        ...neonRoutes,
+        'console.neon.tech/api/v2/projects/own-full': project,
+        'console.neon.tech/api/v2/projects/own-full/branches': fx.neonBranches,
+      },
+      [],
+      {
+        ownDatabases: async () => [
+          { instanceId: 'i9', instanceName: 'Cliente Cheio', projectId: 'own-full', status: 'ready' },
+        ],
+      },
+    ).getOverview();
+    const neon = full.providers.find((item) => item.id === 'neon');
+    assert.equal(neon.resources[1].status, 'suspenso');
+    assert.equal(full.alerts.find((alert) => alert.metric === 'own_compute_i9').status, 'critical');
+
+    const broken = await service(fullEnv, neonRoutes, [], {
+      ownDatabases: async () => {
+        throw new Error('db down');
+      },
+    }).getOverview();
+    const card = broken.providers.find((item) => item.id === 'neon');
+    assert.equal(card.resources.length, 1);
+    assert.ok(card.notes.includes('Não foi possível listar os bancos próprios das instâncias.'));
+  });
+
   test('branches failing makes the card partial', async () => {
     const view = await provider('neon', fullEnv, {
       ...neonRoutes,
