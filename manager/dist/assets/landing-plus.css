@@ -595,3 +595,25 @@
   font-size: 18px;
   font-weight: 500;
 }
+
+/* ------------------------------------------------------------------ respiro entre seções
+   As seções só tinham espaço em cima (.section { padding: 120px 0 0 }). Como várias seções têm fundo próprio
+   (faixas grafite e faixas creme alternadas), o último card ou texto encostava na borda de baixo da faixa.
+   Agora toda seção tem espaço embaixo também; o CTA final e a faixa de números mantêm o espaço que já tinham. */
+.section:not(.cta, .section-tight[aria-labelledby="metrics-title"]) {
+  padding-bottom: 96px;
+}
+.hero.band,
+.seg-hero.band {
+  padding-bottom: 32px;
+}
+@media (max-width: 1023px) {
+  .section:not(.cta, .section-tight[aria-labelledby="metrics-title"]) {
+    padding-bottom: 72px;
+  }
+}
+@media (max-width: 639px) {
+  .section:not(.cta, .section-tight[aria-labelledby="metrics-title"]) {
+    padding-bottom: 56px;
+  }
+}
