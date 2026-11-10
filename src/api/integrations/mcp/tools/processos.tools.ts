@@ -210,4 +210,90 @@ export const syncProcess = defineTool({
   },
 });
 
-export const processosTools = [listProcesses, getProcess, addProcess, listPublications, syncProcess];
+export const getProcessSettings = defineTool({
+  name: 'get_process_settings',
+  title: 'Configurações de Processos',
+  description:
+    'Mostra as configurações do monitoramento de processos da instância (ligado, verificar a cada N horas, dias do DJEN, números da equipe que recebem os avisos, horário de silêncio, mensagem ao cliente) e as OABs acompanhadas no DJEN.',
+  input: { instance: instanceArg },
+  annotations: READ_ONLY,
+  run: async ({ instance }, ctx) => {
+    const svc = service(ctx);
+    const resolved = await resolveInstance(ctx, instance);
+    const [settings, oabs] = await Promise.all([
+      call(() => svc.getSettings(resolved.id)),
+      call(() => svc.listOab(resolved.id)),
+    ]);
+    return jsonResult({
+      instance: resolved.name,
+      settings,
+      oabs: (oabs ?? []).map((o: any) => ({
+        id: o.id,
+        oab: `${o.numeroOab}/${o.ufOab}`,
+        label: o.label ?? null,
+        active: o.active !== false,
+        lastCheckedAt: o.lastCheckedAt ?? null,
+      })),
+    });
+  },
+});
+
+export const updateProcessSettings = defineTool({
+  name: 'update_process_settings',
+  title: 'Alterar configurações de Processos',
+  description:
+    'Altera o monitoramento de processos: ligar/desligar, verificar a cada N horas (2 a 48), dias do DJEN (1 a 30) e números da equipe que recebem os avisos (DDI+DDD+número; a lista SUBSTITUI a atual). Também pode adicionar uma OAB para acompanhar as publicações do DJEN. Campos ausentes não mudam. Confirme com o usuário. Devolve os valores anteriores.',
+  input: {
+    instance: instanceArg,
+    enabled: z.boolean().optional(),
+    check_every_hours: z.number().int().min(2).max(48).optional(),
+    djen_days: z.number().int().min(1).max(30).optional(),
+    notify_numbers: z.array(z.string().min(10).max(20)).max(10).optional(),
+    add_oab: z
+      .object({
+        numero: z.string().min(1).max(10).describe('Número da OAB, ex.: 123456 ou 123456A.'),
+        uf: z.string().length(2).describe('UF da OAB, ex.: RJ.'),
+        label: z.string().max(120).optional().describe('Apelido, ex.: "Dr. Fulano".'),
+      })
+      .optional(),
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  run: async (args, ctx) => {
+    const svc = service(ctx);
+    const input: Record<string, any> = {};
+    if (args.enabled !== undefined) input.enabled = args.enabled;
+    if (args.check_every_hours !== undefined) input.checkEveryHours = args.check_every_hours;
+    if (args.djen_days !== undefined) input.djenDays = args.djen_days;
+    if (args.notify_numbers !== undefined) input.notifyNumbers = args.notify_numbers;
+    if (!Object.keys(input).length && !args.add_oab) throw new McpToolError('nenhum campo para alterar foi informado.');
+
+    const resolved = await resolveInstance(ctx, args.instance);
+    const result = Object.keys(input).length ? await call(() => svc.saveSettings(resolved.id, input)) : null;
+    const oab = args.add_oab
+      ? await call(() =>
+          svc.addOab(resolved.id, {
+            numeroOab: args.add_oab.numero,
+            ufOab: args.add_oab.uf,
+            label: args.add_oab.label,
+          }),
+        )
+      : null;
+    return jsonResult({
+      updated: true,
+      instance: resolved.name,
+      previous: result?.previous ?? null,
+      settings: result?.settings ?? null,
+      oabAdded: oab ? { id: oab.id, oab: `${oab.numeroOab}/${oab.ufOab}`, label: oab.label ?? null } : null,
+    });
+  },
+});
+
+export const processosTools = [
+  listProcesses,
+  getProcess,
+  addProcess,
+  listPublications,
+  syncProcess,
+  getProcessSettings,
+  updateProcessSettings,
+];

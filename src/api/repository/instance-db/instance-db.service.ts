@@ -26,7 +26,25 @@ export interface InstanceDbConfig {
   migrateOnBoot: boolean;
   connectionLimit: number;
   projectPrefix: string;
+  /** Projetos permitidos no plano do Neon (Free: 100), contando o do banco principal. */
+  projectLimit?: number;
 }
+
+/** Cota de projetos do Neon, para a escolha "banco próprio / compartilhado" ao criar uma instância. */
+export interface InstanceDbQuota {
+  enabled: boolean;
+  /** Modo que o painel deve sugerir: "own" enquanto houver projeto livre. */
+  defaultMode: 'own' | 'shared';
+  limit: number;
+  /** Projetos em uso (null quando o Neon não respondeu e não há estimativa). */
+  used: number | null;
+  remaining: number | null;
+  ownInstances: number;
+  /** De onde veio o número: API do Neon, estimativa local (Neon fora) ou desligado. */
+  source: 'neon' | 'estimate' | 'off';
+}
+
+const QUOTA_CACHE_MS = 60_000;
 
 export interface InstanceDbLogger {
   info(msg: string): void;
@@ -73,6 +91,7 @@ export function readInstanceDbConfig(env: NodeJS.ProcessEnv = process.env): Inst
     migrateOnBoot: env.DB_PER_INSTANCE_MIGRATE_ON_BOOT !== 'false',
     connectionLimit: clampInt(env.DB_PER_INSTANCE_CONNECTION_LIMIT, 3, 1, 20),
     projectPrefix: (env.DB_PER_INSTANCE_PROJECT_PREFIX || 'whatsai').slice(0, 20),
+    projectLimit: clampInt(env.NEON_PROJECT_LIMIT, 100, 1, 10_000),
     neonApiKey,
     neonOrgId: env.NEON_ORG_ID || undefined,
     neonRegionId: env.NEON_REGION_ID || 'aws-us-east-2',
@@ -86,6 +105,7 @@ export class InstanceDatabaseService<C extends MinimalClient = MinimalClient> {
   private readonly entries = new Map<string, Entry<C>>();
   private readonly pending = new Map<string, Promise<void>>();
   private dedicatedCount = 0;
+  private quotaCache: { at: number; value: InstanceDbQuota } | null = null;
 
   constructor(
     private readonly config: InstanceDbConfig,
@@ -111,6 +131,41 @@ export class InstanceDatabaseService<C extends MinimalClient = MinimalClient> {
 
   status(instanceId: string): InstanceDbStatus | 'shared' {
     return this.entries.get(instanceId)?.status ?? 'shared';
+  }
+
+  /**
+   * Cota de projetos do Neon (cache de 1 min). Nunca lança: com o Neon fora, devolve uma estimativa
+   * (instâncias com banco próprio + o projeto do banco principal).
+   */
+  async quota(force = false): Promise<InstanceDbQuota> {
+    const limit = this.config.projectLimit ?? 100;
+    const ownInstances = this.dedicatedCount;
+    if (!this.enabled) {
+      return { enabled: false, defaultMode: 'shared', limit, used: null, remaining: null, ownInstances, source: 'off' };
+    }
+    if (!force && this.quotaCache && Date.now() - this.quotaCache.at < QUOTA_CACHE_MS) return this.quotaCache.value;
+
+    let used: number;
+    let source: InstanceDbQuota['source'] = 'neon';
+    try {
+      used = await this.deps!.neon!.countProjects();
+    } catch (error) {
+      this.deps!.logger.warn(`instance-db: cota do Neon indisponível (${errMsg(error)}); usando estimativa`);
+      used = ownInstances + 1;
+      source = 'estimate';
+    }
+    const remaining = Math.max(0, limit - used);
+    const value: InstanceDbQuota = {
+      enabled: true,
+      defaultMode: remaining > 0 ? 'own' : 'shared',
+      limit,
+      used,
+      remaining,
+      ownInstances,
+      source,
+    };
+    this.quotaCache = { at: Date.now(), value };
+    return value;
   }
 
   /** Espera um provisionamento em andamento (se houver). */
@@ -177,6 +232,14 @@ export class InstanceDatabaseService<C extends MinimalClient = MinimalClient> {
   private async doProvision(instanceId: string, instanceName: string): Promise<void> {
     const { control, neon, logger } = this.deps!;
     const started = Date.now();
+    const quota = await this.quota();
+    if (quota.source === 'neon' && quota.remaining === 0) {
+      throw new Error(
+        `Não foi possível criar o banco próprio da instância: o limite de ${quota.limit} projetos do Neon foi atingido. ` +
+          'Crie a instância como compartilhada ou libere um projeto no Neon.',
+      );
+    }
+    this.quotaCache = null;
     this.entries.set(instanceId, { status: 'provisioning' });
 
     let projectId: string | null = null;
@@ -243,6 +306,7 @@ export class InstanceDatabaseService<C extends MinimalClient = MinimalClient> {
       .catch((error: unknown) => this.deps!.logger.error(`instance-db: limpeza de ${instanceId}: ${errMsg(error)}`));
 
     this.entries.delete(instanceId);
+    this.quotaCache = null;
     if (entry.status === 'ready') this.dedicatedCount = Math.max(0, this.dedicatedCount - 1);
     await entry.client?.$disconnect().catch(() => undefined);
 

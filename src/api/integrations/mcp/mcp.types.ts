@@ -48,6 +48,10 @@ export interface McpDeps {
     add: (instanceId: string, input: Record<string, any>) => Promise<any>;
     listPublications: (instanceId: string, filters?: Record<string, any>) => Promise<any>;
     manualSync: (instanceId: string, id: string) => Promise<any>;
+    getSettings: (instanceId: string) => Promise<any>;
+    saveSettings: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; settings: any }>;
+    listOab: (instanceId: string) => Promise<any[]>;
+    addOab: (instanceId: string, input: Record<string, any>) => Promise<any>;
   };
   /** "Leads (triagem)" (LeadsService): the same instance the REST routes and the bot use. */
   leads: {
@@ -69,6 +73,7 @@ export interface McpDeps {
     | 'listAppointments'
     | 'freeSlots'
     | 'createAppointment'
+    | 'updateAppointment'
     | 'cancelAppointment'
     | 'saveSettings'
   >;

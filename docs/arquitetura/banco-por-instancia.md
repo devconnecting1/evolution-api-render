@@ -51,13 +51,29 @@ horas na metade do mês). Por isso a API continua sendo **um serviço só, multi
 2. Render → serviço da API → Environment: `DB_PER_INSTANCE_ENABLED=true`, `NEON_API_KEY`,
    `NEON_ORG_ID` (org dona do projeto atual), `DB_PER_INSTANCE_SECRET` (texto longo aleatório,
    **não trocar depois**). Opcional: `NEON_REGION_ID` (padrão `aws-us-east-2`), `NEON_PG_VERSION` (16).
-3. Criar a próxima instância normalmente pelo painel; a coluna "Banco" mostra "Próprio".
+3. Criar a próxima instância pelo painel. O diálogo "Nova instância" mostra **Banco de dados**:
+   - **Banco próprio (recomendado)**, marcado por padrão, com "Restam N de 100 projetos" (API do Neon,
+     cache de 1 min; com o Neon fora vira "estimativa");
+   - **Compartilhado**, para testes ou quando o limite acaba (aí vira o padrão e "Banco próprio" fica
+     desabilitado).
+   A escolha vai como `dbMode: "own" | "shared"` no `POST /instance/create`; sem o campo, vale "own".
+   A coluna "Banco" da lista mostra "Próprio" ou "Compartilhado".
+
+## Rotas e ferramentas do admin (só chave global, nunca consultam o banco)
+
+- `GET /admin/database-quota` → `{ enabled, defaultMode, limit, used, remaining, ownInstances, source }`.
+- `GET /admin/db-activity?limit=50` → as últimas "acordadas" do banco principal: primeira consulta
+  depois de 5 min parado e as consultas da mesma rajada (só tabela e tipo de SQL, nunca valores).
+  Serve para achar o que mantém o Neon ligado de madrugada.
+- MCP `get_database_info`: as duas coisas acima numa ferramenta.
 
 ## Limites e cuidados
 
 - Cada instância continua precisando caber em **100 CU-h/mês** (≈ 400 h ativas a 0,25 CU,
   ≈ 13 h/dia). Isolar não reduz o consumo de uma instância muito movimentada.
 - Quando a cota de um projeto acaba, só aquela instância fica sem banco até o mês virar.
+- Limite de projetos: `NEON_PROJECT_LIMIT` (padrão 100, o do Free). No limite, a criação com banco
+  próprio é recusada com mensagem clara, sem criar nada.
 - O Free do Neon é para protótipos; cliente pagante deve ir para plano pago (Launch é por uso).
 - Render Free continua com 0,1 vCPU e dorme após 15 min sem tráfego; várias instâncias no mesmo
   serviço disputam a mesma CPU.

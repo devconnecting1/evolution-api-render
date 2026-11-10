@@ -368,6 +368,84 @@ describe('instance-db: provisioning service', () => {
     assert.equal(svc.dedicatedClient('B'), null);
     assert.equal(svc.status('B'), 'failed');
   });
+
+  test('quota: Neon project count, cached 1 min, "own" while there is room; Neon down -> estimate', async () => {
+    const { control } = controlWithMappings();
+    let calls = 0;
+    let count = 3;
+    let down = false;
+    const neon = {
+      countProjects: async () => {
+        calls++;
+        if (down) throw new Error('Neon: HTTP 503');
+        return count;
+      },
+    } as unknown as NeonClient;
+    const svc = new InstanceDatabaseService(
+      { ...cfg, projectLimit: 100 },
+      {
+        control,
+        neon,
+        encryptionKey: key,
+        createClient: () => fakeClient('t'),
+        migrate: async () => undefined,
+        logger: { info() {}, warn() {}, error() {} },
+      },
+    );
+
+    const q = await svc.quota();
+    assert.deepEqual(
+      { used: q.used, remaining: q.remaining, limit: q.limit, mode: q.defaultMode, source: q.source },
+      { used: 3, remaining: 97, limit: 100, mode: 'own', source: 'neon' },
+    );
+    await svc.quota();
+    assert.equal(calls, 1, 'second read comes from the cache');
+
+    count = 100;
+    const full = await svc.quota(true);
+    assert.equal(full.remaining, 0);
+    assert.equal(full.defaultMode, 'shared');
+
+    down = true;
+    const est = await svc.quota(true);
+    assert.equal(est.source, 'estimate');
+    assert.equal(est.used, 1, 'no own instance yet: only the main project');
+  });
+
+  test('provision refuses before creating anything when the Neon project limit is reached', async () => {
+    const { control, mappings } = controlWithMappings();
+    const created: string[] = [];
+    const neon = {
+      countProjects: async () => 100,
+      createProject: async (name: string) => {
+        created.push(name);
+        return { projectId: 'p', regionId: 'r', connectionUri: 'postgresql://x' };
+      },
+    } as unknown as NeonClient;
+    const svc = new InstanceDatabaseService(
+      { ...cfg, projectLimit: 100 },
+      {
+        control,
+        neon,
+        encryptionKey: key,
+        createClient: () => fakeClient('t'),
+        migrate: async () => undefined,
+        logger: { info() {}, warn() {}, error() {} },
+      },
+    );
+    await assert.rejects(svc.provision('inst-1', 'Escritório'), /limite de 100 projetos/);
+    assert.deepEqual(created, []);
+    assert.equal(mappings.length, 0);
+    assert.equal(svc.status('inst-1'), 'shared');
+  });
+
+  test('quota when the feature is off: shared, no Neon call', async () => {
+    const svc = new InstanceDatabaseService({ ...cfg, enabled: false }, null);
+    const q = await svc.quota();
+    assert.equal(q.enabled, false);
+    assert.equal(q.defaultMode, 'shared');
+    assert.equal(q.source, 'off');
+  });
 });
 
 describe('instance-db: Neon client', () => {

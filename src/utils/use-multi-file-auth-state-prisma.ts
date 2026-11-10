@@ -33,6 +33,10 @@ export interface AuthStatePrismaOptions {
 }
 
 export const AUTH_KEYS_DB_TIMEOUT_MS = 8000;
+/** How long a key found in neither Redis nor the table is remembered as absent (writes forget it at once). */
+export const ABSENT_KEY_TTL_MS = 6 * 60 * 60 * 1000;
+/** Upper bound of that memory per session (cleared when full). */
+export const ABSENT_KEY_MAX = 20_000;
 
 /** Rows per statement: well under the bind-parameter limits of PostgreSQL and MySQL. */
 const DB_CHUNK_SIZE = 500;
@@ -245,8 +249,11 @@ export default async function useMultiFileAuthStatePrisma(
     }
   }
 
-  /** Decoded values of the keys found in the table. Never throws: an error or a timeout reads as "not found". */
-  async function dbRead(keys: string[]): Promise<Record<string, any>> {
+  /**
+   * Decoded values of the keys found in the table. Never throws: an error or a timeout reads as "not found".
+   * `checked` lists the keys whose lookup really ran (no error, no timeout): only those may be remembered as absent.
+   */
+  async function dbRead(keys: string[], checked?: Set<string>): Promise<Record<string, any>> {
     const found: Record<string, any> = {};
     for (const part of chunk(keys)) {
       try {
@@ -261,6 +268,7 @@ export default async function useMultiFileAuthStatePrisma(
           logger.warn({ action: 'auth.keys.db.read.slow', sessionId, keys: part.length, timeoutMs: dbTimeoutMs });
           continue;
         }
+        part.forEach((key) => checked?.add(key));
         for (const row of rows) {
           try {
             found[row.key] = JSON.parse(row.value, BufferJSON.reviver);
@@ -318,6 +326,29 @@ export default async function useMultiFileAuthStatePrisma(
     }
   }
 
+  // ---- Keys known to exist nowhere (neither Redis nor the table) -----------------------------------------------------
+  // Baileys asks again and again for keys that were never stored (sessions of devices it has not met, sender keys of
+  // ignored groups...). Without this memory every such ask is a table read, and on Neon each read after 5 idle minutes
+  // wakes the database. Only this process writes the session's keys, so `set` (and `removeCreds`) keep it exact.
+  const absent = new Map<string, number>();
+  /** Bumped by every `set`: a read that overlapped a write never marks keys absent (it may have missed the write). */
+  let writeSeq = 0;
+
+  function isKnownAbsent(key: string): boolean {
+    const at = absent.get(key);
+    if (at === undefined) return false;
+    if (Date.now() - at > ABSENT_KEY_TTL_MS) {
+      absent.delete(key);
+      return false;
+    }
+    return true;
+  }
+
+  function rememberAbsent(key: string): void {
+    if (absent.size >= ABSENT_KEY_MAX) absent.clear();
+    absent.set(key, Date.now());
+  }
+
   // ---- creds (Session table), unchanged ---------------------------------------------------------------------------
 
   async function readCreds(): Promise<any> {
@@ -334,6 +365,7 @@ export default async function useMultiFileAuthStatePrisma(
   }
 
   async function removeCreds(): Promise<any> {
+    absent.clear();
     try {
       await enqueue(sessionId, () => prisma.authStateKey.deleteMany({ where: { sessionId } }));
       logger.info({ action: 'auth.keys.db.delete', sessionId });
@@ -387,9 +419,19 @@ export default async function useMultiFileAuthStatePrisma(
             }),
           );
 
-          if (missing.length) {
-            const found = await dbRead(missing.map((id) => `${type}-${id}`));
-            const restored = missing.filter((id) => found[`${type}-${id}`] !== undefined);
+          const toRead = missing.filter((id) => !isKnownAbsent(`${type}-${id}`));
+          if (toRead.length) {
+            const checked = new Set<string>();
+            const seqBefore = writeSeq;
+            const found = await dbRead(
+              toRead.map((id) => `${type}-${id}`),
+              checked,
+            );
+            const restored = toRead.filter((id) => found[`${type}-${id}`] !== undefined);
+            for (const id of toRead) {
+              const key = `${type}-${id}`;
+              if (found[key] === undefined && checked.has(key) && writeSeq === seqBefore) rememberAbsent(key);
+            }
 
             await Promise.all(
               restored.map(async (id) => {
@@ -418,6 +460,7 @@ export default async function useMultiFileAuthStatePrisma(
           return data;
         },
         set: async (data) => {
+          writeSeq++;
           const entries: { key: string; value: string | null }[] = [];
           const fastTasks: Promise<void>[] = [];
 
@@ -425,6 +468,7 @@ export default async function useMultiFileAuthStatePrisma(
             for (const id in data[category]) {
               const value = data[category][id];
               const key = `${category}-${id}`;
+              absent.delete(key);
 
               if (value) {
                 let dataString: string = null;

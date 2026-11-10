@@ -1,3 +1,4 @@
+import { getInstanceDatabases } from '@api/repository/instance-db';
 import { z } from 'zod';
 
 import { connectionStateOf, requireGlobal, resolveInstance, visibleInstancesWhere } from '../mcp.instance';
@@ -22,6 +23,8 @@ const instanceView = (row: any, liveState: string | null, loaded: boolean) => ({
   name: row.name,
   id: row.id,
   integration: row.integration ?? null,
+  // "own": banco próprio (projeto Neon só desta instância); "shared": banco principal
+  dbMode: getInstanceDatabases()?.status(row.id) === 'ready' ? 'own' : 'shared',
   connectionState: liveState ?? row.connectionStatus ?? null,
   storedConnectionStatus: row.connectionStatus ?? null,
   loaded,

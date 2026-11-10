@@ -258,4 +258,79 @@ export const updateAgendaSettings = defineTool({
   },
 });
 
-export const agendaTools = [listAppointments, getFreeSlots, createAppointment, cancelAppointment, updateAgendaSettings];
+export const getAgendaSettings = defineTool({
+  name: 'get_agenda_settings',
+  title: 'Configurações da agenda',
+  description:
+    'Mostra a Agenda da instância: se está ligada, fuso, duração e intervalo dos horários, antecedência mínima, dias à frente, disponibilidade semanal, bloqueios, tipos de atendimento, lembretes, pedido de confirmação, o que a IA pode fazer (agendar, remarcar, cancelar, aprovação da equipe) e os números da equipe. Use antes de update_agenda_settings.',
+  input: { instance: instanceArg },
+  annotations: READ_ONLY,
+  run: async ({ instance }, ctx) => {
+    const resolved = await resolveInstance(ctx, instance);
+    const settings: any = await ctx.deps.agenda.getSettings(resolved.id);
+    return jsonResult({
+      instance: resolved.name,
+      settings: settings ? { ...settings, icsToken: settings.icsToken ? '****' : null } : null,
+    });
+  },
+});
+
+export const updateAppointment = defineTool({
+  name: 'update_appointment',
+  title: 'Remarcar ou atualizar agendamento',
+  description:
+    'Remarca um agendamento (novo início; checa conflito e, por padrão, a disponibilidade), muda o status (pendente, agendado, confirmado, realizado, faltou; para cancelar use cancel_appointment), o tipo ou a observação interna. Com notify_client (padrão: sim) o cliente recebe o aviso da remarcação pelo WhatsApp: confirme com o usuário antes.',
+  input: {
+    instance: instanceArg,
+    id: z.string().min(1).max(64).describe('Id do agendamento (de list_appointments).'),
+    start: z
+      .string()
+      .min(16)
+      .max(40)
+      .optional()
+      .describe('Novo início: "2026-11-12T14:00" (fuso da agenda) ou ISO com fuso.'),
+    status: z.enum(['pendente', 'agendado', 'confirmado', 'realizado', 'faltou']).optional(),
+    type: z.string().min(1).max(80).optional().describe('Novo tipo de atendimento.'),
+    notes: z.string().max(2000).nullable().optional().describe('Observação interna (null apaga).'),
+    notify_client: z.boolean().optional().describe('Avisar o cliente de uma remarcação (padrão: sim).'),
+    outside_availability: z
+      .boolean()
+      .optional()
+      .describe('Permitir horário fora da disponibilidade (ainda sem sobrepor outro agendamento). Padrão: não.'),
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  run: async (args, ctx) => {
+    if (args.start === undefined && !args.status && !args.type && args.notes === undefined) {
+      throw new McpToolError('nada para alterar: informe start, status, type ou notes.');
+    }
+    const resolved = await resolveInstance(ctx, args.instance);
+    let startsAt: Date | undefined;
+    if (args.start !== undefined) {
+      const settings = await ctx.deps.agenda.getSettings(resolved.id);
+      startsAt = parseStart(args.start, settings.timezone) ?? undefined;
+      if (!startsAt) throw new McpToolError('início inválido: use "AAAA-MM-DDTHH:MM".');
+    }
+    const result = await ctx.deps.agenda
+      .updateAppointment(resolved.id, args.id, {
+        startsAt,
+        status: args.status,
+        typeName: args.type,
+        notes: args.notes,
+        notifyClient: args.notify_client !== false,
+        enforceAvailability: args.outside_availability !== true,
+        by: 'mcp',
+      })
+      .catch(agendaError);
+    return jsonResult({ updated: true, instance: resolved.name, result });
+  },
+});
+
+export const agendaTools = [
+  listAppointments,
+  getFreeSlots,
+  createAppointment,
+  updateAppointment,
+  cancelAppointment,
+  getAgendaSettings,
+  updateAgendaSettings,
+];

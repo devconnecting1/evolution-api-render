@@ -221,6 +221,39 @@ describe('Prisma auth state: durable Signal keys', () => {
     assert.equal(prisma.calls['authStateKey.findMany'], 1);
   });
 
+  test('a key found nowhere is asked to the table once, until a write creates it (Neon stays asleep)', async () => {
+    pairedSession(prisma, sessionId);
+    const { state } = await open();
+
+    for (let i = 0; i < 5; i++) {
+      const result = await state.keys.get('session', ['never-seen.0']);
+      assert.equal(result['never-seen.0'], null);
+    }
+    assert.equal(prisma.calls['authStateKey.findMany'], 1, 'only the first miss reads the table');
+
+    // Baileys stores it: the memory is dropped and the value is served (by Redis)
+    const value = new Uint8Array(randomBytes(64));
+    await state.keys.set({ session: { 'never-seen.0': value } } as any);
+    const after = await state.keys.get('session', ['never-seen.0']);
+    assert.ok(Buffer.from(value).equals(after['never-seen.0']));
+
+    // Redis loses it: the table is asked again (the memory was cleared by the write)
+    redis.hashes.clear();
+    const restored = await state.keys.get('session', ['never-seen.0']);
+    assert.ok(Buffer.from(value).equals(restored['never-seen.0']));
+    assert.equal(prisma.calls['authStateKey.findMany'], 2);
+  });
+
+  test('a failed table read is not remembered as "absent": the next ask tries the table again', async () => {
+    pairedSession(prisma, sessionId);
+    const { state } = await open();
+    prisma.state.failReads = true;
+    await state.keys.get('sender-key', ['group@g.us::x::0']);
+    prisma.state.failReads = false;
+    await state.keys.get('sender-key', ['group@g.us::x::0']);
+    assert.equal(prisma.calls['authStateKey.findMany'], 2);
+  });
+
   test('Redis down: reads and writes still work through the table', async () => {
     pairedSession(prisma, sessionId);
     const { state } = await open();

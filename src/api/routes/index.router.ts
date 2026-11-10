@@ -16,6 +16,7 @@ import fs from 'fs';
 import mimeTypes from 'mime-types';
 import path from 'path';
 
+import { AdminDbRouter } from './admin-db.router';
 import { AgendaRouter } from './agenda.router';
 import { BusinessRouter } from './business.router';
 import { CallRouter } from './call.router';
@@ -247,6 +248,8 @@ router
   .use('/leads', new LeadsRouter(...guards).router)
   .use('/agenda', new AgendaRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
+  // Neon project quota and database wake log: global key only, never touch the database
+  .use('/admin', new AdminDbRouter().router)
   // "Chaves e credenciais": only the global key (adminOnlyGuard), never an instance token
   .use(
     '/admin/credentials',

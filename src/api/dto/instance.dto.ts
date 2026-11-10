@@ -6,6 +6,8 @@ export class InstanceDto extends IntegrationDto {
   instanceName: string;
   instanceId?: string;
   qrcode?: boolean;
+  /** Banco da instância: "own" = projeto Neon próprio (padrão quando ligado), "shared" = banco principal. */
+  dbMode?: 'own' | 'shared';
   businessId?: string;
   number?: string;
   integration?: string;

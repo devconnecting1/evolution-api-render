@@ -1,0 +1,74 @@
+/* "Banco de dados" choice in the "Nova instância" dialog (manager/patches/db-mode.py).
+   Only var(--m-*) tokens of minimal.css / theme.css, so the light and dark themes apply. */
+.wa-db-mode {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.wa-db-mode > legend {
+  margin-bottom: 6px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--m-text);
+}
+.wa-db-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  cursor: pointer;
+}
+.wa-db-opt:hover {
+  background: var(--m-hover);
+}
+.wa-db-opt.is-on {
+  border-color: var(--m-primary);
+  background: var(--m-selected);
+}
+.wa-db-opt.is-off {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.wa-db-opt > input {
+  margin-top: 3px;
+  accent-color: var(--m-primary);
+  flex: none;
+}
+.wa-db-opt > input:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+.wa-db-txt {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.wa-db-txt > strong {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--m-text);
+}
+.wa-db-txt > small {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--m-text-2);
+}
+.wa-db-txt > small.wa-db-count {
+  color: var(--m-tint-text);
+  font-weight: 500;
+}
+.wa-db-opt.is-off .wa-db-count {
+  color: var(--m-bad);
+}
+.wa-db-wait {
+  margin: 0;
+  font-size: 13px;
+  color: var(--m-text-3);
+}
