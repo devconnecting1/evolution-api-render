@@ -1339,13 +1339,18 @@ export function leadsToXlsxSheets(
     'Responder pela aba Leads, filtro "Aguardando equipe há"',
     'amber',
   );
-  line('… há mais de 24 horas', over24, 'Responder hoje: quem espera muito procura outro escritório', 'amber');
-  line('… há mais de 3 dias', over72, 'Prioridade máxima: ligar ou mandar mensagem ainda hoje', 'red');
+  line(
+    '… há mais de 24 horas',
+    over24,
+    'Responder hoje: o retorno rápido faz parte do dever de diligência com quem procurou o escritório',
+    'amber',
+  );
+  line('… há mais de 3 dias', over72, 'Prioridade máxima: retornar ainda hoje', 'red');
   line('Prioridade alta em aberto', highOpen, 'Conferir prazo ou audiência no "Motivo da prioridade"', 'red');
   line(
     'Em aberto sem mensagem do cliente há mais de 7 dias',
     stale.length,
-    'Mandar uma mensagem de retomada; sem resposta, marcar como Descartado',
+    'Retornar uma única vez o pedido da própria pessoa; sem resposta, marcar como Descartado',
     'amber',
   );
 
@@ -1409,18 +1414,18 @@ export function leadsToXlsxSheets(
   const findings: string[] = [];
   if (over72)
     findings.push(
-      `${over72} contato(s) esperam a equipe há mais de 3 dias. Comece por eles e pelos de prioridade alta: cada dia sem resposta aumenta a chance de o cliente procurar outro escritório.`,
+      `${over72} contato(s) esperam a equipe há mais de 3 dias. Comece por eles e pelos de prioridade alta: quem procurou o escritório espera retorno, e a demora pesa mais quando há prazo.`,
     );
   else if (over24)
     findings.push(`${over24} contato(s) esperam a equipe há mais de 24 horas. Responder hoje evita perder o cliente.`);
   if (stale.length)
     findings.push(
-      `${stale.length} atendimento(s) em aberto estão parados há mais de 7 dias. Uma mensagem curta de retomada costuma reativar parte deles; os que não responderem podem ir para Descartado e saem da fila.`,
+      `${stale.length} atendimento(s) em aberto estão parados há mais de 7 dias. Retornar uma única vez o pedido que a própria pessoa fez costuma resolver; os que não responderem vão para Descartado e saem da fila (sem mensagens repetidas nem campanhas, que a ética da OAB veda).`,
     );
   const top = similar[0];
   if (top && top[1] >= 3)
     findings.push(
-      `${top[1]} casos contra "${top[0]}". Vale olhar em conjunto: mesmo assunto, documentos parecidos e possível atendimento em lote.`,
+      `${top[1]} casos contra "${top[0]}". Vale olhar em conjunto (mesmo assunto, documentos parecidos) e conferir conflito de interesses.`,
     );
   if (pct(noArea) >= 25)
     findings.push(
