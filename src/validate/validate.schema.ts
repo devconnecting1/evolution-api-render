@@ -6,6 +6,7 @@ export * from './instance.schema';
 export * from './label.schema';
 export * from './leads.schema';
 export * from './message.schema';
+export * from './processos.schema';
 export * from './proxy.schema';
 export * from './settings.schema';
 export * from './template.schema';

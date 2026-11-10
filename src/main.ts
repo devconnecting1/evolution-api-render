@@ -5,12 +5,13 @@ import '@utils/instrumentSentry';
 import { ProviderFiles } from '@api/provider/sessions';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { HttpStatus, router } from '@api/routes/index.router';
-import { eventManager, instanceDatabases, waMonitor } from '@api/server.module';
+import { eventManager, instanceDatabases, processosService, waMonitor } from '@api/server.module';
 import {
   Auth,
   configService,
   Cors,
   HttpServer,
+  Processos,
   ProviderSession,
   Sentry as SentryConfig,
   Webhook,
@@ -160,6 +161,9 @@ async function bootstrap() {
   }
 
   server.listen(httpServer.PORT, () => logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT));
+
+  // "Processos": in-process ticker (5 min; touches the database only when something is due)
+  if (configService.get<Processos>('PROCESSOS').TICKER) processosService.startTicker();
 
   initWA().catch((error) => {
     logger.error('Error loading instances: ' + error);
