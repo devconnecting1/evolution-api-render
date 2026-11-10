@@ -6,12 +6,12 @@ Uma implantação, cobrada uma vez, e uma mensalidade fixa, **mês a mês e sem 
 
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---|---|---|
-| **Mensalidade** | **R$ 397** | **R$ 697** | **R$ 1.297** |
-| Implantação, cobrada uma vez | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
+| **Mensalidade** | **R$ 437** | **R$ 767** | **R$ 1.427** |
+| Implantação, cobrada uma vez | R$ 1.640 | R$ 3.180 | a partir de R$ 5.820 |
 | Fidelidade | Nenhuma | Nenhuma | Nenhuma |
 | Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
 | Números de WhatsApp incluídos | 1 | 1 | 1 |
-| Número adicional, com os mesmos recursos e a mesma franquia | R$ 247/mês | R$ 447/mês | R$ 847/mês + aprovação da Meta |
+| Número adicional, com os mesmos recursos e a mesma franquia | R$ 287/mês | R$ 497/mês | R$ 927/mês + aprovação da Meta |
 | Conexão | WhatsApp Web (QR code) | WhatsApp Web (QR code) | API oficial da Meta (Cloud API) |
 | Áudio, foto e PDF | Sim | Sim | Sim |
 | Leads: triagem das conversas para a equipe | Sim | Sim | Sim |
@@ -61,7 +61,7 @@ Uma implantação, cobrada uma vez, e uma mensalidade fixa, **mês a mês e sem 
 | Integração com agenda, planilha ou CRM | – | 1 | 2 |
 | Treinamento da equipe (online) | 1 hora | 2 horas | 3 horas |
 | Acompanhamento intensivo após entrar no ar | 7 dias | 14 dias | 30 dias |
-| **Valor, cobrado uma vez** | **R$ 1.490** | **R$ 2.890** | **a partir de R$ 5.290** |
+| **Valor, cobrado uma vez** | **R$ 1.640** | **R$ 3.180** | **a partir de R$ 5.820** |
 
 No Premium, o valor final depende das integrações e dos modelos de mensagem necessários e é fechado na proposta, depois do diagnóstico.
 
@@ -69,9 +69,9 @@ No Premium, o valor final depende das integrações e dos modelos de mensagem ne
 
 | Item | Implantação | Mensalidade |
 |---|---|---|
-| Número adicional no Essencial (2.000 respostas) | R$ 490 | R$ 247 |
-| Número adicional no Profissional (5.000 respostas) | R$ 890 | R$ 447 |
-| Número adicional no Premium (10.000 respostas; aprovação da Meta) | a partir de R$ 1.490 | R$ 847 |
+| Número adicional no Essencial (2.000 respostas) | R$ 540 | R$ 287 |
+| Número adicional no Profissional (5.000 respostas) | R$ 980 | R$ 497 |
+| Número adicional no Premium (10.000 respostas; aprovação da Meta) | a partir de R$ 1.640 | R$ 927 |
 | Integração adicional (agenda, planilha, CRM, sistema próprio) | a partir de R$ 1.200, após diagnóstico | incluída no suporte |
 | Bloco de 1.000 respostas acima da franquia | – | R$ 49 |
 | Treinamento extra ou ajuste fora da franquia (novo fluxo, novo setor) | R$ 180 por hora | – |

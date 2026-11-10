@@ -169,11 +169,11 @@ Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implant
 
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---:|---:|---:|
-| Mensalidade | R$ 397 | R$ 697 | R$ 1.297 |
-| Implantação, cobrada uma vez | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
+| Mensalidade | R$ 437 | R$ 767 | R$ 1.427 |
+| Implantação, cobrada uma vez | R$ 1.640 | R$ 3.180 | a partir de R$ 5.820 |
 | Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
 | Números incluídos | 1 | 1 | 1 |
-| Número adicional (outra instância, mesmos recursos e franquia) | R$ 247/mês + R$ 490 | R$ 447/mês + R$ 890 | R$ 847/mês + a partir de R$ 1.490 + aprovação da Meta |
+| Número adicional (outra instância, mesmos recursos e franquia) | R$ 287/mês + R$ 540 | R$ 497/mês + R$ 980 | R$ 927/mês + a partir de R$ 1.640 + aprovação da Meta |
 | Ajustes nas instruções por mês | 2 | 4 | 8 |
 | Integrações sob medida incluídas | – | 1 | 2 |
 | Áudio, foto e PDF | Sim | Sim | Sim |
@@ -282,6 +282,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 10/11/2026: **Saúde das chaves OpenAI** sem entrar na conta de cada cliente (seção 12.11); cartão **OpenAI** na Observabilidade com alerta; MCP `get_openai_health`. O saldo em dólares não é exposto pela OpenAI para chaves comuns.
 - 10/11/2026: tema **"Meu Tema Global"** no painel e no site (claro, escuro e Sistema, padrão Sistema; lateral escura na mesma paleta), lateral da lista de instâncias só com os itens globais, cabeçalho do celular sem estourar a tela; site com módulos, assistente de IA, números com mini-gráficos e barra fixa de contato no celular.
 - 10/11/2026: **planos sem fidelidade** (mensalidade mês a mês), implantação única pelo valor antigo de 12 meses, todos os planos com 1 número e número adicional com os recursos e a franquia do plano: R$ 247 / R$ 447 / R$ 847 por mês, implantação R$ 490 / R$ 890 / a partir de R$ 1.490. Propostas enviadas antes mantêm os preços durante a validade.
+- 10/11/2026: **reajuste de 10%** em mensalidades, implantações e número adicional (seção 6): R$ 437 / R$ 767 / R$ 1.427 por mês, implantação R$ 1.640 / R$ 3.180 / a partir de R$ 5.820, número adicional R$ 287 / R$ 497 / R$ 927 (cerca de 65% da mensalidade) com implantação R$ 540 / R$ 980 / a partir de R$ 1.640. Excedente (R$ 49 por 1.000 respostas) e piloto (R$ 690) mantidos: o piloto é a porta de entrada e o excedente já cobre a OpenAI com folga.
 - 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
 - Avaliado e adiado: Neon Free → Supabase Free. O banco por instância no Neon já isola a cota de cada cliente; reavaliar se o limite de 100 projetos ou o custo do Neon pago pesar.
 - Planejado: Render Free → Starter (US$ 7/mês) ao ter cliente pagante; site e painel fora do Vercel Hobby (os termos proíbem uso comercial) → Cloudflare Pages (gratuito) ou Vercel Pro.
