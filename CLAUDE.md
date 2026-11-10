@@ -221,3 +221,8 @@ Currently, the project has minimal formal testing infrastructure:
 - Health check endpoints for monitoring
 - Sentry integration for error tracking
 - Telemetry for usage analytics (non-sensitive data only)
+## Vendor Documentation (local copy)
+
+Official docs for **Neon**, **Render** and **Vercel** are mirrored in `docs/vendors/<vendor>/llms.txt`
+(index) and `llms-full.txt` (full text). Grep them before answering questions about plans, limits or
+APIs of these platforms. Refresh with `bash scripts/update-vendor-docs.sh`.
