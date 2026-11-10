@@ -70,13 +70,13 @@ VERCEL_TOKEN="<token da Vercel>" npx -y vercel@65.2.0 deploy --prod --yes --arch
 
 ## 4. Painel, site e manual (build sem fonte)
 
-Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/*.py`: troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (hoje `?v=34`). Depois de qualquer patch: `python3 -I manager/patches/<nome>.py --check` em todos e `node --check` numa cópia `.mjs` do bundle. Se o manager for reconstruído do zero, reaplique todos.
+Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/*.py`: troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (hoje `?v=35`). Depois de qualquer patch: `python3 -I manager/patches/<nome>.py --check` em todos e `node --check` numa cópia `.mjs` do bundle. Se o manager for reconstruído do zero, reaplique todos.
 
 | Área | Patch / arquivos | O que faz |
 |---|---|---|
 | Idioma e marca | `ptbr-only.py`, `login-clean.py`, `favicon-wa.py`, `render-style.py`, `home-redesign.py` | Painel só em PT-BR, login limpo, wordmark em texto, fonte Geist, telas de entrada |
 | Cores e tema | `theme.py` + `assets/theme.css?v=3` | Paleta "Meu Tema Global" (monocromática, raio 4 px, sem sombras), tema **Claro / Escuro / Sistema** (padrão Sistema, guardado em `localStorage` `wa-theme`). Cor só com significado: verde ok, âmbar atenção, vermelho erro |
-| Layout | `minimal.py`, `twenty-layout.py`, `ui-tables.py`, `dashboard-ui.py`, `responsive.py`, `panel-polish.py` | Barra de visão, painel lateral do contato, menu de comandos (Ctrl K), tabelas, "Primeiros passos", celular/tablet. Na lista de instâncias, a lateral mostra só Instâncias, Observabilidade, Chaves e credenciais, Manual e Sair |
+| Layout | `minimal.py`, `twenty-layout.py`, `ui-tables.py`, `dashboard-ui.py`, `responsive.py`, `panel-polish.py`, `credits-clean.py` | Barra de visão, painel lateral do contato, menu de comandos (Ctrl K), tabelas, "Primeiros passos", celular/tablet. Na lista de instâncias, a lateral mostra só Instâncias, Observabilidade, Chaves e credenciais, Manual e Sair. Sem créditos de autor no rodapé; em **Comportamento**, cada chave diz o efeito real e o valor recomendado (seção 4.1) |
 | Conversas | `chat-ui.py`, `chat-guards.py` | Lista, balões, mídia sob demanda, páginas antigas; correção de dois travamentos |
 | Bot OpenAI | `openai-fields.py`, `openai-media.py` | `tokenParam`, pausa humana, estado da pausa por contato, mídia e memória (seções 12.1, 12.2, 12.9, 12.10) |
 | Nova instância | `db-mode.py` + `db-mode.css` | Escolha **Banco próprio / Compartilhado** com "Restam N de 100 projetos" |
@@ -90,6 +90,21 @@ Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/in
 | Manual | `assets/readme-tab.js`, `readme-tab.css`, `marked.min.js`, `readmes/` | Item **Manual** da lateral e `/readme`: resumo operacional (`readmes/RESUMO.md`) com links para o guia comercial e este manual |
 
 **Site** (`manager/dist/landing/`: `index.html`, `advocacia.html`, `instagram.html`): HTML e CSS escritos à mão (`landing.css`, `segment.css`, `landing-theme.css`, `landing-plus.css`) e `landing.js` / `landing-pixels.js` (fundo de pixels do plano Premium, parado com "reduzir movimento"). Sem logos ou nomes de terceiros, fonte Geist, sem animação de rolagem, dados de exemplo fictícios. Preços iguais aos da seção 6 (inclusive no JSON-LD); ao mudar um preço, mude as três páginas, a seção 6, o guia comercial e o resumo. Em `/advocacia`, a linguagem segue a seção 16.7 (triagem, nunca captação; sem nota numérica para pessoas).
+
+### 4.1 Comportamento da instância (recomendado)
+
+Instância > **Comportamento** (mesmos campos do Evolution API, `POST /settings/set/<instância>`). Valores recomendados para atendimento com IA:
+
+| Chave | Efeito real | Recomendado |
+|---|---|---|
+| Rejeitar Chamadas | Recusa ligações de voz e vídeo em **todos** os aparelhos do número; com texto em "Mensagem de Rejeição", envia esse texto a quem ligou | Desligado se alguém atende ligações pelo WhatsApp; ligado (com mensagem) se ninguém atende |
+| Ignorar Grupos | A IA não responde em grupos e mensagens de grupo não são salvas (menos banco) | Ligado |
+| Sempre Online | `markOnlineOnConnect` na conexão e o bot não volta a "offline" depois de responder; o celular da equipe pode parar de receber notificações | Desligado |
+| Visualizar Mensagens | Marca como lida toda mensagem na chegada, antes da IA ou da equipe responder | Desligado |
+| Sincronizar Histórico Completo | Só age ao conectar pelo QR code: importa o histórico do celular (pesado no Neon). Mudar depois não tem efeito até um novo pareamento | Desligado |
+| Visualizar Status | Marca status dos contatos como vistos (o contato vê) e guarda os status; desligado, `status@broadcast` é ignorado | Desligado |
+
+Licença: o painel não mostra créditos de autor. O aviso de uso do Evolution API pedido pela licença (condição 1b do `LICENSE`: visível a administradores e acessível pela documentação) fica no rodapé do **Manual** e neste documento.
 
 ## 5. Onboarding de cliente (runbook)
 
@@ -171,10 +186,10 @@ Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implant
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---:|---:|---:|
 | Mensalidade | R$ 437 | R$ 767 | R$ 1.427 |
-| Implantação, cobrada uma vez | R$ 1.640 | R$ 3.180 | a partir de R$ 5.820 |
+| Implantação, cobrada uma vez | R$ 1.800 | R$ 3.500 | a partir de R$ 6.400 |
 | Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
 | Números incluídos | 1 | 1 | 1 |
-| Número adicional (outra instância, mesmos recursos e franquia) | R$ 287/mês + R$ 540 | R$ 497/mês + R$ 980 | R$ 927/mês + a partir de R$ 1.640 + aprovação da Meta |
+| Número adicional (outra instância, mesmos recursos e franquia) | R$ 287/mês + R$ 590 | R$ 497/mês + R$ 1.080 | R$ 927/mês + a partir de R$ 1.800 + aprovação da Meta |
 | Ajustes nas instruções por mês | 2 | 4 | 8 |
 | Integrações sob medida incluídas | – | 1 | 2 |
 | Áudio, foto e PDF | Sim | Sim | Sim |
@@ -284,6 +299,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 10/11/2026: tema **"Meu Tema Global"** no painel e no site (claro, escuro e Sistema, padrão Sistema; lateral escura na mesma paleta), lateral da lista de instâncias só com os itens globais, cabeçalho do celular sem estourar a tela; site com módulos, assistente de IA, números com mini-gráficos e barra fixa de contato no celular.
 - 10/11/2026: **planos sem fidelidade** (mensalidade mês a mês), implantação única pelo valor antigo de 12 meses, todos os planos com 1 número e número adicional com os recursos e a franquia do plano: R$ 247 / R$ 447 / R$ 847 por mês, implantação R$ 490 / R$ 890 / a partir de R$ 1.490. Propostas enviadas antes mantêm os preços durante a validade.
 - 10/11/2026: **reajuste de 10%** em mensalidades, implantações e número adicional (seção 6): R$ 437 / R$ 767 / R$ 1.427 por mês, implantação R$ 1.640 / R$ 3.180 / a partir de R$ 5.820, número adicional R$ 287 / R$ 497 / R$ 927 (cerca de 65% da mensalidade) com implantação R$ 540 / R$ 980 / a partir de R$ 1.640. Excedente (R$ 49 por 1.000 respostas) e piloto (R$ 690) mantidos: o piloto é a porta de entrada e o excedente já cobre a OpenAI com folga.
+- 10/11/2026: **implantação +10%** (seção 6): R$ 1.800 / R$ 3.500 / a partir de R$ 6.400; implantação do número adicional R$ 590 / R$ 1.080 / a partir de R$ 1.800. Mensalidades, piloto (R$ 690) e excedente (R$ 49 por 1.000 respostas) não mudam.
 - 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
 - 10/11/2026: **Leads**: resposta da equipe detectada também pelas mensagens do número e pela pausa da sessão do bot (corrige "aguardando equipe" falso das conversas analisadas em lote), `refresh-waiting`, tipo de contato (novo caso, já é cliente, sem demanda jurídica), nome da pessoa do caso quando alguém fala por ela, e visualizador da planilha no painel. Migration aditiva `20261110130000_add_lead_contact_kind`.
 - 10/11/2026: **Leads em planilha Excel** (abas Leads e Resumo, gerada pela própria API sem biblioteca nova) e análise automática mais precisa: área classificada pelo assunto, cidade padronizada, prioridade com a data do fato (contagem, prazo vencido, audiência passada, data distante e problema já resolvido).

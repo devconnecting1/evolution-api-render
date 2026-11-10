@@ -1,7 +1,7 @@
 /*
  * WhatsAI Manager: manual (documentation layout). Plain script, no dependencies besides marked (marked.min.js).
  * Opens as a page at /readme (top bar, own <main>) or inline in the Manager (the "Manual" item of the instance
- * menu; panel beside the menu, closes on Escape, "Fechar", a click outside or a route change).
+ * menu; panel beside the menu, closes on Escape, a click outside or a route change, e.g. another sidebar item).
  * Layout: documents on the left (with a title search over documents and their sections), content column
  * (~720px), "Nesta página" (h2/h3 of the current document) on the right. Narrow widths: the document list is
  * a drawer opened by "Menu do manual" and "Nesta página" becomes an accordion above the content.
@@ -30,6 +30,7 @@
   var current = null;
   var spy = null;
   var resizeHandler = null;
+  var headerWatch = null;
 
   function authed() {
     try { return !!localStorage.getItem(TOKEN_KEY); } catch (e) { return false; }
@@ -213,18 +214,34 @@
       if (r.width > 40) left = Math.round(r.right);
     }
     root.style.left = left + 'px';
-    var header = null;
+    // The panel starts below the Manager top bar. Pages have more than one <header> (the instances page keeps a
+    // hidden one first) and the bar's height changes with the width, the safe area of an installed app and
+    // wrapped chips, so measure every visible header near the top and use the lowest bottom edge.
+    var top = 0;
     var headers = document.querySelectorAll('header');
     for (var i = 0; i < headers.length; i++) {
-      if (!root.contains(headers[i])) { header = headers[i]; break; }
+      var el = headers[i];
+      if (root.contains(el) || !el.offsetHeight) continue;
+      var r2 = el.getBoundingClientRect();
+      var docTop = r2.top + window.scrollY;
+      if (docTop > 160) continue;
+      top = Math.max(top, Math.ceil(docTop + r2.height));
     }
-    var top = header ? header.offsetHeight : 0;
     root.style.top = (top >= 40 ? top : 56) + 'px';
+  }
+
+  function watchHeader(root) {
+    if (typeof ResizeObserver !== 'function') return null;
+    var ro = new ResizeObserver(function () { position(root); });
+    var headers = document.querySelectorAll('header');
+    for (var i = 0; i < headers.length; i++) if (!root.contains(headers[i])) ro.observe(headers[i]);
+    return ro;
   }
 
   function close() {
     if (!panel || isPage) return;
     if (spy) { spy.disconnect(); spy = null; }
+    if (headerWatch) { headerWatch.disconnect(); headerWatch = null; }
     if (resizeHandler) { window.removeEventListener('resize', resizeHandler); resizeHandler = null; }
     panel.remove();
     panel = null;
@@ -339,12 +356,9 @@
     main.id = 'wr-main';
     if (inline) {
       var bar = h('div', 'wr-bar');
+      // No "Fechar manual" button: the Manager sidebar (and Escape, a click outside or a route change) leaves
+      // the manual like any other page
       bar.appendChild(menuBtn);
-      var closeBtn = h('button', 'wr-btn wr-close', 'Fechar manual');
-      closeBtn.type = 'button';
-      closeBtn.prepend(svg(ICON_CLOSE));
-      closeBtn.addEventListener('click', function () { close(); });
-      bar.appendChild(closeBtn);
       main.appendChild(bar);
     }
     var content = h('div', 'wr-content');
@@ -609,7 +623,7 @@
     c.appendChild(pager);
 
     var foot = h('footer', 'wr-foot');
-    foot.appendChild(h('span', null, 'Referência: out/2026 · Inspirado no Evolution Foundation/Evolution API'));
+    foot.appendChild(h('span', null, 'Referência: nov/2026 · Usa o Evolution API (Evolution Foundation), licença Apache 2.0 com condições adicionais'));
     var raw = h('a', null, 'Ver o arquivo ' + doc.file);
     raw.href = '/readmes/' + doc.file;
     raw.target = '_blank';
@@ -649,14 +663,18 @@
       position(panel);
       resizeHandler = function () { position(panel); };
       window.addEventListener('resize', resizeHandler);
+      headerWatch = watchHeader(panel);
     }
     var params = new URLSearchParams(location.search);
     var start = isPage ? params.get('doc') : null;
     var hash = isPage && location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
     show(ui, start || DOCS[0].id, hash, false);
     if (inline) {
-      var t = ui.root.querySelector('.wr-close');
-      if (t) setTimeout(function () { t.focus(); }, 0);
+      var t = ui.root.querySelector('.wr-main');
+      if (t) {
+        t.setAttribute('tabindex', '-1');
+        setTimeout(function () { t.focus({ preventScroll: true }); }, 0);
+      }
     }
   }
 

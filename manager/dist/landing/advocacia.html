@@ -57,7 +57,7 @@
     <link rel="stylesheet" href="/assets/segment.css?v=1" />
     <!-- whatsai-patch:theme:landing -->
     <link rel="stylesheet" href="/assets/landing-theme.css?v=2" />
-    <link rel="stylesheet" href="/assets/landing-plus.css?v=4" />
+    <link rel="stylesheet" href="/assets/landing-plus.css?v=5" />
     <script src="/assets/landing.js?v=5" defer></script>
     <script src="/assets/landing-pixels.js?v=1" defer></script>
 
@@ -96,7 +96,7 @@
             "offers": [
               {
                 "@type": "Offer",
-                "name": "Essencial (mensalidade mês a mês, sem fidelidade; 1 número; implantação de R$ 1.640)",
+                "name": "Essencial (mensalidade mês a mês, sem fidelidade; 1 número; implantação de R$ 1.800)",
                 "price": "437.00",
                 "priceCurrency": "BRL",
                 "priceSpecification": { "@type": "UnitPriceSpecification", "price": "437.00", "priceCurrency": "BRL", "unitText": "mês" },
@@ -104,7 +104,7 @@
               },
               {
                 "@type": "Offer",
-                "name": "Profissional (mensalidade mês a mês, sem fidelidade; 1 número; implantação de R$ 3.180)",
+                "name": "Profissional (mensalidade mês a mês, sem fidelidade; 1 número; implantação de R$ 3.500)",
                 "price": "767.00",
                 "priceCurrency": "BRL",
                 "priceSpecification": { "@type": "UnitPriceSpecification", "price": "767.00", "priceCurrency": "BRL", "unitText": "mês" },
@@ -112,7 +112,7 @@
               },
               {
                 "@type": "Offer",
-                "name": "Premium, API oficial da Meta (mensalidade mês a mês, sem fidelidade; 1 número; implantação a partir de R$ 5.820)",
+                "name": "Premium, API oficial da Meta (mensalidade mês a mês, sem fidelidade; 1 número; implantação a partir de R$ 6.400)",
                 "price": "1427.00",
                 "priceCurrency": "BRL",
                 "priceSpecification": { "@type": "UnitPriceSpecification", "price": "1427.00", "priceCurrency": "BRL", "unitText": "mês" },
@@ -138,12 +138,12 @@
               {
                 "@type": "Question",
                 "name": "Isso respeita as regras de publicidade da OAB?",
-                "acceptedAnswer": { "@type": "Answer", "text": "O WhatsAI só responde quem procura o escritório: não faz disparos, listas ou abordagem ativa. As instruções são escritas com você e evitam o que o Provimento 205/2021 restringe, como promessa de resultado e menção a valores sem análise. O escritório aprova o que a IA diz e a avaliação ética final é sempre do escritório." }
+                "acceptedAnswer": { "@type": "Answer", "text": "O WhatsAI só responde quem procura o escritório: não faz disparos, listas ou abordagem ativa. As instruções são escritas com você e seguem o Código de Ética e Disciplina da OAB e o Provimento 205/2021: sem promessa de resultado, sem valores antes da análise e sem autopromoção. O escritório aprova o que a IA diz e a avaliação ética final é sempre do escritório." }
               },
               {
                 "@type": "Question",
                 "name": "E o sigilo profissional?",
-                "acceptedAnswer": { "@type": "Answer", "text": "A IA é orientada a não pedir documentos, senhas ou dados de cartão pelo chat e a indicar o canal que o escritório definir para documentos. O conteúdo de transcrições e PDFs não vai para os registros técnicos, imagens e documentos não ficam no histórico que a IA usa e o histórico das conversas é mantido por até 90 dias, prazo ajustável no contrato. Há termo de tratamento de dados assinado com o escritório." }
+                "acceptedAnswer": { "@type": "Answer", "text": "A IA é orientada a não pedir documentos, senhas ou dados de cartão pelo chat e a indicar o canal que o escritório definir para documentos. O conteúdo de transcrições e PDFs não vai para os registros técnicos, imagens e documentos não ficam no histórico que a IA usa e o histórico das conversas é mantido por até 90 dias, prazo que o escritório pode ajustar. Há termo de tratamento de dados assinado com o escritório." }
               },
               {
                 "@type": "Question",
@@ -158,12 +158,17 @@
               {
                 "@type": "Question",
                 "name": "A IA avisa o advogado quando chega um caso urgente?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Hoje não há aviso automático para o celular do advogado. A IA pergunta se há prazo ou urgência e diz ao cliente que a equipe vai retornar; a equipe vê a conversa no WhatsApp e no painel. Um aviso para um número interno pode ser feito como integração sob medida." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Sim, se o escritório ligar o aviso. A IA pergunta se há prazo ou urgência, e o painel de Leads organiza cada atendimento com prioridade, próximo passo e quem ainda espera retorno. Os números da equipe recebem uma mensagem no WhatsApp quando chega um caso qualificado ou urgente. A prioridade é só uma triagem para a equipe: a IA não avalia o caso nem promete prazo ao cliente." }
               },
               {
                 "@type": "Question",
                 "name": "A IA agenda a consulta?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Ela pode informar os horários de atendimento que estão nas instruções e anotar a preferência do cliente; a confirmação fica com a equipe. Marcar direto na agenda do escritório é uma integração sob medida, com uma incluída no plano Profissional e duas no Premium." }
+                "acceptedAnswer": { "@type": "Answer", "text": "Sim, nos planos Profissional e Premium. Com a Agenda ligada, a IA oferece os horários livres do escritório, marca, remarca ou cancela a consulta e envia lembretes com pedido de confirmação. O escritório define os tipos de atendimento, a antecedência mínima e se cada horário precisa de aprovação da equipe. No plano Essencial, a IA anota a preferência e a equipe confirma." }
+              },
+              {
+                "@type": "Question",
+                "name": "Dá para acompanhar processos e intimações?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Sim, nos planos Profissional e Premium. O módulo Processos consulta os andamentos públicos no DataJud (CNJ) e as intimações publicadas no DJEN pelo número da OAB, guarda o histórico e avisa a equipe pelo WhatsApp. Não é tempo real: o DataJud pode atrasar alguns dias, e processos em segredo de justiça não aparecem." }
               },
               {
                 "@type": "Question",
@@ -498,7 +503,7 @@
               <p class="price"><strong>R$ 437</strong><span>/mês</span></p>
               <p class="impl-h">Mês a mês, sem fidelidade</p>
               <dl class="impl">
-                <div><dt>Implantação, uma vez</dt><dd>R$ 1.640</dd></div>
+                <div><dt>Implantação, uma vez</dt><dd>R$ 1.800</dd></div>
                 <div><dt>Números incluídos</dt><dd>1</dd></div>
                 <div><dt>Número adicional</dt><dd>R$ 287/mês</dd></div>
               </dl>
@@ -519,7 +524,7 @@
               <p class="price"><strong>R$ 767</strong><span>/mês</span></p>
               <p class="impl-h">Mês a mês, sem fidelidade</p>
               <dl class="impl">
-                <div><dt>Implantação, uma vez</dt><dd>R$ 3.180</dd></div>
+                <div><dt>Implantação, uma vez</dt><dd>R$ 3.500</dd></div>
                 <div><dt>Números incluídos</dt><dd>1</dd></div>
                 <div><dt>Número adicional</dt><dd>R$ 497/mês</dd></div>
               </dl>
@@ -542,7 +547,7 @@
               <p class="price"><strong>R$ 1.427</strong><span>/mês</span></p>
               <p class="impl-h">Mês a mês, sem fidelidade</p>
               <dl class="impl">
-                <div><dt>Implantação, uma vez</dt><dd>a partir de R$ 5.820</dd></div>
+                <div><dt>Implantação, uma vez</dt><dd>a partir de R$ 6.400</dd></div>
                 <div><dt>Números incluídos</dt><dd>1</dd></div>
                 <div><dt>Número adicional</dt><dd>R$ 927/mês</dd></div>
               </dl>
@@ -578,9 +583,9 @@
               <table class="addon-table">
                 <thead><tr><th scope="col">Plano</th><th scope="col">Por número</th><th scope="col">Respostas</th><th scope="col">Implantação</th></tr></thead>
                 <tbody>
-                  <tr><th scope="row">Essencial</th><td><strong>R$ 287</strong>/mês</td><td>2.000/mês</td><td>R$ 540</td></tr>
-                  <tr><th scope="row">Profissional</th><td><strong>R$ 497</strong>/mês</td><td>5.000/mês</td><td>R$ 980</td></tr>
-                  <tr><th scope="row">Premium</th><td><strong>R$ 927</strong>/mês</td><td>10.000/mês</td><td>a partir de R$ 1.640</td></tr>
+                  <tr><th scope="row">Essencial</th><td><strong>R$ 287</strong>/mês</td><td>2.000/mês</td><td>R$ 590</td></tr>
+                  <tr><th scope="row">Profissional</th><td><strong>R$ 497</strong>/mês</td><td>5.000/mês</td><td>R$ 1.080</td></tr>
+                  <tr><th scope="row">Premium</th><td><strong>R$ 927</strong>/mês</td><td>10.000/mês</td><td>a partir de R$ 1.800</td></tr>
                 </tbody>
               </table>
             </div>
@@ -594,11 +599,11 @@
                 </thead>
                 <tbody>
                   <tr><th scope="row">Mensalidade</th><td>R$ 437</td><td>R$ 767</td><td>R$ 1.427</td></tr>
-                  <tr><th scope="row">Implantação, cobrada uma vez</th><td>R$ 1.640</td><td>R$ 3.180</td><td>a partir de R$ 5.820</td></tr>
+                  <tr><th scope="row">Implantação, cobrada uma vez</th><td>R$ 1.800</td><td>R$ 3.500</td><td>a partir de R$ 6.400</td></tr>
                   <tr><th scope="row">Fidelidade</th><td>Nenhuma</td><td>Nenhuma</td><td>Nenhuma</td></tr>
                   <tr><th scope="row">Números incluídos</th><td>1</td><td>1</td><td>1</td></tr>
                   <tr><th scope="row">Número adicional, com os mesmos recursos</th><td>R$ 287/mês</td><td>R$ 497/mês</td><td>R$ 927/mês + aprovação da Meta</td></tr>
-                  <tr><th scope="row">Implantação do número adicional</th><td>R$ 540</td><td>R$ 980</td><td>a partir de R$ 1.640</td></tr>
+                  <tr><th scope="row">Implantação do número adicional</th><td>R$ 590</td><td>R$ 1.080</td><td>a partir de R$ 1.800</td></tr>
                   <tr><th scope="row">Respostas da IA por mês</th><td>2.000</td><td>5.000</td><td>10.000</td></tr>
                   <tr><th scope="row">Conversas por mês, aproximadamente</th><td>200 a 400</td><td>500 a 1.000</td><td>1.000 a 2.000</td></tr>
                   <tr><th scope="row">Conexão</th><td>WhatsApp Web (QR code)</td><td>WhatsApp Web (QR code)</td><td>API oficial da Meta</td></tr>
@@ -641,11 +646,11 @@
             </details>
             <details>
               <summary>Isso respeita as regras de publicidade da OAB?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>O WhatsAI só responde quem procura o escritório: não faz disparos, listas ou abordagem ativa. As instruções são escritas com você e evitam o que o Provimento 205/2021 restringe, como promessa de resultado e menção a valores sem análise. O escritório aprova o que a IA diz e a avaliação ética final é sempre do escritório.</p>
+              <p>O WhatsAI só responde quem procura o escritório: não faz disparos, listas ou abordagem ativa. As instruções são escritas com você e seguem o Código de Ética e Disciplina da OAB e o Provimento 205/2021: sem promessa de resultado, sem valores antes da análise e sem autopromoção. O escritório aprova o que a IA diz e a avaliação ética final é sempre do escritório.</p>
             </details>
             <details>
               <summary>E o sigilo profissional?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>A IA é orientada a não pedir documentos, senhas ou dados de cartão pelo chat e a indicar o canal que o escritório definir para documentos. O conteúdo de transcrições e PDFs não vai para os registros técnicos, imagens e documentos não ficam no histórico que a IA usa e o histórico das conversas é mantido por até 90 dias, prazo ajustável no contrato. Há termo de tratamento de dados assinado com o escritório.</p>
+              <p>A IA é orientada a não pedir documentos, senhas ou dados de cartão pelo chat e a indicar o canal que o escritório definir para documentos. O conteúdo de transcrições e PDFs não vai para os registros técnicos, imagens e documentos não ficam no histórico que a IA usa e o histórico das conversas é mantido por até 90 dias, prazo que o escritório pode ajustar. Há termo de tratamento de dados assinado com o escritório.</p>
             </details>
             <details>
               <summary>Onde ficam os dados das conversas?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
@@ -657,11 +662,15 @@
             </details>
             <details>
               <summary>A IA avisa o advogado quando chega um caso urgente?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>Hoje não há aviso automático para o celular do advogado. A IA pergunta se há prazo ou urgência e diz ao cliente que a equipe vai retornar; a equipe vê a conversa no WhatsApp e no painel. Um aviso para um número interno pode ser feito como integração sob medida.</p>
+              <p>Sim, se o escritório ligar o aviso. A IA pergunta se há prazo ou urgência, e o painel de Leads organiza cada atendimento com prioridade, próximo passo e quem ainda espera retorno. Os números da equipe recebem uma mensagem no WhatsApp quando chega um caso qualificado ou urgente. A prioridade é só uma triagem para a equipe: a IA não avalia o caso nem promete prazo ao cliente.</p>
             </details>
             <details>
               <summary>A IA agenda a consulta?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>Ela pode informar os horários de atendimento que estão nas instruções e anotar a preferência do cliente; a confirmação fica com a equipe. Marcar direto na agenda do escritório é uma integração sob medida, com uma incluída no plano Profissional e duas no Premium.</p>
+              <p>Sim, nos planos Profissional e Premium. Com a Agenda ligada, a IA oferece os horários livres do escritório, marca, remarca ou cancela a consulta e envia lembretes com pedido de confirmação. O escritório define os tipos de atendimento, a antecedência mínima e se cada horário precisa de aprovação da equipe. No plano Essencial, a IA anota a preferência e a equipe confirma.</p>
+            </details>
+            <details>
+              <summary>Dá para acompanhar processos e intimações?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
+              <p>Sim, nos planos Profissional e Premium. O módulo Processos consulta os andamentos públicos no DataJud (CNJ) e as intimações publicadas no DJEN pelo número da OAB, guarda o histórico e avisa a equipe pelo WhatsApp. Não é tempo real: o DataJud pode atrasar alguns dias, e processos em segredo de justiça não aparecem.</p>
             </details>
             <details>
               <summary>Quanto tempo a IA leva para responder?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
@@ -781,8 +790,8 @@
           </nav>
         </div>
         <div class="foot-bottom">
-          <p>© 2026 WhatsAI · Atendimento com IA no WhatsApp · Desenvolvido por Matheus Moraes</p>
-          <p>Baseado no Evolution API (Evolution Foundation), licenciado sob Apache 2.0, com condições adicionais. WhatsApp é marca da Meta; o WhatsAI não é afiliado à Meta, à OpenAI nem à OAB.</p>
+          <p>© 2026 WhatsAI · Atendimento com IA no WhatsApp</p>
+          <p>WhatsApp é marca da Meta; o WhatsAI não é afiliado à Meta, à OpenAI nem à OAB.</p>
         </div>
       </div>
     </footer>

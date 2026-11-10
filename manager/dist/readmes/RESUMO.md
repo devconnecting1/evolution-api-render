@@ -3,10 +3,10 @@
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---:|---:|---:|
 | Mensalidade | R$ 437 | R$ 767 | R$ 1.427 |
-| Implantação, cobrada uma vez | R$ 1.640 | R$ 3.180 | a partir de R$ 5.820 |
+| Implantação, cobrada uma vez | R$ 1.800 | R$ 3.500 | a partir de R$ 6.400 |
 | Respostas da IA por mês | 2.000 | 5.000 | 10.000 |
 | Números incluídos | 1 | 1 | 1 |
-| Número adicional (mesmos recursos e franquia) | R$ 287/mês + R$ 540 | R$ 497/mês + R$ 980 | R$ 927/mês + a partir de R$ 1.640 + Meta |
+| Número adicional (mesmos recursos e franquia) | R$ 287/mês + R$ 590 | R$ 497/mês + R$ 1.080 | R$ 927/mês + a partir de R$ 1.800 + Meta |
 | Ajustes nas instruções por mês | 2 | 4 | 8 |
 | Áudio, foto e PDF | Sim | Sim | Sim |
 
