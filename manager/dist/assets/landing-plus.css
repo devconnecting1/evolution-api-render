@@ -379,3 +379,172 @@
 .section-tight[aria-labelledby="metrics-title"] {
   padding-bottom: 72px;
 }
+
+/* ------------------------------------------------------------------ planos: número adicional, como escolher, comparar */
+.addon {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 24px 40px;
+  margin-top: 16px;
+  padding: 28px 32px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--bg);
+}
+.addon-copy p {
+  margin-top: 8px;
+  color: var(--text-2);
+  font-size: 15px;
+}
+.addon-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.addon-parts li {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+.addon-price {
+  font-size: 14px;
+}
+.addon-price > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-strong);
+}
+.addon-price > div:first-child {
+  border-top: 0;
+}
+.addon-price dt {
+  color: var(--text-2);
+}
+.addon-price dd {
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.addon-price dd strong {
+  color: var(--text);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.choose {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 40px;
+}
+.choose li {
+  padding-left: 14px;
+  border-left: 2px solid var(--line-strong);
+  font-size: 14px;
+}
+.choose li:nth-child(2) {
+  border-left-color: var(--primary);
+}
+.choose strong {
+  display: block;
+  font-weight: 500;
+}
+.choose span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-2);
+}
+
+.cmp {
+  margin-top: 48px;
+}
+.cmp-title {
+  text-align: center;
+}
+.cmp-scroll {
+  margin-top: 20px;
+  overflow-x: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--bg);
+  -webkit-overflow-scrolling: touch;
+}
+.cmp-scroll:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.cmp-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.cmp-table th,
+.cmp-table td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.cmp-table thead th,
+.cmp-table thead td {
+  border-top: 0;
+  font-weight: 500;
+}
+.cmp-table tbody th {
+  width: 34%;
+  color: var(--text-2);
+  font-weight: 400;
+}
+.cmp-table td {
+  width: 22%;
+}
+.cmp-table .cmp-feat,
+.cmp-table td:nth-child(3) {
+  background: var(--hover);
+}
+.cmp-yes {
+  font-weight: 500;
+}
+.cmp-no {
+  color: var(--text-3);
+}
+/* a primeira coluna fica parada ao rolar a tabela no celular */
+.cmp-table tbody th,
+.cmp-table thead td {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg);
+}
+
+@media (max-width: 860px) {
+  .addon {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 24px 20px;
+  }
+  .choose {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .cmp-table {
+    min-width: 560px;
+    font-size: 13px;
+  }
+  .cmp-table th,
+  .cmp-table td {
+    padding: 10px 12px;
+  }
+  .cmp-table tbody th {
+    width: 150px;
+    min-width: 150px;
+  }
+}

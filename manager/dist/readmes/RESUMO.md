@@ -3,15 +3,16 @@
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---:|---:|---:|
 | Mensalidade | R$ 397 | R$ 697 | R$ 1.297 |
-| Implantação, contrato de 6 meses | R$ 1.990 | R$ 4.390 | a partir de R$ 7.390 |
-| Implantação, contrato de 12 meses | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
+| Implantação, cobrada uma vez | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
 | Respostas da IA por mês | 2.000 | 5.000 | 10.000 |
-| Números | 1 | até 2 | 1 (+ sob consulta) |
+| Números incluídos | 1 | 1 | 1 |
+| Número adicional | R$ 247/mês + R$ 890 | R$ 247/mês + R$ 890 | R$ 247/mês + R$ 890 + Meta |
 | Ajustes nas instruções por mês | 2 | 4 | 8 |
 | Áudio, foto e PDF | Sim | Sim | Sim |
 
 - **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 690, abatido da implantação.
-- **Contrato mínimo de 6 meses**; o de 12 meses tem a implantação mais barata da tabela.
+- **Sem fidelidade:** mês a mês, cancelamento com 30 dias de aviso e sem multa. Anual antecipado: 10% de desconto.
+- **Número adicional = outra instância** (IA, banco Neon e espaço no Render próprios): R$ 247/mês com 1.000 respostas.
 - Detalhes para o cliente no **Guia comercial**. Custos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora deste manual.
 
 ## O que é automático e o que é serviço
@@ -23,7 +24,7 @@
 
 ## Onboarding em 6 passos
 
-1. Fechar plano, conexão (WhatsApp Web ou API oficial), prazo do contrato e escopo das integrações.
+1. Fechar plano, conexão (WhatsApp Web ou API oficial), quantos números e escopo das integrações.
 2. Coletar informações do negócio e escrever as instruções (base: `prompts/exemplo-advocacia.md`).
 3. Criar a instância: WhatsApp Web (QR code) ou API oficial (Meta Business verificado, WABA, cartão do cliente; webhook com `messages` e `smb_message_echoes`).
 4. Configurar a OpenAI: um project key por instância, com limite de gasto.
@@ -46,4 +47,4 @@
 - **Cloud API** não elimina bloqueio por política; a Meta pode limitar por qualidade.
 - Não prometer parecer jurídico, resultado, 100% de acerto ou "a IA nunca erra preço".
 
-> Valores de 03/11/2026 (contratos e propostas anteriores mantêm seus preços durante a validade). Confirme o rate card da Meta e o preço da OpenAI antes de fechar.
+> Valores de 10/11/2026 (propostas anteriores mantêm seus preços durante a validade). Confirme o rate card da Meta e o preço da OpenAI antes de fechar.

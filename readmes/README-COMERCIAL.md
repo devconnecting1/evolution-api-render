@@ -1,18 +1,23 @@
 # Planos e preços — WhatsAI
 
-Uma implantação, cobrada uma vez, e uma mensalidade fixa que cobre a operação, a inteligência artificial e o suporte. Valores de 03/11/2026, válidos por 30 dias a partir do envio da proposta. Contratos e propostas enviados antes desta data mantêm os preços vigentes na data do envio durante a sua validade.
+Uma implantação, cobrada uma vez, e uma mensalidade fixa, **mês a mês e sem fidelidade**, que cobre a inteligência artificial, o servidor, o banco de dados e o suporte. Cada plano inclui **1 número de WhatsApp**; cada número a mais é somado como número adicional. Valores de 10/11/2026, válidos por 30 dias a partir do envio da proposta. Propostas enviadas antes desta data mantêm os preços durante a sua validade.
 
 ## Resumo dos planos
 
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---|---|---|
 | **Mensalidade** | **R$ 397** | **R$ 697** | **R$ 1.297** |
-| Implantação, contrato de 6 meses | R$ 1.990 | R$ 4.390 | a partir de R$ 7.390 |
-| Implantação, contrato de 12 meses | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
+| Implantação, cobrada uma vez | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
+| Fidelidade | Nenhuma | Nenhuma | Nenhuma |
 | Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
-| Números de WhatsApp | 1 | até 2 | 1 (adicionais sob consulta) |
+| Números de WhatsApp incluídos | 1 | 1 | 1 |
+| Número adicional | R$ 247/mês | R$ 247/mês | R$ 247/mês + aprovação da Meta |
 | Conexão | WhatsApp Web (QR code) | WhatsApp Web (QR code) | API oficial da Meta (Cloud API) |
 | Áudio, foto e PDF | Sim | Sim | Sim |
+| Leads: triagem das conversas para a equipe | Sim | Sim | Sim |
+| Agenda com confirmação e lembretes pelo WhatsApp | – | Sim | Sim, dentro da janela de 24 h |
+| Processos: andamentos e intimações (escritórios) | – | Sim | Sim |
+| Assistente de IA para consultar o painel | – | Sim | Sim |
 | Ajustes nas instruções por mês | até 2 | até 4 | até 8 |
 | Integração (agenda, planilha ou CRM), feita sob medida | – | 1 incluída | 2 incluídas |
 | Relatório de uso, preparado pela nossa equipe | – | mensal | mensal + revisão trimestral |
@@ -22,6 +27,7 @@ Uma implantação, cobrada uma vez, e uma mensalidade fixa que cobre a operaçã
 - **Uma resposta** é cada vez que a IA responde uma mensagem (ou uma sequência de mensagens seguidas) do seu cliente. Uma conversa típica tem de 5 a 10 respostas: 2.000 respostas equivalem a algo entre 200 e 400 conversas por mês.
 - **Excedente:** se o mês passar da franquia, a IA continua respondendo. O excedente custa **R$ 49 por bloco de 1.000 respostas**, na fatura seguinte. No primeiro mês em que isso acontecer, avisamos e não cobramos. Respostas não usadas não acumulam.
 - **Medição:** as respostas da IA são contadas automaticamente, por número, e o uso do mês (franquia, excedente e últimos 30 dias) fica visível no painel. Se preferir, a IA pode pausar ou avisar o cliente ao atingir a franquia, ou atender só em horários definidos.
+- **Qual escolher:** o **Essencial** serve para responder perguntas e organizar os contatos, até cerca de 400 conversas por mês. O **Profissional** é o recomendado para a maioria: agenda pelo WhatsApp, processos para escritórios e uma integração. O **Premium** é para quem precisa da API oficial da Meta, de mensagens ativas por modelo ou de volume alto.
 - **Piloto assistido de 14 dias:** R$ 690 (1 número, até 500 respostas), abatido da implantação se você contratar em até 7 dias após o piloto.
 
 ## O que a IA faz sozinha e o que é serviço da nossa equipe
@@ -48,15 +54,14 @@ Uma implantação, cobrada uma vez, e uma mensalidade fixa que cobre a operaçã
 |---|---|---|---|
 | Conversa de diagnóstico (perguntas frequentes, horários, regras, quando passar para a equipe) | Sim | Sim | Sim |
 | Instruções da IA escritas e revisadas com você | Sim | Sim | Sim |
-| Conexão do número por QR code (WhatsApp Web) | Sim | Sim, até 2 | – |
+| Conexão do número por QR code (WhatsApp Web) | Sim | Sim | – |
 | Verificação da empresa na Meta, conta oficial (WABA), número e modelos de mensagem | – | – | Sim |
 | Configuração de memória, áudio, foto, PDF e tempo de pausa | Sim | Sim | Sim |
 | Roteiro de testes com perguntas reais do seu negócio | Sim | Sim | Sim |
 | Integração com agenda, planilha ou CRM | – | 1 | 2 |
 | Treinamento da equipe (online) | 1 hora | 2 horas | 3 horas |
 | Acompanhamento intensivo após entrar no ar | 7 dias | 14 dias | 30 dias |
-| **Valor, contrato de 6 meses** | **R$ 1.990** | **R$ 4.390** | **a partir de R$ 7.390** |
-| **Valor, contrato de 12 meses** | **R$ 1.490** | **R$ 2.890** | **a partir de R$ 5.290** |
+| **Valor, cobrado uma vez** | **R$ 1.490** | **R$ 2.890** | **a partir de R$ 5.290** |
 
 No Premium, o valor final depende das integrações e dos modelos de mensagem necessários e é fechado na proposta, depois do diagnóstico.
 
@@ -64,7 +69,7 @@ No Premium, o valor final depende das integrações e dos modelos de mensagem ne
 
 | Item | Implantação | Mensalidade |
 |---|---|---|
-| Número adicional (mesma empresa; inclui +1.000 respostas) | R$ 890 | R$ 247 |
+| Número adicional (outra instância da mesma empresa; inclui 1.000 respostas da IA, servidor e banco de dados próprios) | R$ 890 | R$ 247 |
 | Integração adicional (agenda, planilha, CRM, sistema próprio) | a partir de R$ 1.200, após diagnóstico | incluída no suporte |
 | Bloco de 1.000 respostas acima da franquia | – | R$ 49 |
 | Treinamento extra ou ajuste fora da franquia (novo fluxo, novo setor) | R$ 180 por hora | – |
@@ -80,12 +85,13 @@ No Premium, o valor final depende das integrações e dos modelos de mensagem ne
 | Quando a equipe responde | A IA pausa sozinha naquela conversa | Com Coexistence (app WhatsApp Business e API no mesmo número), a IA pausa quando a equipe responde pelo app. Esse recurso é novo e é testado na implantação. A Coexistence depende de aprovação da Meta para o número |
 | Celular | Abra o WhatsApp no celular pelo menos a cada 14 dias para a conexão não expirar | Não depende do celular |
 
-## Pagamento e contrato
+Cada número é uma instância separada: tem a própria IA, as próprias instruções, o próprio banco de dados e um espaço no servidor. Por isso o número adicional tem mensalidade, que cobre esse consumo. No Premium, cada número adicional também passa pela aprovação da Meta.
+
+## Pagamento e condições
 
 - **Implantação:** 50% na assinatura e 50% quando a IA entra no ar.
-- **Mensalidade:** começa no dia em que a IA entra no ar. Pagamento anual antecipado tem 10% de desconto.
-- **Prazo mínimo:** 6 meses. Com 12 meses, a implantação tem o desconto da tabela. Depois do prazo mínimo, o contrato segue mês a mês.
-- **Cancelamento:** aviso de 30 dias. Antes do prazo mínimo, multa de 50% das mensalidades que faltam para completar o prazo.
+- **Mensalidade:** mês a mês, sem fidelidade, a partir do dia em que a IA entra no ar. Pagamento anual antecipado tem 10% de desconto.
+- **Cancelamento:** quando quiser, com aviso de 30 dias e sem multa. A implantação é cobrada uma vez e não é devolvida, porque é o trabalho de configurar a IA com você.
 - **Reajuste:** anual, pelo IPCA. Se a OpenAI, a Meta ou os provedores de hospedagem aumentarem os preços de forma relevante, os valores podem ser revistos com aviso de 30 dias; se você não concordar, pode cancelar sem multa.
 
 ## O que não está incluído
@@ -104,6 +110,6 @@ No Premium, o valor final depende das integrações e dos modelos de mensagem ne
 - A IA é orientada a se apresentar como assistente virtual e a não pedir senhas, dados de cartão ou documentos sensíveis.
 - O conteúdo de transcrições e PDFs não vai para os registros técnicos, e imagens e documentos não ficam no histórico que a IA usa.
 - As mensagens passam por fornecedores de tecnologia (OpenAI, provedores de hospedagem e, na API oficial, a Meta), alguns com servidores fora do Brasil.
-- O histórico das conversas é mantido por até 90 dias, prazo que pode ser ajustado no contrato.
+- O histórico das conversas é mantido por até 90 dias, prazo que pode ser ajustado no termo de tratamento de dados.
 
 Contato: WhatsApp (21) 97469-9723.

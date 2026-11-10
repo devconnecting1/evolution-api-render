@@ -122,37 +122,41 @@ Header de autenticação: `apikey: <chave>`.
 - [ ] Pausa e retomada testadas (teste com `humanResumeMinutes` = 2 e depois volte ao combinado)
 - [ ] Áudio transcrito (`transcribeAudio`), foto e PDF lidos com o modelo do bot (PDF no gpt-6-luna ainda não validado: se o modelo recusar, a IA recebe só a descrição do arquivo)
 - [ ] Cliente avisado sobre políticas/limites da Meta e fair use
-- [ ] Contrato + cobrança do setup
+- [ ] Termo de serviço e de tratamento de dados aceitos + cobrança da implantação
 
 ## 6. Planos e preços
 
-Preços fixos aprovados em 03/11/2026 (reajuste da implantação; contratos e propostas enviados antes mantêm seus preços durante a validade). A versão para o cliente (com o que inclui, adicionais e contrato) está no **Guia comercial** (`readmes/README-COMERCIAL.md`). Custos internos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora do repositório: este manual é público em `/readme`.
+Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implantação por plano e **1 número por plano**; cada número adicional é outra instância, com mensalidade própria. Propostas enviadas antes mantêm os preços durante a validade. A versão para o cliente (com o que inclui, adicionais e condições) está no **Guia comercial** (`readmes/README-COMERCIAL.md`). Custos internos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora do repositório: este manual é público em `/readme`.
 
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---:|---:|---:|
 | Mensalidade | R$ 397 | R$ 697 | R$ 1.297 |
-| Implantação, contrato de 6 meses | R$ 1.990 | R$ 4.390 | a partir de R$ 7.390 |
-| Implantação, contrato de 12 meses | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
+| Implantação, cobrada uma vez | R$ 1.490 | R$ 2.890 | a partir de R$ 5.290 |
 | Respostas da IA incluídas por mês | 2.000 | 5.000 | 10.000 |
-| Números | 1 | até 2 | 1 (+ sob consulta) |
+| Números incluídos | 1 | 1 | 1 |
+| Número adicional (outra instância) | R$ 247/mês + R$ 890 | R$ 247/mês + R$ 890 | R$ 247/mês + R$ 890 + aprovação da Meta |
 | Ajustes nas instruções por mês | 2 | 4 | 8 |
 | Integrações sob medida incluídas | – | 1 | 2 |
 | Áudio, foto e PDF | Sim | Sim | Sim |
+| Leads (seção 16) | Sim | Sim | Sim |
+| Agenda com lembretes (seção 18) | – | Sim | Sim, só na janela de 24 h |
+| Processos (seção 17) e assistente de IA (MCP, seção 14) | – | Sim | Sim |
 
+- **Sem fidelidade:** mensalidade mês a mês; cancelamento com 30 dias de aviso, sem multa. A implantação não é devolvida. Pagamento anual antecipado: 10% de desconto na mensalidade.
+- **Número adicional:** cada número é uma instância própria (IA, instruções, banco por instância e espaço no servidor), por isso tem mensalidade: R$ 247 com 1.000 respostas da IA incluídas, mais R$ 890 de implantação (conexão, instruções e testes). A mensalidade cobre a OpenAI dessas respostas, a parte do Render e o projeto Neon da instância; revise o valor se o custo por instância mudar.
 - **Excedente:** R$ 49 por bloco de 1.000 respostas. **Piloto assistido de 14 dias:** R$ 690, abatido da implantação.
-- **Contrato mínimo de 6 meses**; depois, mês a mês.
 - **Franquia:** medida automaticamente por instância e visível no painel em **Plano e limites** (seção 15). Configure o plano de cada cliente na implantação.
 
-### Cuidados que entram no contrato
+### Cuidados que entram nos termos
 1. **WhatsApp Web (Baileys) não é oficial.** O número pode ser bloqueado, principalmente com disparos em massa. Aviso de risco por escrito; a API oficial é a alternativa.
 2. **Regras da Meta para IA mudaram em 2026** e podem mudar de novo: mantenha a cláusula de revisão de preço.
 3. **LGPD:** termo de tratamento de dados, aviso de que o contato fala com uma IA e retenção combinada (padrão 90 dias; a exclusão hoje é manual, seção 7).
 4. **Advocacia:** o Provimento 205/2021 da OAB limita a publicidade. A IA não promete resultado nem capta clientes ativamente; só faz triagem e agendamento.
-5. **Nada prometido que não exista** (seção 13): relatório automático e aviso à equipe quando o cliente pede uma pessoa **não** são recursos atuais. Lembretes de consulta só existem com a **Agenda** ligada (seção 17), no WhatsApp Web; na Cloud API só dentro da janela de 24 h.
+5. **Nada prometido que não exista** (seção 13): relatório automático e aviso à equipe quando o cliente pede uma pessoa **não** são recursos atuais. Lembretes de consulta só existem com a **Agenda** ligada (seção 18), no WhatsApp Web; na Cloud API só dentro da janela de 24 h.
 
 ## 7. LGPD, segurança e riscos
 
-- Contrato de operador de dados; retenção padrão de 90 dias (configurável no contrato). **Não existe expurgo automático no código**: as mensagens ficam no banco até alguém apagar. Enquanto não houver rotina automática, faça a exclusão manualmente (mensal) e registre. Backup: snapshots do banco + `pg_dump` mensal (seção 8).
+- Termo de tratamento de dados (operador); retenção padrão de 90 dias (configurável no termo). **Não existe expurgo automático no código**: as mensagens ficam no banco até alguém apagar. Enquanto não houver rotina automática, faça a exclusão manualmente (mensal) e registre. Backup: snapshots do banco + `pg_dump` mensal (seção 8).
 - Advocacia: sigilo profissional — não solicitar documentos sensíveis pelo chat; usar link seguro.
 - **Cloud API oficial**: conexão via token permanente, WABA e Phone Number ID. A Meta pode limitar por qualidade/política, exige templates fora da janela de 24 h e cartão do cliente cadastrado; não prometa isenção de bloqueio por violação de política.
 - Manager e chave global são do operador. Cliente nunca recebe a chave global.
@@ -215,12 +219,13 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - Manager sem fonte: patches aplicados direto no bundle (documentados na seção 4).
 - Integrações habilitadas em `render.yaml`.
 - Marca WhatsAI aplicada ao manager (título, logos, textos).
-- ~~Conexão oficial (Cloud API) é a única oferta a clientes.~~ Substituído em 02/11/2026: Essencial e Profissional usam WhatsApp Web (Baileys), com aviso de risco no contrato; o Premium usa a Cloud API.
+- ~~Conexão oficial (Cloud API) é a única oferta a clientes.~~ Substituído em 02/11/2026: Essencial e Profissional usam WhatsApp Web (Baileys), com aviso de risco nos termos; o Premium usa a Cloud API.
 - 29/10/2026: bot OpenAI ganhou `tokenParam` (compatibilidade com modelos de raciocínio) e `humanResumeMinutes` (pausa/retomada quando o dono escreve). `expire` continua sem efeito no OpenAI. Detalhes, curls, limitações e deploy na seção 12.
 - Cloud API: a pausa humana passou a funcionar pelos ecos da Coexistence (`smb_message_echoes`, PR #2). Falta validar com um número real.
 - 02/11/2026: preços fixos aprovados (seção 6) e auditoria do que a landing promete contra o código (seção 13).
 - 03/11/2026: servidor MCP embutido em `/mcp` para operar o projeto por assistentes de IA (seção 14).
 - 03/11/2026: reajuste da implantação e dos adicionais (seção 6); mensalidades e excedente mantidos. Contratos e propostas enviados antes mantêm seus preços durante a validade.
+- 10/11/2026: fim do prazo mínimo e do contrato de 6/12 meses (mensalidade mês a mês, sem fidelidade); implantação única pelo valor antigo de 12 meses; todos os planos com 1 número; número adicional R$ 247/mês + R$ 890.
 - 03/11/2026: chaves Signal do WhatsApp gravadas também no Postgres (tabela `AuthStateKey`, migration `20261103120000_add_auth_state_key`), com backfill do Redis no start: o Redis grátis não tem persistência.
 - 03/11/2026: correções de robustez vindas das issues do upstream (branch `fix/upstream-hardening`): o bot responde uma vez por mensagem mesmo quando o WhatsApp reentrega o mesmo id (cache de 24 h); mensagens temporárias, de visualização única e documentos com legenda são lidos pelo conteúdo real; uma mensagem com erro não derruba as outras do lote; edições, exclusões e o aviso de "mensagens temporárias" não viram mensagem nova para a IA; `msgCall` só sai com `rejectCall` ligado; o token de uma instância não acessa outra pela query (`?instanceName=`); com o banco fora do ar a mensagem ainda vai para o bot e a falha aparece na Observabilidade; o card WhatsApp mostra a última mensagem recebida por instância. Paliativo da CVE do Baileys (GHSA-qvv5-jq5g-4cgg) até o upgrade: respostas de "placeholder resend" só são aceitas para ids que a própria API pediu. Nova migration `20261103120000_message_key_id_index` (só um índice, aplicada no start do container). O upgrade do Baileys continua pendente: testar antes num número descartável.
 - 03/11/2026: **Plano e limites** (seção 15): contagem automática das respostas da IA, franquia, limites diários e horário de atendimento por instância. Sem plano configurado, nada muda no atendimento.
@@ -578,7 +583,7 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | "Não inventa preços" | **Orientação** | O prompt instrui; não é garantia técnica |
 | Se apresentar como assistente e não pedir dados sensíveis | **Orientação** | Depende do prompt de cada cliente |
 | Vários números, cada um com sua IA | Automático | 1 instância por número, bot e credencial próprios. A visão de todos num painel é do operador |
-| Agenda (consultar, marcar, remarcar, cancelar) | Automático com a Agenda ligada | Ferramentas do Chat Completions só na instância com a Agenda ligada (seção 17). Ainda **não validado com um número real** |
+| Agenda (consultar, marcar, remarcar, cancelar) | Automático com a Agenda ligada | Ferramentas do Chat Completions só na instância com a Agenda ligada (seção 18). Ainda **não validado com um número real** |
 | Integrações (planilha, CRM, Google Calendar) | **Serviço sob medida** | Via webhook (`MESSAGES_UPSERT`, `OPENAI_CHANGE_STATUS`) e n8n. O `functionUrl` e o modo Assistants **não estão disponíveis**: a OpenAI desligou a Assistants API em 26/08/2026. A Agenda exporta um feed ICS (somente leitura) para assinar no Google/Apple |
 | Relatório mensal | **Serviço manual** | Não existe relatório automático. Fonte: uso do project key na OpenAI, sessões e Observabilidade |
 | Contagem da franquia de respostas | Automático (desde 03/11/2026) | Contador por instância, dia e contato (seção 15). As mensagens em si continuam sem marcação de origem no banco |
@@ -718,7 +723,7 @@ Sem plano configurado (nenhuma linha em `InstanceLimits`) **nada muda**: a IA re
 | Horário de atendimento: `always` (sempre), `inside` (IA só no horário), `outside` (IA só fora do horário; no horário a equipe atende) | A IA não responde. No modo `inside`, se houver **mensagem fora do horário**, ela vai **uma vez por dia por contato** |
 | Limite por contato por dia | A IA não responde naquele contato até o dia seguinte |
 | Limite por dia | A IA não responde ninguém até o dia seguinte |
-| Franquia do mês, com a ação escolhida | `continue` (padrão, como no contrato): responde e conta **excedente**; `pause`: para de responder até o mês virar; `message`: para e envia a **mensagem de limite** uma vez por dia por contato |
+| Franquia do mês, com a ação escolhida | `continue` (padrão, como no plano): responde e conta **excedente**; `pause`: para de responder até o mês virar; `message`: para e envia a **mensagem de limite** uma vez por dia por contato |
 
 - Com a ação `message`, a mesma mensagem também é usada quando bate um limite diário.
 - Faixa com fim antes do início passa da meia-noite (`["22:00","06:00"]` na segunda = segunda 22h até terça 6h). `24:00` só como fim. Até 4 faixas por dia pela API; o painel edita uma por dia (as extras são mantidas).
@@ -877,7 +882,7 @@ MCP: `list_leads`, `get_lead`, `update_lead`, `get_lead_settings`, `update_lead_
 
 - **Base legal:** legítimo interesse do escritório em organizar o atendimento que o próprio titular iniciou e procedimentos preliminares a contrato a pedido do titular (LGPD art. 7º, V e IX). O escritório é o controlador; o WhatsAI é operador. Registre a finalidade no contrato e na política de privacidade do escritório.
 - **Dados mínimos:** a ficha guarda só o necessário para a triagem; números de documento são proibidos no prompt e apagados no servidor; saúde só no nível da área do caso. A parte contrária é guardada para a **verificação de conflito de interesses** que o advogado deve fazer antes de aceitar o caso.
-- **Retenção:** **não há expurgo automático** de leads (nem de mensagens, seção 7). A retenção configurável ainda não está implementada: exclua manualmente conforme o contrato (os leads saem junto com a instância, `ON DELETE CASCADE`).
+- **Retenção:** **não há expurgo automático** de leads (nem de mensagens, seção 7). A retenção configurável ainda não está implementada: exclua manualmente conforme o termo de tratamento de dados (os leads saem junto com a instância, `ON DELETE CASCADE`).
 - **Linguagem para escritórios de advocacia:** apresente como **"organizar os atendimentos e a triagem"**, nunca como "captação de clientes". O Código de Ética e Disciplina da OAB (art. 7º) veda o oferecimento de serviços para captação de clientela, e o Provimento 205/2021 só admite publicidade informativa. O aviso para a equipe é interno; nada é enviado ao cliente automaticamente, e a análise não responde nem oferece serviço a ninguém.
 
 ## 17. Processos (DataJud e DJEN)
