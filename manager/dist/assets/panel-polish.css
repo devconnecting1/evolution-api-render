@@ -1,0 +1,85 @@
+/* WhatsAI Manager: navigation and mobile polish (manager/patches/panel-polish.py).
+   Only var(--m-*) tokens of minimal.css / theme.css, so the light and dark themes apply. */
+
+/* ============================================================ top bar: always fits the phone screen */
+@media (max-width: 640px) {
+  [data-wa-header] {
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  [data-wa-header] > .flex.items-center.gap-4 {
+    gap: 2px;
+    min-width: 0;
+    margin-left: auto;
+  }
+  /* usage chip: just the mark and the number, shortened when long ("5.317 · Sem limite") */
+  [data-wa-header] .wa-ut-usage {
+    min-width: 0;
+  }
+  [data-wa-header] .wa-ut-usage-btn {
+    max-width: 128px;
+    min-width: 0;
+    gap: 6px;
+    padding: 0 8px;
+  }
+  [data-wa-header] .wa-ut-usage-label,
+  [data-wa-header] .wa-ut-usage-ic {
+    display: none;
+  }
+  [data-wa-header] .wa-ut-usage-val {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* the instance avatar repeats the record card right below it */
+  [data-wa-header] > .flex.items-center.gap-4 > span.relative.flex.shrink-0 {
+    display: none;
+  }
+}
+
+/* ============================================================ instance record card (upstream dashboard) */
+.wa-dash-card {
+  border-radius: var(--m-radius-card);
+}
+.wa-dash-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.wa-dash-actions button,
+.wa-dash-field .wa-token button {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--m-radius-field);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wa-dash-field .wa-token button,
+.wa-dash-actions > button:first-child {
+  width: 32px;
+  padding: 0;
+}
+.wa-dash-field .wa-token {
+  border-radius: var(--m-radius-field);
+}
+@media (max-width: 640px) {
+  .wa-dash-head {
+    gap: 12px;
+  }
+  .wa-dash-actions-main {
+    flex: 1;
+    justify-content: flex-end;
+  }
+}
+
+/* ============================================================ small icon buttons: square, quiet */
+.wa-ut-ibtn.wa-ut-ibtn--round {
+  border-radius: var(--m-radius-item);
+  background: transparent;
+}
+.wa-ut-ibtn.wa-ut-ibtn--round:hover {
+  background: var(--m-hover);
+}
