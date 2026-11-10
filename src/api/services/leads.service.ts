@@ -31,6 +31,7 @@ import {
   LEAD_STATUSES,
   LeadSettingsView,
   leadsToCsv,
+  leadsToXlsxSheets,
   LIMITS,
   mergeExtraction,
   mergeLeadSettings,
@@ -49,6 +50,7 @@ import {
   validateLeadSettings,
   validateLeadSettingsInput,
 } from '@utils/leads';
+import { buildXlsx } from '@utils/xlsx';
 import OpenAI from 'openai';
 
 const SETTINGS_TTL_MS = 30_000;
@@ -868,6 +870,16 @@ export class LeadsService {
     const sort = (SORTS as readonly string[]).includes(query.sort) ? query.sort : 'priority';
     const rows = await this.prisma.lead.findMany({ where, orderBy: this.orderBy(sort), take: EXPORT_MAX });
     return leadsToCsv((rows ?? []).map(leadView));
+  }
+
+  /** The same list as a formatted Excel workbook (sheets "Leads" and "Resumo"), in the order of the panel. */
+  public async exportXlsx(instanceId: string, instanceName: string, query: Record<string, any> = {}): Promise<Buffer> {
+    const where = this.listWhere(instanceId, query);
+    const sort = (SORTS as readonly string[]).includes(query.sort) ? query.sort : 'priority';
+    const rows = await this.prisma.lead.findMany({ where, orderBy: this.orderBy(sort), take: EXPORT_MAX });
+    return buildXlsx(leadsToXlsxSheets((rows ?? []).map(leadView), { instanceName }), {
+      title: `Leads · ${instanceName}`,
+    });
   }
 
   // ------------------------------------------------------------------------------------------ backfill

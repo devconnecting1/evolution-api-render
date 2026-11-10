@@ -69,6 +69,20 @@ export class LeadsRouter extends RouterBroker {
         res.set('Content-Disposition', `attachment; filename="${file}"`);
         res.status(HttpStatus.OK).send(response.csv);
       })
+      .get('/:instanceName/export.xlsx', ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => leadsController.exportXlsx(instance, query(req)),
+        });
+        const day = new Date().toISOString().slice(0, 10);
+        const file = `leads-${String(response.name).replace(/[^\w.-]+/g, '-')}-${day}.xlsx`;
+        res.set('Cache-Control', 'no-store');
+        res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.set('Content-Disposition', `attachment; filename="${file}"`);
+        res.status(HttpStatus.OK).send(response.file);
+      })
       .get('/:instanceName', ...guards, async (req, res) => {
         const response = await this.dataValidate<InstanceDto>({
           request: req,

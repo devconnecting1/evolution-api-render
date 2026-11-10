@@ -61,6 +61,12 @@ export class LeadsController {
     return { name: row.name, csv };
   }
 
+  public async exportXlsx(instance: InstanceDto, query: Record<string, any>) {
+    const row = await this.instanceOf(instance);
+    const file = await this.guard(() => this.leads.exportXlsx(row.id, row.name, query));
+    return { name: row.name, file };
+  }
+
   public async getSettings(instance: InstanceDto) {
     const row = await this.instanceOf(instance);
     const { configured, settings } = await this.leads.getStoredSettings(row.id);
