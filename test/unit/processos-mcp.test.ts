@@ -84,6 +84,22 @@ describe('Processos: MCP tools', () => {
         },
         listPublications: async () => ({ total: 0, items: [] }),
         manualSync: async () => ({ result: { ok: true, created: 0 }, process: { ...processRow, movements: [] } }),
+        getSettings: async () => ({
+          configured: true,
+          enabled: true,
+          checkEveryHours: 6,
+          djenDays: 7,
+          notifyNumbers: [],
+        }),
+        saveSettings: async (instanceId, input) => {
+          calls.push(['saveSettings', instanceId, input]);
+          return { previous: { enabled: false }, settings: { enabled: true, ...input } };
+        },
+        listOab: async () => [{ id: 'o1', numeroOab: '123456', ufOab: 'RJ', label: null, active: true }],
+        addOab: async (instanceId, input) => {
+          calls.push(['addOab', instanceId, input]);
+          return { id: 'o2', numeroOab: input.numeroOab, ufOab: input.ufOab, label: input.label ?? null };
+        },
       },
       isBotMessageId: async () => false,
       logger: { error: () => undefined, warn: () => undefined },
@@ -171,5 +187,33 @@ describe('Processos: MCP tools', () => {
     assert.equal(synced.json.ok, true);
     const pubs = await callTool('list_publications', { unseen: true });
     assert.equal(pubs.json.total, 0);
+  });
+
+  test('get_process_settings shows settings and OABs; update_process_settings maps names and adds an OAB', async () => {
+    const got = await callTool('get_process_settings', {});
+    assert.ok(!got.result.isError, got.text);
+    assert.equal(got.json.oabs[0].oab, '123456/RJ');
+
+    const updated = await callTool('update_process_settings', {
+      enabled: true,
+      check_every_hours: 12,
+      notify_numbers: ['5521999990000'],
+      add_oab: { numero: '654321', uf: 'RJ', label: 'Dr. Exemplo' },
+    });
+    assert.ok(!updated.result.isError, updated.text);
+    assert.deepEqual(calls.find((c) => c[0] === 'saveSettings')[2], {
+      enabled: true,
+      checkEveryHours: 12,
+      notifyNumbers: ['5521999990000'],
+    });
+    assert.deepEqual(calls.find((c) => c[0] === 'addOab')[2], {
+      numeroOab: '654321',
+      ufOab: 'RJ',
+      label: 'Dr. Exemplo',
+    });
+    assert.equal(updated.json.oabAdded.oab, '654321/RJ');
+
+    const empty = await callTool('update_process_settings', {});
+    assert.equal(empty.result.isError, true);
   });
 });
