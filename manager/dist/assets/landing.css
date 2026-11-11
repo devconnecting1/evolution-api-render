@@ -1828,12 +1828,6 @@ small {
   margin-top: auto;
   font-size: 14px;
 }
-/* link to the segment page (/advocacia) under the card's note */
-.segment-more {
-  align-self: flex-start;
-  margin-top: 12px;
-  font-size: 14px;
-}
 .segment-cta {
   justify-content: center;
   border: 1px solid var(--line-strong);

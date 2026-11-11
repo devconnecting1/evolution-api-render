@@ -28,7 +28,7 @@ cron-job.org — GET / a cada 5 min (keep-alive) e, opcionais, POST /agenda/tick
 | Recurso | Endereço |
 |---|---|
 | API | URL do serviço web, configurada no painel do Render |
-| Site | `https://whatsaibr.vercel.app/` (+ `/advocacia` e `/instagram`) |
+| Site | `https://whatsaibr.vercel.app/` (página única; `/advocacia` e `/instagram` redirecionam para ela) |
 | Painel | `https://whatsaibr.vercel.app/manager` (login com a chave global) |
 | Manual | `https://whatsaibr.vercel.app/readme` (também no item **Manual** do painel) |
 | Banco | Neon: projeto principal + um projeto por instância com banco próprio (`docs/arquitetura/banco-por-instancia.md`) |
@@ -90,7 +90,7 @@ Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/in
 | Acesso do cliente | `client-portal.py` + `assets/client-portal.js`, `client-portal.css`, `acesso/` | Itens **Conexão** (cliente) e **Acesso do cliente** (administrador), menu filtrado pelos módulos do código, página `/acesso` e app pelo navegador (seção 19) |
 | Manual | `assets/readme-tab.js`, `readme-tab.css`, `marked.min.js`, `readmes/` | Item **Manual** da lateral e `/readme`: resumo operacional (`readmes/RESUMO.md`) com links para o guia comercial e este manual |
 
-**Site** (`manager/dist/landing/`: `index.html`, `advocacia.html`, `instagram.html`): HTML e CSS escritos à mão (`landing.css`, `segment.css`, `landing-theme.css`, `landing-plus.css`) e `landing.js` / `landing-pixels.js` (fundo de pixels do plano Premium, parado com "reduzir movimento"). Sem logos ou nomes de terceiros, fonte Geist, sem animação de rolagem, dados de exemplo fictícios. Preços iguais aos da seção 6 (inclusive no JSON-LD); ao mudar um preço, mude as três páginas, a seção 6, o guia comercial e o resumo. Em `/advocacia`, a linguagem segue a seção 16.7 (triagem, nunca captação; sem nota numérica para pessoas).
+**Site** (`manager/dist/landing/index.html`, página única desde 11/11/2026; `/advocacia` e `/instagram` redirecionam com 308 para `/#segmentos` e `/` em `vercel.json`): HTML e CSS escritos à mão (`landing.css`, `landing-theme.css`, `landing-plus.css`) e `landing.js` / `landing-pixels.js` (fundo de pixels do plano Premium, parado com "reduzir movimento"). Sem logos ou nomes de terceiros, fonte Geist, sem animação de rolagem, dados de exemplo fictícios. Preços iguais aos da seção 6 (inclusive no JSON-LD); ao mudar um preço, mude as três páginas, a seção 6, o guia comercial e o resumo. Em `/advocacia`, a linguagem segue a seção 16.7 (triagem, nunca captação; sem nota numérica para pessoas).
 
 ### 4.1 Comportamento da instância (recomendado)
 
@@ -309,6 +309,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 10/11/2026: **implantação +10%** (seção 6): R$ 1.800 / R$ 3.500 / a partir de R$ 6.400; implantação do número adicional R$ 590 / R$ 1.080 / a partir de R$ 1.800. Mensalidades, piloto (R$ 690) e excedente (R$ 49 por 1.000 respostas) não mudam.
 - 10/11/2026: **Acesso do cliente** (seção 19): código próprio do cliente com módulos escolhidos pelo administrador, aplicado no servidor; app pelo navegador (PWA, `/acesso`) em vez de instalador no GitHub Releases.
 - 10/11/2026: **retenção automática** das mensagens (`MESSAGE_RETENTION_DAYS`, desligada por padrão) e **avisos ao administrador pelo WhatsApp** (`ADMIN_ALERT_NUMBERS` + `ADMIN_ALERT_INSTANCE`), recomendações da revisão do manual.
+- 11/11/2026: **site com uma página só**: `/advocacia` e `/instagram` saíram (redirecionam para `/`); o FAQ da página inicial ganhou a pergunta sobre escritórios de advocacia (OAB, sigilo, Leads, Agenda e Processos).
 - 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
 - 10/11/2026: **Leads**: resposta da equipe detectada também pelas mensagens do número e pela pausa da sessão do bot (corrige "aguardando equipe" falso das conversas analisadas em lote), `refresh-waiting`, tipo de contato (novo caso, já é cliente, sem demanda jurídica), nome da pessoa do caso quando alguém fala por ela, e visualizador da planilha no painel. Migration aditiva `20261110130000_add_lead_contact_kind`.
 - 10/11/2026: **Leads em planilha Excel** (abas Leads e Resumo, gerada pela própria API sem biblioteca nova) e análise automática mais precisa: área classificada pelo assunto, cidade padronizada, prioridade com a data do fato (contagem, prazo vencido, audiência passada, data distante e problema já resolvido).

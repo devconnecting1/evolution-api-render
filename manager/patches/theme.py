@@ -6,7 +6,7 @@ manual customizations, so changes are exact string replacements on the minified 
 The styles live in two plain files edited by hand:
   manager/dist/assets/theme.css         - panel: --m-* tokens per theme (html[data-theme]), deep green sidebar,
                                           greeting band, usage gauge, warning strip, theme menu, chip palette.
-  manager/dist/assets/landing-theme.css - landing, /advocacia, /instagram: cream canvas, alternating cream / mint /
+  manager/dist/assets/landing-theme.css - landing (/): cream canvas, alternating cream / mint /
                                           deep green sections, dark version through prefers-color-scheme.
 
 Theme of the panel: localStorage "wa-theme" = system | light | dark (default system = prefers-color-scheme). An
@@ -46,7 +46,8 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DIST = os.path.join(ROOT, 'manager', 'dist')
 BUNDLE = os.path.join(DIST, 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(DIST, 'index.html')
-LANDINGS = [os.path.join(DIST, 'landing', n) for n in ('index.html', 'advocacia.html', 'instagram.html')]
+# Só a página inicial: /advocacia e /instagram viraram redirecionamentos para / (vercel.json)
+LANDINGS = [os.path.join(DIST, 'landing', n) for n in ('index.html',)]
 CSS = [os.path.join(DIST, 'assets', 'theme.css'), os.path.join(DIST, 'assets', 'landing-theme.css')]
 REQUIRED = ('/*whatsai-patch:usage-limits:component*/', '/*whatsai-patch:twenty-layout:header*/',
             '/*whatsai-patch:home-redesign:instances*/', '/*whatsai-patch:leads:component*/',
