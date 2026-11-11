@@ -18,8 +18,9 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
 
 ### Comunicação
 - Sempre em **português (PT-BR)**, linguagem simples, com recomendações. O dono do projeto dá autonomia
-  ("faça da melhor forma"): implementar, abrir PR e avisar o que mudou. **Nunca faça merge**: o dono pede ao
-  Claude Code dele (que tem acesso aos MCPs de Neon, Render, Vercel e outros) para revisar e aprovar.
+  ("faça da melhor forma"): implementar, abrir PR e avisar o que mudou. Sobre o merge: o merge é do Claude Code do dono (o que tem os MCPs de Neon, Render, Vercel e WhatsAI): ele revisa e faz o
+  squash assim que a suíte estiver verde, a qualquer hora (pedido do dono em 11/11/2026). Agentes que só desenvolvem
+  (DeepSeek, Cursor e outros) abrem o PR e param.
 - Pergunte só o que só ele pode decidir (números de telefone, apagar dados, gastos, mudar algo do cliente em produção).
 
 ### Múltiplos agentes
@@ -39,19 +40,19 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
 - Identificador de modelo de IA em commits, PRs ou código.
 - Commitar o `.gitignore` local (um plugin do ambiente o altera; é sempre ` M .gitignore` e fica fora).
 - Mandar `reasoning_effort` à OpenAI: os modelos usam o raciocínio padrão.
-- Fazer merge de PR sem a revisão do dono/Claude Code dele.
+- Fazer merge de PR sendo um agente que só desenvolve (DeepSeek, Cursor e outros): só o Claude Code do dono faz.
 - Fazer merge sem a suíte completa verde (unitários, tipos, lint e integração).
 - Usar emojis em código, docs, commits, PRs ou respostas.
 
 ### Git, PR e deploy
-- Uma branch por tarefa a partir de `origin/main`; PR no formato de `.github/pull_request_template.md`. Abra o PR e
-  pare: o merge é feito pelo dono/Claude Code dele, com `commit_message` explícita e cabeçalho de até 100 caracteres
-  (commitlint, Conventional Commits).
+- Uma branch por tarefa a partir de `origin/main`; PR no formato de `.github/pull_request_template.md`. O squash usa
+  `commit_message` explícita e cabeçalho de até 100 caracteres (commitlint, Conventional Commits).
 - Workflows sempre em `ubuntu-latest` (GitHub-hosted, gratuito); não use runner self-hosted ou pago.
 - Push: `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
 - Mudança só estática (`manager/dist`, docs, `scripts/`): termine o título do squash com `[skip render]`.
-- Mudança em `src/` ou `prisma/` reinicia a API (~4 min): em horário comercial (9h–19h, Brasília) só com OK do dono;
-  fora disso, pode fazer o merge.
+- Mudança em `src/`, `prisma/`, `Dockerfile` ou `render.yaml` reinicia a API (~4 min); o dono autorizou o merge a
+  qualquer hora com a suíte verde. Depois do deploy, confira o `live` no Render e a instância `open`. Mudança na
+  conexão do WhatsApp (Baileys) só entra depois de testada com um número de teste.
 - Migrations sempre aditivas, em `prisma/postgresql-migrations` **e** `prisma/mysql-migrations`, com o modelo nos três
   schemas (`postgresql`, `mysql`, `psql_bouncer`). Tabela global (procurada antes de saber a instância) entra em
   `CONTROL_MODELS` de `src/api/repository/instance-db/routing.ts`.

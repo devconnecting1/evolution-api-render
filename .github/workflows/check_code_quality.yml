@@ -17,6 +17,7 @@ on:
       - "Docker/**"
       - "render.yaml"
       - "manager/**"
+      - "scripts/**"
       - ".github/workflows/check_code_quality.yml"
   push:
     branches: [main, develop]
@@ -34,6 +35,7 @@ on:
       - "Docker/**"
       - "render.yaml"
       - "manager/**"
+      - "scripts/**"
       - ".github/workflows/check_code_quality.yml"
   workflow_dispatch:
 
