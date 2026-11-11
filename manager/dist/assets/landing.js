@@ -1,5 +1,5 @@
 /*
- * WhatsAI: páginas públicas (manager/dist/landing/index.html, advocacia.html e instagram.html). JavaScript sem
+ * WhatsAI: página pública (manager/dist/landing/index.html). JavaScript sem
  * dependências, sem cookies e sem rastreadores.
  *
  * CONTATO: troque o número só aqui. Formato internacional, apenas dígitos (55 + DDD + número).

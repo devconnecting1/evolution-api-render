@@ -2,6 +2,85 @@
 
 This file provides comprehensive guidance to Claude AI when working with the Evolution API codebase.
 
+## WhatsAI: regras de trabalho (leia antes de qualquer tarefa)
+
+Este repositório é o **WhatsAI**, um fork do Evolution API vendido como atendimento com IA no WhatsApp. O manual completo
+(fonte de verdade de arquitetura, planos, decisões e runbooks) é `README-WHATSAI.md`; a cópia servida no painel fica em
+`manager/dist/readmes/` e é atualizada com `bash scripts/sync-readmes.sh`. As seções abaixo são as regras fixas.
+
+### Produção
+- API no Render (`srv-dbd9qqi9lscs73aoe85g`, `https://evolution-api-x93o.onrender.com`), painel, manual e site na
+  Vercel (`https://whatsaibr.vercel.app`), banco no Neon (projeto principal `spring-boat-14626479`, mais um projeto por
+  instância com "Banco próprio"). Push no `main` publica nos dois sozinho.
+- Há cliente real em produção (escritório de advocacia, WhatsApp Web/Baileys). O WhatsApp dele precisa ficar `open`:
+  depois de todo deploy que reinicia a API, confira o deploy `live` no Render e o estado da instância.
+
+### Comunicação
+- Sempre em **português (PT-BR)**, linguagem simples, com recomendações. O dono do projeto dá autonomia
+  ("faça da melhor forma"): implementar, abrir PR e fazer o merge quando o CI estiver verde, avisando o que mudou.
+- Pergunte só o que só ele pode decidir (números de telefone, apagar dados, gastos, mudar algo do cliente em produção).
+
+### Nunca
+- Imprimir, commitar ou publicar credenciais (chave global, chaves do Neon/Render/OpenAI, tokens). Rotacionar a chave
+  global. Use a chave de organização do Neon que já está no Render.
+- Deslogar ou parear de novo um WhatsApp em produção; atualizar o Baileys sem número de teste.
+- Ação destrutiva sem OK explícito: apagar projeto/branch do Neon, apagar dados, ligar `MESSAGE_RETENTION_DAYS`.
+- Requisições que alteram produção a partir de testes ou do Playwright (contra produção, só GET).
+- Dados reais de clientes em imagens, PRs, commits, artefatos ou arquivos publicados: capturas e exemplos só com
+  dados fictícios.
+- Identificador de modelo de IA em commits, PRs ou código.
+- Commitar o `.gitignore` local (um plugin do ambiente o altera; é sempre ` M .gitignore` e fica fora).
+- Mandar `reasoning_effort` à OpenAI: os modelos usam o raciocínio padrão.
+
+### Git, PR e deploy
+- Uma branch por tarefa a partir de `origin/main`; PR no formato de `.github/pull_request_template.md`; squash merge
+  com `commit_message` explícita. Cabeçalho do commit com até 100 caracteres (commitlint, Conventional Commits).
+- Push: `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
+- Mudança só estática (`manager/dist`, docs, `scripts/`): termine o título do squash com `[skip render]`.
+- Mudança em `src/` ou `prisma/` reinicia a API (~4 min): em horário comercial (9h–19h, Brasília) só com OK do dono;
+  fora disso, pode fazer o merge.
+- Migrations sempre aditivas, em `prisma/postgresql-migrations` **e** `prisma/mysql-migrations`, com o modelo nos três
+  schemas (`postgresql`, `mysql`, `psql_bouncer`). Tabela global (procurada antes de saber a instância) entra em
+  `CONTROL_MODELS` de `src/api/repository/instance-db/routing.ts`.
+
+### Antes de cada push
+```bash
+DATABASE_PROVIDER=postgresql npm run db:generate          # depois de mudar schema
+npx tsx --test "test/unit/**/*.test.ts"                   # unitários
+npm run test:types && npx tsc --noEmit -p . && npx eslint src test --ext .ts
+# integração (migrations reais) num Postgres local descartável:
+export TEST_PG_DIR=/tmp/evo-pg TEST_PG_PORT=55471 TEST_DATABASE_URL='postgresql://postgres@127.0.0.1:55471/evolution_test?schema=public'
+npm run test:db:start && npm run test:integration
+```
+Nos testes, `test/helpers/setup.ts` troca o `@api/server.module` por um proxy: para substituir um serviço dele, use
+`serverModuleOverrides` (`test/helpers/chatbot-emit.ts`).
+
+### Painel (`manager/dist`, sem código-fonte)
+- Só existe o bundle compilado (`assets/index-b29a5d7a.js`). Toda mudança nele é um patch em `manager/patches/*.py`:
+  trocas exatas (cada âncora 1 vez), marcador, `--check`, `CACHE_VERSION` do bundle (só sobe). Depois de qualquer
+  mudança: `for f in manager/patches/*.py; do python3 -I $f --check; done` e
+  `npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null`.
+- Páginas novas preferem um script próprio (como `readme-tab.js`, `client-portal.js`) a JSX escrito no patch.
+  Ao mudar um CSS/JS, suba o `?v=` dele no `index.html`.
+- Visual: só os tokens `var(--m-*)`, tema padrão **Sistema** (claro e escuro mantidos), fonte Geist, cor só com
+  significado (verde ok, âmbar atenção, vermelho erro). Confira com capturas a 390 e 1440 px, claro e escuro, com a
+  API simulada e dados fictícios.
+
+### Site (`manager/dist/landing/index.html`, página única)
+- Preços iguais no site, `readmes/RESUMO.md`, `readmes/README-COMERCIAL.md` e no manual (seção 6). Sem logos de
+  terceiros, sem animação de rolagem, sem créditos de autor. A licença do Evolution API (condição 1b do `LICENSE`)
+  exige o aviso de uso: ele fica no rodapé do Manual e no README, não remova.
+
+### Linguagem e ética (escritórios de advocacia)
+- Diga "triagem" e "organizar os atendimentos", nunca "captação". Nada de nota numérica para pessoas.
+- A IA não fala de gratuidade, preço, honorários ou autoelogio e não promete resultado: perfil `ethicsProfile:
+  "advocacia"` (Código de Ética e Disciplina da OAB e Provimento 205/2021).
+
+### Banco Neon gratuito
+- Não acorde o banco: nada de timer que consulte o banco; caches em memória; rotinas diárias pegam carona no fluxo de
+  escrita (ex.: limpeza dos contadores e retenção rodam na primeira resposta da IA do dia).
+- "Banco próprio": cada instância nova pode ter o seu projeto Neon (cota separada); a Observabilidade mostra cada um.
+
 ## Project Overview
 
 **Evolution API** is a powerful, production-ready REST API for WhatsApp communication that supports multiple WhatsApp providers:
@@ -59,7 +138,9 @@ npm run db:migrate:dev:win  # Windows
 
 ### Testing
 ```bash
-npm test    # Run tests with watch mode
+npm run test:unit         # unit tests (node:test + tsx)
+npm run test:integration  # integration tests (local Postgres, see "Antes de cada push")
+npm test                  # watch mode
 ```
 
 ## Architecture Overview

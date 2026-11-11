@@ -1,8 +1,8 @@
 {
   "routes": [
     { "src": "^/$", "dest": "/landing/index.html" },
-    { "src": "^/advocacia/?$", "dest": "/landing/advocacia.html" },
-    { "src": "^/instagram/?$", "dest": "/landing/instagram.html" },
+    { "src": "^/advocacia/?$", "status": 308, "headers": { "Location": "/#segmentos" } },
+    { "src": "^/instagram/?$", "status": 308, "headers": { "Location": "/" } },
     { "src": "^/acesso/?$", "dest": "/acesso/index.html" },
     { "handle": "filesystem" },
     { "src": "^/observability/?$", "dest": "/observability/index.html" },

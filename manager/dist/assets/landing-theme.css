@@ -1,5 +1,5 @@
 /*
- * WhatsAI: cores das páginas públicas (/, /advocacia, /instagram). Carregado por ÚLTIMO (depois de landing.css e
+ * WhatsAI: cores da página pública (/). Carregado por ÚLTIMO (depois de landing.css e
  * segment.css) por manager/patches/theme.py. Escrito à mão: só redefine os tokens de landing.css e pinta as faixas.
  *
  * Paleta "Meu Tema Global" (a mesma do painel, theme.css): monocromática, Geist, raio 0,25rem, sem sombras.
