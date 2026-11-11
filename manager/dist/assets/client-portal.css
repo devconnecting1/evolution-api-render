@@ -607,3 +607,60 @@
     margin-left: 6px;
   }
 }
+
+/* ---------------------------------------------------------------- confirmation dialog (WaPortal.ask) */
+.wa-ask {
+  width: min(440px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid var(--m-border);
+  border-radius: 10px;
+  background: var(--m-bg);
+  color: var(--m-text);
+  box-shadow: var(--m-shadow-menu, 0 20px 50px rgba(0, 0, 0, 0.2));
+}
+.wa-ask::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+.wa-ask[open] {
+  animation: wa-ask-in 0.16s ease-out;
+}
+@keyframes wa-ask-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wa-ask[open] {
+    animation: none;
+  }
+}
+.wa-ask-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.wa-ask-text {
+  margin: 8px 0 0;
+  color: var(--m-text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.wa-ask-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+.wa-portal-btn-danger-solid {
+  border-color: var(--m-bad);
+  background: var(--m-bad);
+  color: #ffffff;
+}
+@media (max-width: 480px) {
+  .wa-ask-actions > * {
+    flex: 1 1 auto;
+  }
+}

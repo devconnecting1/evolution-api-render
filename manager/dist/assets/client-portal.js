@@ -74,6 +74,31 @@
     return el;
   }
 
+
+  // Confirmation dialog in the panel's own style (both themes) instead of the browser's grey confirm().
+  // Native <dialog>: focus trap, Esc and the backdrop come from the browser. Resolves true only on the action.
+  function ask(opts) {
+    return new Promise(function (resolve) {
+      if (typeof HTMLDialogElement === 'undefined') { resolve(window.confirm(opts.title + (opts.text ? '\n\n' + opts.text : ''))); return; }
+      var id = 'wa-ask-' + Date.now();
+      var cancel = h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: opts.cancel || 'Cancelar' });
+      var ok = h('button', { type: 'button', class: 'wa-portal-btn' + (opts.danger ? ' wa-portal-btn-danger-solid' : ''), text: opts.action || 'Confirmar' });
+      var d = h('dialog', { class: 'wa-ask', 'aria-labelledby': id + '-t', 'aria-describedby': opts.text ? id + '-d' : null }, [
+        h('h2', { class: 'wa-ask-title', id: id + '-t', text: opts.title }),
+        opts.text ? h('p', { class: 'wa-ask-text', id: id + '-d', text: opts.text }) : null,
+        h('div', { class: 'wa-ask-actions' }, [cancel, ok]),
+      ]);
+      var answer = false;
+      cancel.addEventListener('click', function () { d.close(); });
+      ok.addEventListener('click', function () { answer = true; d.close(); });
+      d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
+      d.addEventListener('close', function () { d.remove(); resolve(answer); });
+      document.body.appendChild(d);
+      d.showModal();
+      (opts.danger ? cancel : ok).focus();
+    });
+  }
+
   // -------------------------------------------------------------------------------------------- client
   var client = isClient();
   var current = client ? state() : null;
@@ -251,11 +276,13 @@
     var actions = h('div', { class: 'wa-portal-actions' }, [
       h('button', { type: 'button', class: 'wa-portal-btn', text: view.configured ? 'Salvar' : 'Criar acesso', onclick: function () { save(); } }),
       view.configured ? h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Gerar novo código', onclick: function () {
-        if (confirm('Gerar um novo código? O código atual para de funcionar na hora.')) save({ newKey: true });
+        ask({ title: 'Gerar um novo código?', text: 'O código atual para de funcionar na hora; o cliente precisa entrar de novo com o novo código.', action: 'Gerar novo código' }).then(function (yes) { if (yes) save({ newKey: true }); });
       } }) : null,
       view.configured ? h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-danger', text: 'Remover acesso', onclick: function () {
-        if (!confirm('Remover o acesso do cliente? O código para de funcionar na hora.')) return;
-        request('DELETE', path).then(function (next) { draw(card, name, next, null); }, function (e) { msg.textContent = e.message; });
+        ask({ title: 'Remover o acesso do cliente?', text: 'O código para de funcionar na hora e o cliente sai do painel.', action: 'Remover acesso', danger: true }).then(function (yes) {
+          if (!yes) return;
+          request('DELETE', path).then(function (next) { draw(card, name, next, null); }, function (e) { msg.textContent = e.message; });
+        });
       } }) : null,
     ]);
     card.appendChild(actions);
@@ -339,8 +366,16 @@
       bulk.hidden = !ids.length; bulk.textContent = '';
       if (!ids.length) return;
       bulk.appendChild(h('span', { text: ids.length + (ids.length === 1 ? ' selecionado' : ' selecionados') }));
-      bulk.appendChild(h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Pausar IA', onclick: function () { change(ids, 'paused'); } }));
-      bulk.appendChild(h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Retomar IA', onclick: function () { change(ids, 'opened'); } }));
+      var many = function (status) {
+        if (ids.length < 2) { change(ids, status); return; }
+        var pause = status === 'paused';
+        ask(pause
+          ? { title: 'Pausar a IA em ' + ids.length + ' contatos?', text: 'A IA para de responder nessas conversas até alguém retomar. A sua equipe responde pelo WhatsApp.', action: 'Pausar IA' }
+          : { title: 'Retomar a IA em ' + ids.length + ' contatos?', text: 'A IA volta a responder nessas conversas na próxima mensagem, inclusive onde a equipe está atendendo agora.', action: 'Retomar IA' }
+        ).then(function (yes) { if (yes) change(ids, status); });
+      };
+      bulk.appendChild(h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Pausar IA', onclick: function () { many('paused'); } }));
+      bulk.appendChild(h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Retomar IA', onclick: function () { many('opened'); } }));
       bulk.appendChild(h('button', { type: 'button', class: 'wa-ci-link', text: 'Limpar', onclick: function () { sel = {}; draw(); } }));
     }
     function drawList() {
@@ -497,12 +532,18 @@
       var d = chosen();
       if (d === null) { msg.textContent = 'Escolha um prazo válido.'; return; }
       if (d === view.days && view.source === 'painel') { msg.textContent = 'Esse já é o prazo em vigor.'; return; }
-      if (d && (!view.enabled || d < view.days) && !confirm('Salvar ' + d + ' dias? A partir de hoje, as mensagens mais antigas que isso saem do banco do WhatsAI em todas as instâncias, sem volta (no WhatsApp nada muda).')) return;
-      msg.textContent = 'Salvando…';
-      request('POST', '/admin/retention', { days: d }).then(function (next) { drawRet(card, next); card.querySelector('.wa-portal-msg').textContent = 'Salvo.'; }, function (e) { msg.textContent = e.message; });
+      var go = function () {
+        msg.textContent = 'Salvando…';
+        request('POST', '/admin/retention', { days: d }).then(function (next) { drawRet(card, next); card.querySelector('.wa-portal-msg').textContent = 'Salvo.'; }, function (e) { msg.textContent = e.message; });
+      };
+      if (d && (!view.enabled || d < view.days)) {
+        ask({ title: 'Guardar mensagens por ' + d + ' dias?', text: 'A partir de hoje, as mensagens mais antigas que isso saem do banco do WhatsAI em todas as instâncias, sem volta. No WhatsApp nada muda.', action: 'Salvar prazo', danger: true }).then(function (yes) { if (yes) go(); });
+      } else go();
     }
     function runNow(btn) {
-      if (!confirm('Apagar agora, em todas as instâncias, as mensagens com mais de ' + view.days + ' dias? Não tem volta (no WhatsApp nada muda).')) return;
+      ask({ title: 'Apagar agora?', text: 'Saem do banco do WhatsAI, em todas as instâncias, as mensagens com mais de ' + view.days + ' dias. Não tem volta. No WhatsApp nada muda.', action: 'Apagar agora', danger: true }).then(function (yes) { if (yes) doRun(btn); });
+    }
+    function doRun(btn) {
       btn.disabled = true;
       msg.textContent = 'Apagando…';
       request('POST', '/admin/retention/run').then(function (r) {
@@ -581,6 +622,8 @@
 
   window.WaPortal = {
     client: client,
+    /** Styled confirmation (Promise<boolean>), for pages outside the Radix dialogs. */
+    ask: ask,
     labels: LABELS,
     /** Sidebar filter: a client keeps only his modules; the administrator does not see "Conexão". */
     nav: function (item) {
