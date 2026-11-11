@@ -40,7 +40,7 @@
     <meta name="twitter:image" content="https://whatsaibr.vercel.app/assets/images/og-whatsai.png?v=2" />
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/landing.bundle.css?v=549d85f661" />
+    <link rel="stylesheet" href="/assets/landing.bundle.css?v=0fa120615a" />
     <!-- whatsai-patch:theme:landing -->
     <script src="/assets/landing.js?v=5" defer></script>
       </head>
@@ -153,6 +153,14 @@
               <a class="btn btn-primary btn-lg" href="#medidas">Ver as medidas</a>
               <a class="btn btn-quiet btn-lg" href="#reportar">Reportar uma falha</a>
             </div>
+            <nav class="sec-toc" aria-label="Nesta página">
+              <ol>
+                <li><a href="#medidas"><span class="sec-toc-n">[1]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Oito camadas de proteção</span></a></li>
+                <li><a href="#fluxo"><span class="sec-toc-n">[2]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Como os dados circulam</span></a></li>
+                <li><a href="#lgpd"><span class="sec-toc-n">[3]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>LGPD na prática</span></a></li>
+                <li><a href="#reportar"><span class="sec-toc-n">[4]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Reportar uma falha</span></a></li>
+              </ol>
+            </nav>
           </div>
           <div class="t3-stage" aria-hidden="true">
             <div class="t3 t3--deep t3-a"><div class="t3-face"><div class="t3-disc"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" /><path d="M8.5 12l2.5 2.5 4.5-4.5" /></svg></div></div></div>
@@ -211,6 +219,67 @@
               <p>O WhatsAI roda na Vercel, no Render e no Neon. Esses provedores mantêm auditorias SOC 2 e, Vercel e Render, certificação ISO 27001. As certificações são deles, da infraestrutura; o WhatsAI não tem selo próprio e não exibe selos que não tem.</p>
             </li>
           </ol>
+        </div>
+      </section>
+
+      <!-- === fluxo: diagrama feito com as regras do diagram-design (MIT): conexões retas, rótulos com máscara,
+           um destaque só (a API), sem sombra, SVG acessível. Cores vêm de security.css (claro e escuro). -->
+      <section class="section" id="fluxo" aria-labelledby="fluxo-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="fluxo-title" class="h2">Como os dados circulam, <span class="soft">de ponta a ponta.</span></h2>
+            <p class="section-lead">Todo caminho é criptografado. As chaves ficam no servidor, e cada pedido do painel é conferido antes de chegar aos dados.</p>
+          </div>
+          <figure class="sec-flow">
+            <div class="sec-flow-scroll">
+              <svg class="sec-flow-svg" viewBox="0 28 960 316" role="img" aria-labelledby="fluxo-svg-title fluxo-svg-desc">
+                <title id="fluxo-svg-title">Como os dados circulam no WhatsAI</title>
+                <desc id="fluxo-svg-desc">A mensagem do contato chega pelo WhatsApp à API do WhatsAI, que confere a chave de cada pedido, consulta a IA por HTTPS e guarda os dados no banco por TLS; a equipe acompanha pelo painel, que fala com a API por HTTPS com a chave de acesso.</desc>
+                <defs>
+                  <marker id="fx-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1L9 5L0 9z" class="fx-head" /></marker>
+                </defs>
+                <!-- arrows first, so lines sit behind the boxes -->
+                <g class="fx-lines">
+                  <line x1="152" y1="128" x2="230" y2="128" marker-end="url(#fx-arrow)" />
+                  <line x1="386" y1="128" x2="446" y2="128" marker-start="url(#fx-arrow)" marker-end="url(#fx-arrow)" />
+                  <line x1="632" y1="68" x2="718" y2="68" marker-end="url(#fx-arrow)" />
+                  <line x1="632" y1="188" x2="718" y2="188" marker-end="url(#fx-arrow)" />
+                  <line x1="540" y1="280" x2="540" y2="218" marker-end="url(#fx-arrow)" />
+                  <line x1="384" y1="308" x2="446" y2="308" marker-end="url(#fx-arrow)" />
+                </g>
+                <g class="fx-labels">
+                  <rect x="162" y="104" width="58" height="14" /><text x="191" y="114.5">MENSAGEM</text>
+                  <rect x="388" y="104" width="56" height="14" /><text x="416" y="114.5">CONEXÃO</text>
+                  <rect x="652" y="44" width="46" height="14" /><text x="675" y="54.5">HTTPS</text>
+                  <rect x="660" y="164" width="30" height="14" /><text x="675" y="174.5">TLS</text>
+                  <rect x="550" y="242" width="92" height="14" /><text x="596" y="252.5">HTTPS + CHAVE</text>
+                </g>
+                <g class="fx-node fx-user"><rect x="16" y="100" width="136" height="56" rx="6" /><text class="fx-name" x="32" y="124">Contato</text><text class="fx-sub" x="32" y="142">seu cliente</text></g>
+                <g class="fx-node fx-ext"><rect x="232" y="100" width="152" height="56" rx="6" /><text class="fx-name" x="248" y="124">WhatsApp</text><text class="fx-sub" x="248" y="142">Web ou API oficial</text></g>
+                <g class="fx-node fx-focal"><rect x="448" y="40" width="184" height="176" rx="6" />
+                  <rect class="fx-tag" x="464" y="56" width="44" height="16" rx="2" /><text class="fx-tagt" x="486" y="67.5">API</text>
+                  <text class="fx-name" x="464" y="98">WhatsAI</text>
+                  <text class="fx-sub" x="464" y="122">chave conferida</text>
+                  <text class="fx-sub" x="464" y="138">a cada pedido</text>
+                  <text class="fx-sub" x="464" y="162">limite de tentativas</text>
+                  <text class="fx-sub" x="464" y="186">segredos cifrados</text>
+                  <text class="fx-sub" x="464" y="202">AES-256-GCM</text></g>
+                <g class="fx-node fx-ext"><rect x="720" y="40" width="224" height="56" rx="6" /><text class="fx-name" x="736" y="64">IA (OpenAI API)</text><text class="fx-sub" x="736" y="82">não treina com os dados</text></g>
+                <g class="fx-node fx-store"><rect x="720" y="160" width="224" height="56" rx="6" /><text class="fx-name" x="736" y="184">Banco de dados</text><text class="fx-sub" x="736" y="202">prazo de guarda (LGPD)</text></g>
+                <g class="fx-node fx-user"><rect x="232" y="280" width="152" height="56" rx="6" /><text class="fx-name" x="248" y="304">Sua equipe</text><text class="fx-sub" x="248" y="322">navegador ou app</text></g>
+                <g class="fx-node"><rect x="448" y="280" width="184" height="56" rx="6" /><text class="fx-name" x="464" y="304">Painel</text><text class="fx-sub" x="464" y="322">CSP · HTTPS</text></g>
+              </svg>
+            </div>
+            <ol class="sec-flow-list" aria-label="Caminho dos dados, passo a passo">
+              <li><strong>Contato</strong><span>manda a mensagem pelo WhatsApp</span></li>
+              <li><strong>WhatsApp</strong><span>Web ou API oficial, conexão criptografada</span></li>
+              <li class="is-focal"><strong>API WhatsAI</strong><span>confere a chave de cada pedido, limita tentativas erradas e guarda os segredos cifrados (AES-256-GCM)</span></li>
+              <li><strong>IA (OpenAI API)</strong><span>recebe por HTTPS só o necessário para responder; não treina com os dados</span></li>
+              <li><strong>Banco de dados</strong><span>conexão TLS e prazo de guarda das mensagens (LGPD)</span></li>
+              <li><strong>Painel</strong><span>sua equipe acompanha pelo navegador ou app, por HTTPS e com a chave de acesso</span></li>
+            </ol>
+            <figcaption class="sec-caption">Ilustrativo. A API e o banco ficam no Render e no Neon; o painel e este site, na Vercel. A IA recebe só o necessário para responder cada mensagem.</figcaption>
+          </figure>
         </div>
       </section>
 
