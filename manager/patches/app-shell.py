@@ -16,7 +16,7 @@ scrolled. Now:
    notice - the Evolution API usage notice required by its license (LICENSE, condition 1b: visible to the
             administrators, inside the system) at the foot of both sidebars. It used to be in the Manual footer,
             which left the panel. Clients (wac_ codes) never see these sidebars.
-5. html   - links app-shell.css?v=1 (viewport-height shell: the page never scrolls, the content does) and raises the
+5. html   - links app-shell.css?v=CSS_VERSION (viewport-height shell: the page never scrolls, the content does) and raises the
             bundle ?v= to CACHE_VERSION.
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
@@ -37,7 +37,8 @@ INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 CSS = os.path.join(ROOT, 'manager', 'dist', 'assets', 'app-shell.css')
 CACHE_VERSION = '40'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
-CSS_LINK = '    <link rel="stylesheet" href="/assets/app-shell.css?v=1" />\n'
+CSS_VERSION = '2'
+CSS_LINK = '    <link rel="stylesheet" href="/assets/app-shell.css?v=' + CSS_VERSION + '" />\n'
 
 
 class PatchError(Exception):
@@ -150,6 +151,12 @@ def patch_html(html):
     return out.replace('</head>', '    ' + html_marker('html') + '\n  </head>', 1)
 
 
+def bump_css(html):
+    import re
+    return re.sub(r'(/assets/app-shell\.css\?v=)(\d+)',
+                  lambda m: m.group(1) + (CSS_VERSION if int(m.group(2)) < int(CSS_VERSION) else m.group(2)), html)
+
+
 def bump_index(html):
     pos = html.find(SCRIPT_TAG)
     if pos < 0 or html.count(SCRIPT_TAG) != 1:
@@ -173,6 +180,8 @@ def main():
         missing.append('html')
     if bump_index(html) != html:
         missing.append('index.html cache version')
+    if bump_css(html) != html:
+        missing.append('index.html app-shell.css version')
     if not os.path.isfile(CSS):
         missing.append('app-shell.css')
     if check:
@@ -188,11 +197,11 @@ def main():
         s = marker(name) + fn(s)
         report.append(f'{name}: applied')
     new_html = patch_html(html) if 'html' in missing else html
-    new_html = bump_index(new_html)
+    new_html = bump_css(bump_index(new_html))
     open(BUNDLE, 'w', encoding='utf-8').write(s)
     if new_html != html:
         open(INDEX, 'w', encoding='utf-8').write(new_html)
-    report.append(f'index.html: app-shell.css?v=1, bundle ?v={CACHE_VERSION}')
+    report.append(f'index.html: app-shell.css?v={CSS_VERSION}, bundle ?v={CACHE_VERSION}')
     print('\n'.join(report))
     return 0
 

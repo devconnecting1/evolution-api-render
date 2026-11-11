@@ -80,3 +80,89 @@
   font-size: 11px;
   line-height: 1.4;
 }
+
+/* ---------------------------------------------------------------- abrir e fechar o menu (animação)
+   Só transform/opacity e a coluna do grid: nada de layout pesado durante o movimento. ~220 ms com uma curva que
+   desacelera no fim (parece "encaixar"), igual nas duas laterais (global e da instância). Com "reduzir movimento"
+   no aparelho, tudo muda na hora. */
+:root {
+  --wa-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --wa-dur-drawer: 0.22s;
+}
+@keyframes wa-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.wa-ut-scrim,
+.wa-overlay {
+  animation: wa-fade-in var(--wa-dur-drawer) ease-out;
+}
+
+/* desktop: recolher/expandir anima a coluna do menu em vez de cortar */
+@media (min-width: 1024px) {
+  .wa-ut-app {
+    transition: grid-template-columns var(--wa-dur-drawer) var(--wa-ease-drawer);
+  }
+  .wa-ut-app[data-side="closed"] {
+    grid-template-columns: 0px minmax(0, 1fr);
+  }
+  .wa-ut-side {
+    min-width: 0;
+    overflow-x: hidden;
+    transition: opacity 0.16s ease, visibility 0s linear 0s;
+  }
+  .wa-ut-side > * {
+    min-width: calc(var(--ut-side) - 16px);
+  }
+  .wa-ut-app[data-side="closed"] .wa-ut-side {
+    display: flex;
+    padding-right: 0;
+    padding-left: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.12s ease, visibility 0s linear var(--wa-dur-drawer);
+  }
+  .wa-ut-main {
+    transition: margin-left var(--wa-dur-drawer) var(--wa-ease-drawer);
+  }
+}
+
+/* celular e tablet: a gaveta desliza da esquerda (antes aparecia de uma vez) */
+@media (max-width: 1023px) {
+  .wa-ut-side,
+  .wa-ut-app[data-side="closed"] .wa-ut-side {
+    display: flex;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform var(--wa-dur-drawer) var(--wa-ease-drawer), visibility 0s linear var(--wa-dur-drawer);
+  }
+  .wa-ut-app[data-drawer="true"] .wa-ut-side {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--wa-dur-drawer) var(--wa-ease-drawer);
+  }
+  /* a lateral das páginas de instância já deslizava: mesma curva e duração */
+  [data-wa-layout] [data-wa-sidebar] {
+    transition: transform var(--wa-dur-drawer) var(--wa-ease-drawer), visibility 0s linear var(--wa-dur-drawer);
+  }
+  [data-wa-layout] [data-wa-sidebar][data-wa-open="true"] {
+    transition: transform var(--wa-dur-drawer) var(--wa-ease-drawer);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-ut-app,
+  .wa-ut-side,
+  .wa-ut-app[data-side="closed"] .wa-ut-side,
+  .wa-ut-app[data-drawer="true"] .wa-ut-side,
+  .wa-ut-main,
+  [data-wa-layout] [data-wa-sidebar],
+  [data-wa-layout] [data-wa-sidebar][data-wa-open="true"] {
+    transition: none;
+  }
+  .wa-ut-scrim,
+  .wa-overlay {
+    animation: none;
+  }
+}
