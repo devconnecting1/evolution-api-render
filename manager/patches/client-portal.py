@@ -12,7 +12,11 @@ the panel. Logic and pages live in a plain script, assets/client-portal.js (wind
             <div data-wa-portal-page> that client-portal.js fills.
 3. retencao - /manager/retencao (global layout, administrator) with <div data-wa-portal-page="retencao">, and the item
             "Retenção (LGPD)" in the sidebar of the instance list: one message retention deadline for every instance.
-4. html   - links client-portal.css and loads client-portal.js (classic script, before the bundle, so
+4. contatos - "Contatos da IA" in the instance menu, right under Conversas, and its route
+            /manager/instance/:instanceId/contatos-ia: the AI sessions of the instance as a Twenty-like list (search,
+            views, bulk pause/resume). It replaces the old "Sessões" dialog hidden in the bot settings; a client with
+            the Conversas module sees it too (the server already allows fetchSessions/changeStatus for that module).
+5. html   - links client-portal.css and loads client-portal.js (classic script, before the bundle, so
             window.WaPortal exists when the menu renders) at ASSET_VERSION; raises the bundle ?v= to CACHE_VERSION.
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
@@ -30,8 +34,8 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
-CACHE_VERSION = '37'
-ASSET_VERSION = '3'
+CACHE_VERSION = '42'
+ASSET_VERSION = '5'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 HTML_ASSETS = (
     '    <link rel="stylesheet" href="/assets/client-portal.css?v=' + ASSET_VERSION + '" />\n'
@@ -113,7 +117,26 @@ def g_retencao(s):
     return rep(s, RET_NAV_OLD, RET_NAV_NEW, 'retencao nav')
 
 
-GROUPS = [('nav', g_nav), ('routes', g_routes), ('retencao', g_retencao)]
+CI_ICON_OLD = 'return {Phone:s('
+CI_ICON_NEW = (
+    'return {Bot:s(["M12 8V4H8","M4 8h16v12H4z","M2 14h2","M20 14h2","M15 13v2","M9 13v2"]),Phone:s('
+)
+CI_NAV_OLD = '{id:"chat",title:e("sidebar.chat"),icon:Bl,path:"chat"},'
+CI_NAV_NEW = CI_NAV_OLD + '{id:"contatos-ia",title:"Contatos da IA",icon:WaPortalIcons.Bot,path:"contatos-ia"},'
+CI_ROUTE_ANCHOR = ROUTE_ANCHOR
+CI_ROUTE_NEW = CI_ROUTE_ANCHOR + (
+    '{path:"/manager/instance/:instanceId/contatos-ia",element:i.jsx(tn,{children:i.jsx(un,{children:'
+    'i.jsx("div",{className:"wa-portal-page","data-wa-portal-page":"contatos-ia"})})})},'
+)
+
+
+def g_contatos(s):
+    s = rep(s, CI_ICON_OLD, CI_ICON_NEW, 'contatos icon')
+    s = rep(s, CI_NAV_OLD, CI_NAV_NEW, 'contatos nav')
+    return rep(s, CI_ROUTE_ANCHOR, CI_ROUTE_NEW, 'contatos route')
+
+
+GROUPS = [('nav', g_nav), ('routes', g_routes), ('retencao', g_retencao), ('contatos', g_contatos)]
 ASSET_RE = re.compile(r'(/assets/client-portal\.(?:js|css)\?v=)(\d+)')
 
 
