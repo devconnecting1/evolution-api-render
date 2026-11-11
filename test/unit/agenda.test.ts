@@ -270,9 +270,9 @@ describe('agenda: iCalendar', () => {
 // -------------------------------------------------------------------------------------------- service
 
 function service(now = NOW, patch: Record<string, any> = {}) {
-  const prisma = createAgendaTables();
-  const sent: { jid: string; text: string }[] = [];
   let clock = now.getTime();
+  const prisma = createAgendaTables(undefined, () => clock);
+  const sent: { jid: string; text: string }[] = [];
   const agenda = new AgendaService(prisma, undefined, {
     now: () => clock,
     cacheTtlMs: 0,

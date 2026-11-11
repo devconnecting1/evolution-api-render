@@ -103,6 +103,9 @@ const MODULE_RULES: Record<ClientModule, Rule[]> = {
     { methods: ['GET'], pattern: /^\/agenda\/:i\/(slots|export\.ics)$/ },
     { methods: ['PATCH', 'DELETE'], pattern: /^\/agenda\/:i\/[^/]+$/ },
     { methods: ['GET'], pattern: /^\/agenda\/settings\/:i$/ },
+    // the office connects its own Google Agenda (status, connect, disconnect)
+    { methods: ['GET', 'DELETE'], pattern: /^\/agenda\/google\/:i$/ },
+    { methods: ['POST'], pattern: /^\/agenda\/google\/:i\/connect$/ },
   ],
   processos: [
     { methods: ['GET', 'POST'], pattern: /^\/processos\/:i$/ },

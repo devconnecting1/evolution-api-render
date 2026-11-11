@@ -1,5 +1,5 @@
 import { CacheEngine } from '@cache/cacheengine';
-import { Chatwoot, configService, Database, Processos, ProviderSession } from '@config/env.config';
+import { Auth, Chatwoot, configService, Database, Processos, ProviderSession } from '@config/env.config';
 import { eventEmitter } from '@config/event.config';
 import { Logger } from '@config/logger.config';
 import { openaiHealthRegistry } from '@utils/openai-health';
@@ -50,6 +50,7 @@ import { adminAlertsConfigFromEnv, AdminAlertsService } from './services/admin-a
 import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
+import { GoogleCalendarService } from './services/google-calendar.service';
 import { LeadsService } from './services/leads.service';
 import { WAMonitoringService } from './services/monitor.service';
 import { OpenaiHealthService } from './services/openai-health.service';
@@ -174,8 +175,23 @@ export const leadsService = new LeadsService(prismaRepository, usageService, waM
 export const leadsController = new LeadsController(leadsService, prismaRepository, waMonitor);
 
 // "Agenda": one instance shared by the REST routes, the MCP and the bot (settings cache + reminder ticker)
-export const agendaService = new AgendaService(prismaRepository, waMonitor);
-export const agendaController = new AgendaController(agendaService, prismaRepository);
+// Google Agenda (opcional): GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET no Render; sem eles, "não configurada"
+const googleLogger = new Logger('GoogleAgenda');
+const serverUrl = String(process.env.SERVER_URL || '')
+  .trim()
+  .replace(/\/+$/, '');
+export const googleCalendarService = new GoogleCalendarService(prismaRepository, {
+  clientId: process.env.GOOGLE_CLIENT_ID?.trim() || undefined,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET?.trim() || undefined,
+  redirectUri:
+    process.env.GOOGLE_REDIRECT_URI?.trim() || (serverUrl ? `${serverUrl}/agenda/google/callback` : undefined),
+  returnUrl: process.env.GOOGLE_RETURN_URL?.trim() || 'https://whatsaibr.vercel.app',
+  secret:
+    process.env.GOOGLE_TOKEN_KEY?.trim() || `apikey:${configService.get<Auth>('AUTHENTICATION').API_KEY.KEY ?? ''}`,
+  log: (level, message) => googleLogger[level](message),
+});
+export const agendaService = new AgendaService(prismaRepository, waMonitor, { google: googleCalendarService });
+export const agendaController = new AgendaController(agendaService, prismaRepository, googleCalendarService);
 if (process.env.NODE_ENV !== 'test') agendaService.start();
 
 const openaiService = new OpenaiService(

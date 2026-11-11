@@ -1,6 +1,7 @@
 import { AgendaSettingsDto, AppointmentCreateDto, AppointmentUpdateDto } from '@api/dto/agenda.dto';
 import { InstanceDto } from '@api/dto/instance.dto';
 import { AgendaError, AgendaService } from '@api/services/agenda.service';
+import type { GoogleCalendarService } from '@api/services/google-calendar.service';
 import { localToUtc, parseStart } from '@utils/agenda';
 import { createJid } from '@utils/createJid';
 import { normalizeUserJid } from '@utils/lidJid';
@@ -31,7 +32,34 @@ export class AgendaController {
   constructor(
     private readonly agenda: AgendaService,
     private readonly prisma: any,
+    private readonly google?: GoogleCalendarService,
   ) {}
+
+  // ------------------------------------------------------------------------------------- Google Agenda
+
+  /** Connection of the instance to a Google Agenda (never the tokens). */
+  public async googleStatus(instance: InstanceDto) {
+    const row = await this.instanceOf(instance);
+    if (!this.google) return { instance: row.name, available: false, connected: false };
+    return { instance: row.name, ...(await this.google.status(row.id)) };
+  }
+
+  /** URL of the Google consent screen; the panel opens it in the same tab. */
+  public async googleConnect(instance: InstanceDto & Record<string, any>) {
+    const row = await this.instanceOf(instance);
+    if (!this.google?.available()) {
+      BadRequestException('A integração com o Google Agenda ainda não foi configurada no servidor (GOOGLE_CLIENT_ID).');
+    }
+    const hint = typeof instance.email === 'string' && /^[^\s@]+@[^\s@]+$/.test(instance.email) ? instance.email : null;
+    return { instance: row.name, url: this.google.connectUrl(row.id, hint) };
+  }
+
+  /** Disconnects (revokes the access at Google). The events already copied stay in the Google Agenda. */
+  public async googleDisconnect(instance: InstanceDto) {
+    const row = await this.instanceOf(instance);
+    if (this.google) await this.google.disconnect(row.id);
+    return { instance: row.name, connected: false };
+  }
 
   private async instanceOf(instance: InstanceDto): Promise<{ id: string; name: string }> {
     const row = await this.prisma.instance.findUnique({

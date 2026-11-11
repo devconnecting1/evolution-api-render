@@ -75,6 +75,14 @@
       "dest": "/landing/seguranca.html"
     },
     {
+      "src": "^/privacidade/?$",
+      "dest": "/landing/privacidade.html"
+    },
+    {
+      "src": "^/termos/?$",
+      "dest": "/landing/termos.html"
+    },
+    {
       "handle": "filesystem"
     },
     {
