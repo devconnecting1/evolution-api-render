@@ -13,6 +13,9 @@ scrolled. Now:
 3. layout - B5 (layout of the global pages) renders WaShell.Global instead of the old top bar; the instance list
             (/manager/, CZ) has its own shell and no longer goes through B5.
 4. logout - "Sair do painel?" no longer mentions the server URL (the login asks only for the key).
+   txtbtn - the toolbar buttons of the instance list (Filtro, Ordenar, Opções) are Radix menu triggers with asChild,
+            but TxtBtn was a plain function component: React dropped the ref, Radix had no anchor and opened the
+            menu at (0, -height), above the screen. "Não funciona ao clicar". TxtBtn now forwards its ref.
    notice - the Evolution API usage notice required by its license (LICENSE, condition 1b: visible to the
             administrators, inside the system) at the foot of both sidebars. It used to be in the Manual footer,
             which left the panel. Clients (wac_ codes) never see these sidebars.
@@ -35,7 +38,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 CSS = os.path.join(ROOT, 'manager', 'dist', 'assets', 'app-shell.css')
-CACHE_VERSION = '40'
+CACHE_VERSION = '41'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 CSS_VERSION = '2'
 CSS_LINK = '    <link rel="stylesheet" href="/assets/app-shell.css?v=' + CSS_VERSION + '" />\n'
@@ -136,11 +139,27 @@ NOTICE_OLD = "        null]}),\n      i.jsxs('section',{className:'wa-ut-main','
 NOTICE_NEW = "        i.jsx(WaShell.Notice,{})]}),\n      i.jsxs('section',{className:'wa-ut-main','aria-labelledby':'wa-ut-title'"
 
 
+TXTBTN_OLD = (
+    "function TxtBtn({icon,label,active,count,...p}){return i.jsxs('button',{type:'button',className:'wa-ut-tbtn',"
+    "'data-active':active?'true':void 0,...p,children:[icon?svg(icon,14):null,i.jsx('span',{children:label}),"
+    "count?i.jsx('span',{className:'wa-ut-tbtn-n',children:count}):null]});}"
+)
+TXTBTN_NEW = (
+    "const TxtBtn=y.forwardRef(function TxtBtn({icon,label,active,count,...p},ref){return i.jsxs('button',{ref,"
+    "type:'button',className:'wa-ut-tbtn','data-active':active?'true':void 0,...p,children:[icon?svg(icon,14):null,"
+    "i.jsx('span',{children:label}),count?i.jsx('span',{className:'wa-ut-tbtn-n',children:count}):null]});});"
+)
+
+
+def g_txtbtn(s):
+    return rep(s, TXTBTN_OLD, TXTBTN_NEW, 'TxtBtn forwardRef')
+
+
 def g_notice(s):
     return rep(s, NOTICE_OLD, NOTICE_NEW, 'list sidebar notice')
 
 
-GROUPS = [('expose', g_expose), ('shell', g_shell), ('layout', g_layout), ('logout', g_logout), ('notice', g_notice)]
+GROUPS = [('expose', g_expose), ('shell', g_shell), ('layout', g_layout), ('logout', g_logout), ('notice', g_notice), ('txtbtn', g_txtbtn)]
 
 
 def patch_html(html):
