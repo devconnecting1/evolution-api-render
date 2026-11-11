@@ -3,7 +3,8 @@
 This document provides comprehensive guidelines for AI agents (Claude, GPT, Cursor, etc.) working with the Evolution API codebase.
 
 > **Project guide (WhatsAI fork):** [`readmes/GUIA-DO-PROJETO.md`](readmes/GUIA-DO-PROJETO.md) — architecture, message flow, MCP, panel/site, deploy, tests, screenshots and prioritized recommendations.
-> **Working rules:** [`CLAUDE.md`](CLAUDE.md).
+> **Working rules:** [`CLAUDE.md`](CLAUDE.md). Never merge PRs: the owner's Claude Code reviews them with the Neon,
+> Render and Vercel MCPs. Never merge without the full test suite green. Workflows use `ubuntu-latest`. No emojis.
 
 ## Project Overview
 

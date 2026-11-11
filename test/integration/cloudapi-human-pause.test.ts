@@ -195,9 +195,15 @@ describe('Cloud API: human pause through Coexistence echoes (integration)', { sk
     await waitFor(() => c.botTexts().length === 1, 8000, 'bot answer');
 
     const [botWamid] = c.sentWamids;
-    const saved = await h.prisma.message.findFirst({
-      where: { instanceId: c.t.instance.instanceId, key: { path: ['id'], equals: botWamid } },
-    });
+    const saved = await waitFor(
+      () =>
+        h.prisma.message.findFirst({
+          where: { instanceId: c.t.instance.instanceId, key: { path: ['id'], equals: botWamid } },
+        }),
+      5000,
+      'bot message stored by the channel',
+    );
+    assert.ok(saved, 'the bot message was stored by the channel');
     assert.equal((saved.key as any).fromMe, true, 'the bot message was stored by the channel');
 
     await c.echo('5511912345678', 'resposta 1', botWamid);

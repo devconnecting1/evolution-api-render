@@ -614,12 +614,14 @@ publique valores. Se um token vazar, rotacione no provedor e no Render.
 ### 11.5 Fluxo de branch, PR e deploy
 
 1. Uma branch por tarefa a partir de `origin/main`.
-2. PR no formato de `.github/pull_request_template.md`.
-3. CI verde (`Check Code Quality`).
-4. Squash merge com `commit_message` explícita (Conventional Commits, cabeçalho ≤100 chars).
-5. Push com `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
-6. `[skip render]` no título do squash quando a mudança é só estática.
-7. Depois de deploy que reinicia a API, confira o deploy `live` no Render e o estado da instância (`open`).
+2. Rode a suíte completa (unitários, tipos, lint e integração) e faça o push com
+   `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
+3. Abra o PR no formato de `.github/pull_request_template.md`; o CI precisa ficar verde.
+4. **Pare aqui.** O dono pede ao Claude Code dele (que tem acesso aos MCPs de Neon, Render, Vercel e outros) para
+   revisar e aprovar. Nunca faça merge; o squash com `commit_message` explícita (Conventional Commits, cabeçalho
+   ≤100 chars) é feito por ele.
+5. `[skip render]` no título do squash quando a mudança é só estática.
+6. Depois de deploy que reinicia a API, confira o deploy `live` no Render e o estado da instância (`open`).
 
 ### 11.6 Conferências somente-leitura (produção)
 
@@ -726,6 +728,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 - O thread principal revisa, consolida e fica com o que é **dependente ou sensível**: deploy, produção, WhatsApp
   do cliente e qualquer ação destrutiva.
 - Registre as decisões e mudanças no PR, em PT-BR, com recomendações.
+- **Nunca faça merge.** O dono pede ao Claude Code dele (com acesso aos MCPs de Neon, Render, Vercel e outros) para
+  revisar e aprovar cada PR. Abra o PR, deixe o CI verde e pare.
 
 ### 13.2 Nunca
 
@@ -738,6 +742,10 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 - Identificador de modelo de IA em commits, PRs ou código.
 - Commitar o `.gitignore` local (um plugin do ambiente o altera; é sempre ` M .gitignore` e fica fora).
 - Mandar `reasoning_effort` à OpenAI.
+- Fazer merge de PR sem a revisão do dono/Claude Code dele.
+- Fazer merge sem a suíte completa verde (unitários, tipos, lint e integração).
+- Usar emojis em código, docs, commits, PRs ou respostas.
+- Usar runner self-hosted ou pago nos workflows; sempre `ubuntu-latest` (GitHub-hosted, gratuito).
 
 ### 13.3 Antes de mexer
 
@@ -746,7 +754,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
    são estáticos (`[skip render]`).
 3. Se for mudar banco, planeje migration aditiva nos dois providers e nos três schemas; crie snapshot no Neon.
 4. Se for mudar o painel, rode os `--check` dos patches e o esbuild; se mudar HTML inline, atualize a CSP.
-5. Rode os testes e o lint antes do push; abra o PR no template; faça squash com mensagem explícita.
+5. Rode a suíte completa e o lint antes do push; abra o PR no template e pare. Não faça merge: o dono/Claude Code
+   dele revisa e aprova. Workflows sempre em `ubuntu-latest`.
 
 ### 13.4 Onde olhar primeiro
 

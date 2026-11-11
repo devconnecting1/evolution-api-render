@@ -18,7 +18,8 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
 
 ### Comunicação
 - Sempre em **português (PT-BR)**, linguagem simples, com recomendações. O dono do projeto dá autonomia
-  ("faça da melhor forma"): implementar, abrir PR e fazer o merge quando o CI estiver verde, avisando o que mudou.
+  ("faça da melhor forma"): implementar, abrir PR e avisar o que mudou. **Nunca faça merge**: o dono pede ao
+  Claude Code dele (que tem acesso aos MCPs de Neon, Render, Vercel e outros) para revisar e aprovar.
 - Pergunte só o que só ele pode decidir (números de telefone, apagar dados, gastos, mudar algo do cliente em produção).
 
 ### Múltiplos agentes
@@ -38,10 +39,15 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
 - Identificador de modelo de IA em commits, PRs ou código.
 - Commitar o `.gitignore` local (um plugin do ambiente o altera; é sempre ` M .gitignore` e fica fora).
 - Mandar `reasoning_effort` à OpenAI: os modelos usam o raciocínio padrão.
+- Fazer merge de PR sem a revisão do dono/Claude Code dele.
+- Fazer merge sem a suíte completa verde (unitários, tipos, lint e integração).
+- Usar emojis em código, docs, commits, PRs ou respostas.
 
 ### Git, PR e deploy
-- Uma branch por tarefa a partir de `origin/main`; PR no formato de `.github/pull_request_template.md`; squash merge
-  com `commit_message` explícita. Cabeçalho do commit com até 100 caracteres (commitlint, Conventional Commits).
+- Uma branch por tarefa a partir de `origin/main`; PR no formato de `.github/pull_request_template.md`. Abra o PR e
+  pare: o merge é feito pelo dono/Claude Code dele, com `commit_message` explícita e cabeçalho de até 100 caracteres
+  (commitlint, Conventional Commits).
+- Workflows sempre em `ubuntu-latest` (GitHub-hosted, gratuito); não use runner self-hosted ou pago.
 - Push: `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
 - Mudança só estática (`manager/dist`, docs, `scripts/`): termine o título do squash com `[skip render]`.
 - Mudança em `src/` ou `prisma/` reinicia a API (~4 min): em horário comercial (9h–19h, Brasília) só com OK do dono;
