@@ -168,40 +168,75 @@
     return h('div', { class: 'wa-portal-head' }, [h('h1', { class: 'wa-page-title', text: text }), lead ? h('p', { class: 'wa-portal-lead', text: lead }) : null]);
   }
 
-  // Conexão (client): state, QR code, pairing code
+  // Conexão (client): state, QR code, pairing code.
+  // The server answers the first "connect" before WhatsApp has produced a QR code (it waits only 2 s), and WhatsApp
+  // replaces the code every ~20 s, so while the client is pairing the page asks again every 5 s and swaps the image.
+  // Stops after 3 minutes (the code stops being renewed); "Mostrar QR code" starts again.
   function renderConexao(root) {
     var name = current && current.instanceName;
     var status = h('p', { class: 'wa-portal-status', role: 'status', 'aria-live': 'polite', text: 'Verificando…' });
     var qrBox = h('div', { class: 'wa-portal-qr' });
     var button = h('button', { type: 'button', class: 'wa-portal-btn', text: 'Mostrar QR code', hidden: true });
     var timer = null;
+    var pairingSince = 0; // > 0 while the client asked for a QR code
+    var shown = '';
 
+    function note(text) {
+      qrBox.textContent = '';
+      shown = '';
+      if (text) qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: text }));
+    }
+    function stopPairing(text) {
+      pairingSince = 0;
+      button.disabled = false;
+      note(text);
+    }
+    function showCode(d) {
+      var key = (d.base64 || '') + '|' + (d.pairingCode || '');
+      if (key === shown) return;
+      qrBox.textContent = '';
+      shown = key;
+      if (d.base64) {
+        qrBox.appendChild(h('img', { src: d.base64, alt: 'QR code para conectar o WhatsApp', width: '264', height: '264' }));
+        qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: 'No celular: WhatsApp > Aparelhos conectados > Conectar um aparelho, e aponte para o código. O código muda sozinho a cada poucos segundos; esta tela acompanha.' }));
+      }
+      if (d.pairingCode) qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: 'Ou use o código de pareamento: ' + d.pairingCode }));
+    }
+    function fetchCode() {
+      if (!pairingSince) return;
+      if (Date.now() - pairingSince > 3 * 60 * 1000) { stopPairing('O QR code expirou. Clique em "Mostrar QR code" para gerar outro.'); return; }
+      request('GET', '/instance/connect/' + encodeURIComponent(name)).then(function (d) {
+        if (!pairingSince) return;
+        if (d && d.instance && d.instance.state === 'open') { setState('open'); return; }
+        if (d && (d.base64 || d.pairingCode)) { showCode(d); return; }
+        if (d && d.error) { stopPairing('Não foi possível gerar o QR code agora. Tente de novo em alguns segundos.'); return; }
+        if (!shown) note('Gerando o QR code…');
+      }, function (e) {
+        stopPairing(e.status === 403 ? 'Este acesso não inclui reconectar o WhatsApp.' : 'Não foi possível gerar o QR code agora. Tente de novo em alguns segundos.');
+      });
+    }
     function setState(state) {
       var open = state === 'open';
-      status.textContent = open ? 'WhatsApp conectado.' : state === 'connecting' ? 'Conectando…' : 'WhatsApp desconectado.';
+      status.textContent = open ? 'WhatsApp conectado.' : pairingSince ? 'Aguardando a leitura do QR code…' : state === 'connecting' ? 'Conectando…' : 'WhatsApp desconectado.';
       status.setAttribute('data-state', open ? 'ok' : 'bad');
       button.hidden = open;
-      if (open) qrBox.textContent = '';
+      if (open && pairingSince) stopPairing('');
+      else if (open) note('');
     }
     function check() {
       if (!document.body.contains(root)) { clearInterval(timer); return; }
+      if (document.hidden) return;
       request('GET', '/instance/connectionState/' + encodeURIComponent(name)).then(function (d) {
         setState(d && d.instance && d.instance.state);
+        if (pairingSince && !(d && d.instance && d.instance.state === 'open')) fetchCode();
       }, function () { status.textContent = 'Não foi possível consultar o servidor agora.'; });
     }
     button.addEventListener('click', function () {
       button.disabled = true;
-      request('GET', '/instance/connect/' + encodeURIComponent(name)).then(function (d) {
-        qrBox.textContent = '';
-        if (d && d.base64) {
-          qrBox.appendChild(h('img', { src: d.base64, alt: 'QR code para conectar o WhatsApp', width: '264', height: '264' }));
-          qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: 'No celular: WhatsApp > Aparelhos conectados > Conectar um aparelho, e aponte para o código.' }));
-        }
-        if (d && d.pairingCode) qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: 'Ou use o código de pareamento: ' + d.pairingCode }));
-        if (!d || (!d.base64 && !d.pairingCode)) qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: 'O WhatsApp já está conectado ou conectando.' }));
-      }, function (e) {
-        qrBox.textContent = e.status === 403 ? 'Este acesso não inclui reconectar o WhatsApp.' : 'Não foi possível gerar o QR code agora.';
-      }).then(function () { button.disabled = false; });
+      pairingSince = Date.now();
+      note('Gerando o QR code…');
+      status.textContent = 'Aguardando a leitura do QR code…';
+      fetchCode();
     });
 
     root.appendChild(title('Conexão', 'Estado do WhatsApp deste número.'));

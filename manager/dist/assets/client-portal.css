@@ -15,6 +15,18 @@
   display: none;
 }
 
+/* client: settings that only the administrator can save (src/utils/client-access.ts lets the client read them, never
+   write). Without this the client saw the forms and got an error on "Salvar". */
+[data-wa-portal='client'] .wl-head-actions > button.wa-tw-ibtn[aria-label='Configurações de leads'],
+[data-wa-portal='client'] .wag-head-actions > button.wag-btn-ghost:not(.wag-gbtn),
+[data-wa-portal='client'] main.wag-page > .wag-callout[role='status'] > button,
+[data-wa-portal='client'] .wp-tabs > .wp-tab-btn:nth-child(3),
+[data-wa-portal='client'] .wp-oab-form,
+[data-wa-portal='client'] .wp-oabs .wa-tw-lbtn,
+[data-wa-portal='client'] form.wu-form {
+  display: none;
+}
+
 .wa-portal-page {
   display: flex;
   flex-direction: column;
