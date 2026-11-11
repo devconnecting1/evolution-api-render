@@ -156,7 +156,11 @@ export async function buildAgendaContext(
   if (options.model && modelsWithoutTools.has(options.model)) return null;
   if (!(await agenda.isEnabled(instanceId))) return null;
 
-  const settings = await agenda.getSettings(instanceId);
+  const stored = await agenda.getSettings(instanceId);
+  // Paused types are invisible to the AI (the team still books them in the panel)
+  const activeTypes = stored.appointmentTypes.filter((type) => type.active !== false);
+  if (!activeTypes.length) return null;
+  const settings = { ...stored, appointmentTypes: activeTypes };
   const now = options.now ? options.now() : agenda.clock();
   const jids = contactJidsOf(remoteJid, options.msg);
   if (!jids.length) return null;

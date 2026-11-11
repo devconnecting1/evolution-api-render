@@ -181,6 +181,16 @@ export const updateAgendaSettings = defineTool({
           mode: z.enum(['presencial', 'online', 'telefone']).optional(),
           location: z.string().max(300).optional(),
           instructions: z.string().max(500).optional(),
+          active: z.boolean().optional().describe('false = tipo pausado: a IA não oferece (a equipe ainda agenda).'),
+          max_per_day: z.number().int().min(1).max(100).nullable().optional().describe('Limite deste tipo por dia.'),
+          min_notice_hours: z
+            .number()
+            .int()
+            .min(0)
+            .max(720)
+            .nullable()
+            .optional()
+            .describe('Antecedência mínima deste tipo, em horas (vazio = a da agenda).'),
         }),
       )
       .min(1)
