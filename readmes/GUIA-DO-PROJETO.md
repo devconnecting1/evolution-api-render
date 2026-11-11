@@ -811,9 +811,11 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 
 ![Processos](../docs/images/projeto/painel-processos-light-1440.png)
 
-![Plano e limites](../docs/images/projeto/painel-plano-light-1440.png)
+![Plano e limites](../docs/images/projeto/painel-plano-limites-light-1440.png)
 
 ![OpenAI](../docs/images/projeto/painel-openai-light-1440.png)
+
+![Comportamento/Configurações](../docs/images/projeto/painel-configuracoes-light-1440.png)
 
 ![Observabilidade](../docs/images/projeto/painel-observabilidade-light-1440.png)
 
@@ -823,11 +825,15 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 
 ![Acesso do cliente](../docs/images/projeto/painel-acesso-cliente-light-1440.png)
 
+![Conexão](../docs/images/projeto/painel-conexao-light-1440.png)
+
 ### 14.3 Celular e tema escuro
 
 ![Instâncias no celular — 390 px](../docs/images/projeto/painel-instancias-light-390.png)
 
 ![Conversas no celular — 390 px](../docs/images/projeto/painel-conversas-light-390.png)
+
+![Agenda no celular — 390 px](../docs/images/projeto/painel-agenda-light-390.png)
 
 ![Visão geral — tema escuro](../docs/images/projeto/painel-dashboard-dark-1440.png)
 
