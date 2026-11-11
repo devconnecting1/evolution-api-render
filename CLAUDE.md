@@ -5,11 +5,12 @@ This file provides comprehensive guidance to Claude AI when working with the Evo
 ## WhatsAI: regras de trabalho (leia antes de qualquer tarefa)
 
 Este repositório é o **WhatsAI**, um fork do Evolution API vendido como atendimento com IA no WhatsApp. O manual completo
-(fonte de verdade de arquitetura, planos, decisões e runbooks) é `README-WHATSAI.md`; a cópia servida no painel fica em
-`manager/dist/readmes/` e é atualizada com `bash scripts/sync-readmes.sh`. As seções abaixo são as regras fixas.
+(fonte de verdade de arquitetura, planos, decisões e runbooks) é `README-WHATSAI.md`. Desde 11/11/2026 o Manual fica só
+no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual nem `/readme`. As seções abaixo são as
+regras fixas.
 
 ### Produção
-- API no Render (`srv-dbd9qqi9lscs73aoe85g`, `https://evolution-api-x93o.onrender.com`), painel, manual e site na
+- API no Render (`srv-dbd9qqi9lscs73aoe85g`, `https://evolution-api-x93o.onrender.com`), painel e site na
   Vercel (`https://whatsaibr.vercel.app`), banco no Neon (projeto principal `spring-boat-14626479`, mais um projeto por
   instância com "Banco próprio"). Push no `main` publica nos dois sozinho.
 - Há cliente real em produção (escritório de advocacia, WhatsApp Web/Baileys). O WhatsApp dele precisa ficar `open`:
@@ -60,7 +61,8 @@ Nos testes, `test/helpers/setup.ts` troca o `@api/server.module` por um proxy: p
   trocas exatas (cada âncora 1 vez), marcador, `--check`, `CACHE_VERSION` do bundle (só sobe). Depois de qualquer
   mudança: `for f in manager/patches/*.py; do python3 -I $f --check; done` e
   `npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null`.
-- Páginas novas preferem um script próprio (como `readme-tab.js`, `client-portal.js`) a JSX escrito no patch.
+- Páginas novas preferem um script próprio (como `client-portal.js`) a JSX escrito no patch. O layout é um só
+  (`app-shell.py`, estilo do bloco Sidebar do shadcn): sidebar em todas as páginas, altura da tela, só o conteúdo rola.
   Ao mudar um CSS/JS, suba o `?v=` dele no `index.html`.
 - Visual: só os tokens `var(--m-*)`, tema padrão **Sistema** (claro e escuro mantidos), fonte Geist, cor só com
   significado (verde ok, âmbar atenção, vermelho erro). Confira com capturas a 390 e 1440 px, claro e escuro, com a

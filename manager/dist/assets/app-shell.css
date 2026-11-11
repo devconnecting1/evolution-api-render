@@ -1,0 +1,82 @@
+/* WhatsAI Manager: app shell (manager/patches/app-shell.py), no estilo do bloco Sidebar do shadcn/ui.
+   A tela inteira nunca rola: o shell ocupa a altura do aparelho (svh/dvh) e só o conteúdo rola dentro do cartão.
+   Vale para a lista de instâncias e para as páginas globais (Observabilidade, Chaves, Retenção). As páginas de uma
+   instância já tinham altura fixa (layout "un"). Só tokens var(--m-*), então claro e escuro valem. */
+
+.wa-ut-app {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.wa-ut-main {
+  min-height: 0;
+  height: calc(100vh - 16px);
+  height: calc(100dvh - 16px);
+}
+/* instance list: the table takes the space left and scrolls by itself, header row stays visible */
+.wa-ut-main > .wa-ut-tablewrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.wa-ut-main > :is(.wa-ut-top, .wa-ut-viewbar, .wa-ut-search, .wa-ut-selbar, .wa-ut-foot) {
+  flex: none;
+}
+
+/* global pages inside the shell */
+.wa-shell .wa-ut-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+.wa-shell-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border-top: 1px solid var(--m-border);
+  scrollbar-gutter: stable;
+}
+.wa-shell-body:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: -2px;
+}
+/* pages written for the old full-width layout keep their own max-width and get side padding */
+.wa-shell-body > :not(.wa-portal-page) {
+  padding: 8px 24px 32px;
+}
+.wa-shell-body > .wa-portal-global {
+  padding: 24px 24px 40px;
+}
+
+@media (max-width: 1023px) {
+  .wa-ut-main,
+  .wa-ut-app[data-side="closed"] .wa-ut-main {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+@media (max-width: 640px) {
+  .wa-shell-body > :not(.wa-portal-page) {
+    padding: 4px 12px 24px;
+  }
+  .wa-shell-body > .wa-portal-global {
+    padding: 16px 12px 32px;
+  }
+}
+@media print {
+  .wa-ut-app,
+  .wa-ut-main {
+    height: auto;
+    overflow: visible;
+  }
+}
+
+/* Evolution API usage notice (license, condition 1b) at the foot of the sidebar */
+.wa-shell-notice {
+  margin-top: auto;
+  padding: 16px 8px 0;
+  color: var(--m-text-3);
+  font-size: 11px;
+  line-height: 1.4;
+}
