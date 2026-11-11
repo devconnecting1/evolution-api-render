@@ -907,6 +907,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
   observabilidade (§10), decisões (§11), bot OpenAI (§12), auditoria (§13), MCP (§14), limites (§15), leads (§16),
   Processos (§17), Agenda (§18) e Acesso do cliente (§19).
 - Banco por instância: [`docs/arquitetura/banco-por-instancia.md`](../docs/arquitetura/banco-por-instancia.md)
+- UI/UX: [`docs/ux-recomendacoes.md`](../docs/ux-recomendacoes.md) — análise contra Twenty CRM e ERPNext, com
+  recomendações priorizadas.
 - Docs espelhados: `docs/vendors/render/llms-full.txt`, `docs/vendors/neon/llms-full.txt`,
   `docs/vendors/vercel/llms-full.txt` (atualize com `bash scripts/update-vendor-docs.sh`)
 - MCP: `src/api/integrations/mcp/` e `whatsai://docs/<nome>`
