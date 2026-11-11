@@ -241,6 +241,34 @@ describe('UsageService', () => {
     assert.equal(tables.calls.filter((call) => call.op === 'instanceLimits.findUnique').length, 4);
   });
 
+  test('anti-loop guard: 100 AI answers per contact per day even without a plan, in memory, no notice', async () => {
+    const { tables, usage, clock } = usageSetup();
+    const OTHER = '5521900000099@s.whatsapp.net';
+    for (let n = 0; n < 99; n++) await usage.recordAnswer('inst-1', JID);
+    assert.equal((await usage.checkBeforeAnswer('inst-1', JID)).allow, true, '99 answers: still allowed');
+    await usage.recordAnswer('inst-1', JID);
+    const gate = await usage.checkBeforeAnswer('inst-1', JID);
+    assert.equal(gate.allow, false);
+    assert.equal(gate.reason, 'contact_daily');
+    assert.equal(gate.notice, null, 'no message to the other bot');
+    assert.equal((await usage.checkBeforeAnswer('inst-1', OTHER)).allow, true, 'other contacts are not affected');
+    assert.equal(
+      tables.calls.filter((call) => call.op === 'usageCounter.findMany').length,
+      0,
+      'no query without limits',
+    );
+    clock.now += 24 * 3_600_000;
+    assert.equal((await usage.checkBeforeAnswer('inst-1', JID)).allow, true, 'next day: answers again');
+  });
+
+  test('anti-loop guard: a configured per-contact limit above 100 is refused; a lower one still applies', async () => {
+    const { usage } = usageSetup();
+    await assert.rejects(usage.saveLimits('inst-1', { perContactDailyResponses: 150 }), /vai até 100/);
+    await usage.saveLimits('inst-1', { perContactDailyResponses: 3 });
+    for (let n = 0; n < 3; n++) await usage.recordAnswer('inst-1', JID);
+    assert.equal((await usage.checkBeforeAnswer('inst-1', JID)).reason, 'contact_daily');
+  });
+
   test('the gate fails open when the database is down', async () => {
     const usage = new UsageService({
       instanceLimits: {

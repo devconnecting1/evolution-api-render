@@ -13,11 +13,16 @@
  * Cost of the gate before each answer: the limits are cached in memory for 30 s per instance; without limits
  * nothing is queried; with count limits, one small query (primary key lookups). Every failure here fails open:
  * the AI keeps answering (the usage feature must never take the bot down).
+ *
+ * Anti-loop guard (always on, plan or not): at most CONTACT_DAILY_GUARD (100) AI answers per contact per day.
+ * Counted in memory (no query, Neon can still sleep); a configured per-contact limit can only be lower. When it
+ * trips, the AI goes silent for that contact until the next day, with no notice (a notice would feed the loop).
  */
 import { Logger } from '@config/logger.config';
 import {
   aiAllowedByHours,
   ALLOW,
+  CONTACT_DAILY_GUARD,
   COUNTER_CONTACT,
   COUNTER_DAY,
   COUNTER_MONTH,
@@ -90,6 +95,10 @@ export class UsageService {
   private readonly logger = new Logger('UsageService');
   private readonly cache = new Map<string, { at: number; limits: UsageLimits | null }>();
   private readonly cleanedOn = new Map<string, string>();
+  /** Anti-loop guard: AI answers per "instanceId|day|jid", in memory (see the header). */
+  private readonly guard = new Map<string, number>();
+  private guardDay = '';
+  private readonly guardLogged = new Set<string>();
 
   constructor(
     private readonly prisma: any,
@@ -199,6 +208,17 @@ export class UsageService {
     try {
       limits = await this.getLimits(instanceId);
       const day = zonedParts(now, limits?.businessHours.timezone ?? DEFAULT_TIMEZONE).day;
+      const key = this.guardKey(instanceId, day, remoteJid);
+      if ((this.guard.get(key) ?? 0) >= CONTACT_DAILY_GUARD) {
+        if (!this.guardLogged.has(key)) {
+          this.guardLogged.add(key);
+          this.logger.warn(
+            `IA parada hoje no contato ${maskContact(remoteJid)} da instância ${instanceId}: ` +
+              `${CONTACT_DAILY_GUARD} respostas no dia (possível conversa com outro robô).`,
+          );
+        }
+        return { allow: false, reason: 'contact_daily', overage: false, notice: null, day, limits };
+      }
       if (!limits) return { ...ALLOW, day, limits };
 
       const hoursOk = aiAllowedByHours(limits.businessHours, now);
@@ -211,7 +231,11 @@ export class UsageService {
       const counts = needsCounts
         ? await this.counts(instanceId, remoteJid, now, limits)
         : { month: 0, day: 0, contact: 0 };
-      return { ...evaluateGate(limits, counts, hoursOk), day, limits };
+      const capped =
+        limits.perContactDailyResponses !== null && limits.perContactDailyResponses > CONTACT_DAILY_GUARD
+          ? { ...limits, perContactDailyResponses: CONTACT_DAILY_GUARD }
+          : limits;
+      return { ...evaluateGate(capped, counts, hoursOk), day, limits };
     } catch (error) {
       this.logger.error(`Usage gate failed for instance ${instanceId}, answering anyway: ${error?.message ?? error}`);
       return { ...ALLOW, day: zonedParts(now, DEFAULT_TIMEZONE).day, limits };
@@ -281,6 +305,7 @@ export class UsageService {
       const limits = await this.getLimits(instanceId).catch((): UsageLimits | null => null);
       const parts = zonedParts(now, limits?.businessHours.timezone ?? DEFAULT_TIMEZONE);
       const jid = String(remoteJid).slice(0, MAX_JID_CHARS);
+      this.countGuard(instanceId, parts.day, remoteJid);
 
       const increment = (type: string, period: string, contact: string) =>
         this.prisma.usageCounter.upsert({
@@ -299,6 +324,21 @@ export class UsageService {
     } catch (error) {
       this.logger.error(`Could not count the AI answer of instance ${instanceId}: ${error?.message ?? error}`);
     }
+  }
+
+  private guardKey(instanceId: string, day: string, remoteJid: string) {
+    return `${instanceId}|${day}|${String(remoteJid).slice(0, MAX_JID_CHARS)}`;
+  }
+
+  /** One answer for the anti-loop guard; yesterday's keys are dropped when the day changes. */
+  private countGuard(instanceId: string, day: string, remoteJid: string) {
+    if (day !== this.guardDay) {
+      for (const key of this.guard.keys()) if (!key.includes(`|${day}|`)) this.guard.delete(key);
+      for (const key of this.guardLogged) if (!key.includes(`|${day}|`)) this.guardLogged.delete(key);
+      this.guardDay = day;
+    }
+    const key = this.guardKey(instanceId, day, remoteJid);
+    this.guard.set(key, (this.guard.get(key) ?? 0) + 1);
   }
 
   /** Old per-contact and day rows go away on the first answer of each day (no timer). */

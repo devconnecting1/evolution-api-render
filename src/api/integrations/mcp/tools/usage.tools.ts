@@ -52,7 +52,9 @@ export const updateLimits = defineTool({
       .describe('Plano. Sem monthly_responses, um plano padrão usa a franquia dele.'),
     monthly_responses: cap('Respostas da IA incluídas por mês.'),
     daily_responses: cap('Máximo de respostas por dia.'),
-    per_contact_daily_responses: cap('Máximo de respostas por contato por dia.'),
+    per_contact_daily_responses: cap(
+      'Máximo de respostas por contato por dia (até 100; sem valor, vale a proteção fixa de 100).',
+    ),
     over_limit_action: z.enum(['continue', 'pause', 'message']).optional().describe('O que fazer ao passar do limite.'),
     over_limit_message: z.string().max(1000).nullable().optional().describe('Mensagem da ação "message".'),
     alert_percent: z.number().int().min(1).max(100).optional().describe('Alerta na Observabilidade a partir deste %.'),

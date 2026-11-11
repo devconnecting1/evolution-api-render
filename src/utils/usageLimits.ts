@@ -46,6 +46,11 @@ export const DAY_LABELS: Record<DayKey, string> = {
 
 export const DEFAULT_TIMEZONE = 'America/Sao_Paulo';
 export const DEFAULT_ALERT_PERCENT = 80;
+/**
+ * Always-on cap of AI answers to ONE contact per day, with or without a plan: stops endless conversations with
+ * other bots (operadora, lojas, URAs) that answer every message. A configured per-contact limit can only be lower.
+ */
+export const CONTACT_DAILY_GUARD = 100;
 export const OVER_LIMIT_ACTIONS: OverLimitAction[] = ['continue', 'pause', 'message'];
 export const HOURS_MODES: HoursMode[] = ['always', 'inside', 'outside'];
 export const PLAN_NAMES = ['Essencial', 'Profissional', 'Premium', 'Personalizado'] as const;
@@ -191,6 +196,12 @@ export function validateLimits(limits: UsageLimits): string[] {
 
   if (limits.overLimitAction === 'message' && !limits.overLimitMessage) {
     errors.push('Informe a mensagem para o cliente quando a ação for "enviar uma mensagem".');
+  }
+
+  if (limits.perContactDailyResponses !== null && limits.perContactDailyResponses > CONTACT_DAILY_GUARD) {
+    errors.push(
+      `O limite por contato por dia vai até ${CONTACT_DAILY_GUARD} (proteção fixa contra conversas entre robôs).`,
+    );
   }
 
   if (
