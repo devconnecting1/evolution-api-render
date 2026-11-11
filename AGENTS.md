@@ -2,6 +2,9 @@
 
 This document provides comprehensive guidelines for AI agents (Claude, GPT, Cursor, etc.) working with the Evolution API codebase.
 
+> **Project guide (WhatsAI fork):** [`readmes/GUIA-DO-PROJETO.md`](readmes/GUIA-DO-PROJETO.md) — architecture, message flow, MCP, panel/site, deploy, tests, screenshots and prioritized recommendations.
+> **Working rules:** [`CLAUDE.md`](CLAUDE.md).
+
 ## Project Overview
 
 **Evolution API** is a production-ready, multi-tenant WhatsApp API platform built with Node.js, TypeScript, and Express.js. It supports multiple WhatsApp providers and extensive integrations with chatbots, CRM systems, and messaging platforms.
@@ -247,8 +250,9 @@ const result = await this.prismaRepository.instance.findUnique({
 ## Testing Guidelines
 
 ### Current State
-- **No formal test suite** currently implemented
-- **Manual testing** is the primary approach
+- **Automated suite** with `node:test` + `tsx`: unit tests in `test/unit/**` and integration tests in
+  `test/integration/**` against a disposable PostgreSQL
+- **Manual testing** remains for WhatsApp connection/pairing flows (never re-pair a production number)
 - **Integration testing** in development environment
 
 ### Testing Strategy

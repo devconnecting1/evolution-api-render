@@ -4,7 +4,10 @@
 
 Plataforma própria de atendimento automatizado: Evolution API (WhatsApp Web via Baileys ou Cloud API oficial da Meta) + agente OpenAI por instância + painel WhatsAI. Cada número = 1 instância com seu próprio agente.
 
-> Este README é o manual operacional do projeto. Atualizado em 10/11/2026 (revisão geral contra o código).
+> Este README é o manual operacional do projeto. Atualizado em 11/11/2026 (revisão geral contra o código).
+>
+> **Guia completo para pessoas e agentes de IA:** `readmes/GUIA-DO-PROJETO.md` — arquitetura, fluxos, MCP, painel,
+> deploy, testes, capturas e recomendações.
 >
 > **Canais:** os planos Essencial e Profissional usam **WhatsApp Web** (`WHATSAPP-BAILEYS`, QR code); o Premium usa a **Cloud API** (`WHATSAPP-BUSINESS`). O escritório de advocacia em produção usa Baileys. A **pausa humana** está validada em produção no Baileys. Na Cloud API ela funciona pelos ecos da **Coexistence** (`smb_message_echoes`), já tratados no código, mas **ainda não validados com um número real** (seção 12.7).
 
@@ -30,7 +33,7 @@ cron-job.org — GET / a cada 5 min (keep-alive) e, opcionais, POST /agenda/tick
 | API | URL do serviço web, configurada no painel do Render |
 | Site | `https://whatsaibr.vercel.app/` (página única; `/advocacia` e `/instagram` redirecionam para ela) |
 | Painel | `https://whatsaibr.vercel.app/manager` (login com a chave global) |
-| Manual | `https://whatsaibr.vercel.app/readme` (também no item **Manual** do painel) |
+| Manual | No GitHub (`README-WHATSAI.md`) e nos recursos MCP `whatsai://docs/*`; `/readme` e `/readmes/*` redirecionam para `/manager/` |
 | Banco | Neon: projeto principal + um projeto por instância com banco próprio (`docs/arquitetura/banco-por-instancia.md`) |
 | Keep-alive | job no cron-job.org (GET `/` a cada 5 min), configurado no painel do provedor |
 | Repo | repositório privado do projeto no GitHub (`origin`); o `main` publica no Render e na Vercel (seção 3) |
@@ -69,13 +72,13 @@ VERCEL_TOKEN="<token da Vercel>" npx -y vercel@65.2.0 deploy --prod --yes --arch
 
 ## 4. Painel, site e manual (build sem fonte)
 
-Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/*.py`: troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (hoje `?v=36`). Depois de qualquer patch: `python3 -I manager/patches/<nome>.py --check` em todos e `node --check` numa cópia `.mjs` do bundle. Se o manager for reconstruído do zero, reaplique todos.
+Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/` (`*.py`; no site, `landing-css.mjs` e `pwa-icons.mjs`): troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (o maior `CACHE_VERSION` dos patches; hoje `?v=48`). Depois de qualquer patch: `for f in manager/patches/*.py; do python3 -I "$f" --check; done` e `npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null`. Se o manager for reconstruído do zero, reaplique todos.
 
 | Área | Patch / arquivos | O que faz |
 |---|---|---|
 | Idioma e marca | `ptbr-only.py`, `login-clean.py`, `favicon-wa.py`, `render-style.py`, `home-redesign.py` | Painel só em PT-BR, login limpo, wordmark em texto, fonte Geist, telas de entrada |
 | Cores e tema | `theme.py` + `assets/theme.css?v=3` | Paleta "Meu Tema Global" (monocromática, raio 4 px, sem sombras), tema **Claro / Escuro / Sistema** (padrão Sistema, guardado em `localStorage` `wa-theme`). Cor só com significado: verde ok, âmbar atenção, vermelho erro |
-| Layout | `minimal.py`, `twenty-layout.py`, `ui-tables.py`, `dashboard-ui.py`, `responsive.py`, `panel-polish.py`, `credits-clean.py` | Barra de visão, painel lateral do contato, menu de comandos (Ctrl K), tabelas, "Primeiros passos", celular/tablet. Na lista de instâncias, a lateral mostra só Instâncias, Observabilidade, Chaves e credenciais, Manual e Sair. Sem créditos de autor no rodapé; em **Comportamento**, cada chave diz o efeito real e o valor recomendado (seção 4.1) |
+| Layout | `minimal.py`, `twenty-layout.py`, `ui-tables.py`, `dashboard-ui.py`, `responsive.py`, `panel-polish.py`, `credits-clean.py` | Barra de visão, painel lateral do contato, menu de comandos (Ctrl K), tabelas, "Primeiros passos", celular/tablet. Na lista de instâncias, a lateral mostra só Instâncias, Observabilidade, Chaves e credenciais, Retenção (LGPD) e Sair. Sem créditos de autor no rodapé; em **Comportamento**, cada chave diz o efeito real e o valor recomendado (seção 4.1) |
 | Conversas | `chat-ui.py`, `chat-guards.py` | Lista, balões, mídia sob demanda, páginas antigas; correção de dois travamentos |
 | Bot OpenAI | `openai-fields.py`, `openai-media.py` | `tokenParam`, pausa humana, estado da pausa por contato, mídia e memória (seções 12.1, 12.2, 12.9, 12.10) |
 | Nova instância | `db-mode.py` + `db-mode.css` | Escolha **Banco próprio / Compartilhado** com "Restam N de 100 projetos" |
@@ -83,8 +86,8 @@ Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/in
 | Leads | `leads.py` + `leads.css`, `leads-xlsx.py` | Página de triagem, linha Lead no painel do contato, "Ver planilha" (prévia no painel) e "Exportar planilha" em Excel (seção 16) |
 | Processos | `processos.py` + `processos.css` | Página com abas Processos, Publicações e Configurações (seção 17) |
 | Agenda | `agenda.py` + `agenda.css` | Semana/lista, novo agendamento, configurações, próximo agendamento no contato (seção 18) |
-| Google Agenda | `google-agenda.py` (+ `agenda.css?v=2`) | Botão "Conectar Google Agenda" na página Agenda, estado e "Desconectar" (seção 18.7) |
-| Observabilidade | `observability-ui.py`, `observability-grid.py`, `observability-alerts.py` | Página nativa com cartões por provedor e alertas (seção 10) |
+| Google Agenda | `google-agenda.py` (+ `agenda.css?v=3`) | Botão "Conectar Google Agenda" na página Agenda, estado e "Desconectar" (seção 18.7) |
+| Observabilidade | `observability-ui.py`, `observability-grid.py`, `observability-alerts.py` (+ `render-style-observability.js`) | Página nativa com cartões por provedor e alertas (seção 10) |
 | Chaves e credenciais | `credentials-vault.py` + `credentials-vault.css` | Só chave global: chaves de cada instância mascaradas e "mostrar" uma por vez (seção 2) |
 | Rotas | `root-redirect.py`, `manager/dist/vercel.json` | A home antiga nunca aparece; rotas SPA e `/observability` com rewrites antes do catch-all |
 | Acesso do cliente | `client-portal.py` + `assets/client-portal.js`, `client-portal.css`, `acesso/` | Itens **Conexão** (cliente) e **Acesso do cliente** (administrador), menu filtrado pelos módulos do código, página `/acesso` e app pelo navegador (seção 19) |
@@ -186,7 +189,7 @@ Header de autenticação: `apikey: <chave>`.
 
 ## 6. Planos e preços
 
-Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implantação por plano e **1 número por plano**; cada número adicional é outra instância, com mensalidade própria. Propostas enviadas antes mantêm os preços durante a validade. A versão para o cliente (com o que inclui, adicionais e condições) está no **Guia comercial** (`readmes/README-COMERCIAL.md`). Custos internos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora do repositório: este manual é público em `/readme`.
+Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implantação por plano e **1 número por plano**; cada número adicional é outra instância, com mensalidade própria. Propostas enviadas antes mantêm os preços durante a validade. A versão para o cliente (com o que inclui, adicionais e condições) está no **Guia comercial** (`readmes/README-COMERCIAL.md`). Custos internos, margens e roteiro de vendas ficam no Guia de Vendas interno, fora do repositório; este manual fica no repositório e nos recursos MCP `whatsai://docs/*`.
 
 | | Essencial | Profissional | Premium (API oficial) |
 |---|---:|---:|---:|
@@ -268,7 +271,7 @@ Página pública: `/seguranca` (`manager/dist/landing/seguranca.html`), ligada p
 
 ## 10. Observabilidade
 
-A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/instance/:instanceId/observability`) mostra, em um só lugar, storage/consumo/limites de Neon, Render, Vercel e GitHub Actions. O endpoint `GET /observability` exige o header `apikey` (chave global) e usa cache de 60 s; `?refresh=1` força a consulta. Ele apenas lê APIs externas, não grava no Postgres. A rota antiga `/observability` redireciona para a página nativa.
+A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/instance/:instanceId/observability`) mostra, em um só lugar, storage/consumo/limites de Neon, Render, Vercel e GitHub Actions. O endpoint `GET /observability` exige o header `apikey` (chave global) e usa cache de 60 s; `?refresh=1` força a consulta. Ele não grava nada, mas o cartão **Sistema** lê contagens do Postgres e a saúde OpenAI lê credenciais/bots. A rota antiga `/observability` redireciona para a página nativa.
 
 | Variável | Uso | Como obter |
 |---|---|---|
@@ -375,7 +378,7 @@ Problema resolvido: com `stopBotFromMe=true`, quando o dono escrevia (celular ou
 |---|---|
 | Dono escreve (celular, WhatsApp Web ou Desktop) com sessão existente | Sessão vai para `paused`; `parameters.humanLastMessageAt` = horário da mensagem humana. Atualizado a cada mensagem humana e nunca volta no tempo |
 | Dono escreve e **não existe sessão** | Cria uma sessão **já pausada** (o bot não entra). Exige que algum bot case com a mensagem: use `triggerType: "all"` ou configure o bot de fallback. Com bots só por palavra-chave e sem fallback, nenhuma sessão é criada |
-| Cliente escreve durante a pausa | Ignorado: sem resposta e sem gravar nada no banco. As mensagens **não ficam guardadas** para depois |
+| Cliente escreve durante a pausa | Ignorado: sem resposta e fora da sessão/histórico. A mensagem do cliente **já foi gravada em `Message`** antes da decisão (com `DATABASE_SAVE_DATA_NEW_MESSAGE=true`), mas não é usada para retomar a conversa |
 | Passaram X minutos desde a **última** mensagem humana e o cliente escreve | A sessão reabre e a mensagem do cliente é respondida **na hora** |
 | `humanResumeMinutes = 0` | Só volta manualmente (`changeStatus` `opened`) ou pela `keywordFinish` do cliente (fecha/apaga a sessão) |
 | Resposta do próprio bot (inclui partes do `splitMessages`) | **Não** pausa: os ids das mensagens enviadas pelo bot ficam registrados (TTL 10 min) e o eco é ignorado |
@@ -735,7 +738,7 @@ Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`
 | Integrações (planilha, CRM, Google Calendar) | **Serviço sob medida** | Via webhook (`MESSAGES_UPSERT`, `OPENAI_CHANGE_STATUS`) e n8n. O `functionUrl` e o modo Assistants **não estão disponíveis**: a OpenAI desligou a Assistants API em 26/08/2026. A Agenda exporta um feed ICS (somente leitura) e conecta o Google Agenda do cliente (seção 18.7) |
 | Relatório mensal | **Serviço manual** | Não existe relatório automático. Fonte: uso do project key na OpenAI, sessões e Observabilidade |
 | Contagem da franquia de respostas | Automático (desde 03/11/2026) | Contador por instância, dia e contato (seção 15). As mensagens em si continuam sem marcação de origem no banco |
-| Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela (inclusive chave OpenAI sem crédito); não envia aviso por e-mail ou WhatsApp |
+| Monitoramento e alertas | Painel do operador | A Observabilidade mostra limites e alertas na tela (inclusive chave OpenAI sem crédito) e envia avisos por WhatsApp ao administrador (`ADMIN_ALERT_NUMBERS` + `ADMIN_ALERT_INSTANCE`), no máximo a cada 6 h; não envia e-mail |
 | Saúde da chave OpenAI do cliente | Automático (desde 10/11/2026) | Situação pela última resposta + teste ativo; sem saldo em dólares (seção 12.11) |
 | Lembretes de consulta | Automático com a Agenda ligada | WhatsApp Web (Baileys). Na Cloud API só funcionam dentro da janela de 24 h (fora dela exigiriam template pago, não implementado) |
 | Retenção de 90 dias | Automático, prazo escolhido no painel (Retenção (LGPD)) para todas as instâncias | Desligado por padrão: ligue depois do backup (seção 7) |
