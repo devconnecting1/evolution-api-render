@@ -183,6 +183,7 @@ export class AgendaController {
         appointment: await this.agenda.cancelAppointment(row.id, String(instance.id), {
           notifyClient: notify,
           by: 'manual',
+          reason: typeof instance.reason === 'string' ? instance.reason : null,
         }),
       };
     } catch (error) {

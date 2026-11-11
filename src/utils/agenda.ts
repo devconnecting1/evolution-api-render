@@ -33,6 +33,12 @@ export type AppointmentType = {
   location: string | null;
   /** "O que levar" / instructions, sent in the confirmation and the reminders. */
   instructions: string | null;
+  /** Paused types stay in the panel and in the existing appointments, but the AI does not offer or book them. */
+  active: boolean;
+  /** At most this many appointments of the type per local day ("Limit booking frequency"); null = no limit. */
+  maxPerDay: number | null;
+  /** Minimum notice for this type, in hours (overrides the agenda's); null = the agenda's. */
+  minNoticeHours: number | null;
 };
 
 /** Whole days from `start` to `end` (inclusive, YYYY-MM-DD); with `from`/`to` only that part of each day. */
@@ -70,7 +76,7 @@ export type AiPermissions = {
   showOtherEventDetails: boolean;
 };
 
-export type Interval = { start: Date; end: Date; id?: string };
+export type Interval = { start: Date; end: Date; id?: string; typeName?: string | null };
 
 export const AGENDA_MODES: AgendaMode[] = ['presencial', 'online', 'telefone'];
 export const AGENDA_PROVIDERS: AgendaProviderName[] = ['internal'];
@@ -125,7 +131,18 @@ export function defaultAvailability(): WeekSchedule {
 }
 
 export function defaultAppointmentTypes(): AppointmentType[] {
-  return [{ name: 'Atendimento inicial', minutes: 30, mode: 'presencial', location: null, instructions: null }];
+  return [
+    {
+      name: 'Atendimento inicial',
+      minutes: 30,
+      mode: 'presencial',
+      location: null,
+      instructions: null,
+      active: true,
+      maxPerDay: null,
+      minNoticeHours: null,
+    },
+  ];
 }
 
 /** No row in AgendaSettings: the agenda is off. */
@@ -162,6 +179,12 @@ export function defaultAgendaSettings(): AgendaSettings {
 const intIn = (value: unknown, min: number, max: number, fallback: number): number => {
   const n = typeof value === 'number' ? value : Number(value);
   return Number.isInteger(n) && n >= min && n <= max ? n : fallback;
+};
+/** Optional integer in [min, max]; empty or invalid = null. */
+const intOrNull = (value: unknown, min: number, max: number): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isInteger(n) && n >= min && n <= max ? n : null;
 };
 
 const textOrNull = (value: unknown, max = MAX_TEXT): string | null =>
@@ -232,6 +255,10 @@ export function normalizeTypes(value: unknown): AppointmentType[] {
       mode: AGENDA_MODES.includes(type.mode) ? (type.mode as AgendaMode) : 'presencial',
       location: textOrNull(type.location, 300),
       instructions: textOrNull(type.instructions, MAX_TEXT),
+      active: type.active !== false,
+      // camelCase (REST, panel) or snake_case (MCP)
+      maxPerDay: intOrNull(type.maxPerDay ?? type.max_per_day, 1, 100),
+      minNoticeHours: intOrNull(type.minNoticeHours ?? type.min_notice_hours, 0, 720),
     }))
     .filter((type) => {
       const key = foldText(type.name);
@@ -423,7 +450,8 @@ export function foldText(value: unknown): string {
 }
 
 export function findType(settings: AgendaSettings, name?: string | null): AppointmentType | null {
-  if (!name) return settings.appointmentTypes[0] ?? null;
+  if (!name)
+    return settings.appointmentTypes.find((type) => type.active !== false) ?? settings.appointmentTypes[0] ?? null;
   const wanted = foldText(name);
   return (
     settings.appointmentTypes.find((type) => foldText(type.name) === wanted) ??
@@ -520,6 +548,8 @@ export type SlotOptions = {
   limit?: number;
   /** Busy interval ignored (the appointment being rescheduled). */
   ignoreId?: string;
+  /** The type being booked: its own minimum notice and per-day limit apply. */
+  type?: AppointmentType | null;
 };
 
 /**
@@ -536,9 +566,16 @@ export function generateSlots(settings: AgendaSettings, options: SlotOptions): I
   const days = Math.max(1, Math.min(options.days ?? 7, 366));
   const duration = options.durationMinutes ?? settings.slotMinutes;
   const step = settings.slotMinutes;
-  const earliest = now.getTime() + settings.minNoticeHours * 3_600_000;
+  const notice = options.type?.minNoticeHours ?? settings.minNoticeHours;
+  const earliest = now.getTime() + notice * 3_600_000;
   const latest = now.getTime() + settings.maxDaysAhead * 86_400_000;
   const busy = options.busy.filter((item) => !options.ignoreId || item.id !== options.ignoreId);
+  const maxPerDay = options.type?.maxPerDay ?? null;
+  const typeKey = options.type ? foldText(options.type.name) : '';
+  const bookedOn = (day: string) =>
+    busy.filter(
+      (item) => item.typeName && foldText(item.typeName) === typeKey && zonedParts(item.start, tz).day === day,
+    ).length;
   const result: Interval[] = [];
 
   for (let index = 0; index < days; index++) {
@@ -548,6 +585,7 @@ export function generateSlots(settings: AgendaSettings, options: SlotOptions): I
 
     const blocked = blockedRange(settings, day);
     if (blocked === 'all') continue;
+    if (maxPerDay !== null && bookedOn(day) >= maxPerDay) continue;
 
     for (const [from, to] of settings.availability[DAY_KEYS[weekdayOf(day)] as DayKey] ?? []) {
       const end = toMinutes(to);
@@ -576,9 +614,10 @@ export function isBookableSlot(
   busy: Interval[],
   now: Date,
   ignoreId?: string,
+  type?: AppointmentType | null,
 ): boolean {
   const day = zonedParts(start, settings.timezone).day;
-  return generateSlots(settings, { now, fromDay: day, days: 1, durationMinutes, busy, ignoreId }).some(
+  return generateSlots(settings, { now, fromDay: day, days: 1, durationMinutes, busy, ignoreId, type }).some(
     (slot) => slot.start.getTime() === start.getTime(),
   );
 }
