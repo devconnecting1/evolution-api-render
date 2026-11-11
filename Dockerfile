@@ -1,5 +1,5 @@
 # Exact version: a floating tag may reuse a cached, unpatched layer (Node 24 CVEs of Oct/2026, #2761). Dependabot bumps it.
-FROM node:24.22.2-alpine AS builder
+FROM node:24.22.3-alpine AS builder
 
 RUN apk update && \
     apk add --no-cache git ffmpeg wget curl bash openssl
@@ -40,7 +40,7 @@ RUN ./Docker/scripts/generate_database.sh
 # (the Render build pipeline has 8 GB). Build stage only, the final image does not inherit it.
 RUN NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
-FROM node:24.22.2-alpine AS final
+FROM node:24.22.3-alpine AS final
 
 RUN apk update && \
     apk add tzdata ffmpeg bash openssl
