@@ -27,6 +27,15 @@ describe('wrong-key throttle', () => {
     assert.equal(t.isBlocked(null), false);
   });
 
+  test('TRUSTED_CLIENT_IP_HEADER picks the header (and the entry of a list header)', () => {
+    const h = { 'x-forwarded-for': '198.51.100.1, 203.0.113.9', 'x-real-ip': '192.0.2.4' };
+    assert.equal(clientIp(h, 'x-forwarded-for'), '198.51.100.1');
+    assert.equal(clientIp(h, 'x-forwarded-for:first'), '198.51.100.1');
+    assert.equal(clientIp(h, 'x-forwarded-for:last'), '203.0.113.9');
+    assert.equal(clientIp(h, 'cf-connecting-ip, x-real-ip'), '192.0.2.4', 'tried in order');
+    assert.equal(clientIp({ 'x-real-ip': 'not an ip' }, 'x-real-ip'), null);
+  });
+
   test('blocks after MAX_FAILURES in the window, for BLOCK_MS, per IP', () => {
     let now = 1_000_000;
     const t = new AuthThrottle(() => now);
