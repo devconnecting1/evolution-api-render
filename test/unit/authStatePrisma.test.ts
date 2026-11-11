@@ -426,6 +426,39 @@ describe('Prisma auth state: durable Signal keys', () => {
     assert.equal(prisma.rowCount(sessionId), 0);
   });
 
+  test('creds.update with nothing changed does not touch the database (Neon stays asleep)', async () => {
+    pairedSession(prisma, sessionId);
+    const { state, saveCreds } = await open();
+    const writes = () => (prisma.calls['session.update'] ?? 0) + (prisma.calls['session.create'] ?? 0);
+    const reads = () => prisma.calls['session.findUnique'] ?? 0;
+    const readsAfterOpen = reads();
+
+    await saveCreds();
+    await saveCreds();
+    assert.equal(writes(), 0, 'same bytes as the row: skipped');
+    assert.equal(reads(), readsAfterOpen, 'not even the existence check');
+
+    (state.creds as any).routingInfo = Buffer.from([1, 2, 3]);
+    await saveCreds();
+    assert.equal(writes(), 1, 'a real change is written');
+    await saveCreds();
+    assert.equal(writes(), 1, 'and only once');
+  });
+
+  test('a failed creds write is retried on the next save, even with the same bytes', async () => {
+    const { state, saveCreds } = await open();
+    const updates = () => prisma.calls['session.update'] ?? 0;
+    (state.creds as any).registrationId = 7;
+    prisma.state.failWrites = true;
+    await saveCreds();
+    prisma.state.failWrites = false;
+    const before = updates();
+    await saveCreds();
+    assert.equal(updates(), before + 1);
+    const stored = JSON.parse(JSON.parse(prisma.sessions.get(sessionId).creds), BufferJSON.reviver);
+    assert.equal(stored.registrationId, 7);
+  });
+
   test('without Redis (local files) the keys are written through and restored from the table too', async () => {
     redisConf().ENABLED = false;
     pairedSession(prisma, sessionId);

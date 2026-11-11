@@ -12,7 +12,7 @@ import path from 'path';
 /**
  * Auth state of a Baileys instance when DATABASE_SAVE_DATA_INSTANCE is on.
  *
- * - `creds` live in the `Session` table (unchanged).
+ * - `creds` live in the `Session` table; a save whose bytes are the same as the last one written is skipped.
  * - Every other Signal key (pre-keys, sessions, sender-keys, app-state-sync-keys, lid-mappings...) is kept in a fast
  *   layer, Redis (CACHE_REDIS_ENABLED) or local files, AND written through to the `AuthStateKey` table. Redis may lose
  *   them (no persistence, LRU eviction, restart): a read that misses the fast layer falls back to the table and puts
@@ -63,26 +63,30 @@ export async function keyExists(sessionId: string, prisma: AuthStatePrisma = pri
   }
 }
 
+/** Writes the creds row; true when it reached the database (errors are swallowed: Baileys must not crash). */
 export async function saveKey(
   sessionId: string,
   keyJson: any,
   prisma: AuthStatePrisma = prismaRepository,
-): Promise<any> {
+): Promise<boolean> {
   const exists = await keyExists(sessionId, prisma);
   try {
-    if (!exists)
-      return await prisma.session.create({
+    if (!exists) {
+      await prisma.session.create({
         data: {
           sessionId: sessionId,
           creds: JSON.stringify(keyJson),
         },
       });
+      return true;
+    }
     await prisma.session.update({
       where: { sessionId: sessionId },
       data: { creds: JSON.stringify(keyJson) },
     });
+    return true;
   } catch {
-    return null;
+    return false;
   }
 }
 
@@ -349,23 +353,33 @@ export default async function useMultiFileAuthStatePrisma(
     absent.set(key, Date.now());
   }
 
-  // ---- creds (Session table), unchanged ---------------------------------------------------------------------------
+  // ---- creds (Session table) ---------------------------------------------------------------------------------------
+  // Baileys fires creds.update even when nothing in the creds changed (measured on 11/11/2026: every 10 minutes, all
+  // night, the same bytes). Each save was a SELECT + UPDATE that woke the Neon compute (free plan: CU-hours). The last
+  // string that reached the table is kept in memory and an identical save is skipped; any real change is written as
+  // before, and a failed write is retried on the next save.
+  let savedCreds: string | null = null;
 
   async function readCreds(): Promise<any> {
     try {
       const rawData = await getAuthKey(sessionId, prisma);
-      return JSON.parse(rawData, BufferJSON.reviver);
+      const parsed = JSON.parse(rawData, BufferJSON.reviver);
+      savedCreds = typeof rawData === 'string' ? rawData : null;
+      return parsed;
     } catch {
       return null;
     }
   }
 
   async function writeCreds(data: any): Promise<void> {
-    await saveKey(sessionId, JSON.stringify(data, BufferJSON.replacer), prisma);
+    const serialized = JSON.stringify(data, BufferJSON.replacer);
+    if (serialized === savedCreds) return;
+    if (await saveKey(sessionId, serialized, prisma)) savedCreds = serialized;
   }
 
   async function removeCreds(): Promise<any> {
     absent.clear();
+    savedCreds = null;
     try {
       await enqueue(sessionId, () => prisma.authStateKey.deleteMany({ where: { sessionId } }));
       logger.info({ action: 'auth.keys.db.delete', sessionId });
