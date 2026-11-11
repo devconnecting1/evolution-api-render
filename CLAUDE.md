@@ -63,6 +63,8 @@ Nos testes, `test/helpers/setup.ts` troca o `@api/server.module` por um proxy: p
   `npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null`.
 - Páginas novas preferem um script próprio (como `client-portal.js`) a JSX escrito no patch. O layout é um só
   (`app-shell.py`, estilo do bloco Sidebar do shadcn): sidebar em todas as páginas, altura da tela, só o conteúdo rola.
+  As páginas da instância usam o mesmo layout (`instance-shell.py` + `instance-shell.css`, carregado por último):
+  ao mexer no layout `un`, na barra `zM` ou no menu `j5`, rode esse patch de novo e confira 390/768/1024/1440 claro e escuro.
   Ao mudar um CSS/JS, suba o `?v=` dele no `index.html`.
 - Visual: só os tokens `var(--m-*)`, tema padrão **Sistema** (claro e escuro mantidos), fonte Geist, cor só com
   significado (verde ok, âmbar atenção, vermelho erro). Confira com capturas a 390 e 1440 px, claro e escuro, com a
