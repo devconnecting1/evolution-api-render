@@ -905,6 +905,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 - Painel: `manager/patches/`, `manager/dist/vercel.json`, `test/unit/security.test.ts`
 - CI: `.github/workflows/check_code_quality.yml`, `.github/workflows/deploy-manager.yml`,
   `.github/workflows/security-scan.yml`
+- Segurança/Baileys: [`docs/seguranca-baileys-rc14.md`](../docs/seguranca-baileys-rc14.md) — por que o rc14 ainda
+  não pode subir e o plano de validação.
 
 ---
 
