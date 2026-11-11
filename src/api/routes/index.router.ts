@@ -22,6 +22,7 @@ import { BusinessRouter } from './business.router';
 import { CallRouter } from './call.router';
 import { ChatRouter } from './chat.router';
 import { ClientAccessRouter } from './client-access.router';
+import { ClientIpRouter } from './client-ip.router';
 import { AdminCredentialsRouter } from './credentials.router';
 import { GroupRouter } from './group.router';
 import { InstanceRouter } from './instance.router';
@@ -256,6 +257,8 @@ router
   // Neon project quota and database wake log: global key only, never touch the database
   // Retenção das mensagens (LGPD): só a chave global
   .use('/admin/retention', new RetentionRouter().router)
+  // IP do cliente que o limite de chaves erradas usa (diagnóstico, só a chave global)
+  .use('/admin/client-ip', new ClientIpRouter().router)
   .use('/admin', new AdminDbRouter().router)
   // "Chaves e credenciais": only the global key (adminOnlyGuard), never an instance token
   .use(
