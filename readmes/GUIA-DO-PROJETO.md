@@ -567,8 +567,8 @@ HTML de `manager/dist`, atualize o hash SHA-256 em `manager/dist/vercel.json` (o
   `Docker/scripts/deploy_database.sh` (migrations) antes de `npm run start:prod`.
 - O plano Free dorme após ~15 min sem tráfego; um job no cron-job.org faz `GET /` a cada 5 min. A primeira
   chamada após dormir pode levar ~50 s.
-- **Mudanças em `src/`, `prisma/`, `Dockerfile` ou `render.yaml` reiniciam a API (~4 min).** Em horário comercial
-  (9h–19h, Brasília), só faça o merge com OK do dono; fora disso, pode.
+- **Mudanças em `src/`, `prisma/`, `Dockerfile` ou `render.yaml` reiniciam a API (~4 min).** O dono autorizou o
+  merge a qualquer hora com a suíte verde; depois, confira o deploy `live` e a instância `open`.
 - Mudanças só estáticas (`manager/dist`, docs, `scripts/`) terminam o título do squash com `[skip render]`.
 
 ### 11.2 Vercel (site e painel)
@@ -614,12 +614,14 @@ publique valores. Se um token vazar, rotacione no provedor e no Render.
 ### 11.5 Fluxo de branch, PR e deploy
 
 1. Uma branch por tarefa a partir de `origin/main`.
-2. PR no formato de `.github/pull_request_template.md`.
-3. CI verde (`Check Code Quality`).
-4. Squash merge com `commit_message` explícita (Conventional Commits, cabeçalho ≤100 chars).
-5. Push com `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
-6. `[skip render]` no título do squash quando a mudança é só estática.
-7. Depois de deploy que reinicia a API, confira o deploy `live` no Render e o estado da instância (`open`).
+2. Rode a suíte completa (unitários, tipos, lint e integração) e faça o push com
+   `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
+3. Abra o PR no formato de `.github/pull_request_template.md`; o CI precisa ficar verde.
+4. Agentes que só desenvolvem (DeepSeek, Cursor e outros) **param aqui**. O Claude Code do dono (com os MCPs de
+   Neon, Render, Vercel e WhatsAI) revisa e faz o squash com `commit_message` explícita (Conventional Commits,
+   cabeçalho ≤100 chars) assim que a suíte estiver verde, a qualquer hora.
+5. `[skip render]` no título do squash quando a mudança é só estática.
+6. Depois de deploy que reinicia a API, confira o deploy `live` no Render e o estado da instância (`open`).
 
 ### 11.6 Conferências somente-leitura (produção)
 
@@ -726,6 +728,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 - O thread principal revisa, consolida e fica com o que é **dependente ou sensível**: deploy, produção, WhatsApp
   do cliente e qualquer ação destrutiva.
 - Registre as decisões e mudanças no PR, em PT-BR, com recomendações.
+- **Merge:** agentes que só desenvolvem abrem o PR, deixam o CI verde e param. O Claude Code do dono (com os MCPs
+  de Neon, Render, Vercel e WhatsAI) revisa e faz o merge assim que a suíte estiver verde, a qualquer hora.
 
 ### 13.2 Nunca
 
@@ -738,6 +742,10 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 - Identificador de modelo de IA em commits, PRs ou código.
 - Commitar o `.gitignore` local (um plugin do ambiente o altera; é sempre ` M .gitignore` e fica fora).
 - Mandar `reasoning_effort` à OpenAI.
+- Fazer merge de PR sendo um agente que só desenvolve (DeepSeek, Cursor e outros): só o Claude Code do dono faz.
+- Fazer merge sem a suíte completa verde (unitários, tipos, lint e integração).
+- Usar emojis em código, docs, commits, PRs ou respostas.
+- Usar runner self-hosted ou pago nos workflows; sempre `ubuntu-latest` (GitHub-hosted, gratuito).
 
 ### 13.3 Antes de mexer
 
@@ -746,7 +754,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
    são estáticos (`[skip render]`).
 3. Se for mudar banco, planeje migration aditiva nos dois providers e nos três schemas; crie snapshot no Neon.
 4. Se for mudar o painel, rode os `--check` dos patches e o esbuild; se mudar HTML inline, atualize a CSP.
-5. Rode os testes e o lint antes do push; abra o PR no template; faça squash com mensagem explícita.
+5. Rode a suíte completa e o lint antes do push; abra o PR no template e pare. Não faça merge: o dono/Claude Code
+   dele revisa e aprova. Workflows sempre em `ubuntu-latest`.
 
 ### 13.4 Onde olhar primeiro
 

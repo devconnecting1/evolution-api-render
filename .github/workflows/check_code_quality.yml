@@ -13,6 +13,11 @@ on:
       - "runWithProvider.js"
       - "test/**"
       - ".eslintrc.js"
+      - "Dockerfile"
+      - "Docker/**"
+      - "render.yaml"
+      - "manager/**"
+      - "scripts/**"
       - ".github/workflows/check_code_quality.yml"
   push:
     branches: [main, develop]
@@ -26,6 +31,11 @@ on:
       - "runWithProvider.js"
       - "test/**"
       - ".eslintrc.js"
+      - "Dockerfile"
+      - "Docker/**"
+      - "render.yaml"
+      - "manager/**"
+      - "scripts/**"
       - ".github/workflows/check_code_quality.yml"
   workflow_dispatch:
 
