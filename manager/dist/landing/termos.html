@@ -1,0 +1,312 @@
+<!doctype html>
+<!--
+  WhatsAI: termos de uso (servidos em "/termos" pelo manager/dist/vercel.json). Link da tela de consentimento do
+  Google e do rodapé do site. Mesmo cabeçalho, ícones, rodapé e estilos de /privacidade (assets/security.css).
+  REGRA: os termos dizem o que o serviço faz de verdade (planos sem fidelidade, 30 dias de aviso, franquia da IA,
+  canal pelo QR code não oficial). Ao mudar preço, prazo ou recurso, mude esta página, a seção 6 do README e o site.
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#10100e" media="(prefers-color-scheme: dark)" />
+    <title>Termos de uso · WhatsAI</title>
+    <meta name="description" content="Regras de uso do WhatsAI: o que o serviço faz, responsabilidades da empresa e do WhatsAI, limites da IA, planos, cancelamento e encerramento." />
+    <link rel="canonical" href="https://whatsaibr.vercel.app/termos" />
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg?v=3" />
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=3" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="WhatsAI" />
+    <meta property="og:url" content="https://whatsaibr.vercel.app/termos" />
+    <meta property="og:title" content="Termos de uso · WhatsAI" />
+    <meta
+      property="og:description"
+      content="Regras de uso do WhatsAI, em linguagem clara."
+    />
+    <meta property="og:image" content="https://whatsaibr.vercel.app/assets/images/og-whatsai.png?v=2" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="WhatsAI: atendimento com IA no WhatsApp. Seu WhatsApp responde em segundos, a qualquer hora; sua equipe assume quando quiser." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Termos de uso · WhatsAI" />
+    <meta
+      name="twitter:description"
+      content="Regras de uso do WhatsAI, em linguagem clara."
+    />
+    <meta name="twitter:image" content="https://whatsaibr.vercel.app/assets/images/og-whatsai.png?v=2" />
+
+    <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/landing.bundle.css?v=e4e7c05357" />
+    <!-- whatsai-patch:theme:landing -->
+    <script src="/assets/landing.js?v=5" defer></script>
+      </head>
+  <body data-wa-origin="site" class="sec-page">
+    <!-- ícones de linha (traço 1.5, cantos arredondados), desenhados à mão -->
+    <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+        <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6" /></symbol>
+        <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></symbol>
+        <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+        <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3" /><path d="M12 4v4M9 13h.01M15 13h.01M9.5 17h5" /></symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M10 9v6M14 9v6" /></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></symbol>
+        <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0014 0M12 18v3" /></symbol>
+        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 16l-5-5-9 9" /></symbol>
+        <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></symbol>
+        <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4" /></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" /><path d="M8.5 12l2.5 2.5 4.5-4.5" /></symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0116 0" /></symbol>
+        <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></symbol>
+        <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0z" /></symbol>
+        <symbol id="i-health" viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.5 4.5 0 018-2.8A4.5 4.5 0 0120 10c0 6.2-8 11-8 11z" /><path d="M9 12h2v-2h2v2h2v2h-2v2h-2v-2H9z" /></symbol>
+        <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6z" /><path d="M9 8V6a3 3 0 016 0v2" /></symbol>
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10M10 20v-6h4v6" /></symbol>
+        <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 005 5L13 17l-3 3-6-6 3-3 6.5-6.5a4 4 0 001 1z" /></symbol>
+        <symbol id="i-gym" viewBox="0 0 24 24"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12" /></symbol>
+        <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v15H6a2 2 0 00-2 2z" /><path d="M4 20a2 2 0 002 2h13v-4" /></symbol>
+        <symbol id="i-food" viewBox="0 0 24 24"><path d="M5 3v8a2 2 0 002 2h0a2 2 0 002-2V3M7 3v18M16 21V3c2.5 1 4 4 4 7.5V13h-4" /></symbol>
+        <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M8.2 7.8L20 19M8.2 16.2L20 5" /></symbol>
+        <symbol id="i-pet" viewBox="0 0 24 24"><circle cx="5.5" cy="10" r="1.8" /><circle cx="9.5" cy="5.5" r="1.8" /><circle cx="14.5" cy="5.5" r="1.8" /><circle cx="18.5" cy="10" r="1.8" /><path d="M12 11c-3 0-6 4.5-6 7a2.5 2.5 0 003.5 2.3c1.6-.7 3.4-.7 5 0A2.5 2.5 0 0018 18c0-2.5-3-7-6-7z" /></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /></symbol>
+        <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2" /></symbol>
+        <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5" /><path d="M11 18.5h2" /></symbol>
+        <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5" /><rect x="3" y="13" width="18" height="7" rx="1.5" /><path d="M7 7.5h.01M7 16.5h.01" /></symbol>
+        <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="8" ry="2.5" /><path d="M4 5.5v13c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-13M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5" /></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2z" /><path d="M12 10v5M12 18h.01" /></symbol>
+        <symbol id="i-redo" viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7" /><path d="M20 4v7h-7" /></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M9 9l6 6M15 9l-6 6" /></symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
+        <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
+        <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16" /></symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h8" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></symbol>
+        <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 103-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></symbol>
+        <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z" /></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></symbol>
+        <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 5 8 6 8 9s-8 4-8 9M16 3c0 5-8 6-8 9s8 4 8 9" /></symbol>
+        <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.8 2.8L16.5 9.5" /></symbol>
+        <!-- ícones do painel atual (mockups) -->
+        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></symbol>
+        <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M3.3 18a9 9 0 1117.4 0" /><path d="M12 14l4-4" /></symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8" /></symbol>
+        <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4" /></symbol>
+        <symbol id="i-sort" viewBox="0 0 24 24"><path d="M7 20V4M4 7l3-3 3 3M11 8h9M11 12h7M11 16h4" /></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" /></symbol>
+        <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9" /><path d="M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4" /></symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M10 8.8v6.4l5-3.2z" /></symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z" /></symbol>
+        <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M8 3v4M16 3v4M3.5 10h17" /></symbol>
+        <symbol id="i-msgs" viewBox="0 0 24 24"><path d="M14 9a2 2 0 01-2 2H6l-4 4V4a2 2 0 012-2h8a2 2 0 012 2z" /><path d="M18 9h2a2 2 0 012 2v11l-4-4h-6a2 2 0 01-2-2v-1" /></symbol>
+        <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M15 4v16" /></symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" /></symbol>
+        <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 004 0" /></symbol>
+      </defs>
+    </svg>
+
+    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+    <header class="site-head" data-head>
+      <div class="wrap head-in">
+        <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+        <nav class="nav" id="menu" aria-label="Principal" data-nav>
+          <ul class="nav-links">
+            <li><a href="/#como-funciona">Como funciona</a></li>
+            <li class="nav-opt"><a href="/#recursos">Recursos</a></li>
+            <li><a href="/#segmentos">Segmentos</a></li>
+            <li><a href="/#planos">Planos</a></li>
+            <li><a href="/#duvidas">Dúvidas</a></li>
+            <li><a href="/seguranca">Segurança</a></li>
+          </ul>
+          <div class="nav-end">
+            <a class="btn btn-quiet btn-sm" href="/manager/login">Entrar no painel</a>
+            <a class="btn btn-primary btn-sm" href="/#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
+          </div>
+        </nav>
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" data-menu>
+          <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
+          <span class="sr">Abrir menu</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="section legal" aria-labelledby="terms-title">
+        <div class="wrap legal-in">
+          <p class="eyebrow">Termos de uso</p>
+          <h1 id="terms-title" class="h2">Regras de uso do WhatsAI</h1>
+          <p class="legal-meta">Atualizados em 11 de novembro de 2026.</p>
+          <p>
+            Estes termos valem para as empresas e profissionais que contratam o WhatsAI e para quem usa o painel em nome
+            delas. Ao usar o serviço, você concorda com eles. A proposta comercial assinada com cada empresa pode trazer
+            condições específicas; quando houver diferença, vale a proposta. O tratamento de dados está na
+            <a href="/privacidade">Política de privacidade</a>.
+          </p>
+
+          <nav class="sec-toc legal-toc" aria-label="Nesta página">
+            <ol>
+              <li><a href="#servico"><span class="sec-toc-n">[1]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>O que é o serviço</span></a></li>
+              <li><a href="#empresa"><span class="sec-toc-n">[2]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Responsabilidades da empresa</span></a></li>
+              <li><a href="#ia"><span class="sec-toc-n">[3]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Limites da IA</span></a></li>
+              <li><a href="#proibido"><span class="sec-toc-n">[4]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>O que não é permitido</span></a></li>
+              <li><a href="#planos"><span class="sec-toc-n">[5]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Planos, pagamento e cancelamento</span></a></li>
+              <li><a href="#disponibilidade"><span class="sec-toc-n">[6]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Disponibilidade e terceiros</span></a></li>
+              <li><a href="#dados"><span class="sec-toc-n">[7]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Dados e privacidade</span></a></li>
+              <li><a href="#responsabilidade"><span class="sec-toc-n">[8]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Responsabilidade do WhatsAI</span></a></li>
+              <li><a href="#encerramento"><span class="sec-toc-n">[9]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Suspensão e encerramento</span></a></li>
+              <li><a href="#gerais"><span class="sec-toc-n">[10]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Disposições gerais</span></a></li>
+            </ol>
+          </nav>
+
+          <h2 id="servico" class="h4">1. O que é o serviço</h2>
+          <p>
+            O WhatsAI responde o WhatsApp da empresa com inteligência artificial, seguindo as instruções definidas na
+            implantação, e oferece um painel para a equipe acompanhar as conversas, pausar a IA, organizar os atendimentos
+            (Leads), agendar (Agenda) e, quando contratado, acompanhar processos judiciais por fontes públicas.
+          </p>
+          <ul class="legal-list">
+            <li><strong>WhatsApp pelo QR code</strong>: usa o WhatsApp Web, que <strong>não é um canal oficial</strong> da Meta. O número pode ser limitado ou bloqueado pelo WhatsApp, principalmente com envio em massa. A empresa escolhe esse canal ciente do risco.</li>
+            <li><strong>WhatsApp Cloud API</strong>: canal oficial da Meta, com regras, aprovação e cobranças da própria Meta, pagas pela empresa.</li>
+          </ul>
+
+          <h2 id="empresa" class="h4">2. Responsabilidades da empresa</h2>
+          <ul class="legal-list">
+            <li><strong>Informar os contatos</strong> de que o atendimento usa IA e ter base legal (LGPD) para tratar os dados de quem conversa com ela. A empresa é a controladora desses dados.</li>
+            <li><strong>Cuidar das instruções da IA</strong> e das informações que passa para ela (horários, serviços, endereços), mantendo tudo correto e atualizado.</li>
+            <li><strong>Acompanhar o atendimento</strong>: conferir as conversas, assumir quando necessário (a IA pausa sozinha quando a equipe responde) e responder os casos que a IA encaminha.</li>
+            <li><strong>Seguir as regras da sua profissão</strong> (por exemplo, o Código de Ética da OAB e o Provimento 205/2021 para advocacia) e as políticas do WhatsApp.</li>
+            <li><strong>Guardar as credenciais</strong>: chave do painel, códigos de acesso do cliente e chave da OpenAI (quando for da empresa). Avise o WhatsAI se suspeitar de vazamento.</li>
+          </ul>
+
+          <h2 id="ia" class="h4">3. Limites da IA</h2>
+          <p>
+            A IA ajuda no atendimento, mas <strong>pode errar ou entender mal</strong>. Ela não dá parecer jurídico, diagnóstico
+            médico ou qualquer orientação profissional, não promete resultado e encaminha à equipe o que exige decisão de
+            uma pessoa. Decisões tomadas com base nas respostas da IA, sem a conferência da equipe, são de responsabilidade
+            da empresa. Os andamentos de processos vêm de bases públicas do Judiciário, podem atrasar dias e
+            <strong>não substituem</strong> a consulta aos sistemas oficiais de intimação.
+          </p>
+
+          <h2 id="proibido" class="h4">4. O que não é permitido</h2>
+          <ul class="legal-list">
+            <li>Enviar mensagens em massa não solicitadas (spam), golpes, conteúdo ilegal, discriminatório ou que engane o contato.</li>
+            <li>Usar o serviço para coletar dados sem base legal, vigiar pessoas ou fazer perfil de contatos para outros fins.</li>
+            <li>Tentar acessar dados de outras empresas, burlar limites, fazer engenharia reversa ou atacar o sistema.</li>
+            <li>Revender ou repassar o acesso a terceiros sem acordo por escrito com o WhatsAI.</li>
+          </ul>
+          <p>O descumprimento pode levar à suspensão imediata quando houver risco a terceiros ou ao sistema.</p>
+
+          <h2 id="planos" class="h4">5. Planos, pagamento e cancelamento</h2>
+          <ul class="legal-list">
+            <li>Os valores são os do plano contratado (veja <a href="/#planos">Planos</a>). A <strong>implantação</strong> é cobrada uma vez; a <strong>mensalidade</strong> é mês a mês, <strong>sem fidelidade</strong>.</li>
+            <li>Cada plano tem uma <strong>franquia de respostas da IA</strong> por mês. Acima dela, cobra-se o excedente previsto no plano, ou a IA pausa, conforme a configuração combinada; o painel mostra o uso em tempo real.</li>
+            <li><strong>Cancelamento</strong> quando quiser, com 30 dias de aviso e sem multa. A implantação já realizada não é devolvida.</li>
+            <li>Com pagamento em atraso, o WhatsAI avisa antes e pode suspender o atendimento da IA até a regularização.</li>
+            <li>Mudanças de preço são avisadas com pelo menos 30 dias de antecedência.</li>
+          </ul>
+
+          <h2 id="disponibilidade" class="h4">6. Disponibilidade e serviços de terceiros</h2>
+          <p>
+            O WhatsAI trabalha para manter o serviço no ar, mas não garante funcionamento sem interrupções: ele depende de
+            serviços de terceiros (WhatsApp/Meta, OpenAI, Google, hospedagem e banco de dados), que têm seus próprios termos
+            e podem falhar ou mudar. Manutenções são feitas, sempre que possível, fora do horário comercial. Quando um
+            terceiro falha, o WhatsAI avisa e trabalha para restabelecer o atendimento o quanto antes.
+          </p>
+
+          <h2 id="dados" class="h4">7. Dados e privacidade</h2>
+          <p>
+            Os dados da empresa e dos seus contatos continuam sendo da empresa. O WhatsAI os trata só para prestar o
+            serviço, como operador, conforme a <a href="/privacidade">Política de privacidade</a>, o termo de tratamento de
+            dados e as medidas descritas em <a href="/seguranca">Segurança</a>. A empresa pode exportar as fichas de
+            atendimento (planilha de Leads) e pedir a exclusão dos dados ao encerrar o serviço.
+          </p>
+
+          <h2 id="responsabilidade" class="h4">8. Responsabilidade do WhatsAI</h2>
+          <p>
+            Na medida permitida pela lei, o WhatsAI não responde por: bloqueio ou limitação do número pelo WhatsApp;
+            decisões tomadas com base em respostas da IA sem conferência da equipe; falhas de serviços de terceiros;
+            instruções ou informações incorretas fornecidas pela empresa; e lucros cessantes ou danos indiretos. Quando
+            houver responsabilidade do WhatsAI, ela fica limitada ao valor pago pela empresa nos 3 meses anteriores ao
+            fato, salvo nos casos em que a lei não permite essa limitação.
+          </p>
+
+          <h2 id="encerramento" class="h4">9. Suspensão e encerramento</h2>
+          <p>
+            A empresa pode encerrar o serviço a qualquer momento (seção 5). O WhatsAI pode suspender ou encerrar o acesso
+            em caso de uso proibido, risco à segurança ou falta de pagamento, avisando antes sempre que possível. No
+            encerramento, a empresa tem 30 dias para exportar o que precisar; depois disso, os dados são apagados,
+            exceto o que a lei obrigar a manter.
+          </p>
+
+          <h2 id="gerais" class="h4">10. Disposições gerais</h2>
+          <ul class="legal-list">
+            <li>O WhatsAI usa software livre, entre eles o Evolution API (licença Apache 2.0 com condições adicionais). A marca, o painel e as personalizações do WhatsAI pertencem ao WhatsAI.</li>
+            <li>Estes termos podem mudar; mudanças relevantes são avisadas com 30 dias de antecedência, e a data no topo é atualizada.</li>
+            <li>Vale a lei brasileira. O foro é o definido na proposta comercial ou, na falta dele, o do domicílio da empresa contratante.</li>
+            <li>Dúvidas: fale com o WhatsAI pelo <a href="/#contato" data-wa-phone data-wa-msg="Olá! Tenho uma dúvida sobre os termos de uso do WhatsAI.">WhatsApp</a>.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot-grid">
+          <div class="foot-brand">
+            <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+            <p>Atendimento com IA no WhatsApp para pequenas e médias empresas.</p>
+          </div>
+          <nav class="foot-col" aria-labelledby="fc1">
+            <h2 id="fc1" class="foot-h">Produto</h2>
+            <ul>
+              <li><a href="/#como-funciona">Como funciona</a></li>
+              <li><a href="/#tour">Tour do produto</a></li>
+              <li><a href="/#recursos">Recursos</a></li>
+              <li><a href="/#canais">WhatsApp Web ou API oficial</a></li>
+              <li><a href="/#planos">Planos</a></li>
+              <li><a href="/#duvidas">Dúvidas</a></li>
+            </ul>
+          </nav>
+          <nav class="foot-col" aria-labelledby="fc2">
+            <h2 id="fc2" class="foot-h">Recursos</h2>
+            <ul>
+              <li><a href="/#recursos">IA 24 horas</a></li>
+              <li><a href="/#pausa">Pausa humana automática</a></li>
+              <li><a href="/#midia">Áudio, foto e PDF</a></li>
+              <li><a href="/seguranca">Segurança e LGPD</a></li>
+              <li><a href="/privacidade">Política de privacidade</a></li>
+              <li><a href="/termos">Termos de uso</a></li>
+            </ul>
+          </nav>
+          <nav class="foot-col" aria-labelledby="fc3">
+            <h2 id="fc3" class="foot-h">Segmentos</h2>
+            <ul>
+              <li><a href="/#segmentos">Advocacia</a></li>
+              <li><a href="/#segmentos">Clínicas</a></li>
+              <li><a href="/#segmentos">Lojas</a></li>
+              <li><a href="/#segmentos">Imobiliárias</a></li>
+              <li><a href="/#segmentos">Serviços</a></li>
+            </ul>
+          </nav>
+          <nav class="foot-col" aria-labelledby="fc4">
+            <h2 id="fc4" class="foot-h">Acesso</h2>
+            <ul>
+              <li><a href="/manager/login">Painel</a></li>
+              <li><a href="/#contato" data-wa-phone data-wa-msg="Olá! Vi o site do WhatsAI e quero tirar algumas dúvidas.">Contato</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="foot-bottom">
+          <p>© 2026 WhatsAI · Atendimento com IA no WhatsApp</p>
+          <p>WhatsApp é marca da Meta; o WhatsAI não é afiliado à Meta, à OpenAI nem ao Google.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -55,6 +55,7 @@ import { zonedParts } from '@utils/usageLimits';
 import { randomBytes } from 'crypto';
 
 import { AgendaProvider, InternalAgendaProvider } from './agenda.provider';
+import type { GoogleCalendarService } from './google-calendar.service';
 
 const CACHE_TTL_MS = 30_000;
 const TICK_INTERVAL_MS = 60_000;
@@ -87,6 +88,8 @@ type AgendaOptions = {
   sendText?: SendText;
   /** Storage adapters by name (default: the internal one over Prisma). */
   providers?: Partial<Record<AgendaProviderName, AgendaProvider>>;
+  /** Google Agenda of the instance, when connected: copy of the appointments + its busy times. */
+  google?: GoogleCalendarService;
 };
 
 export type CreateInput = {
@@ -281,7 +284,42 @@ export class AgendaService {
 
   private async busy(instanceId: string, from: Date, to: Date, db?: any): Promise<Interval[]> {
     const settings = await this.getSettings(instanceId);
-    return this.providerFor(settings).getBusy(instanceId, { from, to }, db);
+    const own = await this.providerFor(settings).getBusy(instanceId, { from, to }, db);
+    const google = await this.googleBusy(instanceId, from, to, settings.timezone);
+    return google.length ? [...own, ...google] : own;
+  }
+
+  /** Busy times of the connected Google Agenda ([] when none or when Google fails). Cached 60 s by the service. */
+  private async googleBusy(instanceId: string, from: Date, to: Date, timeZone: string): Promise<Interval[]> {
+    const google = this.options.google;
+    if (!google) return [];
+    return google.busy(instanceId, from, to, timeZone).catch((): Interval[] => []);
+  }
+
+  /** Copies an appointment to the connected Google Agenda in the background (never blocks or fails a booking). */
+  private syncGoogle(instanceId: string, row: any, settings: AgendaSettings): void {
+    const google = this.options.google;
+    if (!google || !row) return;
+    const type = findType(settings, row.typeName);
+    const location = type && (type.mode === 'presencial' || type.mode === 'online') ? type.location : null;
+    void google.syncAppointment(instanceId, row, settings.timezone, location).catch(() => undefined);
+  }
+
+  /** After the Google Agenda is connected: copies the future appointments of the instance. */
+  public async syncGoogleFuture(instanceId: string): Promise<number> {
+    const google = this.options.google;
+    if (!google) return 0;
+    const settings = await this.getSettings(instanceId);
+    const rows: any[] =
+      (await this.prisma.appointment.findMany({
+        where: { instanceId, status: { in: HOLDING_STATUSES }, startsAt: { gt: this.now() } },
+        orderBy: { startsAt: 'asc' },
+        take: 200,
+      })) ?? [];
+    return google.syncFuture(instanceId, rows, settings.timezone, (row) => {
+      const type = findType(settings, row.typeName);
+      return type && (type.mode === 'presencial' || type.mode === 'online') ? type.location : null;
+    });
   }
 
   /**
@@ -380,6 +418,14 @@ export class AgendaService {
     const jids = [...new Set([remoteJid, ...(input.contactJids ?? []).map(normalizeUserJid).filter(Boolean)])];
 
     await this.prisma.agendaSettings.upsert({ where: { instanceId }, create: { instanceId }, update: {} });
+    // Google busy times are read before the transaction (cached), so a slow Google never holds the row lock
+    const margin0 = settings.bufferMinutes * 60_000;
+    await this.googleBusy(
+      instanceId,
+      new Date(start.getTime() - margin0 - 86_400_000),
+      new Date(end.getTime() + margin0 + 86_400_000),
+      settings.timezone,
+    );
 
     // runWithInstance: with "banco próprio por instância" the transaction opens on the database of the instance
     const result = await runWithInstance(instanceId, () =>
@@ -445,6 +491,7 @@ export class AgendaService {
 
     if (result.created) {
       this.nextRunAt = 0;
+      this.syncGoogle(instanceId, result.row, settings);
       if (input.notifyClient) {
         await this.safeSend(instanceId, remoteJid, bookingConfirmationText(result.row, type, settings.timezone));
       }
@@ -501,6 +548,12 @@ export class AgendaService {
     let row: any;
     if (newStart && (data.status ?? current.status) !== 'cancelado') {
       await this.prisma.agendaSettings.upsert({ where: { instanceId }, create: { instanceId }, update: {} });
+      await this.googleBusy(
+        instanceId,
+        new Date(newStart.getTime() - 2 * 86_400_000),
+        new Date(newStart.getTime() + 2 * 86_400_000),
+        settings.timezone,
+      );
       row = await runWithInstance(instanceId, () =>
         this.prisma.$transaction(
           async (tx: any) => {
@@ -540,6 +593,7 @@ export class AgendaService {
           : await provider.updateEvent(instanceId, current.id, data);
     }
     this.nextRunAt = 0;
+    this.syncGoogle(instanceId, row, settings);
 
     const by = input.by ?? 'manual';
     const cancelled = data.status === 'cancelado' && current.status !== 'cancelado';
@@ -663,6 +717,7 @@ export class AgendaService {
     const data: any = { awaitingReplyAt: null };
     if (kind === 'confirm') Object.assign(data, { status: 'confirmado', confirmedAt: row.confirmedAt ?? now });
     await this.prisma.appointment.update({ where: { id: row.id, instanceId }, data });
+    if (kind === 'confirm') this.syncGoogle(instanceId, { ...row, ...data }, settings);
     if (!kind) return null;
     if (kind === 'confirm') return { reply: confirmedAckText(row, settings.timezone) };
 

@@ -565,3 +565,48 @@
     line-height: 1.45;
   }
 }
+
+/* ---------------------------------------------------------------- política de privacidade (/privacidade) */
+.legal {
+  padding-top: clamp(40px, 6vw, 72px);
+}
+.legal-in {
+  max-width: 760px;
+}
+.legal-in > p,
+.legal-in > ul {
+  margin: 0 0 16px;
+  line-height: 1.65;
+}
+.legal-in > h2 {
+  margin: 40px 0 12px;
+  scroll-margin-top: 88px;
+}
+.legal-meta {
+  color: var(--text-2);
+  font-size: 14px;
+}
+.legal-toc {
+  margin: 24px 0 8px;
+}
+.legal-list {
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 20px;
+}
+.legal-list li::marker {
+  color: currentColor;
+}
+.legal-callout {
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 12px;
+}
+.legal-in > p a,
+.legal-in > ul a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
