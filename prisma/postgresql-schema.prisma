@@ -1097,3 +1097,10 @@ model ClientAccess {
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId String    @unique
 }
+
+/// Configurações globais do WhatsAI (plano de controle), uma linha por chave. Ex.: "retention" = { "days": 90 }.
+model GlobalSetting {
+  key       String   @id @db.VarChar(64)
+  value     Json     @db.JsonB
+  updatedAt DateTime @updatedAt @db.Timestamp
+}

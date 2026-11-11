@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import { adminAlertsConfigFromEnv, AdminAlertsService, DISCONNECTED_MS } from '@api/services/admin-alerts.service';
-import { retentionDaysFromEnv, RetentionService } from '@api/services/retention.service';
+import { retentionDaysFromEnv, RetentionService, validRetentionDays } from '@api/services/retention.service';
 import { UsageService } from '@api/services/usage.service';
 import { OpenaiHealthRegistry } from '@utils/openai-health';
 
@@ -40,9 +40,10 @@ function messagesPrisma(timestampsByInstance: Record<string, number[]>) {
 }
 
 describe('retention (LGPD)', () => {
-  test('MESSAGE_RETENTION_DAYS: off by default and below 30 days; capped at 10 years', () => {
+  test('MESSAGE_RETENTION_DAYS: off by default and below 7 days; capped at 10 years', () => {
     assert.equal(retentionDaysFromEnv({}), 0);
-    assert.equal(retentionDaysFromEnv({ MESSAGE_RETENTION_DAYS: '7' }), 0);
+    assert.equal(retentionDaysFromEnv({ MESSAGE_RETENTION_DAYS: '6' }), 0);
+    assert.equal(retentionDaysFromEnv({ MESSAGE_RETENTION_DAYS: '7' }), 7);
     assert.equal(retentionDaysFromEnv({ MESSAGE_RETENTION_DAYS: 'x' }), 0);
     assert.equal(retentionDaysFromEnv({ MESSAGE_RETENTION_DAYS: '90' }), 90);
     assert.equal(retentionDaysFromEnv({ MESSAGE_RETENTION_DAYS: '99999' }), 3650);
@@ -94,6 +95,75 @@ describe('retention (LGPD)', () => {
     await usage.recordAnswer('inst-1', '5521900000000@s.whatsapp.net');
     await usage.recordAnswer('inst-1', '5521900000000@s.whatsapp.net');
     assert.deepEqual(hooked, ['inst-1']);
+  });
+});
+
+function settingsPrisma(base: any) {
+  const store: Record<string, any> = {};
+  base.globalSetting = {
+    findUnique: async ({ where }: any) => store[where.key] ?? null,
+    upsert: async ({ where, create, update }: any) => {
+      store[where.key] = { ...(store[where.key] ?? create), ...update, key: where.key, updatedAt: new Date(NOW) };
+      return store[where.key];
+    },
+  };
+  base.instance = {
+    findMany: async () => [
+      { id: 'a', name: 'Cliente Exemplo' },
+      { id: 'b', name: 'Cliente Fictício' },
+    ],
+  };
+  base.message.count = async ({ where }: any) =>
+    base.rows.filter((r: any) => r.instanceId === where.instanceId && r.messageTimestamp < where.messageTimestamp.lt)
+      .length;
+  return { base, store };
+}
+
+describe('retention set in the panel (all instances)', () => {
+  const sec = (ms: number) => Math.floor(ms / 1000);
+
+  test('the panel value wins over the environment; preview counts per instance; run now deletes everywhere', async () => {
+    const { base } = settingsPrisma(
+      messagesPrisma({ a: [sec(NOW - 200 * DAY), sec(NOW - 40 * DAY), sec(NOW - 1 * DAY)], b: [sec(NOW - 100 * DAY)] }),
+    );
+    const service = new RetentionService({ prisma: base, days: 0, logger: quiet, now: () => NOW });
+
+    assert.deepEqual(
+      { days: (await service.config()).days, source: (await service.config()).source },
+      { days: 0, source: 'padrao' },
+    );
+    const preview = await service.preview(30);
+    assert.deepEqual(
+      preview.instances.map((i) => [i.instance, i.older]),
+      [
+        ['Cliente Exemplo', 2],
+        ['Cliente Fictício', 1],
+      ],
+    );
+    assert.equal(preview.total, 3);
+
+    const saved = await service.setDays(90);
+    assert.deepEqual([saved.days, saved.source], [90, 'painel']);
+    const run = await service.purgeAll();
+    assert.equal(run.removed, 2, 'only what is older than 90 days, in both instances');
+    assert.equal(base.rows.length, 2, 'a: 40 e 1 dia ficam; b: a de 100 dias saiu');
+
+    await service.setDays(0);
+    assert.equal(service.enabled, false);
+    assert.equal((await service.purgeAll()).removed, 0);
+  });
+
+  test('a saved value is read once from the database and survives a restart; invalid values are refused', async () => {
+    const { base } = settingsPrisma(messagesPrisma({ a: [] }));
+    const first = new RetentionService({ prisma: base, days: 90, logger: quiet, now: () => NOW });
+    await first.setDays(365);
+    const restarted = new RetentionService({ prisma: base, days: 90, logger: quiet, now: () => NOW });
+    assert.equal((await restarted.config()).days, 365);
+    for (const bad of [3, -1, 4000, 'x', 1.5]) {
+      await assert.rejects(restarted.setDays(bad), /deve ser 0/);
+    }
+    assert.equal(validRetentionDays(7), 7);
+    assert.equal(validRetentionDays('180'), 180);
   });
 });
 
