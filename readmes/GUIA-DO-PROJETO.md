@@ -135,7 +135,7 @@ alterar todos** (o teste de unidade não cobre isso; é conferência manual).
 | Cache | Render Key Value `evolution-redis` | Cache de sessões/configurações; `allkeys-lru` | Sem persistência |
 | Banco de controle | Neon, projeto principal `spring-boat-14626479` | Modelos de controle: `Instance`, `InstanceDatabase`, `ClientAccess`, `GlobalSetting`, `IsOnWhatsapp` | Sempre consultado antes de saber a instância; credenciais e contadores seguem o banco da instância quando há banco próprio |
 | Bancos por instância | Neon, um projeto por instância (opcional) | Dados operacionais da instância | Ligado por `DB_PER_INSTANCE_ENABLED=true` |
-| OpenAI | API externa | Chat Completions, transcrição, visão e ferramentas de agenda | Chave por instância; a mesma chave não pode estar em duas instâncias |
+| OpenAI | API externa | Chat Completions, transcrição, visão e ferramentas de agenda | Chave por instância; com banco compartilhado a API recusa a mesma chave em duas instâncias |
 | Site/painel | Vercel, projeto `whatsaibr` | `manager/dist` estático | Deploy pelo workflow `Deploy Manager` |
 | MCP | `POST https://<api>/mcp` | Ferramentas e docs para agentes | Auth por `Bearer`/`apikey` ou caminho secreto |
 | Processos | DataJud (CNJ) + DJEN por OAB | Movimentações e publicações | Ticker de 5 min, só consulta quando vence |
@@ -216,7 +216,7 @@ sequenceDiagram
   (`changeStatus paused`) **nunca** é reaberta automaticamente; só `opened`.
 - Durante a pausa o bot não responde e a mensagem não entra na sessão/histórico. Atenção: no Baileys a mensagem
   **já foi gravada em `Message`** antes do emit (com `DATABASE_SAVE_DATA_NEW_MESSAGE=true`, que o Render liga).
-  O manual já foi corrigido para "não responde e não entra na sessão".
+  O manual já foi corrigido para "sem resposta e fora da sessão/histórico".
 
 ### 4.4 Mídia
 
@@ -428,8 +428,9 @@ flowchart TD
 
 - A página “Chaves e credenciais” mostra chaves mascaradas e revela uma por vez após confirmar a chave global
   (limite de 5/min; 5 falhas/15 min bloqueiam).
-- A mesma chave OpenAI não pode ser cadastrada em duas instâncias; recomende uma project key por instância com
-  limite de gasto.
+- Com **banco compartilhado**, a mesma chave OpenAI não pode ser cadastrada em duas instâncias; com **banco
+  próprio**, cada instância tem sua própria tabela e a chave pode ser reutilizada. Recomende uma project key por
+  instância com limite de gasto de qualquer forma.
 
 ---
 
