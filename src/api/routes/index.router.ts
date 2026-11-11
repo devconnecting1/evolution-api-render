@@ -31,6 +31,7 @@ import { ObservabilityRouter } from './observability.router';
 import { OpenaiHealthRouter } from './openai-health.router';
 import { ProcessosRouter } from './processos.router';
 import { ProxyRouter } from './proxy.router';
+import { RetentionRouter } from './retention.router';
 import { MessageRouter } from './sendMessage.router';
 import { SettingsRouter } from './settings.router';
 import { TemplateRouter } from './template.router';
@@ -253,6 +254,8 @@ router
   .use('/openai-health', new OpenaiHealthRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
   // Neon project quota and database wake log: global key only, never touch the database
+  // Retenção das mensagens (LGPD): só a chave global
+  .use('/admin/retention', new RetentionRouter().router)
   .use('/admin', new AdminDbRouter().router)
   // "Chaves e credenciais": only the global key (adminOnlyGuard), never an instance token
   .use(
