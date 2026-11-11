@@ -54,11 +54,10 @@ O repositório no GitHub (`origin`) é a fonte de tudo, e o `main` publica sozin
 | Site, painel e manual (`manager/dist/**`) | Vercel | Workflow **Deploy Manager** (GitHub Actions, secret `VERCEL_TOKEN`) a cada push no `main` que muda `manager/dist/**` |
 
 - **Fluxo:** branch → PR → CI verde → squash no `main`. Quando o PR só mexe em `manager/dist`, documentação ou READMEs, ponha `[skip render]` no título do commit de merge: o Render não reinicia a API à toa.
-- **Manuais:** depois de editar `README-WHATSAI.md` ou `readmes/*.md`, rode `./scripts/sync-readmes.sh` (copia para `manager/dist/readmes/` e gera o índice) e commite as cópias junto.
+- **Manuais:** ficam só no repositório (`README-WHATSAI.md`, `readmes/*.md`) e nos recursos MCP `whatsai://docs` (a imagem Docker copia os arquivos). O painel não tem mais Manual: `/readme` e `/readmes/*` redirecionam para `/manager/` (308).
 - **Fallback manual do painel:**
 
 ```bash
-./scripts/sync-readmes.sh
 cd manager/dist
 VERCEL_TOKEN="<token da Vercel>" npx -y vercel@65.2.0 deploy --prod --yes --archive=tgz
 ```
@@ -88,7 +87,8 @@ Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/in
 | Chaves e credenciais | `credentials-vault.py` + `credentials-vault.css` | Só chave global: chaves de cada instância mascaradas e "mostrar" uma por vez (seção 2) |
 | Rotas | `root-redirect.py`, `manager/dist/vercel.json` | A home antiga nunca aparece; rotas SPA e `/observability` com rewrites antes do catch-all |
 | Acesso do cliente | `client-portal.py` + `assets/client-portal.js`, `client-portal.css`, `acesso/` | Itens **Conexão** (cliente) e **Acesso do cliente** (administrador), menu filtrado pelos módulos do código, página `/acesso` e app pelo navegador (seção 19) |
-| Manual | `assets/readme-tab.js`, `readme-tab.css`, `marked.min.js`, `readmes/` | Item **Manual** da lateral e `/readme`: resumo operacional (`readmes/RESUMO.md`) com links para o guia comercial e este manual |
+| Layout (app shell) | `app-shell.py` + `app-shell.css` | Estilo do bloco Sidebar do shadcn: a mesma lateral (Instâncias, Observabilidade, Chaves e credenciais, Retenção (LGPD), Sair) na lista e nas páginas globais; a página nunca rola, só o conteúdo; gaveta no celular e no tablet, recolhível no computador |
+| Sem Manual | `no-manual.py` | Tira o Manual de todos os menus, de "Primeiros passos" e do Ctrl K; `readme-tab.*`, `marked.min.js` e `manager/dist/readmes/` foram apagados (11/11/2026) |
 
 **Site** (`manager/dist/landing/index.html`, página única desde 11/11/2026; `/advocacia` e `/instagram` redirecionam com 308 para `/#segmentos` e `/` em `vercel.json`): HTML e CSS escritos à mão (`landing.css`, `landing-theme.css`, `landing-plus.css`) e `landing.js` / `landing-pixels.js` (fundo de pixels do plano Premium, parado com "reduzir movimento"). Sem logos ou nomes de terceiros, fonte Geist, sem animação de rolagem, dados de exemplo fictícios. Preços iguais aos da seção 6 (inclusive no JSON-LD); ao mudar um preço, mude as três páginas, a seção 6, o guia comercial e o resumo. Em `/advocacia`, a linguagem segue a seção 16.7 (triagem, nunca captação; sem nota numérica para pessoas).
 
@@ -323,6 +323,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 11/11/2026: **site com uma página só**: `/advocacia` e `/instagram` saíram (redirecionam para `/`); o FAQ da página inicial ganhou a pergunta sobre escritórios de advocacia (OAB, sigilo, Leads, Agenda e Processos).
 - 11/11/2026: **retenção pelo painel** para todas as instâncias (página Retenção (LGPD), prévia por instância, "Apagar agora"; mínimo 7 dias), valor salvo no banco principal (`GlobalSetting`, migration aditiva `20261111100000_add_global_setting`) acima de `MESSAGE_RETENTION_DAYS`. Build da API sem sourcemaps e só CJS: o deploy de 11/11 passou de 8 GB de memória no tsup e falhou.
 - 11/11/2026: **segurança e Lighthouse**: página `/seguranca` com os blocos 3D (CSS puro) e cartão na seção Segurança do site; CSP e cabeçalhos de proteção no site e no painel, limite de chaves erradas por IP e comparação em tempo constante na API, `/store` fora do ar; login só com a chave; `llms.txt`, manifesto ARD e `security.txt`; CSS do site num arquivo só (seção 7.1).
+- 11/11/2026: **Manual fora do painel** (fica no GitHub e no MCP; `/readme` redireciona) e **um layout só no painel** (lateral em todas as páginas, altura da tela, só o conteúdo rola); site com **escala compacta** em tablet e computador (títulos e espaçamentos ~20% menores, sem `zoom`, texto corrido do mesmo tamanho).
 - 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
 - 10/11/2026: **Leads**: resposta da equipe detectada também pelas mensagens do número e pela pausa da sessão do bot (corrige "aguardando equipe" falso das conversas analisadas em lote), `refresh-waiting`, tipo de contato (novo caso, já é cliente, sem demanda jurídica), nome da pessoa do caso quando alguém fala por ela, e visualizador da planilha no painel. Migration aditiva `20261110130000_add_lead_contact_kind`.
 - 10/11/2026: **Leads em planilha Excel** (abas Leads e Resumo, gerada pela própria API sem biblioteca nova) e análise automática mais precisa: área classificada pelo assunto, cidade padronizada, prioridade com a data do fato (contagem, prazo vencido, audiência passada, data distante e problema já resolvido).

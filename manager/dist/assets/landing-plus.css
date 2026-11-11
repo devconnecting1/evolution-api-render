@@ -617,3 +617,53 @@
     padding-bottom: 56px;
   }
 }
+
+/* ------------------------------------------------------------------ escala compacta (tablet e computador)
+   Em tablets e notebooks o site parecia "com zoom": título de 60 px, seções de 120 px de respiro. Esta escala dá o
+   efeito de ver a página a ~80%, sem usar `zoom` (que encolheria também o texto corrido para ~13 px e pioraria a
+   leitura e a acessibilidade): títulos e espaçamentos ~20% menores, texto corrido e botões do mesmo tamanho. O
+   celular (até 639 px) já tem a escala dele e não muda. */
+@media (min-width: 640px) {
+  .hero {
+    padding-top: 72px;
+  }
+  .display {
+    font-size: clamp(40px, 3.6vw + 8px, 46px);
+  }
+  .hero.band .display {
+    font-size: clamp(40px, 3.6vw + 10px, 48px);
+  }
+  .lead {
+    font-size: 18px;
+  }
+  .section {
+    padding-top: 96px;
+  }
+  .section-tight {
+    padding-top: 80px;
+  }
+  .section:not(.cta, .section-tight[aria-labelledby="metrics-title"]) {
+    padding-bottom: 80px;
+  }
+  .h2 {
+    font-size: 32px;
+  }
+  .h2-sm,
+  .h3-lg {
+    font-size: 24px;
+  }
+  .section-lead {
+    font-size: 16px;
+  }
+  .stage {
+    padding: 40px;
+  }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .section:not(.cta, .section-tight[aria-labelledby="metrics-title"]) {
+    padding-bottom: 64px;
+  }
+  .section {
+    padding-top: 80px;
+  }
+}

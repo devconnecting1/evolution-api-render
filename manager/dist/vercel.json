@@ -60,6 +60,13 @@
       }
     },
     {
+      "src": "^/readmes?(/.*)?$",
+      "status": 308,
+      "headers": {
+        "Location": "/manager/"
+      }
+    },
+    {
       "src": "^/acesso/?$",
       "dest": "/acesso/index.html"
     },
