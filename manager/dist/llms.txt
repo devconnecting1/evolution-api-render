@@ -11,6 +11,7 @@ Site em português do Brasil. O painel (/manager) é privado e exige chave de ac
 - [WhatsApp Web ou API oficial](https://whatsaibr.vercel.app/#canais): diferenças, riscos e quando usar cada conexão.
 - [Segmentos](https://whatsaibr.vercel.app/#segmentos): escritórios de advocacia, clínicas, lojas, imobiliárias e serviços.
 - [Segurança e privacidade](https://whatsaibr.vercel.app/seguranca): HTTPS, acesso conferido no servidor, códigos guardados como hash, credenciais cifradas, LGPD e prazo de guarda das mensagens.
+- [Política de privacidade](https://whatsaibr.vercel.app/privacidade): quais dados o WhatsAI trata, com quem compartilha (OpenAI, Render, Neon, Vercel, Meta, Google), por quanto tempo guarda e como funciona a conexão com o Google Agenda (Uso Limitado).
 
 ## Planos (mensalidade mês a mês, sem fidelidade; 1 número de WhatsApp por plano)
 

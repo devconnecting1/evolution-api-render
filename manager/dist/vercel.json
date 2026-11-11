@@ -75,6 +75,10 @@
       "dest": "/landing/seguranca.html"
     },
     {
+      "src": "^/privacidade/?$",
+      "dest": "/landing/privacidade.html"
+    },
+    {
       "handle": "filesystem"
     },
     {

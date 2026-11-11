@@ -32,7 +32,15 @@ function matchValue(actual: any, condition: any): boolean {
 export const matchesWhere = (row: any, where: any = {}) =>
   Object.entries(where).every(([key, value]) => matchValue(row[key], value));
 
-export function createAgendaTables(instances: { id: string; name: string }[] = [{ id: 'inst-a', name: 'escritorio' }]) {
+/**
+ * `clock` (optional): the fake clock of the test. createdAt/updatedAt follow it, so rules that compare them with the
+ * service clock (e.g. "no reminder for a booking made after the reminder time") do not depend on the real date.
+ */
+export function createAgendaTables(
+  instances: { id: string; name: string }[] = [{ id: 'inst-a', name: 'escritorio' }],
+  clock: () => number = Date.now,
+) {
+  const stamp = () => new Date(clock());
   const settings = new Map<string, any>();
   const appointments = new Map<string, any>();
   let seq = 0;
@@ -55,8 +63,8 @@ export function createAgendaTables(instances: { id: string; name: string }[] = [
     upsert: async ({ where, create, update }: any) => {
       const current = settings.get(where.instanceId);
       const row = current
-        ? Object.assign(current, update, { updatedAt: new Date() })
-        : { id: `as${++seq}`, bookingSeq: 0, createdAt: new Date(), updatedAt: new Date(), ...create };
+        ? Object.assign(current, update, { updatedAt: stamp() })
+        : { id: `as${++seq}`, bookingSeq: 0, createdAt: stamp(), updatedAt: stamp(), ...create };
       settings.set(where.instanceId, row);
       return copy(row);
     },
@@ -69,7 +77,7 @@ export function createAgendaTables(instances: { id: string; name: string }[] = [
             ? row[key] + (value as any).increment
             : value;
       }
-      row.updatedAt = new Date();
+      row.updatedAt = stamp();
       return copy(row);
     },
   };
@@ -92,7 +100,7 @@ export function createAgendaTables(instances: { id: string; name: string }[] = [
         .map(copy),
     count: async ({ where }: any) => [...appointments.values()].filter((row) => matchesWhere(row, where)).length,
     create: async ({ data }: any) => {
-      const now = new Date();
+      const now = stamp();
       const row = {
         id: `ap${++seq}`,
         status: 'agendado',
