@@ -834,3 +834,84 @@
   gap: 8px;
   margin-top: 4px;
 }
+
+/* ---------------------------------------------------------------- Cal.diy: regras por tipo, abas da lista (agenda-polish.py) */
+.wag-typerules {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 16px;
+}
+.wag-typerules .wag-check {
+  flex: 1 1 220px;
+  margin: 0;
+}
+.wag-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 128px;
+}
+.wag-listwrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wag-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--m-border);
+}
+.wag-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 13.5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wag-tab:hover {
+  color: var(--m-text);
+}
+.wag-tab[aria-selected='true'] {
+  border-bottom-color: var(--m-text);
+  color: var(--m-text);
+  font-weight: 500;
+}
+.wag-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wag-tab-n {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-hover);
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+/* o estilo global de [role=tablist] (controle segmentado cinza) não vale para estas abas sublinhadas */
+#root .wag-tabs[role='tablist'] {
+  gap: 4px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+#root .wag-tabs[role='tablist'] > [role='tab'] {
+  min-height: 34px;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 13.5px;
+}

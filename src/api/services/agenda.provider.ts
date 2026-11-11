@@ -36,10 +36,15 @@ export class InternalAgendaProvider implements AgendaProvider {
     const rows: any[] =
       (await db.appointment.findMany({
         where: { instanceId, status: { not: 'cancelado' }, startsAt: { lt: range.to }, endsAt: { gt: range.from } },
-        select: { id: true, startsAt: true, endsAt: true },
+        select: { id: true, startsAt: true, endsAt: true, typeName: true },
         take: 2000,
       })) ?? [];
-    return rows.map((row) => ({ id: row.id, start: new Date(row.startsAt), end: new Date(row.endsAt) }));
+    return rows.map((row) => ({
+      id: row.id,
+      start: new Date(row.startsAt),
+      end: new Date(row.endsAt),
+      typeName: row.typeName ?? null,
+    }));
   }
 
   createEvent(instanceId: string, data: Record<string, any>, db: any = this.prisma) {

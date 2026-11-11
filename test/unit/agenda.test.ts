@@ -203,6 +203,9 @@ describe('agenda: reminder timing', () => {
       mode: 'presencial' as const,
       location: 'Rua Fictícia, 100',
       instructions: 'RG e comprovante',
+      active: true,
+      maxPerDay: null,
+      minNoticeHours: null,
     };
     const text = reminderText(
       { startsAt: sp('2026-11-12T14:00'), typeName: type.name, contactName: 'Maria Teste' },
@@ -379,6 +382,83 @@ describe('agenda: service', () => {
       }),
       (error: any) => error.code === 'forbidden',
     );
+  });
+
+  test('tipos (Cal.com): limite por dia, antecedência própria e tipo pausado só para a IA', async () => {
+    const { agenda, ready } = service(sp('2026-11-09T08:00'), {
+      appointmentTypes: [
+        { name: 'Consulta', minutes: 30, mode: 'presencial', maxPerDay: 1 },
+        { name: 'Retorno', minutes: 30, mode: 'presencial', minNoticeHours: 48 },
+        { name: 'Visita', minutes: 30, mode: 'presencial', active: false },
+      ],
+    });
+    await ready;
+    const settings = await agenda.getSettings('inst-a');
+    assert.deepEqual(
+      settings.appointmentTypes.map((t) => [t.name, t.active, t.maxPerDay, t.minNoticeHours]),
+      [
+        ['Consulta', true, 1, null],
+        ['Retorno', true, null, 48],
+        ['Visita', false, null, null],
+      ],
+    );
+    await agenda.createAppointment('inst-a', {
+      remoteJid: CLIENT,
+      typeName: 'Consulta',
+      startsAt: sp('2026-11-10T09:00'),
+      source: 'ia',
+    });
+    const day = (await agenda.freeSlots('inst-a', { fromDay: '2026-11-10', days: 1, typeName: 'Consulta' })).slots;
+    assert.equal(day.length, 0, 'Consulta: limite de 1 por dia já atingido no dia 10');
+    const next = (await agenda.freeSlots('inst-a', { fromDay: '2026-11-11', days: 1, typeName: 'Consulta' })).slots;
+    assert.ok(next.length > 0, 'no dia seguinte volta a ter horário');
+    await assert.rejects(
+      agenda.createAppointment('inst-a', {
+        remoteJid: '5511900002222@s.whatsapp.net',
+        typeName: 'Consulta',
+        startsAt: sp('2026-11-10T15:00'),
+        source: 'ia',
+      }),
+      /não está disponível/,
+    );
+    const retorno = (await agenda.freeSlots('inst-a', { fromDay: '2026-11-10', days: 3, typeName: 'Retorno' })).slots;
+    assert.ok(
+      retorno.every((slot) => +new Date(slot.startsAt) >= +sp('2026-11-11T08:00')),
+      'Retorno: 48 h de antecedência',
+    );
+    await assert.rejects(
+      agenda.createAppointment('inst-a', {
+        remoteJid: CLIENT,
+        typeName: 'Visita',
+        startsAt: sp('2026-11-12T10:00'),
+        source: 'ia',
+      }),
+      /pausado/,
+    );
+    const manual = await agenda.createAppointment('inst-a', {
+      remoteJid: CLIENT,
+      typeName: 'Visita',
+      startsAt: sp('2026-11-12T10:00'),
+      source: 'manual',
+      enforceAvailability: false,
+    });
+    assert.equal(manual.created, true, 'a equipe ainda agenda um tipo pausado');
+  });
+
+  test('cancelar com motivo: o motivo vai para as observações internas', async () => {
+    const { agenda, ready, prisma } = service(sp('2026-11-09T08:00'));
+    await ready;
+    const { appointment } = await agenda.createAppointment('inst-a', {
+      remoteJid: CLIENT,
+      startsAt: sp('2026-11-10T09:00'),
+      source: 'manual',
+      notes: 'Trazer RG',
+      enforceAvailability: false,
+    });
+    await agenda.cancelAppointment('inst-a', appointment.id, { reason: 'Cliente pediu outra data' });
+    const row = prisma.appointment.rows.get(appointment.id);
+    assert.equal(row.status, 'cancelado');
+    assert.equal(row.notes, 'Trazer RG\nMotivo do cancelamento: Cliente pediu outra data');
   });
 
   test('ticker: sends due reminders once, then "1" confirms', async () => {

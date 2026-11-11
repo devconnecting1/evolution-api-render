@@ -116,6 +116,8 @@ export type UpdateInput = {
   notifyClient?: boolean;
   enforceAvailability?: boolean;
   by?: string;
+  /** Why it was cancelled (internal): appended to the notes. */
+  cancelReason?: string | null;
 };
 
 const iso = (value: any): string | null => (value ? new Date(value).toISOString() : null);
@@ -380,6 +382,7 @@ export class AgendaService {
       durationMinutes: type.minutes,
       busy,
       limit: options.limit,
+      type,
     });
     return {
       timezone: settings.timezone,
@@ -406,6 +409,12 @@ export class AgendaService {
     if (!type) {
       throw new AgendaError(
         `Tipo de atendimento desconhecido: "${input.typeName}". Tipos: ${settings.appointmentTypes.map((t) => t.name).join(', ')}.`,
+      );
+    }
+    if (input.source === 'ia' && type.active === false) {
+      throw new AgendaError(
+        `O tipo "${type.name}" está pausado: a equipe vai entrar em contato para agendar.`,
+        'forbidden',
       );
     }
     const start = input.startsAt;
@@ -458,7 +467,7 @@ export class AgendaService {
             tx,
           );
           if (input.enforceAvailability !== false) {
-            if (!isBookableSlot(settings, start, type.minutes, busy, now)) {
+            if (!isBookableSlot(settings, start, type.minutes, busy, now, undefined, type)) {
               throw new AgendaError('Esse horário não está disponível.', 'conflict');
             }
           } else if (busy.some((item) => overlaps({ start, end }, item, settings.bufferMinutes))) {
@@ -539,7 +548,16 @@ export class AgendaService {
     if (input.status) {
       data.status = input.status;
       if (input.status === 'confirmado') data.confirmedAt = now;
-      if (input.status === 'cancelado') Object.assign(data, { cancelledAt: now, awaitingReplyAt: null });
+      if (input.status === 'cancelado') {
+        Object.assign(data, { cancelledAt: now, awaitingReplyAt: null });
+        const reason = String(input.cancelReason ?? '')
+          .trim()
+          .slice(0, 300);
+        if (reason) {
+          const base = input.notes !== undefined ? input.notes?.trim() || '' : String(current.notes ?? '').trim();
+          data.notes = [base, `Motivo do cancelamento: ${reason}`].filter(Boolean).join('\n').slice(0, 2000);
+        }
+      }
     }
     if (input.notes !== undefined) data.notes = input.notes?.trim().slice(0, 2000) || null;
     if (input.contactName !== undefined) data.contactName = input.contactName?.trim().slice(0, 120) || null;
@@ -567,7 +585,7 @@ export class AgendaService {
             if (input.enforceAvailability) {
               if (
                 newStart.getTime() < now.getTime() ||
-                !isBookableSlot(settings, newStart, type.minutes, busy, now, current.id)
+                !isBookableSlot(settings, newStart, type.minutes, busy, now, current.id, type)
               ) {
                 throw new AgendaError('Esse horário não está disponível.', 'conflict');
               }
@@ -627,9 +645,10 @@ export class AgendaService {
   public async cancelAppointment(
     instanceId: string,
     id: string,
-    options: { notifyClient?: boolean; by?: string } = {},
+    options: { notifyClient?: boolean; by?: string; reason?: string | null } = {},
   ) {
-    return this.updateAppointment(instanceId, id, { status: 'cancelado', ...options });
+    const { reason, ...rest } = options;
+    return this.updateAppointment(instanceId, id, { status: 'cancelado', ...rest, cancelReason: reason ?? null });
   }
 
   // ------------------------------------------------------------------------------------- notifications
