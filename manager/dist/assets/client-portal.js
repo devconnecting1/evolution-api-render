@@ -6,6 +6,7 @@
  *   server applies the same list to every request (src/utils/client-access.ts); hiding here is only comfort.
  * - Administrator (global key): "Acesso do cliente" page of the instance: turn on, pick the modules, create a
  *   new code (shown once), remove. "Conexão" is hidden (the administrator has the full panel).
+ * Everyone with Conversas: "Contatos da IA" page (list of the AI sessions, pause/resume one or many contacts).
  * Administrator: "Retenção (LGPD)" page (/manager/retencao) with the deadline of every instance.
  * Every tab: checks for a new version of the panel and reloads (hidden tab) or offers "Atualizar".
  * Pages are filled into <div data-wa-portal-page="..."> rendered by the routes of manager/patches/client-portal.py.
@@ -14,7 +15,7 @@
   'use strict';
 
   var STATE_KEY = 'wa-portal';
-  var NAV_OF = { conversas: 'chat', leads: 'leads', agenda: 'agenda', processos: 'processos', plano: 'usage', conexao: 'conexao' };
+  var NAV_OF = { conversas: ['chat', 'contatos-ia'], leads: 'leads', agenda: 'agenda', processos: 'processos', plano: 'usage', conexao: 'conexao' };
   var LABELS = {
     conversas: 'Conversas',
     leads: 'Leads',
@@ -79,7 +80,7 @@
 
   function allowedPaths() {
     var mods = (current && current.modules) || [];
-    return mods.map(function (m) { return NAV_OF[m]; }).filter(Boolean);
+    return mods.reduce(function (all, m) { return all.concat(NAV_OF[m] || []); }, []);
   }
   function home() {
     if (!current) return null;
@@ -261,6 +262,164 @@
     card.appendChild(msg);
   }
 
+  // Contatos da IA: every contact with an AI session, Twenty-like list (search, views, bulk pause/resume).
+  // Same API as the old "Sessões" dialog: GET /openai/fetchSessions/all/:instance (all bots, with humanPause) and
+  // POST /openai/changeStatus/:instance {remoteJid, status: paused|opened}. Allowed to a client with Conversas.
+  var CI_VIEWS = [['todos', 'Todos'], ['ativa', 'IA ativa'], ['pausada', 'Pausados']];
+  function ciPhone(jid) {
+    var d = String(jid || '').split('@')[0].replace(/\D/g, '');
+    if (/@g\.us$/.test(jid || '')) return 'Grupo';
+    if (/@lid$/.test(jid || '')) return 'Contato do WhatsApp';
+    if (d.length >= 12 && d.slice(0, 2) === '55') {
+      var ddd = d.slice(2, 4), n = d.slice(4);
+      return '(' + ddd + ') ' + (n.length === 9 ? n.slice(0, 5) + '-' + n.slice(5) : n.slice(0, 4) + '-' + n.slice(4));
+    }
+    return d ? '+' + d : '';
+  }
+  function ciAgo(iso) {
+    var t = Date.parse(iso || ''); if (!t) return '—';
+    var min = Math.round((Date.now() - t) / 60000);
+    if (min < 1) return 'agora';
+    if (min < 60) return 'há ' + min + ' min';
+    var h = Math.round(min / 60); if (h < 24) return 'há ' + h + ' h';
+    var dd = Math.round(h / 24); return dd === 1 ? 'ontem' : 'há ' + dd + ' dias';
+  }
+  function ciTime(iso) {
+    var d = new Date(iso); if (isNaN(d)) return '';
+    var today = new Date().toDateString() === d.toDateString();
+    return (today ? '' : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ') + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+  function ciState(s) {
+    var hp = s.humanPause;
+    if (s.status === 'closed') return { key: 'encerrada', tone: 'muted', label: 'Encerrada', hint: 'A IA responde de novo na próxima mensagem' };
+    if (!hp && s.status !== 'paused') return { key: 'ativa', tone: 'ok', label: 'IA ativa', hint: '' };
+    if (hp && hp.reason === 'human') return { key: 'pausada', tone: 'warn', label: 'Equipe assumiu', hint: hp.resumesAt ? 'IA volta ' + ciTime(hp.resumesAt) : 'Só volta quando você retomar' };
+    return { key: 'pausada', tone: 'bad', label: 'Pausada', hint: 'Só volta quando você retomar' };
+  }
+
+  function renderContatosIa(root) {
+    var instanceName = client && current ? current.instanceName : null;
+    var head = title('Contatos da IA', 'Em quais conversas a IA está respondendo. Pause para a sua equipe atender, ou retome quando quiser. Nada é enviado ao contato.');
+    var view = 'todos', q = '', sel = {}, rows = [], busy = false;
+    var tabs = h('div', { class: 'wa-ci-views', role: 'tablist', 'aria-label': 'Filtrar contatos' });
+    var search = h('input', { type: 'search', class: 'wa-ci-search', placeholder: 'Buscar por nome ou número', 'aria-label': 'Buscar contatos' });
+    var refresh = h('button', { type: 'button', class: 'wa-ci-ibtn', 'aria-label': 'Atualizar', title: 'Atualizar', text: '↻' });
+    var bulk = h('div', { class: 'wa-ci-bulk', hidden: true });
+    var list = h('div', { class: 'wa-ci-list', 'aria-busy': 'true' }, [h('p', { class: 'wa-portal-hint', text: 'Carregando…' })]);
+    var msg = h('p', { class: 'wa-portal-msg', role: 'status', 'aria-live': 'polite' });
+    root.appendChild(head);
+    root.appendChild(h('section', { class: 'wa-ci' }, [
+      h('div', { class: 'wa-ci-bar' }, [tabs, h('div', { class: 'wa-ci-tools' }, [search, refresh])]),
+      bulk, list, msg,
+    ]));
+
+    function counts() {
+      var c = { todos: rows.length, ativa: 0, pausada: 0 };
+      rows.forEach(function (r) { if (r.st.key === 'ativa') c.ativa++; else if (r.st.key === 'pausada') c.pausada++; });
+      return c;
+    }
+    function visible() {
+      var term = q.trim().toLowerCase(), digits = term.replace(/\D/g, '');
+      return rows.filter(function (r) {
+        if (view !== 'todos' && r.st.key !== view) return false;
+        if (!term) return true;
+        return (r.name || '').toLowerCase().indexOf(term) >= 0 || (digits && r.jid.replace(/\D/g, '').indexOf(digits) >= 0);
+      });
+    }
+    function drawTabs() {
+      var c = counts(); tabs.textContent = '';
+      CI_VIEWS.forEach(function (v) {
+        tabs.appendChild(h('button', { type: 'button', role: 'tab', class: 'wa-ci-view', 'aria-selected': view === v[0] ? 'true' : 'false', onclick: function () { view = v[0]; sel = {}; draw(); } }, [
+          v[1], h('span', { class: 'wa-ci-n', text: String(c[v[0]]) }),
+        ]));
+      });
+    }
+    function drawBulk() {
+      var ids = Object.keys(sel).filter(function (k) { return sel[k]; });
+      bulk.hidden = !ids.length; bulk.textContent = '';
+      if (!ids.length) return;
+      bulk.appendChild(h('span', { text: ids.length + (ids.length === 1 ? ' selecionado' : ' selecionados') }));
+      bulk.appendChild(h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Pausar IA', onclick: function () { change(ids, 'paused'); } }));
+      bulk.appendChild(h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Retomar IA', onclick: function () { change(ids, 'opened'); } }));
+      bulk.appendChild(h('button', { type: 'button', class: 'wa-ci-link', text: 'Limpar', onclick: function () { sel = {}; draw(); } }));
+    }
+    function drawList() {
+      var items = visible(); list.textContent = ''; list.removeAttribute('aria-busy');
+      if (!rows.length) { list.appendChild(h('div', { class: 'wa-ci-empty' }, [h('strong', { text: 'Nenhuma conversa com a IA ainda' }), h('p', { text: 'Quando um contato falar com a IA, ele aparece aqui.' })])); return; }
+      if (!items.length) { list.appendChild(h('div', { class: 'wa-ci-empty' }, [h('strong', { text: 'Nada encontrado' }), h('p', { text: 'Mude a busca ou o filtro.' })])); return; }
+      var all = items.every(function (r) { return sel[r.jid]; });
+      var table = h('table', { class: 'wa-ci-table' });
+      var allBox = h('input', { type: 'checkbox', class: 'wa-ci-check', 'aria-label': 'Selecionar todos', checked: all && items.length > 0, onchange: function (e) { items.forEach(function (r) { sel[r.jid] = e.target.checked; }); draw(); } });
+      table.appendChild(h('thead', null, [h('tr', null, [
+        h('th', { class: 'wa-ci-c-check', scope: 'col' }, [allBox]),
+        h('th', { scope: 'col', text: 'Contato' }), h('th', { scope: 'col', text: 'IA' }),
+        h('th', { scope: 'col', class: 'wa-ci-c-when', text: 'Última atividade' }), h('th', { scope: 'col', class: 'wa-ci-c-act' }, [h('span', { class: 'sr-only', text: 'Ação' })]),
+      ])]));
+      var body = h('tbody');
+      items.forEach(function (r) {
+        var box = h('input', { type: 'checkbox', class: 'wa-ci-check', 'aria-label': 'Selecionar ' + (r.name || r.phone), checked: !!sel[r.jid], onchange: function (e) { sel[r.jid] = e.target.checked; drawBulk(); } });
+        var paused = r.st.key !== 'ativa';
+        body.appendChild(h('tr', { 'data-state': r.st.key }, [
+          h('td', { class: 'wa-ci-c-check' }, [box]),
+          h('td', { class: 'wa-ci-c-name' }, [h('span', { class: 'wa-ci-person' }, [
+            h('span', { class: 'wa-ci-avatar', 'aria-hidden': 'true', text: r.name ? r.name.trim().charAt(0).toUpperCase() : '#' }),
+            h('span', { class: 'wa-ci-who' }, [h('strong', { text: r.name || r.phone || 'Sem nome' }), r.name ? h('small', { text: r.phone }) : null]),
+          ])]),
+          h('td', { class: 'wa-ci-c-state' }, [h('span', { class: 'wa-ci-chip', 'data-tone': r.st.tone }, [h('i', { 'aria-hidden': 'true' }), r.st.label]), r.st.hint ? h('small', { class: 'wa-ci-hint', text: r.st.hint }) : null]),
+          h('td', { class: 'wa-ci-c-when', text: ciAgo(r.updatedAt) }),
+          h('td', { class: 'wa-ci-c-act' }, [h('button', { type: 'button', class: 'wa-portal-btn ' + (paused ? '' : 'wa-portal-btn-line'), text: paused ? 'Retomar IA' : 'Pausar IA', disabled: busy, onclick: function () { change([r.jid], paused ? 'opened' : 'paused'); } })]),
+        ]));
+      });
+      table.appendChild(body);
+      list.appendChild(h('div', { class: 'wa-ci-tablewrap' }, [table]));
+    }
+    function draw() { drawTabs(); drawBulk(); drawList(); }
+
+    function load() {
+      list.setAttribute('aria-busy', 'true');
+      return request('GET', '/openai/fetchSessions/all/' + encodeURIComponent(instanceName)).then(function (data) {
+        var byJid = {};
+        (data || []).forEach(function (s) {
+          var prev = byJid[s.remoteJid];
+          if (!prev || Date.parse(s.updatedAt) > Date.parse(prev.updatedAt)) byJid[s.remoteJid] = s;
+        });
+        rows = Object.keys(byJid).map(function (jid) {
+          var s = byJid[jid];
+          return { jid: jid, name: s.pushName && s.pushName !== jid ? s.pushName : '', phone: ciPhone(jid), updatedAt: s.updatedAt, st: ciState(s) };
+        }).sort(function (a, b) { return Date.parse(b.updatedAt) - Date.parse(a.updatedAt); });
+        draw();
+      }, function (e) {
+        list.removeAttribute('aria-busy'); list.textContent = '';
+        list.appendChild(h('div', { class: 'wa-ci-empty' }, [h('strong', { text: 'Não foi possível carregar' }), h('p', { text: e.status === 400 ? 'O bot de IA não está ligado nesta instância.' : e.message })]));
+      });
+    }
+    function change(jids, status) {
+      if (busy || !jids.length) return;
+      busy = true; msg.textContent = status === 'paused' ? 'Pausando…' : 'Retomando…';
+      var done = 0, failed = 0;
+      var next = function (i) {
+        if (i >= jids.length) return Promise.resolve();
+        return request('POST', '/openai/changeStatus/' + encodeURIComponent(instanceName), { remoteJid: jids[i], status: status })
+          .then(function () { done++; }, function () { failed++; }).then(function () { return next(i + 1); });
+      };
+      next(0).then(function () {
+        busy = false; sel = {};
+        msg.textContent = (status === 'paused' ? 'IA pausada em ' : 'IA retomada em ') + done + (done === 1 ? ' contato' : ' contatos') + (failed ? '; ' + failed + ' com erro, tente de novo.' : '.');
+        return load();
+      });
+    }
+    search.addEventListener('input', function () { q = search.value; drawList(); });
+    refresh.addEventListener('click', function () { msg.textContent = ''; load(); });
+
+    var start = instanceName ? Promise.resolve() : request('GET', '/instance/fetchInstances').then(function (listData) {
+      var id = instanceIdFromPath();
+      var inst = (listData || []).filter(function (i) { return i && i.id === id; })[0];
+      if (!inst) throw new Error('Instância não encontrada.');
+      instanceName = inst.name;
+    });
+    start.then(load, function (e) { list.textContent = 'Não foi possível carregar: ' + e.message; });
+  }
+
   // Retenção (LGPD), administrator only: one deadline for every instance, preview per instance, "Apagar agora".
   var PRESETS = [[0, 'Desligada'], [90, '90 dias'], [180, '180 dias'], [365, '1 ano']];
   function fmtN(n) { return n == null ? '—' : Number(n).toLocaleString('pt-BR'); }
@@ -403,6 +562,8 @@
       } else if (page === 'acesso-cliente') {
         if (client) location.replace(home());
         else renderAcesso(el);
+      } else if (page === 'contatos-ia') {
+        renderContatosIa(el);
       } else if (page === 'retencao') {
         if (client) location.replace(home());
         else renderRetencao(el);
