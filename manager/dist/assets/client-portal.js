@@ -6,6 +6,8 @@
  *   server applies the same list to every request (src/utils/client-access.ts); hiding here is only comfort.
  * - Administrator (global key): "Acesso do cliente" page of the instance: turn on, pick the modules, create a
  *   new code (shown once), remove. "Conexão" is hidden (the administrator has the full panel).
+ * Administrator: "Retenção (LGPD)" page (/manager/retencao) with the deadline of every instance.
+ * Every tab: checks for a new version of the panel and reloads (hidden tab) or offers "Atualizar".
  * Pages are filled into <div data-wa-portal-page="..."> rendered by the routes of manager/patches/client-portal.py.
  */
 (function () {
@@ -259,6 +261,135 @@
     card.appendChild(msg);
   }
 
+  // Retenção (LGPD), administrator only: one deadline for every instance, preview per instance, "Apagar agora".
+  var PRESETS = [[0, 'Desligada'], [90, '90 dias'], [180, '180 dias'], [365, '1 ano']];
+  function fmtN(n) { return n == null ? '—' : Number(n).toLocaleString('pt-BR'); }
+  function renderRetencao(root) {
+    root.appendChild(title('Retenção das mensagens (LGPD)', 'Apaga do banco do WhatsAI, em todas as instâncias, as mensagens mais antigas que o prazo. Nada é apagado no WhatsApp: o celular do escritório e o do contato guardam tudo.'));
+    var card = h('section', { class: 'wa-portal-card', 'aria-busy': 'true' }, [h('p', { text: 'Carregando…' })]);
+    root.appendChild(card);
+    request('GET', '/admin/retention').then(function (view) { drawRet(card, view); }, function (e) {
+      card.removeAttribute('aria-busy');
+      card.textContent = e.status === 401 || e.status === 403 ? 'Só o administrador (chave global) muda a retenção.' : 'Não foi possível carregar: ' + e.message;
+    });
+  }
+
+  function drawRet(card, view) {
+    card.textContent = '';
+    card.removeAttribute('aria-busy');
+    var min = view.min || 7, max = view.max || 3650;
+    var isPreset = PRESETS.some(function (p) { return p[0] === view.days; });
+    var other = h('input', { type: 'number', class: 'wa-portal-num', id: 'wa-ret-other', min: String(min), max: String(max), step: '1', inputmode: 'numeric', value: isPreset ? '' : String(view.days), 'aria-label': 'Outro prazo, em dias' });
+    var radios = PRESETS.map(function (p) {
+      return h('label', { class: 'wa-portal-mod wa-portal-opt', for: 'wa-ret-' + p[0] }, [
+        h('input', { type: 'radio', name: 'wa-ret', id: 'wa-ret-' + p[0], value: String(p[0]), checked: isPreset && view.days === p[0] }),
+        h('span', null, [h('strong', { text: p[1] }), p[0] === 90 ? h('small', { text: 'Recomendado: o prazo do termo de tratamento e do site' }) : p[0] === 0 ? h('small', { text: 'Nada é apagado automaticamente' }) : null]),
+      ]);
+    });
+    radios.push(h('label', { class: 'wa-portal-mod wa-portal-opt', for: 'wa-ret-x' }, [
+      h('input', { type: 'radio', name: 'wa-ret', id: 'wa-ret-x', value: 'x', checked: !isPreset }),
+      h('span', null, [h('strong', { text: 'Outro' }), h('span', { class: 'wa-portal-inline' }, [other, h('small', { text: 'dias (' + min + ' a ' + fmtN(max) + ')' })])]),
+    ]));
+    var msg = h('p', { class: 'wa-portal-msg', role: 'status', 'aria-live': 'polite' });
+    var prev = h('div', { class: 'wa-portal-prev' });
+
+    function chosen() {
+      var r = card.querySelector('input[name="wa-ret"]:checked');
+      if (!r) return null;
+      if (r.value !== 'x') return Number(r.value);
+      var n = Number(other.value);
+      return Number.isInteger(n) && n >= min && n <= max ? n : null;
+    }
+    var seq = 0;
+    function drawPreview(p) {
+      prev.textContent = '';
+      if (!p || !p.days) {
+        prev.appendChild(h('p', { class: 'wa-portal-hint', text: 'Com a retenção desligada, nenhuma mensagem é apagada automaticamente.' }));
+        return;
+      }
+      prev.appendChild(h('p', { class: 'wa-portal-hint' }, [h('strong', { text: fmtN(p.total) }), ' mensagem(ns) têm mais de ' + p.days + ' dias e sairiam com este prazo:']));
+      var rows = (p.instances || []).map(function (i) {
+        return h('tr', null, [h('td', { text: i.instance }), h('td', { class: 'wa-portal-n', text: i.older == null ? 'sem acesso ao banco' : fmtN(i.older) })]);
+      });
+      prev.appendChild(h('div', { class: 'wa-portal-tablewrap' }, [h('table', { class: 'wa-portal-table' }, [
+        h('thead', null, [h('tr', null, [h('th', { scope: 'col', text: 'Instância' }), h('th', { scope: 'col', class: 'wa-portal-n', text: 'Mensagens que sairiam' })])]),
+        h('tbody', null, rows),
+      ])]));
+    }
+    function preview() {
+      var d = chosen();
+      if (d === null) { prev.textContent = ''; prev.appendChild(h('p', { class: 'wa-portal-hint', text: 'Digite um número de ' + min + ' a ' + fmtN(max) + ' dias.' })); return; }
+      if (d === view.days) { drawPreview(view.preview); return; }
+      var mine = ++seq;
+      prev.setAttribute('aria-busy', 'true');
+      request('GET', '/admin/retention?days=' + d).then(function (v) { if (mine === seq) drawPreview(v.preview); }, function (e) { if (mine === seq) msg.textContent = e.message; })
+        .then(function () { prev.removeAttribute('aria-busy'); });
+    }
+    card.addEventListener('change', function (e) { if (e.target && e.target.name === 'wa-ret') { if (e.target.value === 'x') other.focus(); preview(); } });
+    other.addEventListener('input', function () { var x = card.querySelector('#wa-ret-x'); if (x) x.checked = true; preview(); });
+
+    var src = view.source === 'painel' ? 'salvo neste painel' + (view.updatedAt ? ' em ' + new Date(view.updatedAt).toLocaleString('pt-BR') : '')
+      : view.source === 'variavel' ? 'da variável MESSAGE_RETENTION_DAYS do Render (salve aqui para mudar)' : 'padrão';
+    card.appendChild(h('p', { class: 'wa-portal-status', 'data-state': view.enabled ? 'ok' : 'bad', text: (view.enabled ? 'Ligada: mensagens com mais de ' + view.days + ' dias saem do banco' : 'Desligada') + ' (' + src + ').' }));
+    card.appendChild(h('fieldset', { class: 'wa-portal-mods wa-portal-opts' }, [h('legend', { text: 'Prazo para todas as instâncias' })].concat(radios)));
+    card.appendChild(prev);
+
+    function save() {
+      var d = chosen();
+      if (d === null) { msg.textContent = 'Escolha um prazo válido.'; return; }
+      if (d === view.days && view.source === 'painel') { msg.textContent = 'Esse já é o prazo em vigor.'; return; }
+      if (d && (!view.enabled || d < view.days) && !confirm('Salvar ' + d + ' dias? A partir de hoje, as mensagens mais antigas que isso saem do banco do WhatsAI em todas as instâncias, sem volta (no WhatsApp nada muda).')) return;
+      msg.textContent = 'Salvando…';
+      request('POST', '/admin/retention', { days: d }).then(function (next) { drawRet(card, next); card.querySelector('.wa-portal-msg').textContent = 'Salvo.'; }, function (e) { msg.textContent = e.message; });
+    }
+    function runNow(btn) {
+      if (!confirm('Apagar agora, em todas as instâncias, as mensagens com mais de ' + view.days + ' dias? Não tem volta (no WhatsApp nada muda).')) return;
+      btn.disabled = true;
+      msg.textContent = 'Apagando…';
+      request('POST', '/admin/retention/run').then(function (r) {
+        return request('GET', '/admin/retention').then(function (next) { drawRet(card, next); card.querySelector('.wa-portal-msg').textContent = fmtN(r.removed) + ' mensagem(ns) apagada(s).'; });
+      }, function (e) { msg.textContent = e.message; btn.disabled = false; });
+    }
+    var total = view.preview && view.preview.total;
+    card.appendChild(h('div', { class: 'wa-portal-actions' }, [
+      h('button', { type: 'button', class: 'wa-portal-btn', text: 'Salvar prazo', onclick: save }),
+      view.enabled ? h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-danger', text: 'Apagar agora', disabled: !total, title: total ? '' : 'Nada passou do prazo', onclick: function (e) { runNow(e.currentTarget); } }) : null,
+    ]));
+    card.appendChild(msg);
+    card.appendChild(h('p', { class: 'wa-portal-hint', text: 'Roda sozinho uma vez por dia em cada instância, na primeira resposta da IA do dia (não acorda o banco), em lotes. Saem a mensagem, as atualizações de status e a mídia dela; conversas, contatos, leads, agenda e processos ficam. Faça um backup antes de ligar pela primeira vez.' }));
+    drawPreview(view.preview);
+  }
+
+  // New version of the panel: index.html is revalidated, but an open tab keeps the old bundle in memory.
+  // Checks every 5 minutes and when the tab comes back; reloads a hidden tab, offers "Atualizar" to a visible one.
+  function bundleVersion(text) {
+    var m = /index-[a-z0-9]+\.js\?v=(\d+)/.exec(text || '');
+    return m ? m[1] : null;
+  }
+  var loadedVersion = null;
+  function checkVersion() {
+    if (!loadedVersion || !window.fetch) return;
+    fetch('/manager/', { cache: 'no-store', credentials: 'same-origin' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (html) {
+      var latest = bundleVersion(html);
+      if (!latest || latest === loadedVersion) return;
+      if (document.hidden) { location.reload(); return; }
+      if (document.querySelector('.wa-portal-update')) return;
+      var bar = h('div', { class: 'wa-portal-update', role: 'status' }, [
+        h('span', { text: 'Nova versão do painel disponível.' }),
+        h('button', { type: 'button', class: 'wa-portal-btn', text: 'Atualizar', onclick: function () { location.reload(); } }),
+        h('button', { type: 'button', class: 'wa-portal-x', 'aria-label': 'Depois', text: '×', onclick: function () { bar.remove(); } }),
+      ]);
+      document.body.appendChild(bar);
+    }).catch(function () {});
+  }
+  function watchVersion() {
+    var tag = document.querySelector('script[src*="/assets/index-"]');
+    loadedVersion = tag ? bundleVersion(tag.getAttribute('src')) : null;
+    if (!loadedVersion) return;
+    setInterval(checkVersion, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) checkVersion(); });
+  }
+
   function fillPages() {
     var nodes = document.querySelectorAll('[data-wa-portal-page]');
     for (var i = 0; i < nodes.length; i++) {
@@ -272,12 +403,16 @@
       } else if (page === 'acesso-cliente') {
         if (client) location.replace(home());
         else renderAcesso(el);
+      } else if (page === 'retencao') {
+        if (client) location.replace(home());
+        else renderRetencao(el);
       }
     }
   }
 
   function start() {
     fillPages();
+    watchVersion();
     new MutationObserver(fillPages).observe(document.body, { childList: true, subtree: true });
   }
   if (document.body) start();

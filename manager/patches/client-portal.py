@@ -10,8 +10,10 @@ the panel. Logic and pages live in a plain script, assets/client-portal.js (wind
             keeps, for a client, only his modules.
 2. routes - /manager/instance/:instanceId/conexao and /acesso-cliente: the usual layout with an empty
             <div data-wa-portal-page> that client-portal.js fills.
-3. html   - links client-portal.css?v=1 and loads client-portal.js?v=1 (classic script, before the bundle, so
-            window.WaPortal exists when the menu renders); raises the bundle ?v= to CACHE_VERSION.
+3. retencao - /manager/retencao (global layout, administrator) with <div data-wa-portal-page="retencao">, and the item
+            "Retenção (LGPD)" in the sidebar of the instance list: one message retention deadline for every instance.
+4. html   - links client-portal.css and loads client-portal.js (classic script, before the bundle, so
+            window.WaPortal exists when the menu renders) at ASSET_VERSION; raises the bundle ?v= to CACHE_VERSION.
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: groups whose marker is present are skipped.
@@ -22,16 +24,18 @@ Usage (from the repository root):
 Validate afterwards: npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null
 """
 import os
+import re
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
-CACHE_VERSION = '36'
+CACHE_VERSION = '37'
+ASSET_VERSION = '2'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 HTML_ASSETS = (
-    '    <link rel="stylesheet" href="/assets/client-portal.css?v=1" />\n'
-    '    <script src="/assets/client-portal.js?v=1"></script>\n'
+    '    <link rel="stylesheet" href="/assets/client-portal.css?v=' + ASSET_VERSION + '" />\n'
+    '    <script src="/assets/client-portal.js?v=' + ASSET_VERSION + '"></script>\n'
 )
 
 
@@ -92,7 +96,29 @@ def g_routes(s):
     return rep(s, ROUTE_ANCHOR, ROUTES_NEW, 'routes')
 
 
-GROUPS = [('nav', g_nav), ('routes', g_routes)]
+RET_ROUTE_ANCHOR = '{path:"/manager/chaves",element:i.jsx(tn,{children:i.jsx(B5,{children:i.jsx(WaVault.Page,{})})})},'
+RET_ROUTE_NEW = RET_ROUTE_ANCHOR + (
+    '{path:"/manager/retencao",element:i.jsx(tn,{children:i.jsx(B5,{children:'
+    'i.jsx("div",{className:"wa-portal-page wa-portal-global","data-wa-portal-page":"retencao"})})})},'
+)
+RET_NAV_OLD = "          navItem('lock','Chaves e credenciais','/manager/chaves')]}),"
+RET_NAV_NEW = (
+    "          navItem('lock','Chaves e credenciais','/manager/chaves'),\n"
+    "          navItem('cal','Retenção (LGPD)','/manager/retencao')]}),"
+)
+
+
+def g_retencao(s):
+    s = rep(s, RET_ROUTE_ANCHOR, RET_ROUTE_NEW, 'retencao route')
+    return rep(s, RET_NAV_OLD, RET_NAV_NEW, 'retencao nav')
+
+
+GROUPS = [('nav', g_nav), ('routes', g_routes), ('retencao', g_retencao)]
+ASSET_RE = re.compile(r'(/assets/client-portal\.(?:js|css)\?v=)(\d+)')
+
+
+def bump_assets(html):
+    return ASSET_RE.sub(lambda m: m.group(1) + (ASSET_VERSION if int(m.group(2)) < int(ASSET_VERSION) else m.group(2)), html)
 
 
 def patch_html(html):
@@ -126,6 +152,8 @@ def main():
         missing.append('html')
     if bump_index(html) != html:
         missing.append('index.html cache version')
+    if bump_assets(html) != html:
+        missing.append('index.html asset version')
     if check:
         print('ok: all groups applied' if not missing else f'missing: {missing}')
         return 0 if not missing else 1
@@ -140,11 +168,11 @@ def main():
         s = marker(name) + fn(s)
         report.append(f'{name}: applied')
     new_html = patch_html(html) if 'html' in missing else html
-    new_html = bump_index(new_html)
+    new_html = bump_assets(bump_index(new_html))
     open(BUNDLE, 'w', encoding='utf-8').write(s)
     if new_html != html:
         open(INDEX, 'w', encoding='utf-8').write(new_html)
-    report.append(f'index.html: client-portal.js/css ?v=1, bundle ?v={CACHE_VERSION}')
+    report.append(f'index.html: client-portal.js/css ?v={ASSET_VERSION}, bundle ?v={CACHE_VERSION}')
     print('\n'.join(report))
     return 0
 
