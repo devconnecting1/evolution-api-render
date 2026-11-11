@@ -664,3 +664,31 @@
     flex: 1 1 auto;
   }
 }
+
+/* Acesso do cliente: link sempre visível e mensagem pronta para o cliente */
+.wa-portal-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card, 8px);
+  background: var(--m-surface);
+}
+.wa-portal-link-label {
+  flex: 1 0 100%;
+  color: var(--m-text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.wa-portal-link .wa-portal-code {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.wa-portal-fresh-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

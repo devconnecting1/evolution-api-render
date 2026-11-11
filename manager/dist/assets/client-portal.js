@@ -259,17 +259,35 @@
     }
     card.appendChild(h('p', { class: 'wa-portal-hint', text: info.join(' ') }));
 
-    if (freshKey) {
-      var code = h('code', { class: 'wa-portal-code', text: freshKey });
-      var copy = h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Copiar código' });
-      copy.addEventListener('click', function () {
-        (navigator.clipboard ? navigator.clipboard.writeText(freshKey) : Promise.reject()).then(function () { copy.textContent = 'Copiado'; }, function () { copy.textContent = 'Selecione e copie'; });
+    // the link the client opens (always visible, with copy): the same for every client, the code is what differs
+    var link = location.origin + '/acesso';
+    function copyButton(label, text) {
+      var b = h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: label });
+      b.addEventListener('click', function () {
+        (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () {
+          b.textContent = 'Copiado';
+          setTimeout(function () { b.textContent = label; }, 2000);
+        }, function () { b.textContent = 'Selecione e copie'; });
       });
+      return b;
+    }
+    card.appendChild(h('div', { class: 'wa-portal-link' }, [
+      h('span', { class: 'wa-portal-link-label', text: 'Link de acesso do cliente' }),
+      h('code', { class: 'wa-portal-code', text: link }),
+      copyButton('Copiar link', link),
+    ]));
+
+    if (freshKey) {
+      var message = 'Olá! Este é o seu acesso ao painel do WhatsAI.\n\n' +
+        '1. Abra: ' + link + '\n' +
+        '2. Entre com o código: ' + freshKey + '\n' +
+        '3. Para usar como app: no computador ou no Android, toque em "Instalar app"; no iPhone, Compartilhar > "Adicionar à Tela de Início".\n\n' +
+        'Guarde o código como uma senha e não compartilhe.';
       card.appendChild(h('div', { class: 'wa-portal-fresh', role: 'alert' }, [
         h('strong', { text: 'Código do cliente (aparece só agora):' }),
-        code,
-        copy,
-        h('p', { class: 'wa-portal-hint', text: 'Envie ao cliente com o link ' + location.origin + '/acesso . No computador ou no celular ele abre o link, entra com o código e pode instalar o app pelo navegador (Instalar app / Adicionar à tela inicial). O código anterior deixou de funcionar.' }),
+        h('code', { class: 'wa-portal-code', text: freshKey }),
+        h('div', { class: 'wa-portal-fresh-actions' }, [copyButton('Copiar mensagem para o cliente', message), copyButton('Copiar só o código', freshKey)]),
+        h('p', { class: 'wa-portal-hint', text: 'A mensagem já traz o link, o código e como instalar o app: cole no WhatsApp ou no e-mail do cliente. O código anterior deixou de funcionar.' }),
       ]));
     }
 
