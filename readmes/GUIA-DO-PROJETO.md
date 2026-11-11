@@ -97,8 +97,9 @@ flowchart LR
 
 ### 2.2 Planos e preços
 
-Os preços são iguais no site, `llms.txt`, `agents/whatsai.md`, `readmes/RESUMO.md`, `readmes/README-COMERCIAL.md`
-e na seção 6 do manual. **Não altere um sem alterar todos** (o teste de unidade não cobre isso; é conferência manual).
+Os valores-núcleo (mensalidade, franquia, implantação e excedente) são iguais no site, `llms.txt`,
+`agents/whatsai.md`, `readmes/RESUMO.md`, `readmes/README-COMERCIAL.md` e na seção 6 do manual. **Não altere um sem
+alterar todos** (o teste de unidade não cobre isso; é conferência manual).
 
 | Plano | Mensalidade | Respostas de IA por mês | Implantação |
 |---|---|---|---|
@@ -132,7 +133,7 @@ e na seção 6 do manual. **Não altere um sem alterar todos** (o teste de unida
 |---|---|---|---|
 | API | Render, serviço `evolution-api`, `srv-dbd9qqi9lscs73aoe85g` | Express + TypeScript; canais, chatbots, eventos, MCP, painel estático | Plano Free, Ohio; dorme após ~15 min sem tráfego |
 | Cache | Render Key Value `evolution-redis` | Cache de sessões/configurações; `allkeys-lru` | Sem persistência |
-| Banco de controle | Neon, projeto principal `spring-boat-14626479` | `Instance`, `InstanceDatabase`, `ClientAccess`, `GlobalSetting`, credenciais, contadores etc. | Sempre consultado antes de saber a instância |
+| Banco de controle | Neon, projeto principal `spring-boat-14626479` | Modelos de controle: `Instance`, `InstanceDatabase`, `ClientAccess`, `GlobalSetting`, `IsOnWhatsapp` | Sempre consultado antes de saber a instância; credenciais e contadores seguem o banco da instância quando há banco próprio |
 | Bancos por instância | Neon, um projeto por instância (opcional) | Dados operacionais da instância | Ligado por `DB_PER_INSTANCE_ENABLED=true` |
 | OpenAI | API externa | Chat Completions, transcrição, visão e ferramentas de agenda | Chave por instância; a mesma chave não pode estar em duas instâncias |
 | Site/painel | Vercel, projeto `whatsaibr` | `manager/dist` estático | Deploy pelo workflow `Deploy Manager` |
@@ -215,13 +216,13 @@ sequenceDiagram
   (`changeStatus paused`) **nunca** é reaberta automaticamente; só `opened`.
 - Durante a pausa o bot não responde e a mensagem não entra na sessão/histórico. Atenção: no Baileys a mensagem
   **já foi gravada em `Message`** antes do emit (com `DATABASE_SAVE_DATA_NEW_MESSAGE=true`, que o Render liga).
-  O manual diz "sem gravar nada no banco"; o correto é "não responde e não entra na sessão".
+  O manual já foi corrigido para "não responde e não entra na sessão".
 
 ### 4.4 Mídia
 
 - Áudio do cliente é transcrito (modelo de transcrição configurado; fallback para o legado).
-- Imagem entra como data URL; PDF como arquivo (≤10 MB, ≤20 páginas, com fallback para descrição); vídeo,
-  figurinha, localização e contato viram texto.
+- Imagem entra como data URL; PDF como arquivo (padrão de 10 MB, configurável de 1 a 32 MB; ≤20 páginas, com
+  fallback para descrição); vídeo, figurinha, localização e contato viram texto.
 - O bot pode optar por não ler imagens/áudios; campos ausentes herdam do settings.
 
 ---
@@ -395,7 +396,8 @@ flowchart TD
   `conversas + leads + conexao`.
 - A autorização é **server-side em cada requisição** (`clientRouteAllowed`); esconder menus em
   `client-portal.js` é só conforto.
-- `GET /instance/fetchInstances` com `wac_` devolve só a instância do código, sem token nem segredos.
+- `GET /instance/fetchInstances` com `wac_` devolve só a instância do código, sem o token da instância nem
+  segredos (o campo `token` é o próprio código do cliente).
 - Cache de 30 s; `lastUsedAt` no máximo a cada 10 min; novo código invalida o anterior.
 - O cliente usa o mesmo painel em `/acesso` (PWA), com polling e checagem de versão a cada 5 min.
 
@@ -403,8 +405,8 @@ flowchart TD
 
 - `GET /observability` (chave global) com cache de 60 s (`?refresh=1`/`?force=1`): cartões Sistema, WhatsApp,
   Plano e uso, OpenAI, Neon, Render, Vercel e GitHub.
-- O cartão **Sistema lê o Postgres** (contagem de instâncias/mensagens etc.); os demais leem APIs externas. O
-  manual diz “apenas lê APIs externas” — está impreciso.
+- O cartão **Sistema**, o **Plano e uso** e a **saúde OpenAI** leem o Postgres (contagens, credenciais e bots); o
+  **WhatsApp** lê o estado em memória; **Neon, Render, Vercel e GitHub** consultam APIs externas.
 - Saúde OpenAI em memória por credencial; teste ativo no máximo a cada 30 s por chave; a Observabilidade testa
   sozinha chaves sem sinal há 6 h. Não há saldo em dólares.
 - Avisos ao administrador por WhatsApp (`ADMIN_ALERT_NUMBERS` + `ADMIN_ALERT_INSTANCE`): OpenAI sem crédito,
@@ -471,8 +473,8 @@ Para operar a infraestrutura, os MCPs oficiais dos fornecedores são a melhor po
 | Neon | `https://mcp.neon.tech/mcp` | OAuth ou API key | `claude mcp add --transport http neon https://mcp.neon.tech/mcp` + `/mcp` |
 | Vercel | `https://mcp.vercel.com` | OAuth | `claude mcp add --transport http vercel https://mcp.vercel.com` + `/mcp` |
 
-- O Render **não** suporta registro dinâmico de cliente OAuth; por isso o plugin oficial (client id `claude`) é o
-  caminho sem API key.
+- No Claude Code, o Render não aceita registro dinâmico de cliente OAuth; por isso o plugin oficial (que já traz o
+  client id) é o caminho sem API key.
 - Neon aceita `?readonly=true`, `?projectId=<id>`, `?category=...` e `?roleName=...` na URL do MCP.
 - O Vercel MCP é OAuth; para CLI/REST use um token com escopo de time/projeto.
 - CLIs úteis: `render` (serviços, deploys, logs), `neon`/`neonctl` (projetos, branches, SQL) e `vercel`
@@ -505,7 +507,7 @@ Para operar a infraestrutura, os MCPs oficiais dos fornecedores são a melhor po
 | `/manager/chaves` | Chaves e credenciais |
 | `/manager/retencao` | Retenção (LGPD) |
 | `/manager/login` | Entrada |
-| `/manager/instance/:id/dashboard` | Visão Geral |
+| `/manager/instance/:instanceId/dashboard` | Visão Geral |
 | `.../chat` e `.../chat/:remoteJid` | Conversas |
 | `.../contatos-ia` | Contatos da IA |
 | `.../leads` | Leads |
@@ -525,6 +527,7 @@ Para operar a infraestrutura, os MCPs oficiais dos fornecedores são a melhor po
 ### 9.3 Comandos obrigatórios após mudar o painel
 
 ```bash
+# favicon-wa.py exige fontTools e brotli (pip install fonttools brotli)
 for f in manager/patches/*.py; do python3 -I "$f" --check; done
 npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null
 ```
@@ -540,7 +543,7 @@ HTML de `manager/dist`, atualize o hash SHA-256 em `manager/dist/vercel.json` (o
 - O site é estático em `manager/dist/landing/` e é servido em `/` pela Vercel. Páginas: `/`, `/seguranca`,
   `/privacidade`, `/termos`, além de `/acesso` (portal), `/observability` e os arquivos para agentes
   (`llms.txt`, `agents/whatsai.md`, `ard.json`, `security.txt`).
-- Preços do site precisam ser iguais aos de `llms.txt`, `agents/whatsai.md`, `readmes/RESUMO.md`,
+- Os valores-núcleo do site precisam ser iguais aos de `llms.txt`, `agents/whatsai.md`, `readmes/RESUMO.md`,
   `readmes/README-COMERCIAL.md` e à seção 6 do manual.
 - **Segurança:** em `/seguranca` só entra o que está implementado e pode ser conferido. Nunca exiba selos que o
   WhatsAI não tem (SOC 2, ISO 27001 etc.). A licença do Evolution API (condição 1b) exige o aviso de uso no
@@ -864,16 +867,19 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 
 9. **Metadados:** `Dockerfile` tem `LABEL version="2.3.1"` e o `package.json` está em 2.3.7; o comentário de
    retenção em `server.module.ts` diz mínimo 30 e o código usa 7. Corrigir junto de outra mudança de código.
-10. **Data e métrica histórica do manual:** a data do topo e o “testes (71)” da auditoria merecem rótulo de
-    histórico para não confundir verificadores automáticos.
+10. **Métrica histórica do manual:** o “testes (71)” da auditoria merece rótulo de histórico para não confundir
+    verificadores automáticos.
 11. **Atualizar o pin do Vercel** no workflow (`vercel@65.2.0` → versão atual) e revisar o plano Hobby
     (não comercial) quando houver cliente pagante.
-12. **Documentar `OPENAI_API_KEY_GLOBAL`** (existe no código, não está no `render.yaml` nem no `.env.example`).
+12. **Documentar `OPENAI_API_KEY_GLOBAL`** (existe no código e em `env.example`, mas não no `render.yaml` nem no
+    `.env.example` da raiz).
 13. **Consistência de preços:** os valores-núcleo batem nos seis locais; `llms.txt` e `agents/whatsai.md` são
-    resumos e omitem número adicional, piloto e aprovação da Meta. Declarar isso explicitamente ou completar.
+    resumos e omitem a implantação do número adicional, o piloto e a aprovação da Meta. Declarar isso
+    explicitamente ou completar.
 14. **Supply chain:** o Gitleaks roda com `--no-git` (não varre o histórico) e o `npm audit` é
     `continue-on-error`; avaliar tornar o audit bloqueante para vulnerabilidades altas.
-15. **Registrar no manual a regra de múltiplos agentes** e o link para este guia (o `CLAUDE.md` já aponta).
+15. **Registrar a regra de múltiplos agentes na seção 8 do manual** (o link para este guia já está no topo e no
+    `CLAUDE.md`).
 
 ---
 
@@ -882,7 +888,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 - Regras de trabalho: [`CLAUDE.md`](../CLAUDE.md)
 - Manual do produto: [`README-WHATSAI.md`](../README-WHATSAI.md) — arquitetura (§1), segredos (§2), deploy (§3),
   painel/site (§4), onboarding (§5), planos (§6), LGPD/segurança (§7), manutenção (§8), troubleshooting (§9),
-  observabilidade (§10), decisões (§11), bot OpenAI (§12), auditoria (§13), MCP (§14), limites (§15), leads (§16).
+  observabilidade (§10), decisões (§11), bot OpenAI (§12), auditoria (§13), MCP (§14), limites (§15), leads (§16),
+  Processos (§17), Agenda (§18) e Acesso do cliente (§19).
 - Banco por instância: [`docs/arquitetura/banco-por-instancia.md`](../docs/arquitetura/banco-por-instancia.md)
 - Docs espelhados: `docs/vendors/render/llms-full.txt`, `docs/vendors/neon/llms-full.txt`,
   `docs/vendors/vercel/llms-full.txt` (atualize com `bash scripts/update-vendor-docs.sh`)
