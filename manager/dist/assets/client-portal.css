@@ -704,3 +704,61 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* Conexão (cliente): número e perfil conectados, dicas para continuar conectado */
+.wa-portal-who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card, 8px);
+  background: var(--m-surface);
+}
+.wa-portal-who[hidden] {
+  display: none;
+}
+.wa-portal-who-pic {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--m-surface-2, var(--m-border));
+  color: var(--m-text-2);
+  font-weight: 600;
+}
+.wa-portal-who-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.wa-portal-who-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wa-portal-who-text small {
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wa-portal-tips {
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wa-portal-tips-title {
+  margin: 0 0 4px;
+  color: var(--m-text);
+  font-weight: 500;
+}
+.wa-portal-tips ul {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+.wa-portal-tips li + li {
+  margin-top: 2px;
+}

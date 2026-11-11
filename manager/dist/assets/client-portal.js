@@ -180,6 +180,44 @@
     var timer = null;
     var pairingSince = 0; // > 0 while the client asked for a QR code
     var shown = '';
+    // connected: which number and profile (GET /instance/fetchInstances, the client's own instance only)
+    var who = h('div', { class: 'wa-portal-who', hidden: true });
+    var tips = h('div', { class: 'wa-portal-tips' });
+    var whoLoaded = false;
+    var lastState = null;
+
+    function loadWho() {
+      if (whoLoaded) return;
+      whoLoaded = true;
+      request('GET', '/instance/fetchInstances').then(function (list) {
+        var inst = (list || []).filter(function (i) { return i && i.name === name; })[0];
+        if (!inst) return;
+        who.textContent = '';
+        var number = ciPhone(inst.ownerJid || '');
+        if (inst.profilePicUrl) who.appendChild(h('img', { class: 'wa-portal-who-pic', src: inst.profilePicUrl, alt: '', width: '40', height: '40', referrerpolicy: 'no-referrer' }));
+        else who.appendChild(h('span', { class: 'wa-portal-who-pic', 'aria-hidden': 'true', text: (inst.profileName || '#').trim().charAt(0).toUpperCase() }));
+        who.appendChild(h('span', { class: 'wa-portal-who-text' }, [
+          h('strong', { text: inst.profileName || 'WhatsApp' }),
+          number ? h('small', { text: number }) : null,
+        ]));
+        who.hidden = lastState !== 'open';
+      }, function () { whoLoaded = false; });
+    }
+    function drawTips(open) {
+      tips.textContent = '';
+      var items = open
+        ? [
+          'Deixe o celular deste número ligado e com internet de vez em quando; ele não precisa ficar aberto no WhatsApp.',
+          'Abra o WhatsApp no celular pelo menos uma vez a cada 14 dias: depois disso o próprio WhatsApp desconecta os aparelhos conectados.',
+          'Não desconecte o aparelho "Evolution API" (navegador Chrome) em WhatsApp > Aparelhos conectados: é por ele que a IA responde.',
+        ]
+        : [
+          'Clique em "Mostrar QR code" e, no celular deste número, abra WhatsApp > Aparelhos conectados > Conectar um aparelho.',
+          'Se o celular trocou de número ou o WhatsApp foi reinstalado, avise quem configurou o seu atendimento.',
+        ];
+      tips.appendChild(h('p', { class: 'wa-portal-tips-title', text: open ? 'Para continuar conectado' : 'Para conectar de novo' }));
+      tips.appendChild(h('ul', null, items.map(function (t) { return h('li', { text: t }); })));
+    }
 
     function note(text) {
       qrBox.textContent = '';
@@ -220,6 +258,9 @@
       status.textContent = open ? 'WhatsApp conectado.' : pairingSince ? 'Aguardando a leitura do QR code…' : state === 'connecting' ? 'Conectando…' : 'WhatsApp desconectado.';
       status.setAttribute('data-state', open ? 'ok' : 'bad');
       button.hidden = open;
+      who.hidden = !open || !who.firstChild;
+      if (open) loadWho();
+      if (state && state !== lastState) { lastState = state; drawTips(open); }
       if (open && pairingSince) stopPairing('');
       else if (open) note('');
     }
@@ -240,7 +281,7 @@
     });
 
     root.appendChild(title('Conexão', 'Estado do WhatsApp deste número.'));
-    root.appendChild(h('section', { class: 'wa-portal-card' }, [status, button, qrBox]));
+    root.appendChild(h('section', { class: 'wa-portal-card' }, [status, who, button, qrBox, tips]));
     check();
     timer = setInterval(check, 5000);
   }
