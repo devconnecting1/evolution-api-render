@@ -1,11 +1,82 @@
 {
   "routes": [
-    { "src": "^/$", "dest": "/landing/index.html" },
-    { "src": "^/advocacia/?$", "status": 308, "headers": { "Location": "/#segmentos" } },
-    { "src": "^/instagram/?$", "status": 308, "headers": { "Location": "/" } },
-    { "src": "^/acesso/?$", "dest": "/acesso/index.html" },
-    { "handle": "filesystem" },
-    { "src": "^/observability/?$", "dest": "/observability/index.html" },
-    { "src": "^/(.*)$", "dest": "/index.html" }
+    {
+      "src": "^/(.*)$",
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'sha256-+xWZOh0szMj2JMWPdd7EFBDQXUuR64ttRHh9UuA0JbM=' 'sha256-QKF0/aQ62VwBc3Ejx4ThT2d9XYfPxvcNcl23m2joxSE=' 'sha256-XfpHiX5VO9sICpvg53dgHqZtl+wnlMZEoPhgONLvM70='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+        "Cross-Origin-Opener-Policy": "same-origin"
+      },
+      "continue": true
+    },
+    {
+      "src": "^/\\.well-known/security\\.txt$",
+      "dest": "/security.txt",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8"
+      }
+    },
+    {
+      "src": "^/\\.well-known/ard\\.json$",
+      "dest": "/ard.json",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
+      "src": "^/llms\\.txt$",
+      "dest": "/llms.txt",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8"
+      }
+    },
+    {
+      "src": "^/agents/([a-z0-9-]+)\\.md$",
+      "dest": "/agents/$1.md",
+      "headers": {
+        "Content-Type": "text/markdown; charset=utf-8"
+      }
+    },
+    {
+      "src": "^/$",
+      "dest": "/landing/index.html"
+    },
+    {
+      "src": "^/advocacia/?$",
+      "status": 308,
+      "headers": {
+        "Location": "/#segmentos"
+      }
+    },
+    {
+      "src": "^/instagram/?$",
+      "status": 308,
+      "headers": {
+        "Location": "/"
+      }
+    },
+    {
+      "src": "^/acesso/?$",
+      "dest": "/acesso/index.html"
+    },
+    {
+      "src": "^/seguranca/?$",
+      "dest": "/landing/seguranca.html"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/observability/?$",
+      "dest": "/observability/index.html"
+    },
+    {
+      "src": "^/(.*)$",
+      "dest": "/index.html"
+    }
   ]
 }

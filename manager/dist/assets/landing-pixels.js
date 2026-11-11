@@ -15,8 +15,9 @@
     if (!ctx) return;
     var cols = 0, rows = 0, seeds = [], visible = false, raf = 0, last = 0, t0 = performance.now();
 
-    function resize() {
-      var r = canvas.getBoundingClientRect();
+    // Size comes from the ResizeObserver entry (no layout read on load, so no forced reflow).
+    function resize(r) {
+      if (!r || !r.width) r = canvas.getBoundingClientRect();
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.max(1, Math.round(r.width * dpr));
       canvas.height = Math.max(1, Math.round(r.height * dpr));
@@ -62,9 +63,13 @@
       if (!reduce && visible && !document.hidden && !raf) raf = requestAnimationFrame(loop);
     }
 
-    resize();
-    if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
-    else window.addEventListener('resize', resize);
+    if (window.ResizeObserver) {
+      // fires once right after observe() with the initial size
+      new ResizeObserver(function (entries) { resize(entries[0].contentRect); }).observe(canvas);
+    } else {
+      resize();
+      window.addEventListener('resize', function () { resize(); });
+    }
     if (reduce) return;
     if (window.IntersectionObserver) {
       new IntersectionObserver(function (entries) {

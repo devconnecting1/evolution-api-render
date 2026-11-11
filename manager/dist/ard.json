@@ -1,0 +1,19 @@
+{
+  "entries": [
+    {
+      "identifier": "urn:air:whatsaibr.vercel.app:site:whatsai-info",
+      "displayName": "WhatsAI: informações do produto",
+      "description": "Resumo em Markdown do WhatsAI (atendimento com IA no WhatsApp para empresas brasileiras): o que faz, planos e preços, segurança e LGPD, e como agendar uma demonstração.",
+      "type": "application/agent-skills+md",
+      "url": "https://whatsaibr.vercel.app/agents/whatsai.md",
+      "representativeQueries": [
+        "atendimento com IA no WhatsApp para empresas",
+        "quanto custa o WhatsAI",
+        "WhatsAI é seguro e segue a LGPD",
+        "agendar demonstração do WhatsAI"
+      ],
+      "tags": ["whatsapp", "atendimento", "ia", "pt-BR"],
+      "updatedAt": "2026-11-11T00:00:00Z"
+    }
+  ]
+}

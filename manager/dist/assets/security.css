@@ -1,0 +1,388 @@
+/* WhatsAI: página /seguranca e cartão "Segurança" da página inicial. Só tokens do tema (landing.css /
+   landing-theme.css), então claro e escuro valem. Os blocos "3D" são CSS puro: sem biblioteca, sem WebGL, sem
+   animação de rolagem; inclinam um pouco ao passar o mouse (desligado com prefers-reduced-motion). */
+
+/* ---------------------------------------------------------------- 3D tiles */
+.t3-stage {
+  position: relative;
+  width: min(100%, 440px);
+  aspect-ratio: 1 / 0.92;
+  margin: 0 auto;
+  perspective: 1100px;
+}
+.t3 {
+  --t3-size: 168px;
+  --t3-face: #2a2a26;
+  --t3-face-2: #11110f;
+  --t3-side: #050504;
+  --t3-disc: #f1f0e6;
+  --t3-ink: #1a1a1a;
+  --t3-rx: 24deg;
+  --t3-ry: -22deg;
+  --t3-rz: 10deg;
+  position: absolute;
+  width: var(--t3-size);
+  height: var(--t3-size);
+  transform: rotateX(var(--t3-rx)) rotateY(var(--t3-ry)) rotateZ(var(--t3-rz));
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.t3-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 26%;
+  background:
+    radial-gradient(120% 90% at 22% 12%, rgba(255, 255, 255, 0.18), transparent 46%),
+    linear-gradient(155deg, var(--t3-face) 0%, var(--t3-face-2) 100%);
+  box-shadow:
+    inset 0 2px 1px rgba(255, 255, 255, 0.24),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.28),
+    1px 1.5px 0 var(--t3-side),
+    2px 3px 0 var(--t3-side),
+    3px 4.5px 0 var(--t3-side),
+    4px 6px 0 var(--t3-side),
+    5px 7.5px 0 var(--t3-side),
+    6px 9px 0 var(--t3-side),
+    7px 10.5px 0 var(--t3-side),
+    8px 12px 0 var(--t3-side),
+    9px 13.5px 0 var(--t3-side),
+    18px 38px 36px rgba(20, 18, 12, 0.3),
+    34px 66px 72px rgba(20, 18, 12, 0.16);
+}
+.t3-disc {
+  display: grid;
+  place-items: center;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  background:
+    radial-gradient(90% 90% at 30% 22%, #ffffff, transparent 55%),
+    linear-gradient(160deg, var(--t3-disc), #cfcdbd);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.16),
+    0 3px 0 #a8a692,
+    0 9px 14px rgba(0, 0, 0, 0.3);
+}
+.t3-disc svg {
+  width: 54%;
+  height: 54%;
+  fill: none;
+  stroke: var(--t3-ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7)) drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.22));
+}
+.t3--cream {
+  --t3-face: #fffff2;
+  --t3-face-2: #e8e7cc;
+  --t3-side: #b7b597;
+  --t3-ink: #ffffe3;
+}
+.t3--cream .t3-disc {
+  background:
+    radial-gradient(90% 90% at 30% 22%, rgba(255, 255, 255, 0.26), transparent 55%),
+    linear-gradient(160deg, #2c2c28, #121210);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.22),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+    0 3px 0 #9a987e,
+    0 9px 14px rgba(0, 0, 0, 0.24);
+}
+.t3--cream .t3-disc svg {
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6));
+}
+.t3--warm {
+  --t3-face: #ec8d50;
+  --t3-face-2: #c25e17;
+  --t3-side: #85390a;
+  --t3-ink: #85390a;
+}
+.t3--warm .t3-disc {
+  background:
+    radial-gradient(90% 90% at 30% 22%, #ffffff, transparent 55%),
+    linear-gradient(160deg, #fff6ee, #ead6c4);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.14),
+    0 3px 0 #b0896b,
+    0 9px 14px rgba(0, 0, 0, 0.28);
+}
+/* placement in the hero stage */
+.t3-a { left: 2%; top: 4%; --t3-rz: -8deg; --t3-ry: -26deg; }
+.t3-b { left: 54%; top: 26%; --t3-size: 150px; --t3-rz: 12deg; --t3-ry: -16deg; }
+.t3-c { left: 20%; top: 60%; --t3-size: 116px; --t3-rz: -16deg; --t3-ry: -30deg; }
+.t3-stage:hover .t3,
+.sec-cta:hover .t3 {
+  --t3-rx: 16deg;
+  --t3-ry: -10deg;
+}
+.t3-stage:hover .t3-b { --t3-rz: 6deg; }
+.t3-stage:hover .t3-c { --t3-rz: -8deg; }
+/* dark theme: the deep tile gets a light rim, shadows go darker */
+:root[data-theme='dark'] .t3--deep .t3-face {
+  outline: 1px solid rgba(255, 255, 227, 0.1);
+  outline-offset: -1px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .t3--deep .t3-face {
+    outline: 1px solid rgba(255, 255, 227, 0.1);
+    outline-offset: -1px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .t3 {
+    transition: none;
+  }
+  .t3-stage:hover .t3,
+  .sec-cta:hover .t3 {
+    --t3-rx: 24deg;
+    --t3-ry: -22deg;
+  }
+}
+
+/* ---------------------------------------------------------------- /seguranca */
+.sec-hero {
+  padding: 136px 0 24px;
+}
+.sec-hero-in {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 48px;
+}
+.eyebrow {
+  margin-bottom: 16px;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.sec-display {
+  max-width: 14ch;
+}
+.sec-hero .lead {
+  max-width: 52ch;
+  margin-top: 20px;
+}
+.sec-page .actions {
+  justify-content: flex-start;
+}
+.sec-hero .actions {
+  margin-top: 32px;
+}
+.sec-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sec-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+.sec-card p {
+  margin-top: 8px;
+  color: var(--text-2);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.sec-card .h4 {
+  margin-top: 16px;
+}
+.sec-ico {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(155deg, #2a2a26, #11110f);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 1px 2px 0 #050504, 2px 4px 0 #050504, 4px 10px 14px rgba(20, 18, 12, 0.22);
+  color: #ffffe3;
+}
+.sec-ico .ico {
+  width: 20px;
+  height: 20px;
+}
+.sec-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 32px;
+}
+.sec-list {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sec-list li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.sec-list strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.sec-list .ico {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: var(--ok);
+}
+.sec-note {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--mint);
+}
+.sec-note p {
+  margin-top: 8px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.sec-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sec-link .ico {
+  width: 16px;
+  height: 16px;
+}
+.sec-report {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 40px;
+  padding: 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  perspective: 900px;
+}
+.sec-report p {
+  max-width: 60ch;
+  margin-top: 8px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.sec-report .actions {
+  margin-top: 24px;
+}
+.t3-mini {
+  position: relative;
+  --t3-size: 96px;
+  --t3-rz: -10deg;
+}
+.sec-page .foot {
+  margin-top: 120px;
+}
+
+/* ---------------------------------------------------------------- card on the home page (#seguranca) */
+.sec-cta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  align-items: center;
+  gap: 32px;
+  margin-top: 56px;
+  padding: 32px 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+/* #seguranca is a graphite band in both themes (landing-theme.css): the card stays translucent on it */
+#seguranca .sec-cta {
+  background: rgba(255, 255, 255, 0.04);
+}
+.sec-cta .h4 {
+  display: block;
+}
+.sec-cta:hover {
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.07);
+}
+.sec-cta:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+.sec-cta p {
+  max-width: 56ch;
+  margin-top: 8px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.sec-cta .sec-link {
+  text-decoration: none;
+}
+.sec-cta-tiles {
+  position: relative;
+  height: 150px;
+  perspective: 900px;
+}
+.sec-cta-tiles .t3 {
+  --t3-size: 92px;
+}
+.sec-cta-tiles .t3:nth-child(1) { left: 6%; top: 10%; --t3-rz: -8deg; }
+.sec-cta-tiles .t3:nth-child(2) { left: 46%; top: 30%; --t3-size: 82px; --t3-rz: 12deg; }
+
+/* ---------------------------------------------------------------- responsive */
+@media (max-width: 1100px) {
+  .sec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 860px) {
+  .sec-hero {
+    padding-top: 112px;
+  }
+  .sec-hero-in,
+  .sec-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .t3-stage {
+    width: min(100%, 340px);
+  }
+  .t3-a { --t3-size: 132px; }
+  .t3-b { --t3-size: 116px; }
+  .t3-c { --t3-size: 92px; }
+  .sec-cta {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 24px;
+  }
+  .sec-cta-tiles {
+    order: -1;
+    width: 220px;
+    height: 128px;
+  }
+}
+@media (max-width: 560px) {
+  .sec-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sec-report {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    padding: 24px;
+  }
+}

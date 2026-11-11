@@ -5,6 +5,7 @@ import { clientAccessService, prismaRepository } from '@api/server.module';
 import { Auth, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { ForbiddenException, UnauthorizedException } from '@exceptions';
+import { authThrottle, clientIp } from '@utils/auth-throttle';
 import { clientRouteAllowed, isClientKey, normalizeClientPath } from '@utils/client-access';
 import { NextFunction, Request, Response } from 'express';
 
@@ -17,16 +18,42 @@ async function instanceToken(name: string): Promise<string | undefined> {
   );
 }
 
-async function apikey(req: Request, _: Response, next: NextFunction) {
-  const env = configService.get<Auth>('AUTHENTICATION').API_KEY;
+function tooManyAttempts(res: Response, ip: string) {
+  res.set('Retry-After', String(authThrottle.retryAfter(ip)));
+  return res.status(429).json({
+    status: 429,
+    error: 'Too Many Requests',
+    response: { message: ['Muitas tentativas com chave inválida. Tente de novo em alguns minutos.'] },
+  });
+}
+
+/**
+ * Wrong keys count per client IP (src/utils/auth-throttle.ts). A blocked IP still gets in with the global key
+ * (compared in memory, constant time); anything else gets 429 without touching the database.
+ */
+async function apikey(req: Request, res: Response, next: NextFunction) {
+  const ip = clientIp(req.headers);
   const key = req.get('apikey');
+  if (authThrottle.isBlocked(ip) && !safeEqual(key ?? '', configService.get<Auth>('AUTHENTICATION').API_KEY.KEY)) {
+    return tooManyAttempts(res, ip);
+  }
+  try {
+    return await checkApikey(req, key, next);
+  } catch (error) {
+    if (error instanceof UnauthorizedException) authThrottle.recordFailure(ip);
+    throw error;
+  }
+}
+
+async function checkApikey(req: Request, key: string | undefined, next: NextFunction) {
+  const env = configService.get<Auth>('AUTHENTICATION').API_KEY;
   const db = configService.get<Database>('DATABASE');
 
   if (!key) {
     throw new UnauthorizedException();
   }
 
-  if (env.KEY === key) {
+  if (safeEqual(key, env.KEY)) {
     return next();
   }
 
@@ -41,7 +68,7 @@ async function apikey(req: Request, _: Response, next: NextFunction) {
 
   try {
     if (param?.instanceName) {
-      if ((await instanceToken(param.instanceName)) === key) {
+      if (safeEqual(key, await instanceToken(param.instanceName))) {
         return next();
       }
     } else {
@@ -96,17 +123,21 @@ async function clientAccessGuard(req: Request, key: string, next: NextFunction) 
  * (no oracle telling a valid token from an invalid one). No key at all: 401, as in `apikey`.
  */
 export function createAdminOnlyGuard(globalKey: () => string | undefined) {
-  return function adminOnlyGuard(req: Request, _: Response, next: NextFunction) {
+  return function adminOnlyGuard(req: Request, res: Response, next: NextFunction) {
     const key = req.get('apikey');
+    const ip = clientIp(req.headers);
 
+    if (key && safeEqual(key, globalKey())) {
+      return next();
+    }
+    if (authThrottle.isBlocked(ip)) {
+      return tooManyAttempts(res, ip);
+    }
     if (!key) {
       throw new UnauthorizedException();
     }
-
-    if (safeEqual(key, globalKey())) {
-      return next();
-    }
-
+    // a wrong key here is a guess at the global key (valid instance tokens and client codes are not wrong keys)
+    if (!isClientKey(key)) authThrottle.recordFailure(ip);
     throw new ForbiddenException('Apenas o administrador (chave global) tem acesso.');
   };
 }

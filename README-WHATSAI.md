@@ -223,6 +223,17 @@ Preços de 10/11/2026: **sem fidelidade** (mensalidade mês a mês), uma implant
 - Uma credencial OpenAI não pode ser cadastrada em duas instâncias (a API recusa chave repetida). Para cliente com número adicional, gere um project key por instância, com limite de gasto no projeto da OpenAI; não compartilhe a mesma key entre clientes.
 - O log de boot **não** mostra mais a `DATABASE_URL` (o script de migration imprime só host e banco). Logs antigos do Render podem ter a URL completa: se alguém de fora viu esses logs, troque a senha do banco no Neon.
 
+### 7.1 Segurança técnica (o que está no ar)
+
+Página pública: `/seguranca` (`manager/dist/landing/seguranca.html`), ligada pela seção Segurança da página inicial. **Regra:** só entra lá o que está implementado; o WhatsAI não tem SOC 2/ISO 27001 próprios e não exibe selos (as certificações citadas são da Vercel, do Render e do Neon, e o texto diz isso).
+
+- **Site e painel (Vercel, `manager/dist/vercel.json`)**: HSTS com preload (da Vercel), `Content-Security-Policy` sem `unsafe-inline`/`unsafe-eval` em scripts (os scripts inline das páginas entram por hash SHA-256), `frame-ancestors 'none'` + `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` (câmera, microfone, localização desligados) e `Cross-Origin-Opener-Policy`. **Ao mudar um `<script>` inline de qualquer HTML do `manager/dist`, atualize o hash na CSP**: o teste `test/unit/security.test.ts` falha no CI e diz qual falta.
+- **API (Render)**: sem `X-Powered-By`, cabeçalhos básicos em toda resposta (`src/utils/security-headers.ts`), chaves comparadas em tempo constante, **limite de chaves erradas por IP** (`src/utils/auth-throttle.ts`: 40 erradas em 10 min bloqueiam o IP por 15 min com 429; a chave global continua entrando; o IP só conta quando vem da Cloudflare em `CF-Connecting-IP`/`True-Client-IP`, senão o limite fica desligado para não travar clientes legítimos). `/store` deixou de ser servido.
+- **Painel**: login só com a chave (o servidor é fixo, `manager/patches/login-fixed-server.py`); o endereço da API não é segredo, quem protege é a chave.
+- **Arquivos para agentes de IA**: `/llms.txt`, `/.well-known/ard.json` (manifesto ARD validado pelo Lighthouse) e `/agents/whatsai.md`; `/.well-known/security.txt` (RFC 9116, renovar o `Expires` antes de 11/11/2027; o teste avisa com 30 dias).
+- **CSS do site**: `/` e `/seguranca` carregam um arquivo só, `assets/landing.bundle.css`, gerado de `geist.css`, `landing.css`, `landing-theme.css`, `landing-plus.css` e `security.css`. **Depois de editar qualquer um deles, rode `node manager/patches/landing-css.mjs`** (o teste falha se o bundle estiver velho).
+- Lighthouse (13.6, local, 11/11/2026): 100/100/100/100 e Navegação agêntica 4/4 em `/` e `/seguranca`, celular e computador.
+
 ## 8. Manutenção
 
 - **Keep-alive**: job no cron-job.org, configurado no painel do provedor (5 min). Sem ele, o free dorme em 15 min.
@@ -311,6 +322,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 - 10/11/2026: **retenção automática** das mensagens (`MESSAGE_RETENTION_DAYS`, desligada por padrão) e **avisos ao administrador pelo WhatsApp** (`ADMIN_ALERT_NUMBERS` + `ADMIN_ALERT_INSTANCE`), recomendações da revisão do manual.
 - 11/11/2026: **site com uma página só**: `/advocacia` e `/instagram` saíram (redirecionam para `/`); o FAQ da página inicial ganhou a pergunta sobre escritórios de advocacia (OAB, sigilo, Leads, Agenda e Processos).
 - 11/11/2026: **retenção pelo painel** para todas as instâncias (página Retenção (LGPD), prévia por instância, "Apagar agora"; mínimo 7 dias), valor salvo no banco principal (`GlobalSetting`, migration aditiva `20261111100000_add_global_setting`) acima de `MESSAGE_RETENTION_DAYS`. Build da API sem sourcemaps e só CJS: o deploy de 11/11 passou de 8 GB de memória no tsup e falhou.
+- 11/11/2026: **segurança e Lighthouse**: página `/seguranca` com os blocos 3D (CSS puro) e cartão na seção Segurança do site; CSP e cabeçalhos de proteção no site e no painel, limite de chaves erradas por IP e comparação em tempo constante na API, `/store` fora do ar; login só com a chave; `llms.txt`, manifesto ARD e `security.txt`; CSS do site num arquivo só (seção 7.1).
 - 10/11/2026: o script de migration deixou de imprimir a `DATABASE_URL` no log de boot (só host e banco).
 - 10/11/2026: **Leads**: resposta da equipe detectada também pelas mensagens do número e pela pausa da sessão do bot (corrige "aguardando equipe" falso das conversas analisadas em lote), `refresh-waiting`, tipo de contato (novo caso, já é cliente, sem demanda jurídica), nome da pessoa do caso quando alguém fala por ela, e visualizador da planilha no painel. Migration aditiva `20261110130000_add_lead_contact_kind`.
 - 10/11/2026: **Leads em planilha Excel** (abas Leads e Resumo, gerada pela própria API sem biblioteca nova) e análise automática mais precisa: área classificada pelo assunto, cidade padronizada, prioridade com a data do fato (contagem, prazo vencido, audiência passada, data distante e problema já resolvido).
