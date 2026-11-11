@@ -1,0 +1,30 @@
+# WhatsAI
+
+> Atendimento com inteligência artificial no WhatsApp para pequenas e médias empresas brasileiras. A IA responde os clientes 24 horas com as informações do negócio, entende áudio, foto e PDF, e pausa sozinha quando alguém da equipe entra na conversa.
+
+Site em português do Brasil. O painel (/manager) é privado e exige chave de acesso; agentes não devem tentar entrar nele.
+
+## Produto
+
+- [Página inicial](https://whatsaibr.vercel.app/): como funciona, recursos, segmentos, planos e perguntas frequentes.
+- [Como funciona](https://whatsaibr.vercel.app/#como-funciona): conectar o WhatsApp (QR code ou API oficial da Meta), configurar a IA com as informações da empresa e acompanhar pelo painel.
+- [WhatsApp Web ou API oficial](https://whatsaibr.vercel.app/#canais): diferenças, riscos e quando usar cada conexão.
+- [Segmentos](https://whatsaibr.vercel.app/#segmentos): escritórios de advocacia, clínicas, lojas, imobiliárias e serviços.
+- [Segurança e privacidade](https://whatsaibr.vercel.app/seguranca): HTTPS, acesso conferido no servidor, códigos guardados como hash, credenciais cifradas, LGPD e prazo de guarda das mensagens.
+
+## Planos (mensalidade mês a mês, sem fidelidade; 1 número de WhatsApp por plano)
+
+- Essencial: R$ 437/mês, implantação R$ 1.800, 2.000 respostas da IA por mês. Número adicional R$ 287/mês.
+- Profissional: R$ 767/mês, implantação R$ 3.500, 5.000 respostas por mês, agenda, processos e uma integração. Número adicional R$ 497/mês.
+- Premium: R$ 1.427/mês, implantação a partir de R$ 6.400, API oficial da Meta e 10.000 respostas por mês. Número adicional R$ 927/mês.
+- Excedente: R$ 49 a cada 1.000 respostas da IA. Detalhes em [Planos](https://whatsaibr.vercel.app/#planos).
+
+## Contato
+
+- [Agendar demonstração](https://whatsaibr.vercel.app/#contato): pelo WhatsApp da equipe WhatsAI.
+- [Reportar falha de segurança](https://whatsaibr.vercel.app/seguranca#reportar) ([security.txt](https://whatsaibr.vercel.app/.well-known/security.txt)).
+
+## Optional
+
+- [Perguntas frequentes](https://whatsaibr.vercel.app/#duvidas)
+- [Skill para agentes](https://whatsaibr.vercel.app/agents/whatsai.md): resumo em Markdown para assistentes que respondem dúvidas sobre o WhatsAI.

@@ -292,3 +292,10 @@
 .wa-portal-x:hover {
   background: var(--m-hover);
 }
+
+/* login on phones: the card has no border there, so the brand line on top looked like a stray curve */
+@media (max-width: 480px) {
+  [data-wa-home='login'] .wa-login-card::before {
+    display: none;
+  }
+}

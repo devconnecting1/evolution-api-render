@@ -66,10 +66,14 @@ Nos testes, `test/helpers/setup.ts` troca o `@api/server.module` por um proxy: p
   significado (verde ok, âmbar atenção, vermelho erro). Confira com capturas a 390 e 1440 px, claro e escuro, com a
   API simulada e dados fictícios.
 
-### Site (`manager/dist/landing/index.html`, página única)
-- Preços iguais no site, `readmes/RESUMO.md`, `readmes/README-COMERCIAL.md` e no manual (seção 6). Sem logos de
-  terceiros, sem animação de rolagem, sem créditos de autor. A licença do Evolution API (condição 1b do `LICENSE`)
-  exige o aviso de uso: ele fica no rodapé do Manual e no README, não remova.
+### Site (`manager/dist/landing/index.html` e `/seguranca`)
+- Preços iguais no site, `llms.txt`, `agents/whatsai.md`, `readmes/RESUMO.md`, `readmes/README-COMERCIAL.md` e no
+  manual (seção 6). Sem logos de terceiros, sem animação de rolagem, sem créditos de autor. A licença do Evolution API
+  (condição 1b do `LICENSE`) exige o aviso de uso: ele fica no rodapé do Manual e no README, não remova.
+- Segurança: nunca exiba selos/certificações que o WhatsAI não tem (SOC 2, ISO 27001...). Em `/seguranca` só entra o
+  que está implementado. CSP em `manager/dist/vercel.json`: mudou um `<script>` inline, atualize o hash (o teste
+  `test/unit/security.test.ts` aponta). Editou CSS do site: `node manager/patches/landing-css.mjs` (README 7.1).
+- Meta do Lighthouse em `/` e `/seguranca`: 100 nas quatro notas e Navegação agêntica 4/4, celular e computador.
 
 ### Linguagem e ética (escritórios de advocacia)
 - Diga "triagem" e "organizar os atendimentos", nunca "captação". Nada de nota numérica para pessoas.

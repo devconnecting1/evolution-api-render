@@ -31,7 +31,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 CACHE_VERSION = '37'
-ASSET_VERSION = '2'
+ASSET_VERSION = '3'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 HTML_ASSETS = (
     '    <link rel="stylesheet" href="/assets/client-portal.css?v=' + ASSET_VERSION + '" />\n'

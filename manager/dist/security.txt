@@ -1,0 +1,6 @@
+# WhatsAI: como reportar uma falha de segurança (RFC 9116)
+Contact: https://whatsaibr.vercel.app/seguranca#reportar
+Expires: 2027-11-11T03:00:00.000Z
+Preferred-Languages: pt, en
+Canonical: https://whatsaibr.vercel.app/.well-known/security.txt
+Policy: https://whatsaibr.vercel.app/seguranca#reportar

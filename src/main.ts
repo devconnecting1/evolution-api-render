@@ -20,6 +20,7 @@ import { onUnexpectedError } from '@config/error.config';
 import { Logger } from '@config/logger.config';
 import { ROOT_DIR } from '@config/path.config';
 import * as Sentry from '@sentry/node';
+import { securityHeaders } from '@utils/security-headers';
 import { ServerUP } from '@utils/server-up';
 import axios from 'axios';
 import compression from 'compression';
@@ -47,6 +48,10 @@ async function bootstrap() {
   const prismaRepository = new PrismaRepository(configService);
   await prismaRepository.onModuleInit();
 
+  // no "X-Powered-By: Express" (tells scanners what to try) + basic browser protections on every response
+  app.disable('x-powered-by');
+  app.use(securityHeaders);
+
   app.use(
     cors({
       origin(requestOrigin, callback) {
@@ -71,7 +76,8 @@ async function bootstrap() {
   app.set('views', join(ROOT_DIR, 'views'));
   app.use(express.static(join(ROOT_DIR, 'public')));
 
-  app.use('/store', express.static(join(ROOT_DIR, 'store')));
+  // /store is no longer served: nothing links to it and it could expose files of integrations (e.g. Chatwoot) to
+  // anyone who guessed a path.
 
   app.use('/', router);
 
