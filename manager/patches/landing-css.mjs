@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Public site (/, /seguranca and /privacidade): the five stylesheets in one minified file, so the browser waits for one request
+ * Public site (/, /seguranca, /privacidade and /termos): the five stylesheets in one minified file, so the browser waits for one request
  * instead of five before the first paint (Lighthouse "render-blocking requests" on mobile).
  *
  * Sources stay the files people edit: assets/geist.css, landing.css, landing-theme.css, landing-plus.css and
@@ -21,7 +21,7 @@ import { transformSync } from 'esbuild';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 const SOURCES = ['geist.css', 'landing.css', 'landing-theme.css', 'landing-plus.css', 'security.css'];
-const PAGES = ['landing/index.html', 'landing/seguranca.html', 'landing/privacidade.html'];
+const PAGES = ['landing/index.html', 'landing/seguranca.html', 'landing/privacidade.html', 'landing/termos.html'];
 const BUNDLE = 'assets/landing.bundle.css';
 const LINK_RE = /<link rel="stylesheet" href="\/assets\/landing\.bundle\.css\?v=[0-9a-f]+" \/>/;
 const SOURCE_LINK_RE = /^[ \t]*<link rel="stylesheet" href="\/assets\/(?:geist|landing|landing-theme|landing-plus|security)\.css\?v=\d+" \/>\n/gm;
