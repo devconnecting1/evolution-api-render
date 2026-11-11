@@ -6,8 +6,8 @@ This file provides comprehensive guidance to Claude AI when working with the Evo
 
 Este repositório é o **WhatsAI**, um fork do Evolution API vendido como atendimento com IA no WhatsApp. O manual completo
 (fonte de verdade de arquitetura, planos, decisões e runbooks) é `README-WHATSAI.md`. Desde 11/11/2026 o Manual fica só
-no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual nem `/readme`. As seções abaixo são as
-regras fixas.
+no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; `/readme` e `/readmes/*` redirecionam
+(308) para `/manager/`. As seções abaixo são as regras fixas.
 
 ### Produção
 - API no Render (`srv-dbd9qqi9lscs73aoe85g`, `https://evolution-api-x93o.onrender.com`), painel e site na
@@ -20,6 +20,12 @@ regras fixas.
 - Sempre em **português (PT-BR)**, linguagem simples, com recomendações. O dono do projeto dá autonomia
   ("faça da melhor forma"): implementar, abrir PR e fazer o merge quando o CI estiver verde, avisando o que mudou.
 - Pergunte só o que só ele pode decidir (números de telefone, apagar dados, gastos, mudar algo do cliente em produção).
+
+### Múltiplos agentes
+- O dono quer trabalho em paralelo: para frentes independentes, dispare vários subagentes ao mesmo tempo (até ~20,
+  menos quando não fizer sentido), cada um com escopo e arquivos explícitos; revise e consolide no thread principal.
+- Fique no thread principal para o que é dependente ou sensível (deploy, produção, WhatsApp do cliente).
+- O guia completo do projeto, inclusive esta regra, fica em `readmes/GUIA-DO-PROJETO.md`.
 
 ### Nunca
 - Imprimir, commitar ou publicar credenciais (chave global, chaves do Neon/Render/OpenAI, tokens). Rotacionar a chave

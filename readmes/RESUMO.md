@@ -34,7 +34,7 @@
 
 ## Links rápidos
 
-- Site: `/` · Painel: `/manager` · Manual: `/readme`
+- Site: `/` · Painel: `/manager` · Manual: no GitHub (`README-WHATSAI.md`) e no MCP (`whatsai://docs`); `/readme` redireciona para `/manager`
 - API: URL do serviço web, configurada no painel do Render
 - Webhook Meta: `<URL da API>/webhook/meta`
 - OpenAI billing: `https://platform.openai.com/settings/organization/billing/overview`
