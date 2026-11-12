@@ -488,8 +488,13 @@ div:has(> main > [data-wa-home="instances"].wa-ut-page) > [data-wa-header] {
 #root .wa-ut-table tbody tr[data-open="true"] {
   background: var(--m-tint);
 }
-.wa-ut-row[data-status="close"] > td:not(.wa-ut-c-check, .wa-ut-c-menu, .wa-ut-c-status) {
-  opacity: 0.55;
+/* desconectada: texto secundário em vez de opacidade (0,55 deixava o texto em 3,8:1, abaixo dos 4,5:1 do WCAG AA) */
+.wa-ut-row[data-status="close"] > td:not(.wa-ut-c-check, .wa-ut-c-menu, .wa-ut-c-status),
+.wa-ut-row[data-status="close"] > td:not(.wa-ut-c-check, .wa-ut-c-menu, .wa-ut-c-status) :is(.wa-ut-name, .wa-ut-pill) {
+  color: var(--m-text-2);
+}
+.wa-ut-row[data-status="close"] > td :is(img, .wa-ut-avatar) {
+  opacity: 0.6;
 }
 .wa-ut-row[aria-busy="true"] {
   opacity: 0.6;
