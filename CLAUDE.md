@@ -41,23 +41,36 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
 - Commitar o `.gitignore` local (um plugin do ambiente o altera; é sempre ` M .gitignore` e fica fora).
 - Mandar `reasoning_effort` à OpenAI: os modelos usam o raciocínio padrão.
 - Fazer merge de PR sendo um agente que só desenvolve (DeepSeek, Cursor e outros): só o Claude Code do dono faz.
-- Fazer merge sem a suíte completa verde (unitários, tipos, lint e integração).
+- Fazer merge sem as checagens do GitHub verdes (lint, prettier, build, tipos, unitários, integração e patches do
+  painel).
 - Usar emojis em código, docs, commits, PRs ou respostas.
 
 ### Git, PR e deploy
 - Uma branch por tarefa a partir de `origin/main`; PR no formato de `.github/pull_request_template.md`. O squash usa
   `commit_message` explícita e cabeçalho de até 100 caracteres (commitlint, Conventional Commits).
 - Workflows sempre em `ubuntu-latest` (GitHub-hosted, gratuito); não use runner self-hosted ou pago.
-- Push: `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
+- Push: `git push -u origin <branch>`. Não há hook local: lint, prettier, build, tipos, unitários, integração e
+  patches do painel rodam no GitHub Actions.
 - Mudança só estática (`manager/dist`, docs, `scripts/`): termine o título do squash com `[skip render]`.
 - Mudança em `src/`, `prisma/`, `Dockerfile` ou `render.yaml` reinicia a API (~4 min); o dono autorizou o merge a
-  qualquer hora com a suíte verde. Depois do deploy, confira o `live` no Render e a instância `open`. Mudança na
+  qualquer hora com as checagens verdes. Depois do deploy, confira o `live` no Render e a instância `open`. Mudança na
   conexão do WhatsApp (Baileys) só entra depois de testada com um número de teste.
 - Migrations sempre aditivas, em `prisma/postgresql-migrations` **e** `prisma/mysql-migrations`, com o modelo nos três
   schemas (`postgresql`, `mysql`, `psql_bouncer`). Tabela global (procurada antes de saber a instância) entra em
   `CONTROL_MODELS` de `src/api/repository/instance-db/routing.ts`.
 
-### Antes de cada push
+### Checagens no GitHub (não rode a suíte localmente)
+O push não roda lint, prettier, testes nem build. Ao abrir o PR, o workflow `Check Code Quality` roda em
+`ubuntu-latest`:
+
+- `npm run lint:check` e `npm run format:check` (ESLint + Prettier);
+- `npm run build` (TypeScript + tsup);
+- `npm run test:types` e `npm run test:run` (unitários + integração com Postgres 16);
+- `python3 -I manager/patches/*.py --check`, `node manager/patches/landing-css.mjs --check` e o parse do bundle;
+- o título do PR no commitlint.
+
+O merge só acontece com todos verdes. Se um check falhar, rode localmente só o comando que ele aponta, para depurar:
+
 ```bash
 DATABASE_PROVIDER=postgresql npm run db:generate          # depois de mudar schema
 npx tsx --test "test/unit/**/*.test.ts"                   # unitários
@@ -66,6 +79,7 @@ npm run test:types && npx tsc --noEmit -p . && npx eslint src test --ext .ts
 export TEST_PG_DIR=/tmp/evo-pg TEST_PG_PORT=55471 TEST_DATABASE_URL='postgresql://postgres@127.0.0.1:55471/evolution_test?schema=public'
 npm run test:db:start && npm run test:integration
 ```
+
 Nos testes, `test/helpers/setup.ts` troca o `@api/server.module` por um proxy: para substituir um serviço dele, use
 `serverModuleOverrides` (`test/helpers/chatbot-emit.ts`).
 
