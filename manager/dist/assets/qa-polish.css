@@ -81,9 +81,9 @@
     scroll-snap-align: start;
   }
 
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-  select,
-  textarea {
+  :is(#root, [role="dialog"], [role="alertdialog"]) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  :is(#root, [role="dialog"], [role="alertdialog"]) select,
+  :is(#root, [role="dialog"], [role="alertdialog"]) textarea {
     font-size: 16px;
   }
 
@@ -119,7 +119,7 @@
   .wv-page .wv-select {
     flex: 1 1 100%;
   }
-  .wo-page a.wa-ai-test {
+  .wa-is-page a.wa-ai-test {
     flex: 1 1 100%;
     justify-content: center;
   }
@@ -210,11 +210,11 @@
 
 /* ============================================================ atendente IA: titulo e acoes em 1024-1279 */
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .wo-page .mb-1.flex.items-center.justify-between {
+  .mb-1.flex.items-center.justify-between:has(a.wa-ai-test) {
     flex-wrap: wrap;
     gap: 8px;
   }
-  .wo-page .mb-1.flex.items-center.justify-between > :last-child {
+  .mb-1.flex.items-center.justify-between:has(a.wa-ai-test) > :last-child {
     margin-left: 0;
   }
 }
