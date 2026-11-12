@@ -114,7 +114,7 @@ const MODULE_RULES: Record<ClientModule, Rule[]> = {
     { methods: ['GET', 'PUT', 'DELETE'], pattern: /^\/processos\/:i\/[^/]+$/ },
     { methods: ['POST'], pattern: /^\/processos\/:i\/[^/]+\/(sync|seen)$/ },
   ],
-  plano: [{ methods: ['GET'], pattern: /^\/usage\/limits\/:i$/ }],
+  plano: [{ methods: ['GET'], pattern: /^\/usage\/(limits|billing)\/:i$/ }],
   conexao: [{ methods: ['GET'], pattern: /^\/instance\/connect\/:i$/ }],
 };
 

@@ -1,0 +1,155 @@
+/*
+ * WhatsAI Manager: "Cobrança" and "Exportar dados" tabs of "Plano e limites" (manager/patches/cobranca-exportacao.py).
+ * Linked right after usage-limits.css. Only the design tokens of minimal.css (var(--m-*)): no colour is defined here,
+ * so the light/dark palettes of theme.css apply to this page too.
+ */
+
+/* ============================================================================================== tabs */
+.wc-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--m-border);
+}
+.wc-tab {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wc-tab:hover {
+  color: var(--m-text);
+  background: var(--m-hover);
+}
+.wc-tab[data-active='true'] {
+  color: var(--m-text);
+  border-bottom-color: var(--m-primary);
+}
+.wc-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+
+/* ============================================================================================= panels */
+.wc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============================================================================================= history */
+.wc-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+}
+.wc-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.wc-table th,
+.wc-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--m-border);
+  text-align: left;
+  vertical-align: middle;
+}
+.wc-table th {
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wc-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.wc-money {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.wc-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wc-empty strong {
+  color: var(--m-text);
+  font-weight: 500;
+}
+
+/* ============================================================================================= export */
+.wc-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+.wc-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  cursor: pointer;
+}
+.wc-check:hover {
+  background: var(--m-hover);
+}
+.wc-check input {
+  margin: 2px 0 0;
+  accent-color: var(--m-primary);
+}
+.wc-check-title {
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+.wc-done {
+  margin: 0;
+  color: var(--m-ok);
+  font-size: 13px;
+}
+.wc-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wc-note strong {
+  color: var(--m-text);
+  font-weight: 500;
+}
+.wc-note p {
+  margin: 0;
+}
+
+/* ============================================================================================ mobile */
+@media (max-width: 639px) {
+  .wc-tab {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .wc-table {
+    min-width: 480px;
+  }
+}

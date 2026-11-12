@@ -1,4 +1,4 @@
-/*whatsai-patch:visao-geral-resultado:metrics*//*whatsai-patch:visao-geral-resultado:overview*//*whatsai-patch:visao-geral-resultado:actions*//*whatsai-patch:visao-geral-resultado:token*//*whatsai-patch:quadro-leads:board*//*whatsai-patch:quadro-leads:segs*//*whatsai-patch:quadro-leads:toolbar*//*whatsai-patch:quadro-leads:actions*//*whatsai-patch:quadro-leads:query*//*whatsai-patch:quadro-leads:state*//*whatsai-patch:quadro-leads:helpers*//*whatsai-patch:celular-listas:proc*//*whatsai-patch:celular-listas:leads*//*whatsai-patch:ctrl-k-acoes:foot*//*whatsai-patch:ctrl-k-acoes:search*//*whatsai-patch:ctrl-k-acoes:blocks*//*whatsai-patch:ctrl-k-acoes:opt*//*whatsai-patch:ctrl-k-acoes:run*//*whatsai-patch:ctrl-k-acoes:items*//*whatsai-patch:ctrl-k-acoes:actions*//*whatsai-patch:ctrl-k-acoes:icons*//*whatsai-patch:integracoes-catalogo:pages*//*whatsai-patch:integracoes-catalogo:menu*//*whatsai-patch:integracoes-catalogo:route*//*whatsai-patch:integracoes-catalogo:component*//*whatsai-patch:chat-lead-panel:head*//*whatsai-patch:chat-lead-panel:panel*//*whatsai-patch:chat-lead-panel:tw-export*//*whatsai-patch:chat-lead-panel:component*//*whatsai-patch:help-menu:shell*//*whatsai-patch:help-menu:instances*//*whatsai-patch:help-menu:header*//*whatsai-patch:help-menu:component*//*whatsai-patch:atendente-ia:texts*//*whatsai-patch:atendente-ia:menu*//*whatsai-patch:atendente-ia:page*//*whatsai-patch:atendente-ia:form*//*whatsai-patch:atendente-ia:component*//*whatsai-patch:ficha-lead:route*//*whatsai-patch:ficha-lead:links*//*whatsai-patch:ficha-lead:page*//*whatsai-patch:acabamento-listas:notif*//*whatsai-patch:acabamento-listas:status*//*whatsai-patch:acabamento-listas:dates*//*whatsai-patch:acabamento-listas:icons*//*whatsai-patch:page-frame:navseg*//*whatsai-patch:first-run:welcome*//*whatsai-patch:states:leads*//*whatsai-patch:states:inst*//*whatsai-patch:states:proc*//*whatsai-patch:states:gate*//*whatsai-patch:states:friendly*/function waFriendlyErr(e){const st=e?.response?.status;if(!e?.response||!(st>=500))return null;const m=e.response.data?.response?.message??e.response.data?.message??e.response.data?.error;const t=[].concat(m??[]).flat(4).map(x=>typeof x==='string'?x:'').join(' ').trim();return !t||/^(internal server error|bad gateway|service unavailable|gateway timeout|error)$/i.test(t)?'O servidor não respondeu agora. Seus dados continuam salvos; tente de novo em alguns segundos.':null}
+/*whatsai-patch:cobranca-exportacao:tabs*//*whatsai-patch:cobranca-exportacao:component*//*whatsai-patch:visao-geral-resultado:metrics*//*whatsai-patch:visao-geral-resultado:overview*//*whatsai-patch:visao-geral-resultado:actions*//*whatsai-patch:visao-geral-resultado:token*//*whatsai-patch:quadro-leads:board*//*whatsai-patch:quadro-leads:segs*//*whatsai-patch:quadro-leads:toolbar*//*whatsai-patch:quadro-leads:actions*//*whatsai-patch:quadro-leads:query*//*whatsai-patch:quadro-leads:state*//*whatsai-patch:quadro-leads:helpers*//*whatsai-patch:celular-listas:proc*//*whatsai-patch:celular-listas:leads*//*whatsai-patch:ctrl-k-acoes:foot*//*whatsai-patch:ctrl-k-acoes:search*//*whatsai-patch:ctrl-k-acoes:blocks*//*whatsai-patch:ctrl-k-acoes:opt*//*whatsai-patch:ctrl-k-acoes:run*//*whatsai-patch:ctrl-k-acoes:items*//*whatsai-patch:ctrl-k-acoes:actions*//*whatsai-patch:ctrl-k-acoes:icons*//*whatsai-patch:integracoes-catalogo:pages*//*whatsai-patch:integracoes-catalogo:menu*//*whatsai-patch:integracoes-catalogo:route*//*whatsai-patch:integracoes-catalogo:component*//*whatsai-patch:chat-lead-panel:head*//*whatsai-patch:chat-lead-panel:panel*//*whatsai-patch:chat-lead-panel:tw-export*//*whatsai-patch:chat-lead-panel:component*//*whatsai-patch:help-menu:shell*//*whatsai-patch:help-menu:instances*//*whatsai-patch:help-menu:header*//*whatsai-patch:help-menu:component*//*whatsai-patch:atendente-ia:texts*//*whatsai-patch:atendente-ia:menu*//*whatsai-patch:atendente-ia:page*//*whatsai-patch:atendente-ia:form*//*whatsai-patch:atendente-ia:component*//*whatsai-patch:ficha-lead:route*//*whatsai-patch:ficha-lead:links*//*whatsai-patch:ficha-lead:page*//*whatsai-patch:acabamento-listas:notif*//*whatsai-patch:acabamento-listas:status*//*whatsai-patch:acabamento-listas:dates*//*whatsai-patch:acabamento-listas:icons*//*whatsai-patch:page-frame:navseg*//*whatsai-patch:first-run:welcome*//*whatsai-patch:states:leads*//*whatsai-patch:states:inst*//*whatsai-patch:states:proc*//*whatsai-patch:states:gate*//*whatsai-patch:states:friendly*/function waFriendlyErr(e){const st=e?.response?.status;if(!e?.response||!(st>=500))return null;const m=e.response.data?.response?.message??e.response.data?.message??e.response.data?.error;const t=[].concat(m??[]).flat(4).map(x=>typeof x==='string'?x:'').join(' ').trim();return !t||/^(internal server error|bad gateway|service unavailable|gateway timeout|error)$/i.test(t)?'O servidor não respondeu agora. Seus dados continuam salvos; tente de novo em alguns segundos.':null}
 /*whatsai-patch:a11y-404:nav*//*whatsai-patch:a11y-404:agenda*//*whatsai-patch:a11y-404:error*//*whatsai-patch:chat-live:msgs*//*whatsai-patch:chat-live:chats*//*whatsai-patch:chat-live:live*//*whatsai-patch:agenda-polish:cancel*//*whatsai-patch:agenda-polish:list*//*whatsai-patch:agenda-polish:types*//*whatsai-patch:limite-contato:field*//*whatsai-patch:google-agenda:hint*//*whatsai-patch:google-agenda:return*//*whatsai-patch:google-agenda:button*//*whatsai-patch:instance-shell:crumbs*//*whatsai-patch:instance-shell:evolution*//*whatsai-patch:instance-shell:logout*//*whatsai-patch:instance-shell:shell*//*whatsai-patch:confirmacoes:session*//*whatsai-patch:confirmacoes:creds*//*whatsai-patch:client-portal:contatos*//*whatsai-patch:app-shell:txtbtn*//*whatsai-patch:app-shell:notice*//*whatsai-patch:app-shell:logout*//*whatsai-patch:app-shell:layout*//*whatsai-patch:app-shell:shell*//*whatsai-patch:app-shell:expose*//*whatsai-patch:no-manual:links*//*whatsai-patch:login-fixed-server:login*//*whatsai-patch:client-portal:retencao*//*whatsai-patch:client-portal:routes*//*whatsai-patch:client-portal:nav*//*whatsai-patch:credits-clean:behavior*//*whatsai-patch:credits-clean:about*//*whatsai-patch:credits-clean:footer*//*whatsai-patch:leads-xlsx:viewer*//*whatsai-patch:leads-xlsx:export*//*whatsai-patch:panel-polish:sidebar*//*whatsai-patch:db-mode:field*//*whatsai-patch:db-mode:submit*//*whatsai-patch:db-mode:state*//*whatsai-patch:theme:prio*//*whatsai-patch:theme:usage*//*whatsai-patch:theme:home-menu*//*whatsai-patch:theme:greeting*//*whatsai-patch:theme:header*//*whatsai-patch:theme:component*//*whatsai-patch:agenda:panel*//*whatsai-patch:agenda:cmd*//*whatsai-patch:agenda:sidebar*//*whatsai-patch:agenda:route*//*whatsai-patch:agenda:component*//*whatsai-patch:ui-tables:v1*//*whatsai-patch:processos:sidebar*//*whatsai-patch:processos:route*//*whatsai-patch:processos:component*//*whatsai-patch:leads:contact*//*whatsai-patch:leads:pages*//*whatsai-patch:leads:sidebar*//*whatsai-patch:leads:route*//*whatsai-patch:leads:component*//*whatsai-patch:root-redirect:v1*//*whatsai-patch:twenty-layout:layout*//*whatsai-patch:twenty-layout:header*//*whatsai-patch:twenty-layout:conv-head*//*whatsai-patch:twenty-layout:list*//*whatsai-patch:twenty-layout:component*//*whatsai-patch:usage-limits:dashboard*//*whatsai-patch:usage-limits:sidebar*//*whatsai-patch:usage-limits:route*//*whatsai-patch:usage-limits:component*//*whatsai-patch:chat-guards:v1*//*whatsai-patch:ptbr-only:v1*//*whatsai-patch:minimal:lid*//*whatsai-patch:minimal:older*//*whatsai-patch:minimal:media*//*whatsai-patch:minimal:composer*//*whatsai-patch:minimal:chat-start*//*whatsai-patch:minimal:chat-title*//*whatsai-patch:dashboard-ui:sidebar*//*whatsai-patch:dashboard-ui:labels*//*whatsai-patch:dashboard-ui:list*//*whatsai-patch:dashboard-ui:titles*//*whatsai-patch:dashboard-ui:header*//*whatsai-patch:dashboard-ui:status*//*whatsai-patch:dashboard-ui:token*//*whatsai-patch:dashboard-ui:dashboard*//*whatsai-patch:chat-ui:list*//*whatsai-patch:chat-ui:conversation*//*whatsai-patch:chat-ui:content*//*whatsai-patch:chat-ui:helpers*//*whatsai-patch:login-clean:login*//*whatsai-patch:render-style:observability*//*whatsai-patch:render-style:instances*//*whatsai-patch:render-style:dashboard*//*whatsai-patch:render-style:sidebar*//*whatsai-patch:render-style:brand*//*whatsai-patch:observability-grid:v1*//*whatsai-patch:home-redesign:instances*//*whatsai-patch:home-redesign:landing*//*whatsai-patch:home-redesign:login*//*whatsai-patch:observability-alerts:main*//*whatsai-patch:observability-alerts:alerts*//*whatsai-patch:openai-media:history*//*whatsai-patch:openai-media:media*//*whatsai-patch:responsive:titles*//*whatsai-patch:responsive:chat*//*whatsai-patch:responsive:drawer*//*whatsai-patch:openai-fields:pause*//*whatsai-patch:openai-fields:help*//*whatsai-patch:openai-fields:tokens*/var TD=(e,t)=>()=>(t||e((t={exports:{}}).exports,t),t.exports);var tie=TD((ko,jo)=>{function Bk(e,t){for(var n=0;n<t.length;n++){const r=t[n];if(typeof r!="string"&&!Array.isArray(r)){for(const s in r)if(s!=="default"&&!(s in e)){const o=Object.getOwnPropertyDescriptor(r,s);o&&Object.defineProperty(e,s,o.get?o:{enumerable:!0,get:()=>r[s]})}}}return Object.freeze(Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}))}(function(){const t=document.createElement("link").relList;if(t&&t.supports&&t.supports("modulepreload"))return;for(const s of document.querySelectorAll('link[rel="modulepreload"]'))r(s);new MutationObserver(s=>{for(const o of s)if(o.type==="childList")for(const l of o.addedNodes)l.tagName==="LINK"&&l.rel==="modulepreload"&&r(l)}).observe(document,{childList:!0,subtree:!0});function n(s){const o={};return s.integrity&&(o.integrity=s.integrity),s.referrerPolicy&&(o.referrerPolicy=s.referrerPolicy),s.crossOrigin==="use-credentials"?o.credentials="include":s.crossOrigin==="anonymous"?o.credentials="omit":o.credentials="same-origin",o}function r(s){if(s.ep)return;s.ep=!0;const o=n(s);fetch(s.href,o)}})();function fd(e){return e&&e.__esModule&&Object.prototype.hasOwnProperty.call(e,"default")?e.default:e}var av={exports:{}},Xc={},iv={exports:{}},Et={};/**
  * @license React
  * react.production.min.js
@@ -1016,11 +1016,12 @@ const WaUsage=(()=>{
     const[base,setBase]=y.useState(null),[form,setForm]=y.useState(null),[loadError,setLoadError]=y.useState(''),[saving,setSaving]=y.useState(!1),[saveError,setSaveError]=y.useState(''),[tried,setTried]=y.useState(!1);
     const loadLimits=y.useCallback(async()=>{if(!name)return;setLoadError('');try{const r=await Ee.get('/usage/limits/'+encodeURIComponent(name));const f=toForm(r.data?.limits);setBase(f);setForm(f)}catch(e){setLoadError(errText(e))}},[name]);
     y.useEffect(()=>{loadLimits()},[loadLimits]);
+    const[tab,setTab]=y.useState('uso');
     if(!g)return null;
     const header=i.jsxs('header',{className:'wu-head',children:[i.jsx('h1',{className:'wu-title',children:'Plano e limites'}),
       i.jsx('p',{className:'wu-muted',children:'Quantas respostas a IA deu, quanto o plano inclui e quando a IA pode responder. Uma resposta é cada vez que a IA responde uma mensagem (ou uma sequência de mensagens seguidas) do cliente.'})]});
     const usage=summary.data?i.jsx(Usage,{data:summary.data,onReload:summary.reload,loading:summary.loading}):summary.error?i.jsxs('div',{className:'wu-callout','data-tone':'bad',role:'alert',children:[i.jsx('p',{children:summary.error}),i.jsx('button',{type:'button',className:'wu-btn',onClick:summary.reload,children:'Tentar de novo'})]}):i.jsx('div',{className:'wu-card wu-skeleton','aria-busy':'true',children:i.jsx('span',{className:'sr-only',children:'Carregando o uso…'})});
-    if(!form)return i.jsxs('main',{className:'wu-page',children:[header,usage,loadError?i.jsxs('div',{className:'wu-callout','data-tone':'bad',role:'alert',children:[i.jsx('p',{children:loadError}),i.jsx('button',{type:'button',className:'wu-btn',onClick:loadLimits,children:'Tentar de novo'})]}):null]});
+    if(!form)return i.jsxs('main',{className:'wu-page',children:[header,i.jsx(TabBar,{tab,onTab:setTab}),tab==='uso'?usage:null,tab==='cobranca'?i.jsx(Billing,{instance:g}):null,tab==='exportar'?i.jsx(ExportData,{instance:g}):null,tab==='uso'&&loadError?i.jsxs('div',{className:'wu-callout','data-tone':'bad',role:'alert',children:[i.jsx('p',{children:loadError}),i.jsx('button',{type:'button',className:'wu-btn',onClick:loadLimits,children:'Tentar de novo'})]}):null]});
     const set=patch=>{setForm(f=>({...f,...patch}));setSaveError('')};
     const setDay=(k,patch)=>setForm(f=>({...f,week:{...f.week,[k]:{...f.week[k],...patch}}}));
     const copyAll=k=>setForm(f=>{const src=f.week[k],week={};for(const[d]of DAYS)week[d]={...f.week[d],open:src.open,start:src.start,end:src.end};return{...f,week}});
@@ -1029,8 +1030,7 @@ const WaUsage=(()=>{
       try{const r=await Ee.post('/usage/limits/'+encodeURIComponent(name),toBody(form));const f=toForm(r.data?.limits);setBase(f);setForm(f);setTried(!1);me.success('Plano e limites salvos.');summary.reload()}
       catch(e){const t=errText(e);setSaveError(t);me.error(t)}finally{setSaving(!1)}};
     const preset=PLANS.find(p=>p[0]===form.plan);
-    return i.jsxs('main',{className:'wu-page',children:[header,usage,
-      i.jsxs('form',{className:'wu-form',onSubmit:save,noValidate:!0,children:[
+    return i.jsxs('main',{className:'wu-page',children:[header,i.jsx(TabBar,{tab,onTab:setTab}),tab==='uso'?usage:null,tab==='cobranca'?i.jsx(Billing,{instance:g}):null,tab==='exportar'?i.jsx(ExportData,{instance:g}):null,tab==='uso'?i.jsxs('form',{className:'wu-form',onSubmit:save,noValidate:!0,children:[
         i.jsxs('section',{className:'wu-card','aria-labelledby':'wu-plan-title',children:[
           i.jsx('h2',{id:'wu-plan-title',className:'wu-card-title',children:'Plano'}),
           i.jsxs('fieldset',{className:'wu-fieldset',children:[i.jsx('legend',{className:'wu-label',children:'Plano contratado'}),
@@ -1071,8 +1071,108 @@ const WaUsage=(()=>{
         (tried&&errors.length)||saveError?i.jsx('div',{className:'wu-callout','data-tone':'bad',role:'alert',children:i.jsx('ul',{children:(saveError?[saveError]:errors).map((t,k)=>i.jsx('li',{children:t},k))})}):null,
         i.jsxs('div',{className:'wu-actions',children:[
           i.jsx('button',{type:'button',className:'wu-btn wu-btn-ghost',disabled:!dirty||saving,onClick:()=>{setForm(base);setSaveError('');setTried(!1)},children:'Descartar alterações'}),
-          i.jsx('button',{type:'submit',className:'wu-btn wu-btn-primary',disabled:!dirty||saving,'aria-busy':saving?'true':void 0,children:saving?'Salvando…':'Salvar'})]})]})]});
+          i.jsx('button',{type:'submit',className:'wu-btn wu-btn-primary',disabled:!dirty||saving,'aria-busy':saving?'true':void 0,children:saving?'Salvando…':'Salvar'})]})]}):null]});
   }
+
+  const WC_TABS=[['uso','Uso'],['cobranca','Cobrança'],['exportar','Exportar dados']];
+  const wctabs=()=>WC_TABS.filter(t=>t[0]!=='exportar'||!window.WaPortal||!window.WaPortal.client);
+  const WC_BILL_STATUS={pago:['ok','Pago'],pendente:['warn','Pendente'],atrasado:['bad','Atrasado']};
+  const WC_SETS=[
+    ['conversas','Conversas','Lista de conversas, com nome, rótulos e não lidas.'],
+    ['mensagens','Mensagens','Todo o histórico, com texto, tipo e data.'],
+    ['contatos','Contatos','Nome, telefone (JID) e foto do perfil.'],
+    ['leads','Leads e triagem','Fichas de triagem, prioridade e próximo passo.'],
+    ['agenda','Agenda','Compromissos, horários e situação.']];
+  const wctext=v=>v==null||v===''?'':String(v);
+  const wcbrl=v=>v==null||!Number.isFinite(Number(v))?'—':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v));
+  const wcdate=v=>{if(!v)return '';const d=new Date(v);return Number.isFinite(d.getTime())?d.toLocaleDateString('pt-BR'):String(v)};
+
+  function TabBar({tab,onTab}){
+    return i.jsx('nav',{className:'wc-tabs',role:'tablist','aria-label':'Seções de Plano e limites',children:wctabs().map(([id,label])=>i.jsx('button',{type:'button',role:'tab',id:'wc-tab-'+id,'aria-selected':tab===id?'true':'false',className:'wc-tab','data-active':tab===id?'true':void 0,onClick:()=>onTab(id),children:label},id))});
+  }
+
+  function useBilling(name){
+    const[st,set]=y.useState({data:null,error:'',loading:!0});
+    const load=y.useCallback(async()=>{if(!name)return;set(p=>({...p,loading:!0}));try{const r=await Ee.get('/usage/billing/'+encodeURIComponent(name));set({data:r.data,error:'',loading:!1})}catch(e){set({data:null,error:errText(e),loading:!1})}},[name]);
+    y.useEffect(()=>{load()},[load]);
+    return{...st,reload:load};
+  }
+
+  function Billing({instance}){
+    const{data,error,reload}=useBilling(instance?.name);
+    if(error)return i.jsxs('div',{className:'wu-callout','data-tone':'bad',role:'alert',children:[i.jsx('p',{children:error}),i.jsx('button',{type:'button',className:'wu-btn',onClick:reload,children:'Tentar de novo'})]});
+    if(!data)return i.jsx('section',{className:'wu-card wu-skeleton','aria-busy':'true',children:i.jsx('span',{className:'sr-only',children:'Carregando a cobrança…'})});
+    const plan=data.plan||{},invoice=data.invoice||{},history=Array.isArray(data.history)?data.history:[];
+    return i.jsxs('div',{className:'wc-panel',role:'tabpanel',id:'wc-panel-cobranca','aria-labelledby':'wc-tab-cobranca',children:[
+      i.jsxs('section',{className:'wu-card','aria-labelledby':'wc-plan-title',children:[
+        i.jsxs('div',{className:'wu-card-head',children:[
+          i.jsx('h2',{id:'wc-plan-title',className:'wu-card-title',children:'Plano'}),
+          i.jsx('span',{className:'wu-chip','data-tone':plan.configured?'ok':'warn',children:plan.configured?'Configurado':'Plano padrão'})]}),
+        i.jsx('p',{className:'wu-big',children:plan.name?'Plano '+plan.name:'Nenhum plano configurado'}),
+        i.jsx('p',{className:'wu-muted',children:plan.monthlyResponses?fmt(plan.monthlyResponses)+' respostas por mês incluídas no plano.':plan.name?'Plano sem franquia definida.':'Defina o plano na aba Uso para acompanhar a franquia.'})]}),
+      i.jsxs('section',{className:'wu-card','aria-labelledby':'wc-due-title',children:[
+        i.jsx('h2',{id:'wc-due-title',className:'wu-card-title',children:'Próximo vencimento'}),
+        data.nextDueDate?i.jsx('p',{className:'wu-big',children:wcdate(data.nextDueDate)}):i.jsx('p',{className:'wu-muted',children:'Nenhuma cobrança registrada ainda.'}),
+        data.paymentMethod?i.jsx('p',{className:'wu-hint',children:'Forma de pagamento: '+wctext(data.paymentMethod)}):null]}),
+      i.jsxs('section',{className:'wu-card','aria-labelledby':'wc-history-title',children:[
+        i.jsx('h2',{id:'wc-history-title',className:'wu-card-title',children:'Histórico mensal'}),
+        history.length?i.jsx('div',{className:'wc-table-wrap',children:i.jsxs('table',{className:'wc-table',children:[
+          i.jsx('thead',{children:i.jsx('tr',{children:['Mês','Valor','Situação','Comprovante'].map(h=>i.jsx('th',{scope:'col',children:h},h))})}),
+          i.jsx('tbody',{children:history.map((row,k)=>{const st=WC_BILL_STATUS[row.status]||[];return i.jsxs('tr',{children:[
+            i.jsx('td',{children:monthLabel(row.period)||wctext(row.period)}),
+            i.jsx('td',{className:'wc-money',children:wcbrl(row.amountBRL)}),
+            i.jsx('td',{children:st[0]?i.jsxs('span',{className:'wu-chip','data-tone':st[0],children:[i.jsx('span',{className:'wu-dot','aria-hidden':'true'}),st[1]]}):wctext(row.status)||'—'}),
+            i.jsx('td',{children:row.receiptUrl?i.jsx('a',{className:'wu-link',href:row.receiptUrl,target:'_blank',rel:'noopener noreferrer',children:'Abrir comprovante'}):'—'})]},wctext(row.period)+'-'+k)})})]})})
+          :i.jsxs('div',{className:'wc-empty',children:[i.jsx('strong',{children:'Nenhuma cobrança registrada ainda.'}),i.jsx('span',{children:wctext(data.note)})]})]}),
+      i.jsxs('section',{className:'wu-card','aria-labelledby':'wc-invoice-title',children:[
+        i.jsx('h2',{id:'wc-invoice-title',className:'wu-card-title',children:'Dados para nota fiscal'}),
+        invoice.legalName||invoice.taxId||invoice.email||invoice.address?i.jsxs('dl',{className:'wu-stats',children:[
+          i.jsxs('div',{children:[i.jsx('dt',{children:'Razão social ou nome'}),i.jsx('dd',{children:wctext(invoice.legalName)||'—'})]}),
+          i.jsxs('div',{children:[i.jsx('dt',{children:'CPF ou CNPJ'}),i.jsx('dd',{children:wctext(invoice.taxId)||'—'})]}),
+          i.jsxs('div',{children:[i.jsx('dt',{children:'E-mail'}),i.jsx('dd',{children:wctext(invoice.email)||'—'})]}),
+          i.jsxs('div',{children:[i.jsx('dt',{children:'Endereço'}),i.jsx('dd',{children:wctext(invoice.address)||'—'})]})]})
+          :i.jsx('div',{className:'wc-empty',children:i.jsx('span',{children:'Os dados para nota fiscal ainda não foram preenchidos. Quando a cobrança for registrada, eles ficam guardados aqui.'})})]})
+    ]});
+  }
+
+  function ExportData({instance}){
+    const[selected,setSelected]=y.useState(WC_SETS.map(s=>s[0]));
+    const[busy,setBusy]=y.useState(!1),[error,setError]=y.useState(''),[done,setDone]=y.useState('');
+    const toggle=id=>setSelected(cur=>cur.includes(id)?cur.filter(x=>x!==id):[...cur,id]);
+    const download=async()=>{
+      if(!selected.length||busy)return;
+      setBusy(!0);setError('');setDone('');
+      try{
+        const r=await Ee.get('/usage/export/'+encodeURIComponent(instance?.name),{params:{datasets:selected.join(',')},responseType:'blob'});
+        const found=/filename="([^"]+)"/.exec(String(r.headers?.['content-disposition']||''));
+        const file=found?found[1]:'dados-'+instance?.name+'-'+new Date().toISOString().slice(0,10)+'.zip';
+        const url=URL.createObjectURL(r.data);
+        const link=document.createElement('a');
+        link.href=url;link.download=file;document.body.appendChild(link);link.click();link.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),30000);
+        setDone('Download iniciado: '+file+'.');
+      }catch(e){setError(errText(e))}
+      finally{setBusy(!1)}
+    };
+    return i.jsxs('div',{className:'wc-panel',role:'tabpanel',id:'wc-panel-exportar','aria-labelledby':'wc-tab-exportar',children:[
+      i.jsxs('section',{className:'wu-card','aria-labelledby':'wc-export-title',children:[
+        i.jsx('h2',{id:'wc-export-title',className:'wu-card-title',children:'Exportar dados da instância'}),
+        i.jsx('p',{className:'wu-muted',children:'Baixe uma cópia dos dados desta instância em um arquivo ZIP com planilhas CSV. As planilhas abrem direto no Excel em português.'}),
+        i.jsx('div',{className:'wc-checks',role:'group','aria-label':'O que exportar',children:WC_SETS.map(([id,label,hint])=>i.jsxs('label',{className:'wc-check',children:[
+          i.jsx('input',{type:'checkbox',checked:selected.includes(id),onChange:()=>toggle(id)}),
+          i.jsxs('span',{children:[i.jsx('span',{className:'wc-check-title',children:label}),i.jsx('span',{className:'wu-hint',children:hint})]})]},id))}),
+        i.jsxs('div',{className:'wu-actions',children:[
+          i.jsx('button',{type:'button',className:'wu-btn',disabled:selected.length===WC_SETS.length||busy,onClick:()=>setSelected(WC_SETS.map(s=>s[0])),children:'Selecionar tudo'}),
+          i.jsx('button',{type:'button',className:'wu-btn wu-btn-primary',disabled:!selected.length||busy,onClick:download,'aria-busy':busy?'true':void 0,children:busy?'Gerando o arquivo…':'Baixar ZIP'})]}),
+        done?i.jsx('p',{className:'wc-done',role:'status',children:done}):null,
+        error?i.jsxs('div',{className:'wu-callout','data-tone':'bad',role:'alert',children:[i.jsx('p',{children:error}),i.jsx('button',{type:'button',className:'wu-btn',onClick:download,children:'Tentar de novo'})]}):null,
+        !selected.length?i.jsx('p',{className:'wu-hint',children:'Escolha pelo menos uma opção para exportar.'}):null,
+        i.jsxs('div',{className:'wc-note',children:[
+          i.jsx('strong',{children:'Somente leitura'}),
+          i.jsx('p',{children:'A exportação não apaga nem altera nada e não toca na conexão do WhatsApp. O arquivo é gerado durante o download: instâncias com muitas mensagens podem demorar alguns minutos.'}),
+          i.jsx('p',{children:'O arquivo contém conversas e dados pessoais dos contatos. Guarde com cuidado: a exportação atende ao direito de portabilidade da LGPD.'})]})]})]});
+  }
+
   return {Page,Bar,Icon};
 })();
 
