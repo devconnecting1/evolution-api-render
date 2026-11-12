@@ -23,7 +23,15 @@ export interface RoutingLogger {
 }
 
 /** Tabelas globais: sempre no banco principal. */
-const CONTROL_MODELS = new Set(['instance', 'instanceDatabase', 'isOnWhatsapp', 'clientAccess', 'globalSetting']);
+const CONTROL_MODELS = new Set([
+  'instance',
+  'instanceDatabase',
+  'isOnWhatsapp',
+  'clientAccess',
+  'globalSetting',
+  'user',
+  'userSession',
+]);
 /** Tabelas cuja chave da instância se chama `sessionId`. */
 const SESSION_KEY_MODELS = new Set(['session', 'authStateKey']);
 /** Operações de cliente que não passam por um model e seguem o contexto. */
