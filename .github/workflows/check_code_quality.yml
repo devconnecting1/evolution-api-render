@@ -151,6 +151,9 @@ jobs:
       - name: Install packages
         run: npm ci --no-audit --no-fund
 
+      - name: Install manager patch dependencies
+        run: python3 -m pip install --quiet fonttools brotli
+
       - name: Check manager patches
         run: for f in manager/patches/*.py; do python3 -I "$f" --check; done
 

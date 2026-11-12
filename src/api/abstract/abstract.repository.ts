@@ -45,22 +45,22 @@ export abstract class Repository implements IRepository {
   };
 
   // eslint-disable-next-line
-    public insert(data: any, instanceName: string, saveDb = false): Promise<IInsert> {
+  public insert(data: any, instanceName: string, saveDb = false): Promise<IInsert> {
     throw new Error('Method not implemented.');
   }
 
   // eslint-disable-next-line
-    public update(data: any, instanceName: string, saveDb = false): Promise<IInsert> {
+  public update(data: any, instanceName: string, saveDb = false): Promise<IInsert> {
     throw new Error('Method not implemented.');
   }
 
   // eslint-disable-next-line
-    public find(query: any): Promise<any> {
+  public find(query: any): Promise<any> {
     throw new Error('Method not implemented.');
   }
 
   // eslint-disable-next-line
-    delete(query: any, force?: boolean): Promise<any> {
+  delete(query: any, force?: boolean): Promise<any> {
     throw new Error('Method not implemented.');
   }
 }
