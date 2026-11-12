@@ -58,7 +58,7 @@ INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 CSS = os.path.join(ROOT, 'manager', 'dist', 'assets', 'qa-painel-polish.css')
 SHORTCUTS = os.path.join(ROOT, 'manager', 'dist', 'assets', 'help-shortcuts.js')
 CACHE_VERSION = '75'
-CSS_VERSION = '1'
+CSS_VERSION = '2'
 SHORTCUTS_VERSION = '2'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 CSS_LINK = '    <link rel="stylesheet" href="/assets/qa-painel-polish.css?v=' + CSS_VERSION + '" />\n'
