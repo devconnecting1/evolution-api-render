@@ -1,0 +1,192 @@
+/* WhatsAI Manager: Integrações em catálogo (proposal J, manager/patches/integracoes-catalogo.py).
+   Um cartão por integração, com uma frase, o estado e o atalho para a página de sempre.
+   Só tokens var(--m-*): claro e escuro valem. Medidas do painel: título 20/600, cantos de item 4,
+   cartões 8, conteúdo em 1040px. */
+
+.wa-int-desc {
+  margin: 6px 0 0;
+  color: var(--m-text-2);
+  font-size: 13.5px;
+  line-height: 20px;
+}
+
+.wa-int-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.wa-int-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 172px;
+  padding: 16px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-surface);
+}
+.wa-int-card:hover {
+  border-color: var(--m-border-strong);
+}
+
+.wa-int-top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.wa-int-mono {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--m-radius-card);
+  background: var(--m-hover);
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.wa-int-mono-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--m-radius-item);
+  font-size: 11px;
+}
+.wa-int-card h2 {
+  margin: 0;
+  color: var(--m-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.wa-int-card p {
+  margin: 4px 0 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.wa-int-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+.wa-int-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+.wa-int-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--m-text-3);
+}
+.wa-int-state[data-on='true'] .wa-int-dot {
+  background: var(--m-primary);
+}
+.wa-int-loading {
+  color: var(--m-text-3);
+}
+.wa-int-config,
+.wa-int-toggle {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--m-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.wa-int-config:hover,
+.wa-int-toggle:hover {
+  text-decoration: underline;
+}
+
+/* "Ver todas": os links das integrações raras ficam na mesma página */
+.wa-int-more {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--m-border);
+}
+.wa-int-more h2 {
+  margin: 0;
+  color: var(--m-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.wa-int-more > p {
+  margin: 4px 0 12px;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 19px;
+}
+.wa-int-more-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.wa-int-more-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-item);
+  color: var(--m-text);
+  text-decoration: none;
+}
+.wa-int-more-link:hover {
+  background: var(--m-hover);
+}
+.wa-int-more-link strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+.wa-int-more-link small {
+  display: block;
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+@media (max-width: 1023px) {
+  .wa-int-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .wa-int-grid,
+  .wa-int-more-grid {
+    grid-template-columns: 1fr;
+  }
+  .wa-int-card {
+    min-height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-int-config,
+  .wa-int-toggle,
+  .wa-int-more-link {
+    transition: none;
+  }
+}
