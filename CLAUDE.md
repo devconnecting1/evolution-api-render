@@ -53,8 +53,9 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
   patches do painel rodam no GitHub Actions.
 - Mudança só estática (`manager/dist`, docs, `scripts/`): termine o título do squash com `[skip render]`.
 - Mudança em `src/`, `prisma/`, `Dockerfile` ou `render.yaml` reinicia a API (~4 min); o dono autorizou o merge a
-  qualquer hora com as checagens verdes. Depois do deploy, confira o `live` no Render e a instância `open`. Mudança na
-  conexão do WhatsApp (Baileys) só entra depois de testada com um número de teste.
+  qualquer hora com as checagens verdes. Depois do deploy, a conferência do `live` no Render e da instância `open`
+  fica com o Claude Code do dono, que tem os MCPs; agentes sem MCP registram a pendência no PR. Mudança na conexão do
+  WhatsApp (Baileys) só entra depois de testada com um número de teste.
 - Migrations sempre aditivas, em `prisma/postgresql-migrations` **e** `prisma/mysql-migrations`, com o modelo nos três
   schemas (`postgresql`, `mysql`, `psql_bouncer`). Tabela global (procurada antes de saber a instância) entra em
   `CONTROL_MODELS` de `src/api/repository/instance-db/routing.ts`.
