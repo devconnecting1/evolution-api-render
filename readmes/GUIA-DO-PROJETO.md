@@ -622,7 +622,8 @@ publique valores. Se um token vazar, rotacione no provedor e no Render.
    cabeçalho ≤100 chars) assim que as checagens estiverem verdes, a qualquer hora.
 5. `[skip render]` no título do squash quando a mudança é só estática.
 6. Depois de deploy que reinicia a API, a conferência do deploy `live` no Render e do estado da instância (`open`)
-   fica com o Claude Code do dono, que tem os MCPs; agentes sem MCP registram a pendência no PR.
+   fica com o Claude Code do dono, que tem os MCPs; agentes sem MCP registram a pendência no PR. O roteiro completo
+   de handoff está em `readmes/HANDOFF-CLAUDE-CODE.md`.
 
 ### 11.6 Conferências somente-leitura (produção)
 
