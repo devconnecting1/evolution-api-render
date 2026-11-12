@@ -8,6 +8,17 @@ if (sentryConfig.DSN) {
     dsn: sentryConfig.DSN,
     environment: process.env.NODE_ENV || 'development',
     tracesSampleRate: 1.0,
-    profilesSampleRate: 1.0,
+    profileSessionSampleRate: 1.0,
+    profileLifecycle: 'trace',
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      databaseQueryData: false,
+      queues: false,
+      stackFrameVariables: false,
+    },
   });
 }
