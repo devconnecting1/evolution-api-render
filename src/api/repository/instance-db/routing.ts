@@ -29,6 +29,7 @@ const CONTROL_MODELS = new Set([
   'isOnWhatsapp',
   'clientAccess',
   'globalSetting',
+  'billingEntry',
   'user',
   'userSession',
 ]);

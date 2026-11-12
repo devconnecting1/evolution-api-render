@@ -12,3 +12,13 @@ export class UsageLimitsDto {
   businessHours?: Partial<BusinessHours> | null;
   outsideHoursMessage?: string | null;
 }
+
+/** Body of POST/PATCH /usage/billing/:instanceName: validated in BillingService, every field optional on update. */
+export class BillingEntryDto {
+  period?: string;
+  amountCents?: number;
+  status?: string;
+  method?: string | null;
+  paidAt?: string | null;
+  note?: string | null;
+}
