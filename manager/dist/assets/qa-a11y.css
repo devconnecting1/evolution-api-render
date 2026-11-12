@@ -1,0 +1,16 @@
+/* WhatsAI: accessibility fixes from the review of the Artefato (12/11/2026), proposal Q.
+   Loaded right before design-system.css, after qa-polish.css. Only var(--m-*) tokens. */
+
+/* "Desconectar" in Conexão: the light theme red (#dc2626) reached 4.42 on the card (#f5f5f5); the token used for
+   red text (--m-chip-red-text) reaches 5.93 there and stays readable in the dark theme (9.46). */
+.wa-portal-btn-danger {
+  border-color: var(--m-chip-red-text);
+  color: var(--m-chip-red-text);
+}
+
+/* Weekly agenda: the type line of "realizado"/"faltou" cards inherited --m-text-2 at opacity 0.8, which rendered
+   #7c7c7c on #f5f5f5 (3.82). The full token keeps the same hierarchy in both themes at 5.95 (light) and 6.22 (dark). */
+.wag-appt[data-status='realizado'] .wag-appt-type,
+.wag-appt[data-status='faltou'] .wag-appt-type {
+  opacity: 1;
+}
