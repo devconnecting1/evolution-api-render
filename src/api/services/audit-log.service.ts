@@ -174,8 +174,14 @@ export class AuditLogService {
       page,
       pages: Math.max(1, Math.ceil(total / size)),
       items: rows.map(AuditLogService.view),
-      actors: actors.map((a: any) => a.actor).filter(Boolean).sort(),
-      instances: instances.map((a: any) => a.instanceName).filter(Boolean).sort(),
+      actors: actors
+        .map((a: any) => a.actor)
+        .filter(Boolean)
+        .sort(),
+      instances: instances
+        .map((a: any) => a.instanceName)
+        .filter(Boolean)
+        .sort(),
       types: AUDIT_TYPES.map((id) => ({ id, label: AUDIT_TYPE_LABEL[id] })),
       retentionDays: this.days(),
     };

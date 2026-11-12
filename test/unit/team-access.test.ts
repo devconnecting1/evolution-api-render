@@ -242,7 +242,10 @@ describe('team keys: service', () => {
     assert.equal(listed.keys.length, 3);
     assert.ok(!JSON.stringify(listed).includes('keyHash'));
     assert.ok(!JSON.stringify(listed).includes(created.key));
-    assert.deepEqual(listed.roles.map((r) => r.id), ['dono', 'equipe', 'leitura']);
+    assert.deepEqual(
+      listed.roles.map((r) => r.id),
+      ['dono', 'equipe', 'leitura'],
+    );
 
     assert.deepEqual(await service.revoke(prisma.keys[0].id), { removed: true });
     assert.equal(await service.resolve(created.key), null);
@@ -256,10 +259,7 @@ describe('team keys: service', () => {
       assert.equal(e.errors.length, 2);
       return true;
     });
-    await assert.rejects(
-      service.create({ name: 'Ana', role: 'equipe', instances: ['Não existe'] }),
-      /não encontrada/,
-    );
+    await assert.rejects(service.create({ name: 'Ana', role: 'equipe', instances: ['Não existe'] }), /não encontrada/);
     await assert.rejects(service.create({ name: 'Ana', role: 'equipe', instances: [] }), /pelo menos uma/);
     await assert.rejects(service.create({ name: 'A'.repeat(81), role: 'equipe' }), /até 80/);
   });
@@ -270,8 +270,10 @@ describe('team keys: auth guard', () => {
     let passed = false;
     let error: any = null;
     try {
-      await guard(req, { set() {}, status: () => ({ json: () => undefined }) }, () => {
-        passed = true;
+      await guard(req, { set() {}, status: () => ({ json: () => undefined }) }, (err?: any) => {
+        // a guard that answers through next(error) refused the request; only next() without an error lets it pass
+        if (err) error = err;
+        else passed = true;
       });
     } catch (e) {
       error = e;
@@ -426,8 +428,10 @@ describe('team keys: admin-only guard', () => {
     let passed = false;
     let error: any = null;
     try {
-      await guard(req, { set() {}, status: () => ({ json: () => undefined }) }, () => {
-        passed = true;
+      await guard(req, { set() {}, status: () => ({ json: () => undefined }) }, (err?: any) => {
+        // a guard that answers through next(error) refused the request; only next() without an error lets it pass
+        if (err) error = err;
+        else passed = true;
       });
     } catch (e) {
       error = e;
@@ -450,8 +454,12 @@ describe('team keys: admin-only guard', () => {
         ? { id: 'k0', name: 'Dono', role: 'dono', instanceNames: null, keyHint: 'wat_…dddd' }
         : key === 'wat_' + 'e'.repeat(43)
           ? { id: 'k1', name: 'Ana', role: 'equipe', instanceNames: null, keyHint: 'wat_…eeee' }
-          : null;
-    const guard = createAdminOnlyGuard(() => GLOBAL, async () => null, resolveTeam as any);
+          : { id: 'k2', name: 'Leitura', role: 'leitura', instanceNames: null, keyHint: 'wat_…llll' };
+    const guard = createAdminOnlyGuard(
+      () => GLOBAL,
+      async () => null,
+      resolveTeam as any,
+    );
     const dono = req('wat_' + 'd'.repeat(43), { 'cf-connecting-ip': '198.51.100.91' });
     assert.equal((await run(guard, dono)).passed, true);
     assert.equal((dono as any).teamAccess.role, 'dono');

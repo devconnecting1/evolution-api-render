@@ -69,7 +69,10 @@ describe('registro de ações HTTP', () => {
     assert.equal(res.status, 200);
     assert.match(String(res.headers.get('content-type')), /text\/csv/);
     assert.match(String(res.headers.get('content-disposition')), /registro-de-acoes\.csv/);
-    const text = await res.text();
+    // response.text() drops the BOM (WHATWG decoding); check the bytes and then the decoded text
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    assert.deepEqual([...bytes.subarray(0, 3)], [0xef, 0xbb, 0xbf]);
+    const text = new TextDecoder('utf-8', { ignoreBOM: true }).decode(bytes);
     assert.ok(text.startsWith(String.fromCharCode(0xfeff) + '"Quando (UTC)"'));
     assert.equal(seen[seen.length - 1].instance, 'Loja');
   });

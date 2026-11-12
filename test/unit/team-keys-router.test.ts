@@ -127,7 +127,10 @@ describe('team keys HTTP: who am I and sessions', () => {
     assert.equal(body.name, 'Ana Exemplo');
     assert.equal(body.role, 'equipe');
     assert.deepEqual(body.instances, ['Loja']);
-    assert.deepEqual(body.roles.map((r: any) => r.id), ['dono', 'equipe', 'leitura']);
+    assert.deepEqual(
+      body.roles.map((r: any) => r.id),
+      ['dono', 'equipe', 'leitura'],
+    );
 
     const global = await call('/team/me', {}, globalKey());
     assert.equal(global.status, 200);

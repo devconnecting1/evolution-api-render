@@ -105,7 +105,10 @@ describe('audit log: middleware', () => {
     const res: any = new EventEmitter();
     res.statusCode = status;
     let nextCalled = false;
-    createAuditMiddleware(() => service, () => GLOBAL)(req, res, () => {
+    createAuditMiddleware(
+      () => service,
+      () => GLOBAL,
+    )(req, res, () => {
       nextCalled = true;
     });
     assert.equal(nextCalled, true, 'never blocks the request');
