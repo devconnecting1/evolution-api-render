@@ -131,7 +131,9 @@ export class ProcessosRouter extends RouterBroker {
       .put(
         `${base}/:id`,
         ...guards,
-        handle(processUpdateSchema, ProcessBodyDto, (i, d, r) => processosController.update(i, r.params.id as string, d)),
+        handle(processUpdateSchema, ProcessBodyDto, (i, d, r) =>
+          processosController.update(i, r.params.id as string, d),
+        ),
       )
       .delete(
         `${base}/:id`,
