@@ -486,6 +486,12 @@
   color: #1a1a1a;
   font: 12px/1.35 Calibri, Carlito, 'Segoe UI', Arial, sans-serif;
 }
+/* selection follows the sheet, not the panel theme: the dark ::selection painted the cells almost black and the
+   light text disappeared on the coloured fills */
+.wl-sv-grid ::selection {
+  background: #cfe2ff;
+  color: #1a1a1a;
+}
 .wl-sv-grid td,
 .wl-sv-grid th {
   padding: 3px 6px;
