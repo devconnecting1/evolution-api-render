@@ -199,6 +199,34 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
     });
   });
 
+  // ------------------------------------------------------------------ mobile contact bar: only after the hero button scrolls away
+  // and not over the contact section (it repeats the same button). Without IntersectionObserver it stays on, as before.
+  const sticky = document.querySelector('.sticky-cta');
+  if (sticky) {
+    const heroBtn = document.querySelector('.hero .btn-lg');
+    const contact = document.getElementById('contato');
+    if (!heroBtn || !('IntersectionObserver' in window)) {
+      sticky.classList.add('is-on');
+    } else {
+      let heroSeen = true;
+      let contactSeen = false;
+      const update = function () {
+        sticky.classList.toggle('is-on', !heroSeen && !contactSeen);
+      };
+      new IntersectionObserver(function (entries) {
+        const e = entries[0];
+        heroSeen = e.isIntersecting || e.boundingClientRect.top > 0;
+        update();
+      }).observe(heroBtn);
+      if (contact) {
+        new IntersectionObserver(function (entries) {
+          contactSeen = entries[0].isIntersecting;
+          update();
+        }).observe(contact);
+      }
+    }
+  }
+
   // ------------------------------------------------------------------ header hairline after scrolling
   const head = document.querySelector('[data-head]');
   const hero = document.querySelector('[data-hero]') || document.querySelector('.hero');

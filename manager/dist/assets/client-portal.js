@@ -124,7 +124,11 @@
     var ok = m && m[1] === current.instanceId && allowedPaths().indexOf(m[2]) >= 0;
     if (!ok && location.pathname.replace(/\/+$/, '') !== '/manager/login') {
       var target = home();
-      if (target && target !== location.pathname) location.replace(target);
+      if (target && target !== location.pathname) {
+        // a page outside the modules: say so on the page the client lands on, instead of switching screens silently
+        if (m) { try { sessionStorage.setItem('wa-portal-denied', '1'); } catch (e) { /* private mode */ } }
+        location.replace(target);
+      }
     }
   }
 
@@ -146,8 +150,24 @@
     });
   }
 
+  function deniedNotice() {
+    var flag = null;
+    try { flag = sessionStorage.getItem('wa-portal-denied'); sessionStorage.removeItem('wa-portal-denied'); } catch (e) { flag = null; }
+    if (!flag) return;
+    var close = h('button', { type: 'button', class: 'wa-portal-toast-x', 'aria-label': 'Fechar aviso', text: '×' });
+    var box = h('div', { class: 'wa-portal-toast', role: 'status' }, [
+      h('span', { text: 'Esta área não está liberada para o seu acesso. Se precisar dela, peça a quem configurou o seu atendimento.' }),
+      close,
+    ]);
+    var done = function () { if (box.parentNode) box.parentNode.removeChild(box); };
+    close.addEventListener('click', done);
+    setTimeout(done, 8000);
+    (document.body || document.documentElement).appendChild(box);
+  }
+
   if (client) {
     document.documentElement.setAttribute('data-wa-portal', 'client');
+    if (document.body) deniedNotice(); else document.addEventListener('DOMContentLoaded', deniedNotice);
     guardRoute();
     refreshClient();
     setInterval(guardRoute, 250);
@@ -227,6 +247,7 @@
     function stopPairing(text) {
       pairingSince = 0;
       button.disabled = false;
+      button.hidden = lastState === 'open';
       note(text);
     }
     function showCode(d) {
@@ -236,9 +257,24 @@
       shown = key;
       if (d.base64) {
         qrBox.appendChild(h('img', { src: d.base64, alt: 'QR code para conectar o WhatsApp', width: '264', height: '264' }));
-        qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: 'No celular: WhatsApp > Aparelhos conectados > Conectar um aparelho, e aponte para o código. O código muda sozinho a cada poucos segundos; esta tela acompanha.' }));
+        qrBox.appendChild(h('ol', { class: 'wa-portal-steps' }, [
+          h('li', { text: 'No celular deste número, abra o WhatsApp.' }),
+          h('li', { text: 'Toque em Aparelhos conectados e depois em Conectar um aparelho.' }),
+          h('li', { text: 'Aponte a câmera para o código. Ele muda sozinho a cada poucos segundos; esta tela acompanha.' }),
+        ]));
       }
-      if (d.pairingCode) qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: 'Ou use o código de pareamento: ' + d.pairingCode }));
+      if (d.pairingCode) {
+        var copy = h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Copiar' });
+        copy.addEventListener('click', function () {
+          var ok = function () { copy.textContent = 'Copiado'; setTimeout(function () { copy.textContent = 'Copiar'; }, 2000); };
+          try { navigator.clipboard.writeText(d.pairingCode).then(ok, function () {}); } catch (e) { /* no clipboard */ }
+        });
+        qrBox.appendChild(h('div', { class: 'wa-portal-pair' }, [
+          h('p', { class: 'wa-portal-pair-title', text: 'Sem câmera? Conecte com o código' }),
+          h('div', { class: 'wa-portal-pair-row' }, [h('code', { class: 'wa-portal-pair-code', text: d.pairingCode }), copy]),
+          h('p', { class: 'wa-portal-hint', text: 'Em Conectar um aparelho, toque em "Conectar com número de telefone" e digite este código.' }),
+        ]));
+      }
     }
     function fetchCode() {
       if (!pairingSince) return;
@@ -257,7 +293,7 @@
       var open = state === 'open';
       status.textContent = open ? 'WhatsApp conectado.' : pairingSince ? 'Aguardando a leitura do QR code…' : state === 'connecting' ? 'Conectando…' : 'WhatsApp desconectado.';
       status.setAttribute('data-state', open ? 'ok' : 'bad');
-      button.hidden = open;
+      button.hidden = open || !!pairingSince;
       who.hidden = !open || !who.firstChild;
       if (open) loadWho();
       if (state && state !== lastState) { lastState = state; drawTips(open); }
@@ -274,6 +310,7 @@
     }
     button.addEventListener('click', function () {
       button.disabled = true;
+      button.hidden = true;
       pairingSince = Date.now();
       note('Gerando o QR code…');
       status.textContent = 'Aguardando a leitura do QR code…';

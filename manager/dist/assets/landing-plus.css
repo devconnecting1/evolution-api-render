@@ -667,3 +667,104 @@
     padding-top: 80px;
   }
 }
+
+/* ------------------------------------------------------------------ celular: barra fixa só depois do topo, tabelas em lista
+   A barra "Demonstração · Agendar" aparecia já na primeira tela, cobrindo o preço e repetindo o botão do topo. Agora ela
+   entra (landing.js põe .is-on) quando o botão do topo sai da tela e sai de novo na seção de contato, que tem o mesmo botão.
+   As duas tabelas de planos eram cortadas à direita no celular; abaixo de 560 px cada linha vira um bloco com rótulos. */
+@media (max-width: 760px) {
+  .sticky-cta {
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(calc(100% + 24px));
+    transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0s linear 0.24s;
+  }
+  .sticky-cta.is-on {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0s;
+  }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  .sticky-cta,
+  .sticky-cta.is-on {
+    transition: none;
+  }
+}
+@media (max-width: 560px) {
+  .addon-scroll,
+  .cmp-scroll {
+    overflow: visible;
+  }
+  .addon-table,
+  .addon-table tbody,
+  .addon-table tr,
+  .addon-table th,
+  .addon-table td,
+  .cmp-table,
+  .cmp-table tbody,
+  .cmp-table tr,
+  .cmp-table th,
+  .cmp-table td {
+    display: block;
+    width: auto;
+    min-width: 0;
+  }
+  .addon-table thead,
+  .cmp-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .addon-table tr,
+  .cmp-table tbody tr {
+    padding: 12px 0;
+    border-top: 1px solid var(--line-strong);
+  }
+  .addon-table tbody tr:first-child {
+    border-top: 0;
+  }
+  .cmp-table tbody tr {
+    padding: 12px 16px;
+  }
+  .cmp-table tbody tr:first-child {
+    border-top: 0;
+  }
+  .addon-table th,
+  .addon-table td,
+  .cmp-table th,
+  .cmp-table td {
+    position: static;
+    padding: 2px 0;
+    border: 0;
+    background: none;
+    white-space: normal;
+  }
+  .addon-table tbody th,
+  .cmp-table tbody th {
+    padding-bottom: 6px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .addon-table td,
+  .cmp-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    text-align: right;
+  }
+  .addon-table td::before,
+  .cmp-table td::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--text-2);
+    text-align: left;
+  }
+  .addon-table td strong {
+    font-size: 16px;
+  }
+}
