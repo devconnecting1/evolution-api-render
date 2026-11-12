@@ -1,0 +1,102 @@
+[
+  {
+    "name": "01-toast 1440-claro",
+    "ok": true,
+    "detail": "{\"toast\":\"Planilha exportada: abas Resumo e Leads.\",\"toastBox\":{\"x\":1028,\"y\":60,\"w\":392,\"h\":70},\"container\":{\"cls\":\"Toastify__toast-container Toastify__toast-container--top-right\",\"pointer\":\"auto\"},\"buttonBox\":{\"x\":1048,\"y\":90,\"w\":114,\"h\":32},\"overlap\":true,\"closes\":true}"
+  },
+  {
+    "name": "02-conversas-erro 1440-claro",
+    "ok": true,
+    "detail": "{\"skeleton\":true,\"retry\":false,\"errText\":false,\"nav\":true,\"right\":true}"
+  },
+  {
+    "name": "03-instancias-erro 1440-claro",
+    "ok": true,
+    "detail": "{\"skeleton\":true,\"retry\":false,\"create\":true,\"last\":false,\"errText\":false}"
+  },
+  {
+    "name": "04-conversas-formato 1440-claro",
+    "ok": true,
+    "detail": "{\"boundary\":true,\"errText\":false,\"nav\":false,\"retry\":false}"
+  },
+  {
+    "name": "05-ia-confirmacao 1440-claro",
+    "ok": true,
+    "detail": "{\"dialogMessage\":null,\"posts\":1}"
+  },
+  {
+    "name": "01-toast 1440-escuro",
+    "ok": true,
+    "detail": "{\"toast\":\"Planilha exportada: abas Resumo e Leads.\",\"toastBox\":{\"x\":1028,\"y\":60,\"w\":392,\"h\":70},\"container\":{\"cls\":\"Toastify__toast-container Toastify__toast-container--top-right\",\"pointer\":\"auto\"},\"buttonBox\":{\"x\":1048,\"y\":90,\"w\":114,\"h\":32},\"overlap\":true,\"closes\":true}"
+  },
+  {
+    "name": "02-conversas-erro 1440-escuro",
+    "ok": true,
+    "detail": "{\"skeleton\":true,\"retry\":false,\"errText\":false,\"nav\":true,\"right\":true}"
+  },
+  {
+    "name": "03-instancias-erro 1440-escuro",
+    "ok": true,
+    "detail": "{\"skeleton\":true,\"retry\":false,\"create\":true,\"last\":false,\"errText\":false}"
+  },
+  {
+    "name": "04-conversas-formato 1440-escuro",
+    "ok": true,
+    "detail": "{\"boundary\":true,\"errText\":false,\"nav\":false,\"retry\":false}"
+  },
+  {
+    "name": "05-ia-confirmacao 1440-escuro",
+    "ok": true,
+    "detail": "{\"dialogMessage\":null,\"posts\":1}"
+  },
+  {
+    "name": "01-toast 390-claro",
+    "ok": true,
+    "detail": "{\"toast\":\"Planilha exportada: abas Resumo e Leads.\",\"toastBox\":{\"x\":0,\"y\":56,\"w\":358,\"h\":90},\"container\":{\"cls\":\"Toastify__toast-container Toastify__toast-container--top-right\",\"pointer\":\"auto\"},\"buttonBox\":{\"x\":0,\"y\":0,\"w\":0,\"h\":0},\"overlap\":false,\"closes\":true}"
+  },
+  {
+    "name": "02-conversas-erro 390-claro",
+    "ok": true,
+    "detail": "{\"skeleton\":true,\"retry\":false,\"errText\":false,\"nav\":true,\"right\":true}"
+  },
+  {
+    "name": "03-instancias-erro 390-claro",
+    "ok": true,
+    "detail": "{\"skeleton\":true,\"retry\":false,\"create\":true,\"last\":false,\"errText\":false}"
+  },
+  {
+    "name": "04-conversas-formato 390-claro",
+    "ok": true,
+    "detail": "{\"boundary\":true,\"errText\":false,\"nav\":false,\"retry\":false}"
+  },
+  {
+    "name": "05-ia-confirmacao 390-claro",
+    "ok": true,
+    "detail": "{\"dialogMessage\":null,\"posts\":1}"
+  },
+  {
+    "name": "01-toast 390-escuro",
+    "ok": true,
+    "detail": "{\"toast\":\"Planilha exportada: abas Resumo e Leads.\",\"toastBox\":{\"x\":0,\"y\":56,\"w\":358,\"h\":90},\"container\":{\"cls\":\"Toastify__toast-container Toastify__toast-container--top-right\",\"pointer\":\"auto\"},\"buttonBox\":{\"x\":0,\"y\":0,\"w\":0,\"h\":0},\"overlap\":false,\"closes\":true}"
+  },
+  {
+    "name": "02-conversas-erro 390-escuro",
+    "ok": true,
+    "detail": "{\"skeleton\":true,\"retry\":false,\"errText\":false,\"nav\":true,\"right\":true}"
+  },
+  {
+    "name": "03-instancias-erro 390-escuro",
+    "ok": true,
+    "detail": "{\"skeleton\":true,\"retry\":false,\"create\":true,\"last\":false,\"errText\":false}"
+  },
+  {
+    "name": "04-conversas-formato 390-escuro",
+    "ok": true,
+    "detail": "{\"boundary\":true,\"errText\":false,\"nav\":false,\"retry\":false}"
+  },
+  {
+    "name": "05-ia-confirmacao 390-escuro",
+    "ok": true,
+    "detail": "{\"dialogMessage\":null,\"posts\":1}"
+  }
+]

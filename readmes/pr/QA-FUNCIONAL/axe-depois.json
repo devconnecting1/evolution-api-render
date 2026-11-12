@@ -1,0 +1,138 @@
+{
+  "generatedAt": "2026-11-12T17:19:16.356Z",
+  "bad": [],
+  "rows": [
+    {
+      "scenario": "leads-toast",
+      "viewport": "1440-claro",
+      "criticalSerious": [],
+      "all": [
+        "region:moderate"
+      ]
+    },
+    {
+      "scenario": "conversas-erro",
+      "viewport": "1440-claro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "instancias-erro",
+      "viewport": "1440-claro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "conversas-formato",
+      "viewport": "1440-claro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "ficha-lead-ia",
+      "viewport": "1440-claro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "leads-toast",
+      "viewport": "1440-escuro",
+      "criticalSerious": [],
+      "all": [
+        "region:moderate"
+      ]
+    },
+    {
+      "scenario": "conversas-erro",
+      "viewport": "1440-escuro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "instancias-erro",
+      "viewport": "1440-escuro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "conversas-formato",
+      "viewport": "1440-escuro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "ficha-lead-ia",
+      "viewport": "1440-escuro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "leads-toast",
+      "viewport": "390-claro",
+      "criticalSerious": [],
+      "all": [
+        "region:moderate"
+      ]
+    },
+    {
+      "scenario": "conversas-erro",
+      "viewport": "390-claro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "instancias-erro",
+      "viewport": "390-claro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "conversas-formato",
+      "viewport": "390-claro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "ficha-lead-ia",
+      "viewport": "390-claro",
+      "criticalSerious": [],
+      "all": [
+        "aria-allowed-role:minor"
+      ]
+    },
+    {
+      "scenario": "leads-toast",
+      "viewport": "390-escuro",
+      "criticalSerious": [],
+      "all": [
+        "region:moderate"
+      ]
+    },
+    {
+      "scenario": "conversas-erro",
+      "viewport": "390-escuro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "instancias-erro",
+      "viewport": "390-escuro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "conversas-formato",
+      "viewport": "390-escuro",
+      "criticalSerious": [],
+      "all": []
+    },
+    {
+      "scenario": "ficha-lead-ia",
+      "viewport": "390-escuro",
+      "criticalSerious": [],
+      "all": [
+        "aria-allowed-role:minor"
+      ]
+    }
+  ]
+}
