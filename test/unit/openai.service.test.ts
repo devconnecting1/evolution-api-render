@@ -308,9 +308,53 @@ describe('OpenaiService: errors never reach the customer', { concurrency: true }
       bot: { botType: 'assistant', assistantId: 'asst_1' },
       session: { sessionId: 'thread_existing' },
     });
-    t.openai.beta.threads.runs.retrieve = async () => ({ status: 'failed', last_error: { message: errorMessage } });
+    const calls: any[] = [];
+    t.openai.beta.threads.runs.create = async () => ({ id: 'run_test' });
+    t.openai.beta.threads.runs.retrieve = async (...args: any[]) => {
+      calls.push(args);
+      return { status: 'failed', last_error: { message: errorMessage } };
+    };
     await t.ask();
     assert.deepEqual(texts(t.waInstance), [UNKNOWN]);
+    assert.deepEqual(calls, [['run_test', { thread_id: 'thread_existing' }]]);
+  });
+
+  test('assistant tool outputs are submitted with the run id and thread id', async () => {
+    const t = setup({
+      bot: { botType: 'assistant', assistantId: 'asst_1' },
+      session: { sessionId: 'thread_existing' },
+    });
+    const submitCalls: any[] = [];
+    let polls = 0;
+    t.openai.beta.threads.runs.create = async () => ({ id: 'run_test' });
+    t.openai.beta.threads.runs.retrieve = async () => {
+      polls++;
+      if (polls <= 2) {
+        return {
+          status: 'requires_action',
+          required_action: {
+            type: 'submit_tool_outputs',
+            submit_tool_outputs: {
+              tool_calls: [{ id: 'call_1', function: { name: 'consultar', arguments: '{}' } }],
+            },
+          },
+        };
+      }
+      return { status: 'completed' };
+    };
+    t.openai.beta.threads.runs.submitToolOutputs = async (...args: any[]) => void submitCalls.push(args);
+    t.openai.beta.threads.messages.list = async () => ({
+      data: [{ content: [{ type: 'text', text: { value: 'ok' } }] }],
+    });
+    await t.ask();
+
+    assert.deepEqual(texts(t.waInstance), ['ok']);
+    assert.equal(submitCalls.length, 1);
+    assert.equal(submitCalls[0][0], 'run_test');
+    assert.equal(submitCalls[0][1].thread_id, 'thread_existing');
+    assert.deepEqual(submitCalls[0][1].tool_outputs, [
+      { tool_call_id: 'call_1', output: JSON.stringify({ error: 'No function URL configured' }) },
+    ]);
   });
 
   test('audio that cannot be transcribed ends in the fallback (no network call)', async () => {

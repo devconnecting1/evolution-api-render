@@ -731,7 +731,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     remoteJid: string,
     pushName: string,
   ) {
-    let status = await client.beta.threads.runs.retrieve(threadId, runId);
+    let status = await client.beta.threads.runs.retrieve(runId, { thread_id: threadId });
 
     let maxRetries = 60; // 1 minute with 1s intervals
     const checkInterval = 1000; // 1 second
@@ -744,7 +744,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       maxRetries > 0
     ) {
       await new Promise((resolve) => setTimeout(resolve, checkInterval));
-      status = await client.beta.threads.runs.retrieve(threadId, runId);
+      status = await client.beta.threads.runs.retrieve(runId, { thread_id: threadId });
 
       // Handle tool calls
       if (status.status === 'requires_action' && status.required_action?.type === 'submit_tool_outputs') {
@@ -784,7 +784,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
           }
         }
 
-        await client.beta.threads.runs.submitToolOutputs(threadId, runId, {
+        await client.beta.threads.runs.submitToolOutputs(runId, {
+          thread_id: threadId,
           tool_outputs: toolOutputs,
         });
       }
