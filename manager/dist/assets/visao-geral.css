@@ -1,0 +1,560 @@
+/*
+ * WhatsAI: "Visão Geral com o resultado do escritório" (visao-geral.js) and the "Conexão" page of the
+ * administrator (client-portal.js). Loaded after the other panel CSS so the tokens below stay in control.
+ *
+ * Colors only through var(--m-*), which theme.css defines for light and dark (System theme): text tokens for
+ * text, --m-chart-1/--m-chart-4 for the two series (validated pair), --m-warn-strip for attention.
+ * Shape: cards 8px, fields and buttons 6px. Width: the page already caps the content at 1040px.
+ */
+
+.wa-overview {
+  min-width: 0;
+}
+
+.wa-ov {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------------------------------------ header */
+.wa-ov-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wa-ov-headtext {
+  min-width: 0;
+}
+
+.wa-ov-title {
+  margin: 0;
+  color: var(--m-text);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.wa-ov-sub {
+  margin: 4px 0 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wa-ov-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--m-border);
+  border-radius: 6px;
+  background: var(--m-surface);
+}
+
+.wa-ov-seg button {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.wa-ov-seg button:hover {
+  color: var(--m-text);
+}
+
+.wa-ov-seg button[aria-pressed='true'] {
+  background: var(--m-bg);
+  color: var(--m-text);
+  box-shadow: 0 0 0 1px var(--m-border-strong);
+}
+
+.wa-ov-seg button:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 1px;
+}
+
+/* ------------------------------------------------------------------------------------------------ numbers */
+.wa-ov-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wa-ov-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: var(--m-bg);
+}
+
+.wa-ov-kpi-label {
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.wa-ov-kpi-value {
+  color: var(--m-text);
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.wa-ov-kpi-foot,
+.wa-ov-kpi-note {
+  color: var(--m-text-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+}
+
+.wa-ov-kpi-note {
+  font-size: 11px;
+}
+
+.wa-ov-kpi-foot[data-tone='up'] {
+  color: var(--m-ok);
+}
+
+.wa-ov-kpi-foot[data-tone='down'] {
+  color: var(--m-warn-text);
+}
+
+/* ------------------------------------------------------------------------------------------------ cards */
+.wa-ov-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: var(--m-bg);
+}
+
+.wa-ov-cardhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.wa-ov-cardtitle {
+  margin: 0;
+  color: var(--m-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wa-ov-cardmeta {
+  color: var(--m-text-2);
+  font-size: 12px;
+}
+
+.wa-ov-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+/* ------------------------------------------------------------------------------------------------ chart */
+.wa-ov-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.wa-ov-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--m-text-2);
+  font-size: 12px;
+}
+
+.wa-ov-swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.wa-ov-swatch[data-series='leads'] {
+  background: var(--m-chart-1);
+}
+
+.wa-ov-swatch[data-series='appointments'] {
+  background: var(--m-chart-4);
+}
+
+.wa-ov-chartwrap {
+  margin: 0 -4px;
+  padding: 0 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.wa-ov-chart {
+  display: block;
+  width: 100%;
+  min-width: 520px;
+  height: auto;
+}
+
+.wa-ov-chart text {
+  font-family: inherit;
+}
+
+.wa-ov-chart .wa-ov-bar {
+  transition: opacity 0.12s ease;
+}
+
+.wa-ov-chart g:hover .wa-ov-bar,
+.wa-ov-chart g:focus .wa-ov-bar {
+  opacity: 0.82;
+}
+
+.wa-ov-chart g:focus {
+  outline: none;
+}
+
+.wa-ov-chart g:focus-visible .wa-ov-bar {
+  stroke: var(--m-text);
+  stroke-width: 1.5;
+}
+
+.wa-ov-data {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--m-border);
+}
+
+.wa-ov-data summary {
+  color: var(--m-text-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wa-ov-data summary:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+
+.wa-ov-tablewrap {
+  overflow-x: auto;
+}
+
+.wa-ov-table {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.wa-ov-table th,
+.wa-ov-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--m-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.wa-ov-table th {
+  color: var(--m-text-2);
+  font-weight: 500;
+}
+
+.wa-ov-table td {
+  color: var(--m-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------------------------------------ today */
+.wa-ov-agenda {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wa-ov-agenda-item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--m-border);
+}
+
+.wa-ov-agenda-item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.wa-ov-agenda-time {
+  flex: none;
+  width: 44px;
+  color: var(--m-text);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.wa-ov-agenda-who {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.wa-ov-agenda-who strong {
+  color: var(--m-text);
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.wa-ov-agenda-who small {
+  color: var(--m-text-2);
+  font-size: 12px;
+}
+
+.wa-ov-empty {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------------------------------------------------ alerts */
+.wa-ov-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wa-ov-alert {
+  display: block;
+  padding: 10px 12px;
+  border: 1px solid var(--m-border);
+  border-left: 3px solid var(--m-warn);
+  border-radius: 6px;
+  background: var(--m-warn-strip);
+  color: var(--m-warn-strip-text);
+  text-decoration: none;
+}
+
+.wa-ov-alert:hover {
+  border-color: var(--m-border-strong);
+  border-left-color: var(--m-warn);
+}
+
+.wa-ov-alert:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+
+.wa-ov-alert strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.wa-ov-alert small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* ------------------------------------------------------------------------------------------------ states */
+.wa-ov-skel {
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: var(--m-surface);
+}
+
+.wa-ov-kpi.wa-ov-skel {
+  height: 92px;
+}
+
+.wa-ov-skel-chart {
+  height: 200px;
+}
+
+.wa-ov-loading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wa-ov-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: var(--m-bg);
+}
+
+.wa-ov-error p {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+
+.wa-ov-error strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--m-text);
+  font-size: 14px;
+}
+
+.wa-ov-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--m-border-input);
+  border-radius: 6px;
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.wa-ov-btn:hover {
+  background: var(--m-surface);
+}
+
+.wa-ov-btn:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------------------------ dashboard link */
+.wa-dash-connect-link {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--m-border-input);
+  border-radius: 6px;
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.wa-dash-connect-link:hover {
+  background: var(--m-surface);
+  color: var(--m-text);
+}
+
+.wa-dash-connect-link:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------------------ admin "Conexão" page */
+.wa-portal-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--m-border);
+}
+
+.wa-portal-subtitle {
+  margin: 6px 0 0;
+  color: var(--m-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wa-portal-token {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--m-border);
+  border-radius: 6px;
+  background: var(--m-surface);
+}
+
+.wa-portal-token code {
+  flex: 1 1 220px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--m-text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------------------------------------ narrow */
+@media (max-width: 900px) {
+  .wa-ov-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wa-ov-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .wa-ov-head {
+    align-items: stretch;
+  }
+
+  .wa-ov-seg {
+    align-self: flex-start;
+  }
+
+  .wa-ov-card {
+    padding: 14px;
+  }
+
+  .wa-ov-kpi {
+    padding: 12px 14px 10px;
+  }
+
+  .wa-ov-kpi-value {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .wa-dash-connect-link {
+    height: 44px;
+  }
+}

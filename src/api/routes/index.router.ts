@@ -31,6 +31,7 @@ import { LabelRouter } from './label.router';
 import { LeadsRouter } from './leads.router';
 import { ObservabilityRouter } from './observability.router';
 import { OpenaiHealthRouter } from './openai-health.router';
+import { OverviewRouter } from './overview.router';
 import { ProcessosRouter } from './processos.router';
 import { ProxyRouter } from './proxy.router';
 import { RetentionRouter } from './retention.router';
@@ -250,6 +251,7 @@ router
   .use('/proxy', new ProxyRouter(...guards).router)
   .use('/label', new LabelRouter(...guards).router)
   .use('/usage', new UsageRouter(...guards).router)
+  .use('/overview', new OverviewRouter(...guards).router)
   .use('/processos', new ProcessosRouter(...guards).router)
   .use('/leads', new LeadsRouter(...guards).router)
   .use('/agenda', new AgendaRouter(...guards).router)
