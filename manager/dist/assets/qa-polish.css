@@ -1,0 +1,220 @@
+/* WhatsAI Manager: correcoes da auditoria visual/funcional de 12/11/2026 (manager/patches/qa-polish.py).
+   Only the var(--m-*) tokens; linked before design-system.css, which stays the last stylesheet. */
+
+/* ============================================================ toque: cabecalho, gaveta e acoes de lista */
+@media (max-width: 1023px) {
+  [data-wa-layout].wa-is [data-wa-nav] > li > :is(button, .wa-nb),
+  [data-wa-layout].wa-is [data-wa-nav] > li > div > button,
+  .wa-ut-nav-item {
+    height: 44px;
+    min-height: 44px;
+  }
+  [data-wa-layout].wa-is [data-wa-nav] ul button {
+    min-height: 40px;
+  }
+  .wa-ut-nav {
+    gap: 4px;
+  }
+  [data-wa-header] > div:last-child {
+    gap: 8px;
+  }
+  [data-wa-header] :is(.wa-help-btn, .wa-notif-btn, .wa-theme-btn, .wa-menu-toggle, .wa-tw-ibtn) {
+    position: relative;
+  }
+  [data-wa-header] :is(.wa-help-btn, .wa-notif-btn, .wa-theme-btn, .wa-menu-toggle, .wa-tw-ibtn)::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+  }
+  .wa-ut-tbtn--line,
+  [aria-label^="Ações de "] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* ============================================================ tablet: breadcrumb e busca */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .wa-tw-crumbs li:not(:last-child),
+  .wa-tw-crumb-sep {
+    display: none;
+  }
+  .wa-tw-crumbs {
+    margin: 0 8px;
+  }
+  [data-wa-header] > div:last-child > button.wa-tw-cmdbtn .wa-tw-kbd {
+    display: none;
+  }
+  [data-wa-header] > div:last-child > button.wa-tw-cmdbtn {
+    white-space: nowrap;
+  }
+}
+
+/* ============================================================ celular: abas, filtros e formularios */
+@media (max-width: 640px) {
+  #root .wc-tab,
+  #root .wp-tab-btn,
+  #root .wp-seg-btn,
+  #root .wa-notif-tab {
+    height: 44px;
+    min-height: 44px;
+  }
+  #root .wp-seg-btn {
+    padding: 0 12px;
+  }
+  #root .wc-tabs,
+  #root .wp-tabs,
+  #root .wa-tw-segs,
+  #root .wag-tabs,
+  #root .wa-ut-ptabs {
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+  #root .wa-tw-segs,
+  #root .wag-tabs,
+  #root .wa-ut-ptabs {
+    scroll-snap-type: x proximity;
+  }
+  #root .wa-tw-segs > *,
+  #root .wag-tabs > *,
+  #root .wa-ut-ptabs > * {
+    scroll-snap-align: start;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .wa-notif-act,
+  .wa-notif-check,
+  .wa-notif-tab,
+  .wa-notif-all,
+  .wa-help-all {
+    min-height: 44px;
+  }
+  .wa-notif-check {
+    min-width: 44px;
+  }
+  .wa-notif-act,
+  .wa-notif-all,
+  .wa-help-all {
+    display: inline-flex;
+    align-items: center;
+  }
+  .wa-help-menu {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .wa-tw-cmd {
+    max-height: calc(100dvh - 32px);
+  }
+  .wa-tw-kbd-btn {
+    min-width: 44px;
+  }
+
+  .wa-ut-viewpick-t {
+    max-width: 150px;
+  }
+  .wv-page .wv-select {
+    flex: 1 1 100%;
+  }
+  .wo-page a.wa-ai-test {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .wp-table tbody tr > td:nth-child(7) {
+    order: 6;
+    flex: 0 0 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+    padding-top: 4px;
+  }
+}
+
+/* ============================================================ processos: OAB em uma coluna */
+@media (max-width: 767px) {
+  .wp-oab-form {
+    grid-template-columns: 1fr;
+  }
+  .wp-oab-form > .wa-tw-sbtn {
+    width: 100%;
+    justify-self: stretch;
+  }
+}
+
+/* ============================================================ cobranca: tabela vira cartoes no celular */
+@media (max-width: 639px) {
+  .wc-table-wrap {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+  }
+  .wc-table {
+    min-width: 0;
+  }
+  .wc-table thead {
+    display: none;
+  }
+  .wc-table,
+  .wc-table tbody,
+  .wc-table tr,
+  .wc-table td {
+    display: block;
+    width: 100%;
+  }
+  .wc-table tr {
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--m-border);
+    border-radius: var(--m-radius-card);
+    background: var(--m-bg);
+  }
+  .wc-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+    border: 0;
+  }
+  .wc-table td::before {
+    color: var(--m-text-2);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .wc-table td:nth-child(1)::before {
+    content: "Mês";
+  }
+  .wc-table td:nth-child(2)::before {
+    content: "Valor";
+  }
+  .wc-table td:nth-child(3)::before {
+    content: "Situação";
+  }
+  .wc-table td:nth-child(4)::before {
+    content: "Comprovante";
+  }
+}
+
+/* ============================================================ chaves: tabela rolavel no tablet */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .wv-table {
+    overflow-x: auto;
+  }
+  .wv-row {
+    min-width: 770px;
+  }
+}
+
+/* ============================================================ atendente IA: titulo e acoes em 1024-1279 */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .wo-page .mb-1.flex.items-center.justify-between {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .wo-page .mb-1.flex.items-center.justify-between > :last-child {
+    margin-left: 0;
+  }
+}
