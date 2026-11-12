@@ -36,7 +36,7 @@ cron-job.org — GET / a cada 5 min (keep-alive) e, opcionais, POST /agenda/tick
 | Manual | No GitHub (`README-WHATSAI.md`) e nos recursos MCP `whatsai://docs/*`; `/readme` e `/readmes/*` redirecionam para `/manager/` |
 | Banco | Neon: projeto principal + um projeto por instância com banco próprio (`docs/arquitetura/banco-por-instancia.md`) |
 | Keep-alive | job no cron-job.org (GET `/` a cada 5 min), configurado no painel do provedor |
-| Repo | repositório privado do projeto no GitHub (`origin`); o `main` publica no Render e na Vercel (seção 3) |
+| Repo | repositório público do projeto no GitHub (`origin`); o `main` publica no Render e na Vercel (seção 3) |
 
 ## 2. Segredos e acessos
 
