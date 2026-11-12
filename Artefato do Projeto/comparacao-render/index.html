@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WhatsAI · comparação com o dashboard do Render</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#conteudo">Ir para o conteúdo</a>
+
+  <header class="topbar">
+    <button class="menu-btn" type="button" aria-label="Abrir menu">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+    </button>
+    <span class="brand">WhatsAI</span>
+    <nav class="crumb" aria-label="Trilha">
+      <span>Instâncias</span><span class="sep">/</span><strong>escritorio-exemplo</strong>
+    </nav>
+    <div class="top-actions">
+      <button class="search" type="button">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="m13.2 13.2 3.8 3.8"/></svg>
+        <span>Buscar</span><kbd>Ctrl K</kbd>
+      </button>
+      <button class="icon-btn" type="button" aria-label="Ajuda">?</button>
+      <button class="icon-btn bell" type="button" aria-label="Notificações, 4 não vistas">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3a5 5 0 0 0-5 5v3l-1.4 2.4h12.8L15 11V8a5 5 0 0 0-5-5Z"/><path d="M8 16a2 2 0 0 0 4 0"/></svg>
+        <span class="count">4</span>
+      </button>
+      <span class="avatar" aria-label="Conta de Exemplo">E</span>
+      <button class="theme-btn" type="button" id="theme-toggle" aria-live="polite">Claro</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="sidebar" aria-label="Menu principal">
+      <p class="side-brand">WhatsAI</p>
+      <div class="side-group">
+        <p class="side-label">Atendimento</p>
+        <a class="nav active" href="#conteudo" aria-current="page">Visão geral</a>
+        <a class="nav" href="#">Conversas <span class="nav-count">7</span></a>
+        <a class="nav" href="#">Leads</a>
+        <a class="nav" href="#">Agenda</a>
+        <a class="nav" href="#">Processos <span class="nav-count">2</span></a>
+      </div>
+      <div class="side-group">
+        <p class="side-label">Ajustes</p>
+        <a class="nav" href="#">Atendente IA</a>
+        <a class="nav" href="#">Conexão</a>
+        <a class="nav" href="#">Plano e limites</a>
+      </div>
+      <div class="side-group">
+        <p class="side-label">Ferramentas</p>
+        <a class="nav" href="#">Observabilidade</a>
+        <a class="nav" href="#">Chaves</a>
+        <a class="nav" href="#">Registro de ações</a>
+      </div>
+      <p class="side-foot">Este sistema usa o Evolution API<br>(licença Apache 2.0 com condições adicionais).</p>
+    </aside>
+
+    <main id="conteudo">
+      <section class="service-head" aria-labelledby="titulo-servico">
+        <div class="service-title">
+          <p class="eyebrow">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2"/><path d="M2.8 10h14.4M10 2.8c2 2 3 4.4 3 7.2s-1 5.2-3 7.2c-2-2-3-4.4-3-7.2s1-5.2 3-7.2Z"/></svg>
+            WhatsApp Web · instância
+          </p>
+          <div class="title-row">
+            <h1 id="titulo-servico">escritorio-exemplo</h1>
+            <span class="badge neutral">WhatsApp Web</span>
+            <span class="badge ok-soft">Profissional</span>
+          </div>
+          <p class="service-lead">Atendimento com IA no WhatsApp de um escritório de advocacia. Dados fictícios.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn outline" type="button">
+            Conectar
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+          </button>
+          <button class="btn primary" type="button">Abrir WhatsApp</button>
+        </div>
+      </section>
+
+      <dl class="meta">
+        <div>
+          <dt>ID da instância</dt>
+          <dd><code>srv-whatsai-0001</code><button class="copy" type="button" aria-label="Copiar ID da instância">copiar</button></dd>
+        </div>
+        <div>
+          <dt>Conta</dt>
+          <dd>WhatsAI / escritorio-exemplo</dd>
+        </div>
+        <div>
+          <dt>Número</dt>
+          <dd>+55 11 9****-0001</dd>
+        </div>
+        <div>
+          <dt>Situação</dt>
+          <dd><span class="live"><span class="dot ok"></span>Ao vivo</span></dd>
+        </div>
+        <div>
+          <dt>Endereço</dt>
+          <dd class="url">https://whatsai.exemplo/escritorio-exemplo</dd>
+        </div>
+      </dl>
+
+      <section class="status-strip" aria-label="Estado do atendimento">
+        <span class="status-item"><span class="dot ok"></span>IA respondendo</span>
+        <span class="status-item"><span class="dot ok"></span>WhatsApp conectado</span>
+        <span class="status-item usage">
+          <span>Respostas da IA</span>
+          <strong>2.610 / 3.000</strong>
+          <span class="progress"><span style="width:87%"></span></span>
+        </span>
+        <span class="status-item muted">Atualizado há 2 min<button class="btn tiny" type="button">Atualizar</button></span>
+      </section>
+
+      <div class="content-grid">
+        <section class="activity" aria-labelledby="titulo-atividade">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Atividade</p>
+              <h2 id="titulo-atividade">Últimos eventos</h2>
+              <p class="section-lead">O que a IA, a equipe e as integrações fizeram nesta instância.</p>
+            </div>
+            <button class="btn outline small" type="button">Ver tudo</button>
+          </div>
+
+          <label class="search-wide">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="m13.2 13.2 3.8 3.8"/></svg>
+            <input type="search" placeholder="Buscar eventos e contatos" aria-label="Buscar eventos e contatos">
+          </label>
+
+          <ul class="events">
+            <li class="event">
+              <span class="event-state ok" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></span>
+              <div class="event-main">
+                <h3>Novo lead qualificado</h3>
+                <p>Helena Prado · Trabalhista · conversa 5511900000001</p>
+                <p class="event-meta">há 2 min · IA · mensagem do cliente sem resposta da equipe</p>
+              </div>
+              <div class="event-side">
+                <span class="badge ok-soft">Qualificado</span>
+                <span class="event-when">há 2 min</span>
+                <span class="event-origin">IA</span>
+              </div>
+            </li>
+            <li class="event">
+              <span class="event-state warn" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M8 3v6M8 12v.5"/></svg></span>
+              <div class="event-main">
+                <h3>IA pausada para um contato</h3>
+                <p>Ana Exemplo assumiu a conversa · escritorio-exemplo</p>
+                <p class="event-meta">há 18 min · Equipe · retoma em 2 h</p>
+              </div>
+              <div class="event-side">
+                <span class="badge warn-soft">Em atendimento</span>
+                <span class="event-when">há 18 min</span>
+                <span class="event-origin">Equipe</span>
+              </div>
+            </li>
+            <li class="event">
+              <span class="event-state ok" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></span>
+              <div class="event-main">
+                <h3>Agendamento confirmado</h3>
+                <p>Rafael Quintela · Reunião de guarda · 14:00</p>
+                <p class="event-meta">há 1 h · Agenda · confirmação automática</p>
+              </div>
+              <div class="event-side">
+                <span class="badge ok-soft">Confirmado</span>
+                <span class="event-when">há 1 h</span>
+                <span class="event-origin">Agenda</span>
+              </div>
+            </li>
+            <li class="event">
+              <span class="event-state neutral" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 4.5h10M3 8h10M3 11.5h6"/></svg></span>
+              <div class="event-main">
+                <h3>Processo atualizado</h3>
+                <p>0000000-00.0000.0.00.0000 · DataJud · publicação nova</p>
+                <p class="event-meta">há 3 h · Processos · marcado como visto</p>
+              </div>
+              <div class="event-side">
+                <span class="badge neutral">Visto</span>
+                <span class="event-when">há 3 h</span>
+                <span class="event-origin">Processos</span>
+              </div>
+            </li>
+            <li class="event">
+              <span class="event-state ok" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></span>
+              <div class="event-main">
+                <h3>Cobrança de novembro registrada</h3>
+                <p>Plano Profissional · R$ 767,00 · Pix</p>
+                <p class="event-meta">há 5 h · Financeiro · recibo nº 0004</p>
+              </div>
+              <div class="event-side">
+                <span class="badge ok-soft">Pago</span>
+                <span class="event-when">há 5 h</span>
+                <span class="event-origin">Financeiro</span>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <aside class="rail" aria-label="Resumo do plano e dos atendimentos">
+          <section class="card usage-card">
+            <p class="eyebrow">Uso do plano</p>
+            <h2><strong>2.610</strong><span> / 3.000</span></h2>
+            <p class="section-lead">87% das respostas de novembro</p>
+            <span class="progress large"><span style="width:87%"></span></span>
+            <p class="muted">Plano Profissional · 3.000 respostas por mês</p>
+          </section>
+
+          <section class="card chart-card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Atendimentos</p>
+                <h2>Por dia</h2>
+              </div>
+              <span class="badge neutral">7 dias</span>
+            </div>
+            <div class="chart" role="img" aria-label="Atendimentos por dia: segunda 28, terça 34, quarta 31, quinta 42, sexta 46, sábado 18, domingo 12">
+              <span class="bar" style="--h:34%"><i>28</i></span>
+              <span class="bar" style="--h:42%"><i>34</i></span>
+              <span class="bar" style="--h:38%"><i>31</i></span>
+              <span class="bar" style="--h:52%"><i>42</i></span>
+              <span class="bar today" style="--h:58%"><i>46</i></span>
+              <span class="bar" style="--h:24%"><i>18</i></span>
+              <span class="bar" style="--h:16%"><i>12</i></span>
+            </div>
+            <div class="chart-axis"><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span><span>dom</span></div>
+            <p class="chart-note"><span class="dash"></span>Horário de atendimento: 9h às 18h</p>
+          </section>
+
+          <section class="card plan-card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Plano</p>
+                <h2>Profissional</h2>
+              </div>
+              <span class="badge ok-soft">Ativo</span>
+            </div>
+            <dl class="plan-list">
+              <div><dt>Respostas por mês</dt><dd>3.000</dd></div>
+              <div><dt>Números incluídos</dt><dd>1</dd></div>
+              <div><dt>Próximo vencimento</dt><dd>05/12/2026</dd></div>
+            </dl>
+          </section>
+        </aside>
+      </div>
+
+      <section class="card recent" aria-labelledby="titulo-conversas">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">Conversas</p>
+            <h2 id="titulo-conversas">Recentes</h2>
+          </div>
+          <button class="btn outline small" type="button">Ver todas</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Contato</th><th scope="col">Última mensagem</th><th scope="col">Situação</th><th scope="col">Quando</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td data-label="Contato"><strong>Helena Prado</strong><span class="sub">Trabalhista</span></td>
+                <td data-label="Última mensagem">Consegui separar os documentos.</td>
+                <td data-label="Situação"><span class="badge warn-soft">Aguardando equipe</span></td>
+                <td data-label="Quando"><span class="nowrap">há 12 min</span></td>
+              </tr>
+              <tr>
+                <td data-label="Contato"><strong>Rafael Quintela</strong><span class="sub">Família</span></td>
+                <td data-label="Última mensagem">A reunião está confirmada para 14h?</td>
+                <td data-label="Situação"><span class="badge ok-soft">IA respondendo</span></td>
+                <td data-label="Quando"><span class="nowrap">há 38 min</span></td>
+              </tr>
+              <tr>
+                <td data-label="Contato"><strong>Carla Amostra</strong><span class="sub">Contratos</span></td>
+                <td data-label="Última mensagem">Obrigada, vou ler com calma.</td>
+                <td data-label="Situação"><span class="badge neutral">Encerrada</span></td>
+                <td data-label="Quando"><span class="nowrap">há 2 h</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="prototype">Protótipo de exploração visual, inspirado no dashboard do Render. Dados fictícios; não é o painel em produção.</p>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var button = document.getElementById('theme-toggle');
+      function paint() {
+        var light = root.getAttribute('data-theme') === 'light';
+        button.textContent = light ? 'Escuro' : 'Claro';
+        button.setAttribute('aria-label', light ? 'Usar tema escuro' : 'Usar tema claro');
+      }
+      button.addEventListener('click', function () {
+        root.setAttribute('data-theme', root.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+        paint();
+      });
+      paint();
+    })();
+  </script>
+</body>
+</html>
