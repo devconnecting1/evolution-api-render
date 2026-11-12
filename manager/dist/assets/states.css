@@ -1,0 +1,90 @@
+/* WhatsAI panel: honest loading and error states (proposal T, manager/patches/states.py).
+   Uses the shimmer of .wa-sk (render-style.css) and the panel tokens, so it follows the light and dark theme. */
+
+/* instance could not be loaded: the block takes the place of the page */
+.wa-state-block {
+  margin: 48px auto;
+  max-width: 440px;
+}
+
+/* instance loading: page title, a line and a content box */
+.wa-state-skel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 8px;
+}
+.wa-state-skel .wa-sk {
+  display: block;
+}
+.wa-state-sk-title {
+  width: 180px;
+  height: 22px;
+}
+.wa-state-sk-line {
+  width: min(520px, 90%);
+  height: 12px;
+}
+.wa-state-sk-box {
+  width: 100%;
+  height: 280px;
+  margin-top: 12px;
+  border-radius: var(--m-radius-card, 10px);
+}
+
+/* table skeleton (Leads first load) */
+.wa-state-rows {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card, 10px);
+  overflow: hidden;
+}
+.wa-state-row {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+  padding: 14px 16px;
+  border-top: 1px solid var(--m-border);
+}
+.wa-state-row:first-of-type {
+  border-top: 0;
+}
+.wa-state-row .wa-sk {
+  display: block;
+  height: 12px;
+}
+.wa-state-c1 {
+  width: 70%;
+}
+.wa-state-c2 {
+  width: 60%;
+}
+.wa-state-c3 {
+  width: 50%;
+}
+.wa-state-c4 {
+  width: 40%;
+}
+@media (max-width: 640px) {
+  .wa-state-row {
+    grid-template-columns: 2fr 1fr;
+  }
+  .wa-state-c3,
+  .wa-state-c4 {
+    display: none;
+  }
+}
+
+/* error callout with an action (Processos) */
+div.wa-state-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+div.wa-state-callout p {
+  margin: 0;
+}
