@@ -14,6 +14,7 @@ import { GroupController } from './controllers/group.controller';
 import { InstanceController } from './controllers/instance.controller';
 import { LabelController } from './controllers/label.controller';
 import { LeadsController } from './controllers/leads.controller';
+import { OverviewController } from './controllers/overview.controller';
 import { ProcessosController } from './controllers/processos.controller';
 import { ProxyController } from './controllers/proxy.controller';
 import { SendMessageController } from './controllers/sendMessage.controller';
@@ -56,6 +57,7 @@ import { GoogleLoginService } from './services/google-login.service';
 import { LeadsService } from './services/leads.service';
 import { WAMonitoringService } from './services/monitor.service';
 import { OpenaiHealthService } from './services/openai-health.service';
+import { OverviewService } from './services/overview.service';
 import { ProcessosService } from './services/processos.service';
 import { ProxyService } from './services/proxy.service';
 import { retentionDaysFromEnv, RetentionService } from './services/retention.service';
@@ -170,6 +172,12 @@ export const processosService = new ProcessosService(prismaRepository, waMonitor
 });
 export const processosController = new ProcessosController(processosService);
 setProcessAiContextProvider((instanceId, remoteJid) => processosService.aiContext(instanceId, remoteJid));
+
+// "Visão Geral com o resultado do escritório": read-only numbers of the first screen; no timer, only when the panel opens
+export const overviewService = new OverviewService(prismaRepository, {
+  processesBadge: (instanceId) => processosService.badge(instanceId),
+});
+export const overviewController = new OverviewController(overviewService, prismaRepository);
 
 // "Leads (triagem)": the bot hands every answered conversation to it (in the background); same instance as the routes
 export const leadsService = new LeadsService(prismaRepository, usageService, waMonitor, {
