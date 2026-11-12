@@ -148,6 +148,11 @@ export function createAdminOnlyGuard(
     if (key && safeEqual(key, globalKey())) {
       return next();
     }
+    // Blocked IP: 429 without asking the session table (a blocked scanner must not wake the database). The global
+    // key above is the break-glass and still passes.
+    if (authThrottle.isBlocked(ip)) {
+      return tooManyAttempts(res, ip);
+    }
     if (key && isSessionToken(key)) {
       // async path handled explicitly: the guard also runs outside the app (unit tests) without async wrappers
       Promise.resolve(resolveSession(key))
@@ -156,7 +161,6 @@ export function createAdminOnlyGuard(
             (req as any).userSession = session;
             return next();
           }
-          if (authThrottle.isBlocked(ip)) return tooManyAttempts(res, ip);
           authThrottle.recordFailure(ip);
           try {
             throw new UnauthorizedException('Sua sessão expirou. Entre de novo com o Google.');
@@ -167,9 +171,6 @@ export function createAdminOnlyGuard(
         })
         .catch(next);
       return;
-    }
-    if (authThrottle.isBlocked(ip)) {
-      return tooManyAttempts(res, ip);
     }
     if (!key) {
       throw new UnauthorizedException();

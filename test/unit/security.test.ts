@@ -113,6 +113,9 @@ describe('security headers', () => {
     assert.ok(!/script-src[^;]*'unsafe-(inline|eval)'/.test(csp), 'no unsafe script sources');
     assert.equal(headers['X-Content-Type-Options'], 'nosniff');
     assert.equal(headers['X-Frame-Options'], 'DENY');
+    // the one-time Google login code comes back in the login URL: never leak it through the Referer
+    const login = routes.find((route: any) => route.src === '^/manager/login/?$');
+    assert.equal(login?.headers?.['Referrer-Policy'], 'no-referrer');
 
     const html: string[] = [];
     const walk = (dir: string) => {

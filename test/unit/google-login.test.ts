@@ -43,7 +43,16 @@ const googleFetch =
     return { ok: true, status: 200, json: async () => ({ id_token: idToken(claims), scope: 'openid email profile' }) };
   };
 
-const verified = { email: 'Dono@Exemplo.com', email_verified: true, name: 'Dono Exemplo', picture: 'https://x/p.png' };
+const verified = {
+  email: 'Dono@Exemplo.com',
+  email_verified: true,
+  name: 'Dono Exemplo',
+  picture: 'https://x/p.png',
+  aud: 'login.apps.googleusercontent.com',
+  iss: 'https://accounts.google.com',
+  // finish() reads the real clock: keep this fixture valid forever, not until a fixed date
+  exp: Math.floor(Date.now() / 1000) + 3600,
+};
 
 describe('equipe: session tokens', () => {
   test('was_ + 32 random bytes; only the SHA-256 is stored and looked up', () => {
@@ -101,19 +110,38 @@ describe('equipe: OAuth state and cookie', () => {
     assert.deepEqual(parseAllowlist(undefined), []);
   });
 
-  test('id_token claims: email_verified, audience and issuer are required', () => {
+  test('id_token claims: audience, issuer, expiry and email_verified are required', () => {
     const clientId = 'login.apps.googleusercontent.com';
-    const good = claimsFromIdToken(
-      idToken({ email: 'Dono@Exemplo.com', email_verified: true, name: 'Dono', aud: clientId }),
-      clientId,
-    );
+    const base = {
+      email: 'Dono@Exemplo.com',
+      email_verified: true,
+      name: 'Dono',
+      aud: clientId,
+      iss: 'https://accounts.google.com',
+      exp: Math.floor(NOW / 1000) + 3600,
+    };
+    const good = claimsFromIdToken(idToken(base), clientId, NOW);
     assert.deepEqual(good, { email: 'dono@exemplo.com', emailVerified: true, name: 'Dono', picture: null });
     assert.equal(
-      claimsFromIdToken(idToken({ email: 'x@y.com', email_verified: false, aud: clientId }), clientId)?.emailVerified,
+      claimsFromIdToken(idToken({ ...base, email_verified: false }), clientId, NOW)?.emailVerified,
       false,
+      'email_verified false is returned as false for finish() to refuse',
     );
-    assert.equal(claimsFromIdToken(idToken({ email: 'x@y.com', aud: 'other' }), clientId), null);
-    assert.equal(claimsFromIdToken(idToken({ email: 'x@y.com', iss: 'https://evil.example' }), clientId), null);
+    assert.equal(claimsFromIdToken(idToken({ ...base, aud: undefined }), clientId, NOW), null, 'aud is required');
+    assert.equal(claimsFromIdToken(idToken({ ...base, aud: 'other' }), clientId, NOW), null, 'aud must be ours');
+    assert.equal(claimsFromIdToken(idToken({ ...base, iss: undefined }), clientId, NOW), null, 'iss is required');
+    assert.equal(
+      claimsFromIdToken(idToken({ ...base, iss: 'https://evil.example' }), clientId, NOW),
+      null,
+      'iss must be Google',
+    );
+    assert.equal(claimsFromIdToken(idToken({ ...base, exp: undefined }), clientId, NOW), null, 'exp is required');
+    assert.equal(
+      claimsFromIdToken(idToken({ ...base, exp: Math.floor(NOW / 1000) }), clientId, NOW),
+      null,
+      'expired token',
+    );
+    assert.ok(claimsFromIdToken(idToken({ ...base, iss: 'accounts.google.com' }), clientId, NOW));
     assert.equal(claimsFromIdToken('not-a-token'), null);
   });
 });

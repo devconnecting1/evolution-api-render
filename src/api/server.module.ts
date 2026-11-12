@@ -135,7 +135,11 @@ export const businessController = new BusinessController(waMonitor);
 export const groupController = new GroupController(waMonitor);
 export const labelController = new LabelController(waMonitor);
 
-export const eventManager = new EventManager(prismaRepository, waMonitor);
+// A pessoa com sessão do Google ("was_") entra no WebSocket como a chave global. O resolvedor é lido a cada
+// conexão (depois de o módulo estar montado), nunca durante a subida.
+export const eventManager = new EventManager(prismaRepository, waMonitor, {
+  resolveSession: (token) => userSessionService.resolve(token),
+});
 export const chatbotController = new ChatbotController(prismaRepository, waMonitor);
 export const channelController = new ChannelController(prismaRepository, waMonitor);
 
@@ -209,10 +213,6 @@ export const googleCalendarService = new GoogleCalendarService(prismaRepository,
 // "Equipe" (proposta V, etapa 1): login com Google por pessoa + sessões revogáveis. Sem as envs, o recurso fica
 // desligado e a chave global continua entrando (break-glass). Nada aqui chama o Google ao subir a API.
 const teamLogger = new Logger('Equipe');
-export const userSessionService = new UserSessionService({
-  prisma: prismaRepository,
-  log: (message) => teamLogger.warn(message),
-});
 export const googleLoginService = new GoogleLoginService({
   clientId: process.env.GOOGLE_LOGIN_CLIENT_ID?.trim() || process.env.GOOGLE_CLIENT_ID?.trim() || undefined,
   clientSecret: process.env.GOOGLE_LOGIN_CLIENT_SECRET?.trim() || process.env.GOOGLE_CLIENT_SECRET?.trim() || undefined,
@@ -225,6 +225,13 @@ export const googleLoginService = new GoogleLoginService({
     process.env.GOOGLE_TOKEN_KEY?.trim() ||
     `apikey:${configService.get<Auth>('AUTHENTICATION').API_KEY.KEY ?? ''}`,
   log: (level, message) => teamLogger[level](message),
+});
+// A session only counts while the feature is on and the e-mail is still on the allowlist: turning it off (or
+// removing the person) ends the live sessions at once, instead of keeping them for up to 30 days.
+export const userSessionService = new UserSessionService({
+  prisma: prismaRepository,
+  authorized: (email) => googleLoginService.available() && googleLoginService.allowlist().includes(email),
+  log: (message) => teamLogger.warn(message),
 });
 export const agendaService = new AgendaService(prismaRepository, waMonitor, { google: googleCalendarService });
 export const agendaController = new AgendaController(agendaService, prismaRepository, googleCalendarService);

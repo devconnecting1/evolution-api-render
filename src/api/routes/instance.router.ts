@@ -1,7 +1,7 @@
 import { RouterBroker } from '@api/abstract/abstract.router';
 import { InstanceDto, SetPresenceDto } from '@api/dto/instance.dto';
 import { clientAccessService, instanceController, waMonitor } from '@api/server.module';
-import { ConfigService } from '@config/env.config';
+import { Auth, ConfigService } from '@config/env.config';
 import { clientInstanceView, isClientKey } from '@utils/client-access';
 import { instanceSchema, presenceOnlySchema } from '@validate/validate.schema';
 import { RequestHandler, Router } from 'express';
@@ -56,7 +56,11 @@ export class InstanceRouter extends RouterBroker {
         return res.status(HttpStatus.OK).json(response);
       })
       .get(this.routerPath('fetchInstances', false), ...guards, async (req, res) => {
-        const key = req.get('apikey');
+        // A person session ("was_", Google login) has the same reach as the global key, as decided by the guard:
+        // the controller compares the key with the global one to list every instance, so hand it the global key.
+        const key = (req as any).userSession
+          ? this.configService.get<Auth>('AUTHENTICATION').API_KEY.KEY
+          : req.get('apikey');
 
         // "Acesso do cliente": only its own instance, without the instance token or integration secrets
         if (isClientKey(key)) {

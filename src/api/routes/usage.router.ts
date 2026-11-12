@@ -73,11 +73,17 @@ export class UsageRouter extends RouterBroker {
         res.on('close', () => {
           closed = true;
         });
-        for await (const chunk of response.stream) {
-          if (closed) break;
-          if (!res.write(chunk)) await Promise.race([once(res, 'drain'), once(res, 'close')]);
+        try {
+          for await (const chunk of response.stream) {
+            if (closed) break;
+            if (!res.write(chunk)) await Promise.race([once(res, 'drain'), once(res, 'close')]);
+          }
+          if (!res.writableEnded) res.end();
+        } catch {
+          // The headers (200 + ZIP) are already sent: a half ZIP must not look complete. Destroy the connection
+          // instead of leaving the client with a truncated file that seems valid.
+          res.destroy();
         }
-        if (!res.writableEnded) res.end();
       });
   }
 

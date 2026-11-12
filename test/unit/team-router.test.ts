@@ -38,7 +38,14 @@ const owner = new GoogleLoginService({
   returnUrl: 'https://painel.exemplo.com/manager/login',
   allowlist: ['Dono@Exemplo.com'],
   secret: 'state-secret',
-  fetchImpl: googleFetch({ email: 'Dono@Exemplo.com', email_verified: true, name: 'Dono Exemplo' }),
+  fetchImpl: googleFetch({
+    email: 'Dono@Exemplo.com',
+    email_verified: true,
+    name: 'Dono Exemplo',
+    aud: 'login.apps.googleusercontent.com',
+    iss: 'https://accounts.google.com',
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  }),
 });
 const disabled = new GoogleLoginService({ secret: 'state-secret' });
 

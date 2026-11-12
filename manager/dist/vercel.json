@@ -13,6 +13,13 @@
       "continue": true
     },
     {
+      "src": "^/manager/login/?$",
+      "headers": {
+        "Referrer-Policy": "no-referrer"
+      },
+      "continue": true
+    },
+    {
       "src": "^/assets/(.*)$",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"
