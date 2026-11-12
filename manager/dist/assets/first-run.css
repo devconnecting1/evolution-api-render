@@ -1,0 +1,86 @@
+/* WhatsAI panel: guided first use (proposal U, manager/patches/first-run.py).
+   With zero instances the welcome block replaces the empty table; the toolbar and table header are hidden. */
+
+.wa-ut-app:has(.wa-ut-welcome) .wa-ut-tablewrap,
+.wa-ut-app:has(.wa-ut-welcome) .wa-ut-viewbar,
+.wa-ut-app:has(.wa-ut-welcome) .wa-ut-empty {
+  display: none;
+}
+
+.wa-ut-welcome {
+  width: min(560px, calc(100% - 32px));
+  margin: 56px auto;
+  color: var(--m-text);
+}
+.wa-ut-welcome-title {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.wa-ut-welcome-lead {
+  margin: 0 0 20px;
+  color: var(--m-text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.wa-ut-welcome-steps {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 24px;
+  padding: 0;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card, 10px);
+  background: var(--m-surface);
+  list-style: none;
+}
+.wa-ut-welcome-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--m-border);
+}
+.wa-ut-welcome-steps li:first-child {
+  border-top: 0;
+}
+.wa-ut-welcome-steps li > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--m-text-2);
+}
+.wa-ut-welcome-steps strong {
+  color: var(--m-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+.wa-ut-welcome-n {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--m-hover, rgba(127, 127, 127, 0.12));
+  color: var(--m-text);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 500;
+}
+.wa-ut-welcome-cta {
+  display: flex;
+  gap: 8px;
+}
+/* the one primary action of the page */
+.wa-ut-welcome-cta button {
+  border-color: var(--m-primary);
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+}
+.wa-ut-welcome-cta button:hover {
+  border-color: var(--m-primary-hover, var(--m-primary));
+  background: var(--m-primary-hover, var(--m-primary));
+}
