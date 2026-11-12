@@ -1,0 +1,136 @@
+/* WhatsAI Manager: um sistema visual só, aplicado em todas as telas (proposta L, manager/patches/design-system.py).
+   Linked after first-run.css, so it is the last word on sizes, radii, page width and type of the panel.
+   Only var(--m-*) tokens of minimal.css/theme.css (plus the size tokens below), so light and dark both apply.
+
+   Escala: títulos de página 20/28 semibold; controles 32px (28px em barras, tabelas e filtros); campos 32/28;
+   cantos 6px em controles e 8px em cartões; chips 22px com canto 4px; uma coluna de 1040px nas páginas de conteúdo.
+   Conversas, Agenda, Planilha e Instâncias continuam em tela cheia. */
+
+:root {
+  --m-radius-field: 6px;
+  --m-radius-item: 6px;
+  --m-radius-card: 8px;
+  --m-control: 32px;
+  --m-control-sm: 28px;
+  --m-content: 1040px;
+}
+
+/* ===================================================================================== títulos de página */
+/* #root vence as regras antigas (20px nas páginas da instância, 24px em Chaves/Retenção/Observabilidade) sem
+   !important. A cor e as margens de cada página continuam como estão. */
+#root :is(.wa-page-title, .wa-list-title, .wl-title, .wag-title, .wu-title, .wv-title, .wp-title, .wo-title, .wa-chat-listtitle, .wa-ut-title) {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+}
+
+/* ==================================================================================== largura do conteúdo */
+/* A coluna visível é 1040px; o max-width soma o respiro horizontal que cada página já tem. As páginas da
+   instância ficam dentro de .wa-is-page (1040px de conteúdo), então a regra não muda a largura delas. */
+#root :is(.wl-page, .wu-page) {
+  max-width: var(--m-content);
+  margin-inline: auto;
+}
+#root .wp-page {
+  max-width: calc(var(--m-content) + 32px);
+  margin-inline: auto;
+}
+#root :is(.wo-page, .wv-page, .wa-portal-global) {
+  max-width: calc(var(--m-content) + 48px);
+  margin-inline: auto;
+}
+#root .wa-portal-page:not(.wa-portal-global) {
+  max-width: var(--m-content);
+  margin-inline: auto;
+}
+
+/* ================================================================================================= cartões */
+#root :is(.wu-card, .wp-card, .wv-table, .wl-table-wrap, .wp-table-wrap, .wo-card, .wa-dash-card, .wag-fieldset, .wa-tw-panel, .wa-ut-main) {
+  border-radius: var(--m-radius-card);
+}
+
+/* ================================================================================================== chips */
+/* Altura 22px e canto 4px; as cores de cada chip continuam vindo dos seus seletores originais. */
+#root :is(.wt-chip, .wa-ut-chip, .wa-tw-badge, .wl-chip, .wag-chip, .wu-chip, .wv-chip) {
+  height: 22px;
+  border-radius: 4px;
+}
+
+/* Fora do sistema de 6px: ícone quadrado de 24px, login e composer continuam com o canto que já tinham. */
+#root .wa-tw-ibtn,
+#root [data-wa-home='login'] :is(input, .wa-login-submit),
+#root :is(.wa-composer .wa-chat-attach, .wa-composer .wa-chat-send) {
+  border-radius: 4px;
+}
+
+/* ==================================================================================== tipografia miúda */
+/* 13,5px não pertence à escala do painel (12/13/14/16/20/24): descrições e abas vão para 13px, o submenu para 14px. */
+#root .wa-is-page :is(.wl-head, .wag-head, .wu-head, .wp-head, .wo-head, .wa-portal-head) p {
+  font-size: 13px;
+}
+#root [data-wa-layout].wa-is [data-wa-nav] ul button {
+  font-size: 14px;
+}
+#root [data-wa-layout].wa-is .wp-tabs[role='tablist'] > [role='tab'],
+#root .wag-tab,
+#root .wag-tabs[role='tablist'] > [role='tab'] {
+  font-size: 13px;
+}
+
+/* ======================================================================================= controles finos */
+/* Só com mouse: em telas de toque o alvo de 44px do responsive.css continua valendo (min-height vence height). */
+@media (pointer: fine) {
+  /* botões padrão: 32px */
+  #root :is(.wv-btn, .wu-btn, .wag-btn, .wo-btn, .wa-portal-btn, .wa-ut-start-btn) {
+    height: var(--m-control);
+    min-height: var(--m-control);
+    border-radius: var(--m-radius-field);
+  }
+  #root :is(.wa-dash-actions, .wa-dash-alert-actions) button {
+    height: var(--m-control);
+    min-height: var(--m-control);
+    border-radius: var(--m-radius-field);
+  }
+  #root .wa-dash-actions button.wa-icon-btn {
+    width: var(--m-control);
+    min-width: var(--m-control);
+  }
+  /* ações no cabeçalho da página (Leads): mesmo tamanho dos outros cabeçalhos; o ícone quadrado fica pequeno */
+  #root :is(.wl-head-actions, .wag-head-actions, .wu-head-actions) :is(button, a):not(.wa-tw-ibtn, .wa-ut-ibtn, .wa-icon-btn) {
+    height: var(--m-control);
+    min-height: var(--m-control);
+    border-radius: var(--m-radius-field);
+  }
+
+  /* barras, tabelas e filtros: 28px */
+  #root :is(.wv-btn-sm, .wu-copy, .wag-btn-sm, .wo-btn-sm, .wa-tw-lbtn, .wa-ut-tbtn, .wa-ut-viewpick, .wa-tw-seg, .wa-tw-chip-clear, .wp-seg-btn, .wa-portal-update .wa-portal-btn) {
+    height: var(--m-control-sm);
+    min-height: var(--m-control-sm);
+    border-radius: var(--m-radius-field);
+  }
+  #root .wag-seg button {
+    height: var(--m-control-sm);
+    min-height: var(--m-control-sm);
+    border-radius: var(--m-radius-item);
+  }
+  #root .wv-bar :is(.wv-btn, .wv-input) {
+    height: var(--m-control-sm);
+  }
+
+  /* abas sublinhadas: 32px, canto 0 (não viram botão) */
+  #root :is(.wp-tab-btn, .wag-tab, .wag-tabs[role='tablist'] > [role='tab'], .wa-ut-ptab) {
+    height: var(--m-control);
+    min-height: var(--m-control);
+    border-radius: 0;
+  }
+
+  /* campos: 32px em formulários, 28px no que é filtro/barra */
+  #root :is(.wl-input, .wl-select, .wa-ut-dinput) {
+    height: var(--m-control);
+    min-height: var(--m-control);
+  }
+  #root :is(.wl-input, .wl-select, .wl-textarea, .wp-input, .wag-input, .wag-textarea, .wu-input, .wu-textarea, .wv-input, .wa-ut-dinput) {
+    border-radius: var(--m-radius-field);
+  }
+}
