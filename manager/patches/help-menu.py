@@ -47,7 +47,7 @@ JS = os.path.join(ROOT, 'manager', 'dist', 'assets', 'help-shortcuts.js')
 CACHE_VERSION = '56'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 CSS_TAG = '    <link rel="stylesheet" href="/assets/help-menu.css?v=1" />\n'
-JS_TAG = '    <script src="/assets/help-shortcuts.js?v=1"></script>\n'
+JS_TAG = '    <script src="/assets/help-shortcuts.js?v=2"></script>\n'
 CSS_ANCHOR = '    <link rel="stylesheet" href="/assets/first-run.css?v=1" />\n'
 JS_ANCHOR = '    <script src="/assets/panel-a11y.js?v=1"></script>\n'
 

@@ -1,0 +1,166 @@
+/*
+ * WhatsAI Manager: texto e layout do polimento pedido na revisao de 12/11/2026
+ * (manager/patches/qa-painel-polish.py). Linked right before design-system.css, like qa-polish.css.
+ *
+ * So tokens var(--m-*), tema claro e escuro, nada muda acima dos breakpoints indicados:
+ *   D  Visao Geral: botoes de atualizar e "Conexao" na linha do nome; no computador, a coluna
+ *      "Hoje" (agenda e alertas) fica ao lado do grafico.
+ *   K  celular: no cartao do quadro de Leads, o horario vai para a direita do nome, a prioridade
+ *      e o status dividem a ultima linha e o chip de status nao encosta mais em "Aguardando".
+ */
+
+/* =========================================================================================
+   D - top card: refresh and "Conexao" on the name row (the markup is moved into .wa-dash-head)
+   ========================================================================================= */
+.wa-dash-card .wa-dash-head {
+  flex-wrap: wrap;
+}
+
+.wa-dash-card .wa-dash-head .wa-dash-actions {
+  flex: none;
+  justify-content: flex-end;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+@media (max-width: 639px) {
+  /* avatar on the left, name + actions on the first row, profile using the full width below */
+  .wa-dash-card .wa-dash-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: start;
+    gap: 6px 12px;
+  }
+
+  .wa-dash-card .wa-dash-head .wa-dash-avatar {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 40px;
+    height: 40px;
+  }
+
+  .wa-dash-card .wa-dash-head .wa-dash-id {
+    display: contents;
+  }
+
+  .wa-dash-card .wa-dash-head .wa-dash-titlerow {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .wa-dash-card .wa-dash-head .wa-dash-title {
+    font-size: 18px;
+  }
+
+  .wa-dash-card .wa-dash-head .wa-dash-profile {
+    grid-column: 2 / 4;
+    grid-row: 2;
+  }
+
+  .wa-dash-card .wa-dash-head .wa-dash-actions {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: start;
+    gap: 6px;
+    margin-left: 0;
+  }
+
+  .wa-dash-card .wa-dash-head .wa-dash-connect-link {
+    padding: 0 10px;
+  }
+}
+
+/* =========================================================================================
+   D - desktop: "Hoje" (agenda + alerts) beside the chart, like the drawing
+   The overview body is the only direct div child of .wa-ov besides the head.
+   ========================================================================================= */
+@media (min-width: 1100px) {
+  .wa-ov > div:not(.wa-ov-head) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    align-items: start;
+    gap: 16px;
+  }
+
+  .wa-ov > div:not(.wa-ov-head) > .wa-ov-kpis {
+    grid-column: 1 / -1;
+  }
+
+  .wa-ov > div:not(.wa-ov-head) > .wa-ov-card {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .wa-ov > div:not(.wa-ov-head) > .wa-ov-columns {
+    grid-column: 2;
+    grid-row: 2;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 12px;
+  }
+
+  .wa-ov > div:not(.wa-ov-head) > .wa-ov-loading {
+    grid-column: 1 / -1;
+  }
+}
+
+/* =========================================================================================
+   K - phone: lead card of the board
+   .wl-card-top and .wl-card-foot become display:contents, so their children are placed in
+   the card grid: name + "ha X" on the first row, the optional texts next, priority + status
+   on the last row. The status chip no longer shares the line with "Aguardando ha X".
+   ========================================================================================= */
+@media (max-width: 639px) {
+  .wl-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    column-gap: 8px;
+    row-gap: 0;
+  }
+
+  .wl-card-top,
+  .wl-card-foot {
+    display: contents;
+  }
+
+  .wl-card-name {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+  }
+
+  .wl-card-when {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .wl-card .wt-prio {
+    grid-column: 1;
+    grid-row: 6;
+    justify-self: start;
+    margin-top: 6px;
+  }
+
+  .wl-card-status {
+    grid-column: 2;
+    grid-row: 6;
+    justify-self: end;
+    margin-top: 6px;
+  }
+
+  .wl-card-meta,
+  .wl-card-step,
+  .wl-card-miss,
+  .wl-card-chips {
+    grid-column: 1 / -1;
+    margin-top: 5px;
+  }
+}

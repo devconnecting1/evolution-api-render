@@ -1,11 +1,12 @@
+/*whatsai-patch:qa-painel-polish:shortcuts*/
 /*
  * WhatsAI Manager: atalhos de teclado globais e ponte com o menu Ajuda (manager/patches/help-menu.py, proposta W).
  *
  *   ?      abre o diálogo "Atalhos do teclado" (o componente WaHelp escuta o evento wa-help:shortcuts)
  *   G + C  vai para Conversas da instância aberta
  *   G + L  vai para Leads da instância aberta
- *   P      na conversa aberta, abre o painel do contato e aciona "Pausar IA" / "Retomar IA"; a confirmação
- *          continua sendo do usuário, como no botão do painel
+ *   P      na conversa aberta, abre o painel do contato e aciona "Assumir conversa" / "Retomar IA"
+ *          (a pausa da IA é imediata, como no botão da ficha do lead)
  *   Esc    fecha os menus e diálogos abertos; quem trata é o próprio componente (Radix Dialog e os menus do
  *          painel já fecham com Esc), por isso este script não intercepta a tecla
  *
@@ -88,7 +89,7 @@
     var buttons = panel.querySelectorAll('button');
     for (var i = 0; i < buttons.length; i++) {
       var label = text(buttons[i]);
-      if (label === 'Pausar IA' || label === 'Retomar IA') return buttons[i];
+      if (label === 'Assumir conversa' || label === 'Retomar IA') return buttons[i];
     }
     return null;
   }
