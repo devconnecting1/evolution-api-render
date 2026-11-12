@@ -208,7 +208,7 @@
   }
 
   // ------------------------------------------------------------------------------------------ pages
-  function filled(el) { return el.getAttribute('data-wa-filled') === '1'; }
+  function filled(el) { return el.getAttribute('data-wa-filled') === location.pathname; }
 
   function instanceIdFromPath() {
     var m = location.pathname.match(/^\/manager\/instance\/([^/]+)\//);
@@ -449,7 +449,11 @@
     card.appendChild(tips);
     root.appendChild(card);
     check();
-    timer = setInterval(check, 5000);
+    timer = setInterval(function () {
+      if (!root.isConnected) { clearInterval(timer); timer = null; return; }
+      check();
+    }, 5000);
+    root.__waCleanup = function () { if (timer) { clearInterval(timer); timer = null; } };
   }
 
   // Acesso do cliente (administrator)
@@ -855,7 +859,16 @@
     for (var i = 0; i < nodes.length; i++) {
       var el = nodes[i];
       if (filled(el)) continue;
-      el.setAttribute('data-wa-filled', '1');
+      if (el.getAttribute('data-wa-filled')) {
+        // React reuses the same page div for Conexão, Contatos da IA and Acesso do cliente. Before drawing the new
+        // page, stop the old page's timer and clear its content; otherwise the div keeps the old screen.
+        if (typeof el.__waCleanup === 'function') {
+          try { el.__waCleanup(); } catch (e) {}
+        }
+        el.__waCleanup = null;
+        el.textContent = '';
+      }
+      el.setAttribute('data-wa-filled', location.pathname);
       var page = el.getAttribute('data-wa-portal-page');
       if (page === 'conexao') {
         if (client) renderConexao(el);
