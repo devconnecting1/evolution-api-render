@@ -81,7 +81,16 @@
     // Agenda: the appointment name read aloud starts with what is written on it (time and contact), then the status
     var appts = document.querySelectorAll('.wag-appt[aria-label]');
     for (var a = 0; a < appts.length; a++) {
-      var seen = text(appts[a]);
+      /*whatsai-patch:qa-funcional-medio:agenda-labels*/
+      // textContent joins the spans without spaces ("14:00Maria SouzaReunião inicial"): add the separators.
+      var bits = [];
+      var timeEl = appts[a].querySelector('.wag-appt-time');
+      var nameEl = appts[a].querySelector('.wag-appt-name');
+      var typeEl = appts[a].querySelector('.wag-appt-type');
+      if (timeEl) bits.push(text(timeEl));
+      if (nameEl) bits.push(text(nameEl));
+      if (typeEl) bits.push(text(typeEl));
+      var seen = bits.length ? bits.join(', ') : text(appts[a]);
       var label = appts[a].getAttribute('aria-label') || '';
       if (seen && label.indexOf(seen) !== 0) {
         var status = label.split(', ').pop();

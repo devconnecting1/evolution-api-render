@@ -29,7 +29,7 @@ BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 CACHE_VERSION = '49'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
-A11Y_VERSION = '1'
+A11Y_VERSION = '2'
 A11Y_TAG = '<script src="/assets/panel-a11y.js?v=' + A11Y_VERSION + '" defer></script>'
 A11Y_TAG_BLOCKING = '<script src="/assets/panel-a11y.js?v=' + A11Y_VERSION + '"></script>'
 
