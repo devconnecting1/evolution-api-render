@@ -2478,11 +2478,11 @@ Marque o que quer que eu faça e copie a resposta. **Comece pelo que o cliente j
 
 [x] **AA · Movimento e acabamento com um padrão só**Site + painel · esforço baixo a médio · junto com Lbase
 
-[ ] **Y · Central de notificações**Só painel · esforço médiodepois
+[x] **Y · Central de notificações**Só painel · esforço médiodepois
 
-[ ] **X · Cobrança e exportação completa da instância**Painel + API · esforço médiodepois
+[x] **X · Cobrança e exportação completa da instância**Painel + API · esforço médiodepois
 
-[ ] **V · Equipe, papéis, convites, revogar acessos e registro de ações**API + painel · esforço alto, em etapasdepois
+[x] **V · Equipe, papéis, convites, revogar acessos e registro de ações**API + painel · esforço alto, em etapasdepois
 
 [x] **P · Segurança: data, onde ficam os dados, direitos, incidentes, recuperação e perguntas**Só site estático · esforço baixosite
 
@@ -2504,7 +2504,7 @@ Marque o que quer que eu faça e copie a resposta. **Comece pelo que o cliente j
 
 [x] **J · Integrações em catálogo**Só painel · esforço baixo3º
 
-[ ] **I · Eventos em grupos, com teste de envio**Só painel · esforço médio4º
+[x] **I · Eventos em grupos, com teste de envio**Só painel · esforço médio4º
 
 [x] **F · Acabamento: ícones, datas relativas, notificações**Só painel · esforço baixo5º
 
@@ -2512,14 +2512,46 @@ Marque o que quer que eu faça e copie a resposta. **Comece pelo que o cliente j
 
 [x] **B · Conversa com a ficha do lead ao lado**Só painel · esforço médio7º
 
-[ ] **D · Visão Geral com o resultado do escritório**Painel + 1 rota na API · esforço médio8º
+[x] **D · Visão Geral com o resultado do escritório**Painel + 1 rota na API · esforço médio8º
 
-[ ] **K · Celular: listas em linhas empilhadas**Só painel · esforço médio9º
+[x] **K · Celular: listas em linhas empilhadas**Só painel · esforço médio9º
 
-[ ] **C · Quadro por status e visões fixadas**Só painel · esforço médio10º
+[x] **C · Quadro por status e visões fixadas**Só painel · esforço médio10º
 
-[ ] **E · Ctrl K com ações**Só painel · esforço baixo11º
+[x] **E · Ctrl K com ações**Só painel · esforço baixo11º
 
-[ ] **S · Painel mais leve no primeiro acesso**Só painel · esforço alto · depois de L e M12º
+[x] **S · Painel mais leve no primeiro acesso**Só painel · esforço alto · depois de L e M12º
 
-`Aprovo: Z, Q, T, U, P, R, O, L, AA, M, N, G, H, J, W, F, A, B`
+`Aprovo: todas as 27 propostas (Z, Q, T, U, P, R, O, L, AA, M, N, G, H, J, W, F, A, B, I, X, V, D, K, C, E, S, Y).`
+
+## Status da execução (12/11/2026)
+
+| Letra | Proposta | Status | PR |
+|---|---|---|---|
+| Z | Correções rápidas: celular, planos, Conexão, /acesso | Mesclada | #83 |
+| Q | Página 404, acessibilidade e título da aba | Mesclada | #84 |
+| T | Erros e carregamento honestos | Mesclada | #85 |
+| U | Primeiro uso guiado | Mesclada | #87 |
+| P | Segurança: dados, direitos, incidentes e perguntas | Mesclada | #86 |
+| R | Privacidade e termos completos | Mesclada | #88 |
+| O | Site com 6 seções | Mesclada | #89 |
+| G | Um cabeçalho e uma largura para todas as páginas | Mesclada | #90 |
+| H | Atendente IA com seções e linguagem simples | Mesclada | #93 |
+| F | Acabamento: ícones, datas relativas e notificações | Mesclada | #94 |
+| A | Ficha do lead em página, com abas | Mesclada | #95 |
+| W | Ajuda, novidades e atalhos | Mesclada | #92 |
+| B | Conversa com a ficha do lead ao lado | Mesclada | #91 |
+| J | Integrações em catálogo | Mesclada | #98 |
+| S | Painel mais leve no primeiro acesso | Mesclada | #100 |
+| E | Ctrl K com ações | Mesclada | #99 |
+| X | Conta, cobrança e exportação | Mesclada | #101 |
+| D | Visão Geral com o resultado do escritório | Mesclada | #102 |
+| V | Equipe, acessos e registro de ações | Mesclada | #103 |
+| I | Eventos em grupos, com teste de envio | Mesclada | #104 |
+| C | Quadro por status e visões fixadas | Mesclada | #105 |
+| K | Celular: listas em linhas empilhadas | Mesclada | #106 |
+| L | Um sistema visual só | Mesclada | #97 |
+| Y | Central de notificações | Mesclada | #108 |
+| M | Componentes únicos | Entregue em PRs anteriores | - |
+| N | Formatos e textos iguais | Entregue em PRs anteriores | - |
+| AA | Movimento e acabamento com um padrão só | Entregue em PRs anteriores | - |
