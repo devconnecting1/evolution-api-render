@@ -182,8 +182,9 @@ if (metricsConfig.ENABLED) {
 
 if (!serverConfig.DISABLE_MANAGER) router.use('/manager', new ViewsRouter().router);
 
-router.get('/assets/*', (req, res) => {
-  const fileName = req.params[0];
+router.get('/assets/*splat', (req, res) => {
+  const rawSplat = (req.params as unknown as { splat?: string | string[] }).splat;
+  const fileName = Array.isArray(rawSplat) ? rawSplat.join('/') : String(rawSplat ?? '');
 
   // Security: Reject paths containing traversal patterns
   if (!fileName || fileName.includes('..') || fileName.includes('\\') || path.isAbsolute(fileName)) {
