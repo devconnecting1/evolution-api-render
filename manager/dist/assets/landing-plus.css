@@ -832,3 +832,253 @@
     display: none;
   }
 }
+
+/* ------------------------------------------------------------------ segunda etapa do site
+   Landing mais curta: o antes/depois virou uma faixa compacta dentro de Como funciona, os recursos
+   entraram nas abas do tour, os segmentos ganharam um seletor, os canais ficaram compactos em Planos
+   e o CTA final entrou no fim de Dúvidas. Âncoras antigas (#recursos, #pausa, #midia, #instrucoes,
+   #seg-*) continuam valendo: as abas abrem pelo hash em landing.js. */
+.anchor-alias {
+  display: block;
+  height: 0;
+  overflow: hidden;
+}
+.tour-panel .anchor-alias {
+  display: none;
+}
+.tour-copy > p {
+  margin-top: 12px;
+  color: var(--text-2);
+}
+.tour-copy > p + .checks {
+  margin-top: 20px;
+}
+
+/* antes/depois compacto */
+.vs-title {
+  margin-top: 72px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+.vs-compact {
+  display: grid;
+  overflow: hidden;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+.vs-side {
+  min-width: 0;
+  padding: 32px;
+}
+.vs-side.vs-without {
+  border-right: 1px solid var(--line);
+}
+.vs-compact .vs-h {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+.vs-notes {
+  display: grid;
+  gap: 10px;
+  color: var(--text-2);
+  font-size: 15px;
+}
+.vs-notes li {
+  position: relative;
+  padding-left: 20px;
+  line-height: 1.45;
+}
+.vs-notes li::before {
+  content: "";
+  position: absolute;
+  top: 0.7em;
+  left: 0;
+  width: 8px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: var(--text-3);
+}
+.vs-compact .flow {
+  gap: 16px;
+  padding-left: 30px;
+}
+.vs-compact .flow::before {
+  bottom: -18px;
+  left: 7px;
+  width: 1.5px;
+}
+.vs-compact .flow li::before {
+  top: 2px;
+  left: -30px;
+  width: 16px;
+  height: 16px;
+}
+.vs-compact .flow b {
+  font-size: 15px;
+}
+.vs-compact .flow span {
+  font-size: 14px;
+}
+.vs-compact .flow-end {
+  margin-top: 20px;
+  font-size: 15px;
+}
+
+/* seletor de segmentos */
+.seg-selector .tour-tabs {
+  margin-left: 0;
+}
+.seg-selector .tour-panel {
+  padding: 32px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+}
+.seg-selector .ico-box {
+  margin-bottom: 16px;
+}
+.seg-selector .tour-copy .h3 {
+  margin-bottom: 0;
+}
+.seg-asks {
+  align-content: center;
+  font-size: 15px;
+}
+.seg-more {
+  margin-top: 24px;
+  color: var(--text-2);
+  text-align: center;
+}
+.num-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 40px;
+}
+.num-row > div {
+  min-width: 0;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+.num-row strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.num-row span {
+  display: block;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.seg-note {
+  margin-top: 24px;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.seg-note b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* canais compactos dentro de Planos */
+.channels-mini {
+  margin-top: 64px;
+}
+.channels-mini .h3 {
+  margin-bottom: 8px;
+}
+.channels-mini .channels-lead {
+  max-width: 720px;
+  margin-bottom: 20px;
+  color: var(--text-2);
+}
+.channels-mini .card {
+  padding: 24px;
+  border: 1px solid var(--line);
+}
+.channels-mini .card .h4 {
+  margin-bottom: 8px;
+}
+.channels-mini .card > p {
+  font-size: 15px;
+}
+.channels-mini .card > p.note {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+
+/* CTA final dentro de Dúvidas */
+.faq-in .cta {
+  grid-column: 1 / -1;
+  margin-top: 0;
+  padding-bottom: 0;
+}
+.faq-in .cta-in {
+  padding: 64px 48px;
+}
+
+@media (max-width: 1023px) {
+  .vs-compact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .vs-side.vs-without {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .num-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .seg-selector .tour-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .seg-asks {
+    align-content: start;
+  }
+  .faq-in .cta {
+    margin-top: 16px;
+  }
+  .faq-in .cta-in {
+    padding: 48px 32px;
+  }
+}
+@media (max-width: 639px) {
+  .vs-title {
+    margin-top: 48px;
+    text-align: left;
+  }
+  .vs-side {
+    padding: 24px 20px;
+  }
+  .num-row {
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .num-row > div {
+    padding: 16px 20px;
+  }
+  .seg-selector .tour-panel {
+    padding: 24px 20px;
+  }
+  .channels-mini {
+    margin-top: 48px;
+  }
+  .channels-mini .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .faq-in .cta-in {
+    padding: 40px 20px;
+  }
+}
