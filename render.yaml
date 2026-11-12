@@ -111,4 +111,4 @@ services:
       - key: GITHUB_OWNER
         value: devconnecting1
       - key: GITHUB_REPO
-        value: whatsai-api
+        value: evolution-api-render
