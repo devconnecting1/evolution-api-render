@@ -18,6 +18,7 @@ import path from 'path';
 
 import { AdminDbRouter } from './admin-db.router';
 import { AgendaRouter } from './agenda.router';
+import { BillingRouter } from './billing.router';
 import { BusinessRouter } from './business.router';
 import { CallRouter } from './call.router';
 import { ChatRouter } from './chat.router';
@@ -42,6 +43,7 @@ import { ViewsRouter } from './view.router';
 enum HttpStatus {
   OK = 200,
   CREATED = 201,
+  CONFLICT = 409,
   NOT_FOUND = 404,
   FORBIDDEN = 403,
   BAD_REQUEST = 400,
@@ -252,6 +254,8 @@ router
   .use('/leads', new LeadsRouter(...guards).router)
   .use('/agenda', new AgendaRouter(...guards).router)
   .use('/client-access', new ClientAccessRouter().router)
+  // Cobrança manual e exportação dos dados da instância (escrita e exportação: só a chave global)
+  .use('/billing', new BillingRouter().router)
   .use('/openai-health', new OpenaiHealthRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
   // Neon project quota and database wake log: global key only, never touch the database

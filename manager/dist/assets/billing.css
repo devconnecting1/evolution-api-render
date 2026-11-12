@@ -1,0 +1,366 @@
+/* WhatsAI panel: Cobrança, recibo and data export in "Plano e limites" (billing.js, proposal X).
+   Built on the .wu-* look of the page (usage-limits.css) and the panel tokens, light and dark. */
+
+.wb-card {
+  margin-top: 16px;
+}
+.wb-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+.wb-note {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--m-border);
+  border-left: 3px solid var(--m-warn);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wb-empty {
+  margin: 0;
+}
+.wb-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.wb-pending {
+  color: var(--m-text);
+  font-weight: 500;
+}
+.wb-tablewrap {
+  overflow-x: auto;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card, 10px);
+}
+.wb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.wb-table th,
+.wb-table td {
+  padding: 10px 12px;
+  border-top: 1px solid var(--m-border);
+  text-align: left;
+  vertical-align: middle;
+}
+.wb-table thead th {
+  border-top: 0;
+  background: var(--m-bg);
+  color: var(--m-text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.wb-month {
+  display: block;
+  font-weight: 500;
+}
+.wb-month::first-letter {
+  text-transform: uppercase;
+}
+.wb-sub {
+  display: block;
+  max-width: 280px;
+  overflow: hidden;
+  color: var(--m-text-2);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.wb-chip[data-tone='off'] .wu-dot {
+  background: var(--m-text-3, #888);
+}
+.wb-c-act {
+  width: 1%;
+  white-space: nowrap;
+}
+.wb-acts {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.wu-btn.wb-sm {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+.wu-btn.wb-icon {
+  width: 28px;
+  padding: 0;
+  font-size: 16px;
+}
+.wb-error-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--m-border);
+  border-left: 3px solid var(--m-bad);
+  border-radius: var(--m-radius-field);
+}
+.wb-error-block p {
+  margin: 0;
+}
+.wu-btn-danger {
+  border-color: var(--m-bad);
+  background: var(--m-bad);
+  color: #fff;
+}
+
+/* dialogs */
+.wb-dialog {
+  width: min(520px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--m-border);
+  border-radius: 12px;
+  background: var(--m-surface);
+  color: var(--m-text);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+}
+.wb-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+.wb-dialog-title {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 600;
+}
+.wb-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+.wb-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wb-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.wb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wb-field label {
+  font-size: 13px;
+  font-weight: 500;
+}
+.wb-field input,
+.wb-field select,
+.wb-field textarea {
+  min-height: var(--m-control, 36px);
+  padding: 6px 10px;
+  border: 1px solid var(--m-border-input, var(--m-border-strong));
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: 14px;
+}
+.wb-field textarea {
+  resize: vertical;
+}
+.wb-hint,
+.wb-text {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.wb-text p {
+  margin: 0 0 8px;
+}
+.wb-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 14px;
+  color: var(--m-text);
+}
+.wb-error {
+  margin: 0;
+  color: var(--m-bad);
+  font-size: 13px;
+}
+.wb-error:empty {
+  display: none;
+}
+
+/* receipt: a sheet over the page; printing shows only the sheet */
+.wb-receipt-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  overflow: auto;
+  padding: 0 16px 32px;
+  background: var(--m-canvas, var(--m-bg));
+}
+.wb-receipt-bar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(720px, 100%);
+  padding: 12px 0;
+  background: inherit;
+  font-weight: 500;
+}
+.wb-grow {
+  flex: 1;
+}
+.wb-receipt-warn {
+  width: min(720px, 100%);
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--m-border);
+  border-left: 3px solid var(--m-warn);
+  border-radius: var(--m-radius-field);
+  color: var(--m-text-2);
+  font-size: 13px;
+}
+.wb-receipt {
+  width: min(720px, 100%);
+  padding: 48px 56px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.wb-receipt-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #d9d9d9;
+}
+.wb-receipt-head h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.wb-receipt-no {
+  margin: 0;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 15px;
+}
+.wb-receipt-value {
+  margin: 20px 0 8px;
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.wb-receipt-body {
+  margin: 0;
+}
+.wb-receipt-note {
+  margin: 12px 0 0;
+  color: #555;
+}
+.wb-receipt-place {
+  margin: 28px 0 0;
+}
+.wb-receipt-sign {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 56px;
+  text-align: center;
+}
+.wb-receipt-sign p {
+  margin: 0;
+}
+.wb-receipt-line {
+  width: 280px;
+  max-width: 100%;
+  margin-bottom: 8px;
+  border-top: 1px solid #1a1a1a;
+}
+
+@media (max-width: 640px) {
+  .wb-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wb-table thead {
+    display: none;
+  }
+  .wb-table,
+  .wb-table tbody,
+  .wb-table tr,
+  .wb-table td {
+    display: block;
+    width: auto;
+  }
+  .wb-table tr {
+    padding: 10px 12px;
+    border-top: 1px solid var(--m-border);
+  }
+  .wb-table tbody tr:first-child {
+    border-top: 0;
+  }
+  .wb-table td {
+    padding: 2px 0;
+    border: 0;
+  }
+  .wb-table td[data-label]:not(:first-child)::before {
+    content: attr(data-label) ': ';
+    color: var(--m-text-2);
+  }
+  .wb-acts {
+    justify-content: flex-start;
+    margin-top: 6px;
+  }
+  .wb-receipt {
+    padding: 28px 20px;
+  }
+}
+
+@media print {
+  html[data-wb-printing] body > *:not(.wb-receipt-wrap) {
+    display: none !important;
+  }
+  html[data-wb-printing] .wb-receipt-wrap {
+    position: static;
+    padding: 0;
+    background: #fff;
+  }
+  html[data-wb-printing] .wb-receipt-bar,
+  html[data-wb-printing] .wb-receipt-warn {
+    display: none;
+  }
+  html[data-wb-printing] .wb-receipt {
+    width: 100%;
+    border: 0;
+    padding: 0;
+  }
+  @page {
+    margin: 20mm;
+  }
+}

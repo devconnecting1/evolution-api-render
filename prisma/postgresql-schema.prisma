@@ -121,6 +121,7 @@ model Instance {
   Lead                    Lead[]
   LeadSettings            LeadSettings?
   ClientAccess            ClientAccess?
+  BillingEntry            BillingEntry[]
   AgendaSettings          AgendaSettings?
   Appointment             Appointment[]
 }
@@ -1096,6 +1097,25 @@ model ClientAccess {
   updatedAt  DateTime  @updatedAt @db.Timestamp
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId String    @unique
+}
+
+/// Cobrança manual por instância (operador pessoa física, sem gateway): mês de referência, valor em centavos e status.
+/// "receiptNumber" é a numeração sequencial dos recibos (única no sistema todo), dada quando a cobrança fica paga.
+model BillingEntry {
+  id            String    @id @default(cuid())
+  period        String    @db.VarChar(7)
+  amountCents   Int
+  status        String    @db.VarChar(12)
+  method        String?   @db.VarChar(20)
+  paidAt        DateTime? @db.Timestamp
+  note          String?   @db.VarChar(280)
+  receiptNumber Int?      @unique
+  createdAt     DateTime? @default(now()) @db.Timestamp
+  updatedAt     DateTime  @updatedAt @db.Timestamp
+  Instance      Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId    String
+
+  @@index([instanceId, period])
 }
 
 /// Configurações globais do WhatsAI (plano de controle), uma linha por chave. Ex.: "retention" = { "days": 90 }.

@@ -1,5 +1,5 @@
 import { CacheEngine } from '@cache/cacheengine';
-import { Auth, Chatwoot, configService, Database, Processos, ProviderSession } from '@config/env.config';
+import { Auth, Billing, Chatwoot, configService, Database, Processos, ProviderSession } from '@config/env.config';
 import { eventEmitter } from '@config/event.config';
 import { Logger } from '@config/logger.config';
 import { openaiHealthRegistry } from '@utils/openai-health';
@@ -48,8 +48,10 @@ import { createInstanceDatabases, createRoutedRepository } from './repository/in
 import { PrismaRepository } from './repository/repository.service';
 import { adminAlertsConfigFromEnv, AdminAlertsService } from './services/admin-alerts.service';
 import { AgendaService } from './services/agenda.service';
+import { BillingService } from './services/billing.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
+import { DataExportService } from './services/data-export.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
 import { LeadsService } from './services/leads.service';
 import { WAMonitoringService } from './services/monitor.service';
@@ -151,6 +153,17 @@ export const usageService = new UsageService(prismaRepository, {
 /** "Acesso do cliente": códigos de acesso do cliente com módulos escolhidos (src/utils/client-access.ts). */
 export const clientAccessService = new ClientAccessService({ prisma: prismaRepository });
 export const usageController = new UsageController(usageService, prismaRepository);
+/** Cobrança manual por instância e recibos do operador pessoa física (BILLING_PROVIDER_*). */
+export const billingService = new BillingService({
+  prisma: prismaRepository,
+  provider: () => configService.get<Billing>('BILLING'),
+});
+const exportLogger = new Logger('DataExport');
+/** "Exportar dados da instância" (portabilidade da LGPD): ZIP em fluxo, sem segredos. */
+export const dataExportService = new DataExportService({
+  prisma: prismaRepository,
+  logger: { info: (m) => exportLogger.log(m), error: (m) => exportLogger.error(m) },
+});
 
 // "Processos" (DataJud + DJEN): one instance (in-memory ticker state, rate limits, AI context provider)
 const processosConfig = configService.get<Processos>('PROCESSOS');

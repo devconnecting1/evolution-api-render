@@ -23,7 +23,7 @@ export const CLIENT_MODULE_INFO: Record<ClientModule, { label: string; descripti
     description: 'Ver, marcar, remarcar e cancelar agendamentos (sem mudar horários e regras)',
   },
   processos: { label: 'Processos', description: 'Andamentos e intimações (sem mudar OAB e configurações)' },
-  plano: { label: 'Plano e uso', description: 'Respostas da IA usadas no mês e a franquia do plano' },
+  plano: { label: 'Plano e uso', description: 'Respostas da IA usadas no mês, a franquia do plano e os recibos' },
   conexao: { label: 'Conexão', description: 'Ver se o WhatsApp está conectado e ler o QR code para reconectar' },
 };
 
@@ -114,7 +114,11 @@ const MODULE_RULES: Record<ClientModule, Rule[]> = {
     { methods: ['GET', 'PUT', 'DELETE'], pattern: /^\/processos\/:i\/[^/]+$/ },
     { methods: ['POST'], pattern: /^\/processos\/:i\/[^/]+\/(sync|seen)$/ },
   ],
-  plano: [{ methods: ['GET'], pattern: /^\/usage\/limits\/:i$/ }],
+  plano: [
+    { methods: ['GET'], pattern: /^\/usage\/limits\/:i$/ },
+    // histórico de cobrança e recibos, só leitura (escrever e exportar ficam com a chave global)
+    { methods: ['GET'], pattern: /^\/billing\/:i$/ },
+  ],
   conexao: [{ methods: ['GET'], pattern: /^\/instance\/connect\/:i$/ }],
 };
 
