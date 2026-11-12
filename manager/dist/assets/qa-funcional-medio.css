@@ -1,0 +1,69 @@
+/* WhatsAI panel: medium/low findings of the functional audit (manager/patches/qa-funcional-medio.py).
+   Only local corrections; no product structure changes. */
+
+/* ---------------------------------------------------------------- login: advanced server URL */
+[data-wa-home="login"] .wa-login-adv {
+  padding: 10px 12px;
+  border: 1px solid var(--wa-line);
+  border-radius: var(--wa-radius);
+  background: var(--wa-paper);
+}
+[data-wa-home="login"] .wa-login-adv summary {
+  cursor: pointer;
+  color: var(--wa-ink-soft);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+[data-wa-home="login"] .wa-login-adv[open] summary {
+  margin-bottom: 10px;
+}
+[data-wa-home="login"] .wa-login-adv-hint {
+  margin: 6px 0 0;
+  color: var(--wa-ink-soft);
+  font-size: 0.75rem;
+}
+[data-wa-home="login"] .wa-login-adv input {
+  width: 100%;
+}
+
+/* ------------------------------------------- processos: the Situação column was cut at 1440 */
+.wp-table th,
+.wp-table td {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.wp-table th:last-child,
+.wp-table td:last-child {
+  padding-right: 14px;
+}
+.wp-table .wp-status {
+  white-space: normal;
+}
+
+/* ------------------------------------ instâncias: room for the actions menu and its header */
+#root .wa-ut-table th,
+#root .wa-ut-table td {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+#root .wa-ut-table .wa-ut-c-menu {
+  width: 54px;
+  min-width: 54px;
+  padding: 0 10px 0 6px;
+}
+#root .wa-ut-table .wa-ut-c-name {
+  min-width: 176px;
+}
+
+/* ---------------------- agenda: empty week slots receive keyboard focus (Enter/Space opens) */
+.wag-col:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: -2px;
+}
+
+/* Agenda: the 0.8 opacity of the appointment type dropped "realizado" below 4.5:1 (axe) */
+.wag-appt[data-status="realizado"] .wag-appt-type,
+.wag-appt[data-status="faltou"] .wag-appt-type {
+  opacity: 1;
+  color: var(--m-text);
+}

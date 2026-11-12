@@ -347,10 +347,9 @@ document.addEventListener('click', (event) => {
   if (help && typeof help.scrollIntoView === 'function') help.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-setInterval(() => {
-  if (autoRefresh && !document.hidden) load(false);
-}, REFRESH_MS);
-
+/*whatsai-patch:qa-funcional-medio:no-poll*/
+// No background polling. The overview reads the control database (own databases and instance usage), so it
+// only loads when the page opens, when the tab becomes visible again after 60 s and on the Atualizar button.
 setInterval(updateUpdatedLabel, 15000);
 
 document.addEventListener('visibilitychange', () => {
