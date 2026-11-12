@@ -1,0 +1,242 @@
+{
+ "antes": [
+  {
+   "tela": "instances-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "help-1440-light",
+   "violacoes": [
+    {
+     "id": "aria-required-children",
+     "impacto": "critical",
+     "nos": 1
+    },
+    {
+     "id": "aria-required-parent",
+     "impacto": "critical",
+     "nos": 3
+    }
+   ]
+  },
+  {
+   "tela": "chat-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-open-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "openai-1440-light",
+   "violacoes": [
+    {
+     "id": "heading-order",
+     "impacto": "moderate",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "agenda-1440-light",
+   "violacoes": [
+    {
+     "id": "color-contrast",
+     "impacto": "serious",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "conexao-1440-light",
+   "violacoes": [
+    {
+     "id": "color-contrast",
+     "impacto": "serious",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "instances-390-light",
+   "violacoes": [
+    {
+     "id": "button-name",
+     "impacto": "critical",
+     "nos": 2
+    }
+   ]
+  },
+  {
+   "tela": "help-390-light",
+   "violacoes": [
+    {
+     "id": "aria-required-children",
+     "impacto": "critical",
+     "nos": 1
+    },
+    {
+     "id": "aria-required-parent",
+     "impacto": "critical",
+     "nos": 3
+    },
+    {
+     "id": "button-name",
+     "impacto": "critical",
+     "nos": 2
+    }
+   ]
+  },
+  {
+   "tela": "chat-390-light",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-open-390-light",
+   "violacoes": [
+    {
+     "id": "page-has-heading-one",
+     "impacto": "moderate",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "openai-390-light",
+   "violacoes": [
+    {
+     "id": "heading-order",
+     "impacto": "moderate",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "agenda-390-light",
+   "violacoes": []
+  },
+  {
+   "tela": "conexao-390-light",
+   "violacoes": [
+    {
+     "id": "color-contrast",
+     "impacto": "serious",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "instances-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "help-1440-dark",
+   "violacoes": [
+    {
+     "id": "aria-required-children",
+     "impacto": "critical",
+     "nos": 1
+    },
+    {
+     "id": "aria-required-parent",
+     "impacto": "critical",
+     "nos": 3
+    }
+   ]
+  },
+  {
+   "tela": "chat-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-open-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "openai-1440-dark",
+   "violacoes": [
+    {
+     "id": "heading-order",
+     "impacto": "moderate",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "agenda-1440-dark",
+   "violacoes": [
+    {
+     "id": "color-contrast",
+     "impacto": "serious",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "conexao-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "instances-390-dark",
+   "violacoes": [
+    {
+     "id": "button-name",
+     "impacto": "critical",
+     "nos": 2
+    }
+   ]
+  },
+  {
+   "tela": "help-390-dark",
+   "violacoes": [
+    {
+     "id": "aria-required-children",
+     "impacto": "critical",
+     "nos": 1
+    },
+    {
+     "id": "aria-required-parent",
+     "impacto": "critical",
+     "nos": 3
+    },
+    {
+     "id": "button-name",
+     "impacto": "critical",
+     "nos": 2
+    }
+   ]
+  },
+  {
+   "tela": "chat-390-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-open-390-dark",
+   "violacoes": [
+    {
+     "id": "page-has-heading-one",
+     "impacto": "moderate",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "openai-390-dark",
+   "violacoes": [
+    {
+     "id": "heading-order",
+     "impacto": "moderate",
+     "nos": 1
+    }
+   ]
+  },
+  {
+   "tela": "agenda-390-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "conexao-390-dark",
+   "violacoes": []
+  }
+ ]
+}

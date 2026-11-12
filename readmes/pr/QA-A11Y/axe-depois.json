@@ -1,0 +1,116 @@
+{
+ "depois": [
+  {
+   "tela": "instances-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "help-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-open-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "openai-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "agenda-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "conexao-1440-light",
+   "violacoes": []
+  },
+  {
+   "tela": "instances-390-light",
+   "violacoes": []
+  },
+  {
+   "tela": "help-390-light",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-390-light",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-open-390-light",
+   "violacoes": []
+  },
+  {
+   "tela": "openai-390-light",
+   "violacoes": []
+  },
+  {
+   "tela": "agenda-390-light",
+   "violacoes": []
+  },
+  {
+   "tela": "conexao-390-light",
+   "violacoes": []
+  },
+  {
+   "tela": "instances-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "help-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-open-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "openai-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "agenda-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "conexao-1440-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "instances-390-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "help-390-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-390-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "chat-open-390-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "openai-390-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "agenda-390-dark",
+   "violacoes": []
+  },
+  {
+   "tela": "conexao-390-dark",
+   "violacoes": []
+  }
+ ]
+}
