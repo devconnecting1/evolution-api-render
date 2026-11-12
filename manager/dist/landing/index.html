@@ -47,7 +47,7 @@
     <meta name="twitter:image" content="https://whatsaibr.vercel.app/assets/images/og-whatsai.png?v=2" />
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/landing.bundle.css?v=dd30565b24" />
+    <link rel="stylesheet" href="/assets/landing.bundle.css?v=4863ac1aa0" />
     <!-- whatsai-patch:theme:landing -->
     <script src="/assets/landing.js?v=6" defer></script>
     <script src="/assets/landing-pixels.js?v=2" defer></script>
@@ -183,8 +183,8 @@
             <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
           </a>
           <h1 id="hero-title" class="display">
-            Seu WhatsApp responde em segundos, a qualquer hora.
-            <span class="soft">Sua equipe assume quando quiser.</span>
+            Seu WhatsApp responde em segundos.
+            Sua equipe assume quando quiser.
           </h1>
           <p class="lead">
             O WhatsAI responde seus clientes a qualquer hora com as informações do seu negócio, entende áudios, fotos e
@@ -199,28 +199,11 @@
             <strong>R$ 437<small>/mês</small></strong>
             <svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg>
           </a>
-          <ul class="hero-points">
-            <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>Conexão por QR code ou API oficial da Meta</li>
-            <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>Configurado com as informações da sua empresa</li>
-          </ul>
+          <p class="hero-meta">WhatsApp pelo QR code ou API oficial da Meta · IA da OpenAI · configurado com as informações da sua empresa</p>
         </div>
 
         <figure class="wrap hero-visual">
           <div class="stage">
-            <!-- profundidade: cartões do painel ao fundo, desfocados (decorativos) -->
-            <div class="deck" aria-hidden="true">
-              <div class="deck-card deck-l">
-                <p class="deck-h">Instâncias · 3</p>
-                <p class="deck-row"><i class="dot dot-ok"></i>recepcao-clinica<span>Conectada</span></p>
-                <p class="deck-row"><i class="dot dot-ok"></i>loja-centro<span>Conectada</span></p>
-                <p class="deck-row"><i class="dot dot-warn"></i>comercial<span>Aguardando QR</span></p>
-              </div>
-              <div class="deck-card deck-r">
-                <p class="deck-h">Respostas da IA · novembro</p>
-                <p class="deck-v">1.234 <small>de 2.000</small></p>
-                <span class="deck-bars"><i style="height: 30%"></i><i style="height: 45%"></i><i style="height: 25%"></i><i style="height: 60%"></i><i style="height: 80%"></i><i style="height: 55%"></i><i style="height: 70%"></i><i style="height: 95%"></i><i style="height: 65%"></i><i style="height: 40%"></i></span>
-              </div>
-            </div>
             <!-- o painel atual: menu, caminho + Buscar (Ctrl K), lista com visões e filtros, conversa e painel do contato -->
             <div
               class="app"
@@ -317,63 +300,6 @@
         </figure>
       </section>
 
-      <!-- === tecnologia -->
-      <section class="tech" aria-labelledby="tech-title">
-        <div class="wrap tech-in">
-          <h2 id="tech-title" class="tech-h">Funciona com</h2>
-          <ul class="tech-list">
-            <li>OpenAI</li>
-            <li>WhatsApp Web</li>
-            <li>WhatsApp Cloud API (Meta)</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- === sem x com -->
-      <section class="section" id="antes-depois" aria-labelledby="vs-title">
-        <div class="wrap">
-          <div class="section-head section-head-c">
-            <h2 id="vs-title" class="h2">Sem WhatsAI, o cliente espera. <span class="soft">Com WhatsAI, ele é atendido.</span></h2>
-          </div>
-          <div class="vs">
-            <article class="vs-col vs-without" aria-labelledby="vs-without-h">
-              <h3 id="vs-without-h" class="vs-h">Sem WhatsAI</h3>
-              <div class="mess">
-                <svg class="mess-lines" viewBox="0 0 400 420" preserveAspectRatio="none" aria-hidden="true">
-                  <g class="mess-knot">
-                    <ellipse cx="200" cy="34" rx="34" ry="20" transform="rotate(-18 200 34)" />
-                    <ellipse cx="200" cy="34" rx="30" ry="18" transform="rotate(32 200 34)" />
-                    <ellipse cx="200" cy="34" rx="26" ry="15" transform="rotate(78 200 34)" />
-                    <ellipse cx="202" cy="32" rx="18" ry="11" transform="rotate(-50 202 32)" />
-                  </g>
-                  <path class="mess-path" d="M200 56c-8 30-90 18-96 54s70 26 92 58-120 20-110 70 150 4 170 44-60 40-120 56 40 50 70 70" />
-                  <path class="mess-path" d="M214 58c40 20 110 30 96 70s-150 30-130 76 140 6 120 62-120 30-80 86" />
-                </svg>
-                <ul class="mess-boxes">
-                  <li style="--x: 8%; --y: 15%; --r: -3deg">Mensagem das 23h sem resposta</li>
-                  <li style="--x: 52%; --y: 24%; --r: 2deg">Cliente pergunta de novo</li>
-                  <li style="--x: 14%; --y: 40%; --r: 2deg">Áudio que ninguém ouviu</li>
-                  <li style="--x: 50%; --y: 52%; --r: -2deg">40 conversas abertas de manhã</li>
-                  <li style="--x: 4%; --y: 66%; --r: -1deg">“Qual o horário?” pela 10ª vez</li>
-                  <li style="--x: 54%; --y: 78%; --r: 3deg">Retorno esquecido</li>
-                  <li style="--x: 20%; --y: 88%; --r: -2deg">Cliente desiste</li>
-                </ul>
-              </div>
-            </article>
-            <article class="vs-col vs-with" aria-labelledby="vs-with-h">
-              <h3 id="vs-with-h" class="vs-h">Com WhatsAI</h3>
-              <ol class="flow">
-                <li><time>22:47</time><b>O cliente pergunta</b><span>“Vocês atendem sábado?”</span></li>
-                <li><time>22:47</time><b>A IA responde em segundos</b><span>com o horário e as regras do seu negócio</span></li>
-                <li><time>22:48</time><b>Triagem pronta</b><span>nome, horário e o que o cliente precisa</span></li>
-                <li><time>08:02</time><b>A equipe assume quando quiser</b><span>a IA pausa sozinha naquela conversa</span></li>
-              </ol>
-              <p class="flow-end"><svg class="ico" aria-hidden="true"><use href="#i-check-circle" /></svg>Cliente atendido, a qualquer hora</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
       <!-- === como funciona -->
       <section class="section" id="como-funciona" aria-labelledby="como-title">
         <div class="wrap">
@@ -440,6 +366,51 @@
               </figure>
             </li>
           </ol>
+        </div>
+      </section>
+
+      <!-- === sem x com -->
+      <section class="section" id="antes-depois" aria-labelledby="vs-title">
+        <div class="wrap">
+          <div class="section-head section-head-c">
+            <h2 id="vs-title" class="h2">Sem WhatsAI, o cliente espera. <span class="soft">Com WhatsAI, ele é atendido.</span></h2>
+          </div>
+          <div class="vs">
+            <article class="vs-col vs-without" aria-labelledby="vs-without-h">
+              <h3 id="vs-without-h" class="vs-h">Sem WhatsAI</h3>
+              <div class="mess">
+                <svg class="mess-lines" viewBox="0 0 400 420" preserveAspectRatio="none" aria-hidden="true">
+                  <g class="mess-knot">
+                    <ellipse cx="200" cy="34" rx="34" ry="20" transform="rotate(-18 200 34)" />
+                    <ellipse cx="200" cy="34" rx="30" ry="18" transform="rotate(32 200 34)" />
+                    <ellipse cx="200" cy="34" rx="26" ry="15" transform="rotate(78 200 34)" />
+                    <ellipse cx="202" cy="32" rx="18" ry="11" transform="rotate(-50 202 32)" />
+                  </g>
+                  <path class="mess-path" d="M200 56c-8 30-90 18-96 54s70 26 92 58-120 20-110 70 150 4 170 44-60 40-120 56 40 50 70 70" />
+                  <path class="mess-path" d="M214 58c40 20 110 30 96 70s-150 30-130 76 140 6 120 62-120 30-80 86" />
+                </svg>
+                <ul class="mess-boxes">
+                  <li style="--x: 8%; --y: 15%; --r: -3deg">Mensagem das 23h sem resposta</li>
+                  <li style="--x: 52%; --y: 24%; --r: 2deg">Cliente pergunta de novo</li>
+                  <li style="--x: 14%; --y: 40%; --r: 2deg">Áudio que ninguém ouviu</li>
+                  <li style="--x: 50%; --y: 52%; --r: -2deg">40 conversas abertas de manhã</li>
+                  <li style="--x: 4%; --y: 66%; --r: -1deg">“Qual o horário?” pela 10ª vez</li>
+                  <li style="--x: 54%; --y: 78%; --r: 3deg">Retorno esquecido</li>
+                  <li style="--x: 20%; --y: 88%; --r: -2deg">Cliente desiste</li>
+                </ul>
+              </div>
+            </article>
+            <article class="vs-col vs-with" aria-labelledby="vs-with-h">
+              <h3 id="vs-with-h" class="vs-h">Com WhatsAI</h3>
+              <ol class="flow">
+                <li><time>22:47</time><b>O cliente pergunta</b><span>“Vocês atendem sábado?”</span></li>
+                <li><time>22:47</time><b>A IA responde em segundos</b><span>com o horário e as regras do seu negócio</span></li>
+                <li><time>22:48</time><b>Triagem pronta</b><span>nome, horário e o que o cliente precisa</span></li>
+                <li><time>08:02</time><b>A equipe assume quando quiser</b><span>a IA pausa sozinha naquela conversa</span></li>
+              </ol>
+              <p class="flow-end"><svg class="ico" aria-hidden="true"><use href="#i-check-circle" /></svg>Cliente atendido, a qualquer hora</p>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -686,135 +657,6 @@
         </div>
       </section>
 
-      <!-- === detalhes (bento): componentes do painel que vendem o dia a dia -->
-      <section class="section" id="detalhes" aria-labelledby="bento-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="bento-title" class="h2">Detalhes que poupam cliques. <span class="soft">No dia a dia da equipe.</span></h2>
-          </div>
-          <ul class="bento">
-            <li class="bento-card bento-wide">
-              <h3 class="h4">Ctrl K para ir a qualquer lugar</h3>
-              <p>Busque uma conversa pelo nome ou número, ou pule para outra página do painel sem tirar a mão do teclado (⌘ K no Mac).</p>
-              <div class="bento-snip" role="img" aria-label="Exemplo do menu de comandos: busca por jul; em Conversas, Juliana P., +55 11 9•••• 5678, selecionada; em Ir para, Visão Geral, Plano e limites e Observabilidade; rodapé com setas para navegar, Enter para abrir e Esc para fechar.">
-                <div class="ui-cmdk">
-                  <p class="ui-cmdk-in"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span>jul<i class="caret"></i></span><kbd class="ui-kbd">Esc</kbd></p>
-                  <p class="ui-cmdk-h">Conversas</p>
-                  <p class="ui-cmdk-i is-on"><span class="ui-av ui-av-sm">JP</span>Juliana P.<small>+55 11 9•••• 5678</small></p>
-                  <p class="ui-cmdk-h">Ir para</p>
-                  <p class="ui-cmdk-i"><svg class="ico" aria-hidden="true"><use href="#i-grid" /></svg>Visão Geral</p>
-                  <p class="ui-cmdk-i"><svg class="ico" aria-hidden="true"><use href="#i-gauge" /></svg>Plano e limites</p>
-                  <p class="ui-cmdk-i"><svg class="ico" aria-hidden="true"><use href="#i-activity" /></svg>Observabilidade</p>
-                  <p class="ui-cmdk-f"><span><kbd class="ui-kbd">↑↓</kbd>navegar</span><span><kbd class="ui-kbd">Enter</kbd>abrir</span><span><kbd class="ui-kbd">Esc</kbd>fechar</span></p>
-                </div>
-              </div>
-            </li>
-            <li class="bento-card">
-              <h3 class="h4">Aviso antes de a franquia acabar</h3>
-              <p>Ao chegar a 80% das respostas do mês (ou o percentual que você escolher), aparece o alerta.</p>
-              <div class="bento-snip" role="img" aria-label="Exemplo da barra de uso perto do limite: 1.712 de 2.000 respostas este mês, 85,6 por cento, com a marca de alerta em 80 por cento e o selo Perto do limite; excedente estimado nenhum.">
-                <div class="ui-card ui-card-snip">
-                  <p class="ui-card-h"><span>Respostas este mês</span><span class="ui-badge"><i class="dot dot-warn"></i>Perto do limite</span></p>
-                  <p class="us-big"><b>1.712 de 2.000</b><span> · 85,6%</span></p>
-                  <span class="us-bar us-bar-warn"><i style="width: 85.6%"></i><em style="left: 80%"></em></span>
-                  <p class="us-axis"><span>Alerta em 80%</span><span>Excedente estimado: nenhum</span></p>
-                </div>
-              </div>
-            </li>
-            <li class="bento-card">
-              <h3 class="h4">Filtros que ficam à vista</h3>
-              <p>Cada filtro ativo vira um chip. Um × tira só aquele; “Limpar tudo” volta para a lista inteira.</p>
-              <div class="bento-snip" role="img" aria-label="Exemplo dos filtros ativos: Período: hoje, Com mídia e Ordem: não lidas primeiro, cada um com um x, e Limpar tudo; 4 conversas.">
-                <div class="ui-card ui-card-snip">
-                  <div class="ui-vbar"><span>4 conversas</span><span class="ui-btn ui-btn-ghost is-on"><svg class="ico" aria-hidden="true"><use href="#i-filter" /></svg>Filtro<i class="ui-n">2</i></span></div>
-                  <p class="ui-chips"><span class="ui-chip">Período: hoje<svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span><span class="ui-chip">Com mídia<svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span><span class="ui-chip">Ordem: não lidas primeiro<svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span><span class="ui-clear">Limpar tudo</span></p>
-                </div>
-              </div>
-            </li>
-            <li class="bento-card">
-              <h3 class="h4">Pausar ou devolver para a IA</h3>
-              <p>No painel do contato, um botão pausa a IA naquela conversa ou devolve o atendimento para ela, com confirmação.</p>
-              <div class="bento-snip" role="img" aria-label="Exemplo de dois estados da IA num contato: pausada até 16:40, com o botão Retomar IA; e ativa, com o botão Pausar IA.">
-                <div class="ui-card ui-card-snip ai-states">
-                  <p class="ai-st"><span class="ai-st-l"><small>IA neste contato</small><span class="ui-badge"><i class="dot dot-warn"></i>Pausada até 16:40</span></span><span class="ui-btn ui-btn-primary"><svg class="ico" aria-hidden="true"><use href="#i-play" /></svg>Retomar IA</span></p>
-                  <p class="ai-st"><span class="ai-st-l"><small>IA neste contato</small><span class="ui-badge"><i class="dot dot-ok"></i>Ativa</span></span><span class="ui-btn"><svg class="ico" aria-hidden="true"><use href="#i-pause" /></svg>Pausar IA</span></p>
-                </div>
-              </div>
-            </li>
-            <li class="bento-card">
-              <h3 class="h4">Horário de atendimento em uma linha por dia</h3>
-              <p>Ajuste um dia e use “Copiar para todos” para repetir a faixa na semana.</p>
-              <div class="bento-snip" role="img" aria-label="Exemplo das linhas de horário: sábado das 09:00 às 13:00, com Copiar para todos; domingo fechado.">
-                <div class="ui-card ui-card-snip">
-                  <ul class="hr-days">
-                    <li><i class="ui-cb is-on"></i><b>Sábado</b><span class="ui-time">09:00</span><span class="hr-to">às</span><span class="ui-time">13:00</span><span class="hr-copy">Copiar para todos</span></li>
-                    <li class="is-off"><i class="ui-cb"></i><b>Domingo</b><span class="hr-closed">Fechado</span></li>
-                  </ul>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- === destaque: segmentos -->
-      <section class="section spot" aria-labelledby="spot-title">
-        <div class="wrap">
-          <div class="card card-soft spot-in">
-            <h2 id="spot-title" class="h2">Seja qual for o seu negócio, <span class="soft">o WhatsAI atende.</span></h2>
-            <ul class="chips" aria-label="Tipos de negócio atendidos">
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-health" /></svg>Clínicas</li>
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-scale" /></svg>Advocacia</li>
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-bag" /></svg>Lojas</li>
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-home" /></svg>Imobiliárias</li>
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-tool" /></svg>Serviços</li>
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-gym" /></svg>Academias</li>
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg>Escolas</li>
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-food" /></svg>Restaurantes</li>
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-scissors" /></svg>Salões</li>
-              <li class="chip"><svg class="ico" aria-hidden="true"><use href="#i-pet" /></svg>Pet shops</li>
-            </ul>
-            <a class="btn btn-primary" href="#segmentos">Ver exemplos por segmento</a>
-          </div>
-        </div>
-      </section>
-
-      <!-- === canais -->
-      <section class="section" id="canais" aria-labelledby="canais-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="canais-title" class="h2">WhatsApp Web ou API oficial da Meta. <span class="soft">Você escolhe.</span></h2>
-            <p class="section-lead">
-              Conexão em minutos; IA no ar em até 5 dias úteis. Use o número que você já tem ou vá para a API oficial quando precisar de mais garantia e volume.
-            </p>
-          </div>
-          <div class="grid grid-2">
-            <article class="card channel">
-              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-qr" /></svg></span>
-              <h3 class="h3">WhatsApp Web</h3>
-              <p class="muted">Conexão por QR code</p>
-              <ul class="checks">
-                <li>Usa o número e o celular que a empresa já tem</li>
-                <li>Conexão em minutos, sem aprovação da Meta</li>
-                <li>Pausa humana automática quando a equipe responde</li>
-              </ul>
-              <p class="note"><i class="dot dot-warn"></i>Não é um canal oficial da Meta: o número pode ser bloqueado, principalmente com disparos em massa.</p>
-            </article>
-            <article class="card channel">
-              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg></span>
-              <h3 class="h3">WhatsApp Cloud API</h3>
-              <p class="muted">API oficial da Meta</p>
-              <ul class="checks">
-                <li>Canal oficial, com verificação da empresa pela Meta</li>
-                <li>Coexistence: o app no celular e a API no mesmo número, sujeito à aprovação da Meta</li>
-                <li>Modelos de mensagem aprovados pela Meta (lembretes automáticos exigem integração)</li>
-              </ul>
-              <p class="note"><i class="dot dot-mute"></i>A Meta cobra por algumas categorias de mensagem. Com Coexistence, a IA também pausa quando a equipe responde pelo app WhatsApp Business.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
       <!-- === recursos -->
       <section class="section" id="recursos" aria-labelledby="recursos-title">
         <div class="wrap">
@@ -974,58 +816,6 @@
               </figure>
             </article>
           </div>
-        </div>
-      </section>
-
-      <!-- === tudo num lugar só: módulos do produto (lista em cartão) -->
-      <section class="section" id="modulos" aria-labelledby="mod-title">
-        <div class="wrap mod-wrap">
-          <div class="section-head mod-head">
-            <p class="eyebrow">Tudo num lugar só</p>
-            <h2 id="mod-title" class="h2">Do primeiro “oi” ao cliente atendido, <span class="soft">sem trocar de ferramenta.</span></h2>
-            <p class="section-lead">O WhatsApp, a IA, a triagem e a agenda conversam entre si. A equipe abre um painel só.</p>
-          </div>
-          <div class="mod-card">
-            <p class="mod-label">Atendimento e operação</p>
-            <ul class="mod-list">
-              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-bot" /></svg></span><span class="mod-txt"><strong>Atendimento com IA</strong><span>Responde, entende áudio, foto e PDF</span></span></li>
-              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-filter" /></svg></span><span class="mod-txt"><strong>Leads</strong><span>Triagem das conversas para a equipe</span></span></li>
-              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg><span class="mod-new">Novo</span></span><span class="mod-txt"><strong>Agenda</strong><span>Agenda, remarca e lembra pelo WhatsApp</span></span></li>
-              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-scale" /></svg><span class="mod-new">Novo</span></span><span class="mod-txt"><strong>Processos</strong><span>Andamentos e intimações, para escritórios</span></span></li>
-              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-pause" /></svg></span><span class="mod-txt"><strong>Equipe no controle</strong><span>A IA pausa quando alguém responde</span></span></li>
-              <li class="mod-item"><span class="mod-ico"><svg class="ico" aria-hidden="true"><use href="#i-gauge" /></svg></span><span class="mod-txt"><strong>Plano e limites</strong><span>Respostas da IA sob controle, sem surpresa</span></span></li>
-              <li class="mod-item mod-more"><span class="mod-ico mod-ico-more">+3</span><span class="mod-txt"><strong>E mais</strong><span>Observabilidade, banco próprio por cliente, assistente de IA</span></span></li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- === pergunte em português (MCP): o dono pergunta, o assistente responde com os dados do painel -->
-      <section class="section" id="pergunte" aria-labelledby="ask-title">
-        <div class="wrap ask-wrap">
-          <div class="ask-copy">
-            <p class="eyebrow">Assistente de IA</p>
-            <h2 id="ask-title" class="h2">Pergunte do seu jeito. <span class="soft">O painel responde.</span></h2>
-            <p class="section-lead">Conecte o WhatsAI ao seu assistente de IA (MCP) e peça em português o que levaria vários cliques.</p>
-            <ul class="checks ask-checks">
-              <li>Ações que mudam algo pedem confirmação</li>
-              <li>Chaves e senhas nunca aparecem por inteiro</li>
-            </ul>
-          </div>
-          <div class="ask-chat" role="img" aria-label="Exemplo de conversa com o assistente: pergunta quais leads esperam resposta e recebe três nomes com o tempo de espera (ilustrativo)">
-            <p class="ask-bubble ask-me">Quais leads estão esperando resposta da equipe?</p>
-            <div class="ask-answer">
-              <p class="ask-answer-h"><svg class="ico" aria-hidden="true"><use href="#i-sparkle" /></svg>3 aguardando há mais de 1 hora</p>
-              <ul>
-                <li><span>Mariana E. · Trabalhista</span><span class="ask-tag">há 3 h</span></li>
-                <li><span>Roberto F. · Previdenciário</span><span class="ask-tag">há 1 h</span></li>
-                <li><span>Clara D. · Família</span><span class="ask-tag">há 7 h</span></li>
-              </ul>
-            </div>
-            <p class="ask-bubble ask-me">E o que tem na agenda de amanhã?</p>
-            <p class="ask-bubble ask-me ask-faded">Quantas respostas a IA deu este mês?</p>
-          </div>
-          <p class="fine ask-fine">Ilustrativo · dados de exemplo</p>
         </div>
       </section>
 
@@ -1190,6 +980,42 @@
         </div>
       </section>
 
+      <!-- === canais -->
+      <section class="section" id="canais" aria-labelledby="canais-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="canais-title" class="h2">WhatsApp Web ou API oficial da Meta. <span class="soft">Você escolhe.</span></h2>
+            <p class="section-lead">
+              Conexão em minutos; IA no ar em até 5 dias úteis. Use o número que você já tem ou vá para a API oficial quando precisar de mais garantia e volume.
+            </p>
+          </div>
+          <div class="grid grid-2">
+            <article class="card channel">
+              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-qr" /></svg></span>
+              <h3 class="h3">WhatsApp Web</h3>
+              <p class="muted">Conexão por QR code</p>
+              <ul class="checks">
+                <li>Usa o número e o celular que a empresa já tem</li>
+                <li>Conexão em minutos, sem aprovação da Meta</li>
+                <li>Pausa humana automática quando a equipe responde</li>
+              </ul>
+              <p class="note"><i class="dot dot-warn"></i>Não é um canal oficial da Meta: o número pode ser bloqueado, principalmente com disparos em massa.</p>
+            </article>
+            <article class="card channel">
+              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg></span>
+              <h3 class="h3">WhatsApp Cloud API</h3>
+              <p class="muted">API oficial da Meta</p>
+              <ul class="checks">
+                <li>Canal oficial, com verificação da empresa pela Meta</li>
+                <li>Coexistence: o app no celular e a API no mesmo número, sujeito à aprovação da Meta</li>
+                <li>Modelos de mensagem aprovados pela Meta (lembretes automáticos exigem integração)</li>
+              </ul>
+              <p class="note"><i class="dot dot-mute"></i>A Meta cobra por algumas categorias de mensagem. Com Coexistence, a IA também pausa quando a equipe responde pelo app WhatsApp Business.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <!-- === planos (preços aprovados; o JSON-LD no <head> repete o menor e o maior valor) -->
       <section class="section" id="planos" aria-labelledby="planos-title">
         <div class="wrap">
@@ -1287,13 +1113,8 @@
               </table>
             </div>
           </div>
-          <ul class="choose" aria-label="Qual plano escolher">
-            <li><strong>Essencial</strong><span>Para responder perguntas e organizar os contatos, com até cerca de 400 conversas por mês.</span></li>
-            <li><strong>Profissional</strong><span>Para quem agenda pelo WhatsApp, acompanha processos ou quer integrar um sistema. É o que recomendamos para a maioria.</span></li>
-            <li><strong>Premium</strong><span>Para quem precisa da API oficial da Meta, de mensagens ativas por modelo ou de volume alto.</span></li>
-          </ul>
-          <div class="cmp" id="comparar">
-            <h3 id="cmp-title" class="h3 cmp-title">Compare os planos</h3>
+          <details class="cmp cmp-more" id="comparar">
+            <summary class="cmp-sum"><h3 id="cmp-title" class="h3 cmp-title">Comparar todos os itens dos planos</h3><svg class="ico" aria-hidden="true"><use href="#i-chev-d" /></svg></summary>
             <div class="cmp-scroll" role="region" aria-labelledby="cmp-title" tabindex="0">
               <table class="cmp-table">
                 <thead>
@@ -1325,7 +1146,7 @@
                 </tbody>
               </table>
             </div>
-          </div>
+          </details>
           <ul class="plan-notes">
             <li>Piloto de 14 dias por R$ 690 (1 número, até 500 respostas), abatido da implantação.</li>
             <li>Sem fidelidade: a mensalidade é mês a mês e você cancela quando quiser, com 30 dias de aviso e sem multa.</li>
@@ -1375,6 +1196,9 @@
               <summary>O WhatsApp pode bloquear o meu número?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
               <p>No WhatsApp Web, que não é um canal oficial, existe esse risco, principalmente com disparos em massa. O WhatsAI é feito para responder quem chama, não para disparar. Para reduzir esse risco, use a API oficial da Meta.</p>
             </details>
+            <details class="faq-more">
+              <summary>Ver mais 6 perguntas<svg class="ico" aria-hidden="true"><use href="#i-chev-d" /></svg></summary>
+              <div class="faq faq-nested">
             <details>
               <summary>Quem paga o uso da OpenAI?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
               <p>O custo da IA já está incluído na mensalidade, dentro da franquia de respostas do plano. Se preferir usar a conta OpenAI da sua empresa, combinamos na proposta.</p>
@@ -1398,6 +1222,7 @@
             <details>
               <summary>Funciona para vários números ou filiais?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
               <p>Sim. Cada número (recepção, vendas, filial) tem a própria IA e as próprias instruções. Cada plano inclui 1 número. O número adicional tem os mesmos recursos e a mesma franquia do plano, com IA, servidor e banco de dados próprios: R$ 287, R$ 497 ou R$ 927 por mês, conforme o plano.</p>
+            </details>              </div>
             </details>
           </div>
         </div>
