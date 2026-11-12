@@ -165,9 +165,40 @@
     (document.body || document.documentElement).appendChild(box);
   }
 
+  // First access of a client code on this device: what the area is for and what this code can do. Once per instance.
+  var CAN = {
+    conversas: 'Ler e responder as conversas e pausar ou retomar a IA',
+    leads: 'Acompanhar a triagem dos contatos',
+    agenda: 'Ver, marcar e remarcar horários',
+    processos: 'Acompanhar os processos e as publicações',
+    plano: 'Ver o uso do plano no mês',
+    conexao: 'Ver o estado do WhatsApp e reconectar se cair',
+  };
+  function welcomeNotice() {
+    if (!current || !current.instanceId) return;
+    var key = 'wa-portal-welcome-' + current.instanceId;
+    if (ls(key)) return;
+    var items = (current.modules || []).map(function (m) { return CAN[m]; }).filter(Boolean);
+    if (!items.length) return;
+    var ok = h('button', { type: 'button', class: 'wa-portal-btn', text: 'Entendi' });
+    var box = h('section', { class: 'wa-portal-welcome', role: 'dialog', 'aria-labelledby': 'wa-portal-welcome-t' }, [
+      h('h2', { id: 'wa-portal-welcome-t', class: 'wa-portal-welcome-title', text: 'Boas-vindas à área do cliente' }),
+      h('p', { class: 'wa-portal-hint', text: 'Com o seu código de acesso você pode:' }),
+      h('ul', { class: 'wa-portal-welcome-list' }, items.map(function (t) { return h('li', { text: t }); })),
+      h('p', { class: 'wa-portal-hint', text: 'O que não aparece no menu fica com quem configurou o seu atendimento.' }),
+      ok,
+    ]);
+    ok.addEventListener('click', function () {
+      lsSet(key, '1');
+      if (box.parentNode) box.parentNode.removeChild(box);
+    });
+    (document.body || document.documentElement).appendChild(box);
+    try { ok.focus({ preventScroll: true }); } catch (e) { ok.focus(); }
+  }
+
   if (client) {
     document.documentElement.setAttribute('data-wa-portal', 'client');
-    if (document.body) deniedNotice(); else document.addEventListener('DOMContentLoaded', deniedNotice);
+    if (document.body) { deniedNotice(); welcomeNotice(); } else document.addEventListener('DOMContentLoaded', function () { deniedNotice(); welcomeNotice(); });
     guardRoute();
     refreshClient();
     setInterval(guardRoute, 250);
