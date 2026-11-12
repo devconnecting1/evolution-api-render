@@ -350,12 +350,12 @@ button[role="checkbox"] {
 [data-wa-layout] [data-wa-sidebar] svg {
   color: var(--m-side-text-2);
 }
-[data-wa-layout] [data-wa-sidebar] [data-wa-nav] button.bg-secondary svg,
-[data-wa-layout] [data-wa-sidebar] [data-wa-nav] button:hover svg {
+[data-wa-layout] [data-wa-sidebar] [data-wa-nav] :is(button, .wa-nb).bg-secondary svg,
+[data-wa-layout] [data-wa-sidebar] [data-wa-nav] :is(button, .wa-nb):hover svg {
   color: var(--m-side-active-text);
 }
 /* the active page: a 2px mark on the left edge (ink in light, cream in dark) */
-[data-wa-layout] [data-wa-nav] > li > button.bg-secondary,
+[data-wa-layout] [data-wa-nav] > li > :is(button, .wa-nb).bg-secondary,
 [data-wa-layout] [data-wa-nav] > li > div > button.bg-secondary {
   box-shadow: inset 2px 0 0 var(--m-lime);
 }

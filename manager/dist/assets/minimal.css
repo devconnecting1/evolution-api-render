@@ -323,7 +323,7 @@ div:has(> main .wo-page) > [data-wa-header] {
   }
 }
 /* nav items (Twenty-like): 32px rows, 8px radius, hover #f3f3f3, the current page in green tint */
-[data-wa-nav] > li > button,
+[data-wa-nav] > li > :is(button, .wa-nb),
 [data-wa-nav] > li > div > button {
   height: var(--m-control);
   min-height: var(--m-control);
@@ -334,21 +334,21 @@ div:has(> main .wo-page) > [data-wa-header] {
   font-size: 14px;
   font-weight: 400;
 }
-[data-wa-nav] > li > button:hover,
+[data-wa-nav] > li > :is(button, .wa-nb):hover,
 [data-wa-nav] > li > div > button:hover {
   background: var(--m-hover);
 }
-[data-wa-nav] > li > button.bg-secondary,
+[data-wa-nav] > li > :is(button, .wa-nb).bg-secondary,
 [data-wa-nav] > li > div > button.bg-secondary {
   background: var(--m-tint);
   color: var(--m-tint-text);
   font-weight: 500;
 }
-[data-wa-nav] > li > button.bg-secondary svg,
+[data-wa-nav] > li > :is(button, .wa-nb).bg-secondary svg,
 [data-wa-nav] > li > div > button.bg-secondary svg {
   color: var(--m-primary);
 }
-[data-wa-nav] > li > button svg,
+[data-wa-nav] > li > :is(button, .wa-nb) svg,
 [data-wa-nav] > li > div > button svg {
   color: var(--m-text-2);
 }

@@ -71,7 +71,7 @@
   gap: 2px;
   padding: 0 10px 0 8px;
 }
-[data-wa-nav] > li > button,
+[data-wa-nav] > li > :is(button, .wa-nb),
 [data-wa-nav] > li > div > button {
   height: 36px;
   min-height: 36px;
@@ -86,25 +86,25 @@
   text-decoration: none !important;
   box-shadow: none;
 }
-[data-wa-nav] > li > button:hover,
+[data-wa-nav] > li > :is(button, .wa-nb):hover,
 [data-wa-nav] > li > div > button:hover {
   background: var(--wo-hover);
   color: var(--wo-ink);
 }
-[data-wa-nav] > li > button.bg-secondary,
+[data-wa-nav] > li > :is(button, .wa-nb).bg-secondary,
 [data-wa-nav] > li > div > button.bg-secondary {
   background: var(--wo-active);
   color: var(--wo-ink);
   font-weight: 600;
 }
-[data-wa-nav] > li > button svg,
+[data-wa-nav] > li > :is(button, .wa-nb) svg,
 [data-wa-nav] > li > div > button svg {
   flex: none;
   width: 16px;
   height: 16px;
   color: var(--wo-muted);
 }
-[data-wa-nav] > li > button.bg-secondary svg,
+[data-wa-nav] > li > :is(button, .wa-nb).bg-secondary svg,
 [data-wa-nav] > li > div > button.bg-secondary svg {
   color: var(--wo-ink);
 }
