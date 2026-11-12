@@ -475,7 +475,7 @@ describe('usage REST: validation and controller', () => {
 
   test('controller: 404 for an unknown instance, 400 for semantic errors, summary with the instance name', async () => {
     const tables = createUsageTables([{ id: 'inst-1', name: 'escritorio' }]);
-    const controller = new UsageController(new UsageService(tables, { now: () => TUESDAY_14H }), tables);
+    const controller = new UsageController(new UsageService(tables, { now: () => TUESDAY_14H }), tables, null);
 
     await assert.rejects(
       controller.getLimits({ instanceName: 'nao-existe' } as any),
