@@ -8,7 +8,7 @@
  * - OAuth state: "<payload>.<hmac>" (base64url JSON {n: nonce, e: expiry ms} + HMAC-SHA256), valid for 10 minutes.
  *   The nonce is also kept in an HttpOnly cookie, so a state generated for someone else's browser does not work.
  * - The id_token comes straight from Google's token endpoint over TLS (same reasoning as the Agenda integration):
- *   there is no need to check the signature, but the audience, the issuer and email_verified are checked.
+ *   there is no need to check the signature, but audience, issuer, expiry and email_verified are checked.
  * - One-time code: random 32 bytes, 60 seconds, exchanged by the panel for the session token. Never the token
  *   itself in the redirect URL.
  */
@@ -151,15 +151,24 @@ export type GoogleLoginClaims = {
   picture: string | null;
 };
 
-/** E-mail, name and picture from the id_token of the token response. null when it is not a usable Google token. */
-export function claimsFromIdToken(idToken: unknown, clientId?: string): GoogleLoginClaims | null {
+/**
+ * E-mail, name and picture from the id_token of the token response. null when it is not a usable Google token.
+ * Audience, issuer and expiry are required (an absent claim is a refusal, never "nothing to check").
+ */
+export function claimsFromIdToken(
+  idToken: unknown,
+  clientId?: string,
+  now: number = Date.now(),
+): GoogleLoginClaims | null {
   const part = String(idToken ?? '').split('.')[1];
   if (!part) return null;
   try {
     const data = JSON.parse(Buffer.from(part, 'base64url').toString('utf8'));
     if (typeof data?.email !== 'string') return null;
-    if (clientId && data?.aud && String(data.aud) !== clientId) return null;
-    if (data?.iss && data.iss !== 'https://accounts.google.com' && data.iss !== 'accounts.google.com') return null;
+    if (typeof data?.aud !== 'string' || !data.aud) return null;
+    if (clientId && data.aud !== clientId) return null;
+    if (data?.iss !== 'https://accounts.google.com' && data.iss !== 'accounts.google.com') return null;
+    if (typeof data?.exp !== 'number' || !Number.isFinite(data.exp) || data.exp * 1000 <= now) return null;
     const verified = data?.email_verified === true || data?.email_verified === 'true';
     const email = data.email.trim().toLowerCase();
     if (!email || email.length > 320 || !email.includes('@')) return null;

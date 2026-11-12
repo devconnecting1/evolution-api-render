@@ -4,7 +4,10 @@ import { PusherController } from '@api/integrations/event/pusher/pusher.controll
 import { RabbitmqController } from '@api/integrations/event/rabbitmq/rabbitmq.controller';
 import { SqsController } from '@api/integrations/event/sqs/sqs.controller';
 import { WebhookController } from '@api/integrations/event/webhook/webhook.controller';
-import { WebsocketController } from '@api/integrations/event/websocket/websocket.controller';
+import {
+  WebsocketController,
+  WebsocketControllerOptions,
+} from '@api/integrations/event/websocket/websocket.controller';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { WAMonitoringService } from '@api/services/monitor.service';
 import { Server } from 'http';
@@ -20,11 +23,15 @@ export class EventManager {
   private pusherController: PusherController;
   private kafkaController: KafkaController;
 
-  constructor(prismaRepository: PrismaRepository, waMonitor: WAMonitoringService) {
+  constructor(
+    prismaRepository: PrismaRepository,
+    waMonitor: WAMonitoringService,
+    options: WebsocketControllerOptions = {},
+  ) {
     this.prisma = prismaRepository;
     this.monitor = waMonitor;
 
-    this.websocket = new WebsocketController(prismaRepository, waMonitor);
+    this.websocket = new WebsocketController(prismaRepository, waMonitor, options);
     this.webhook = new WebhookController(prismaRepository, waMonitor);
     this.rabbitmq = new RabbitmqController(prismaRepository, waMonitor);
     this.nats = new NatsController(prismaRepository, waMonitor);

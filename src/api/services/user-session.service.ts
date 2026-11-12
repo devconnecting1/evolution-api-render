@@ -36,6 +36,12 @@ type Deps = {
   sessionTtlMs?: number;
   /** lastSeenAt is written at most once per this interval per session (default 10 min). */
   touchIntervalMs?: number;
+  /**
+   * Current access policy for an e-mail. In the app it is "Google login is configured AND the e-mail is still in
+   * GOOGLE_LOGIN_OWNER_EMAILS", so turning the feature off or removing someone refuses the live sessions at once
+   * instead of waiting up to 30 days for them to expire. Without it (unit tests), every e-mail is accepted.
+   */
+  authorized?: (email: string) => boolean;
   log?: (message: string) => void;
 };
 
@@ -64,20 +70,38 @@ export class UserSessionService {
     return this.deps.sessionTtlMs ?? SESSION_TTL_MS;
   }
 
-  /** The person behind a "was_" token, or null (unknown, expired or revoked). */
+  /** Feature still configured and e-mail still on the allowlist (see Deps.authorized). */
+  private allowed(email: unknown): boolean {
+    return this.deps.authorized ? this.deps.authorized(String(email ?? '')) : true;
+  }
+
+  /** The person behind a "was_" token, or null (unknown, expired, revoked or no longer authorized). */
   public async resolve(token: string): Promise<SessionUser | null> {
     if (!isSessionToken(token)) return null;
     const hash = hashSessionToken(token);
     const ttl = this.deps.cacheTtlMs ?? CACHE_TTL_MS;
     const hit = this.cache.get(hash);
-    if (hit && this.now() - hit.at < ttl) return hit.user;
+    if (hit && this.now() - hit.at < ttl) {
+      // The cache skips the database, never the access policy: an e-mail removed from the allowlist (or the
+      // feature turned off) is refused on the very next request, not after the cache TTL.
+      if (!hit.user || this.allowed(hit.user.email)) return hit.user;
+      this.cache.delete(hash);
+      return null;
+    }
 
     const row = await this.deps.prisma.userSession.findUnique({
       where: { tokenHash: hash },
       include: { User: { select: USER_SELECT } },
     });
     const valid =
-      row && !row.revokedAt && row.expiresAt && +new Date(row.expiresAt) > this.now() && row.User ? row.User : null;
+      row &&
+      !row.revokedAt &&
+      row.expiresAt &&
+      +new Date(row.expiresAt) > this.now() &&
+      row.User &&
+      this.allowed(row.User.email)
+        ? row.User
+        : null;
     const user: SessionUser | null = valid
       ? {
           userId: valid.id,

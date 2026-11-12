@@ -86,4 +86,23 @@ describe('equipe: users and sessions (integration)', { skip: SKIP_INTEGRATION },
     await h.prisma.user.delete({ where: { id: first.id } });
     assert.equal(await h.prisma.userSession.count({ where: { userId: first.id } }), 0, 'sessions go with the person');
   });
+
+  test('resolve refuses a live session when the access policy no longer allows the e-mail', async () => {
+    const email = unique();
+    created.push(email);
+    let allow = true;
+    const service = new UserSessionService({
+      prisma: h.prisma,
+      cacheTtlMs: 0,
+      authorized: (value) => allow && value === email,
+    });
+    const user = await service.findOrCreateUser({ email });
+    const session = await service.createSession(user.id);
+    assert.equal((await service.resolve(session.token))?.email, email);
+
+    allow = false;
+    assert.equal(await service.resolve(session.token), null, 'feature off / e-mail removed from the allowlist');
+    allow = true;
+    assert.equal((await service.resolve(session.token))?.email, email, 'allowed again: the session works');
+  });
 });

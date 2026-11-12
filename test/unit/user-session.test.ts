@@ -77,6 +77,29 @@ describe('equipe: user and session service', () => {
     assert.equal(await service.revokeSession('missing'), false);
   });
 
+  test('resolve refuses a session when the feature is off or the e-mail left the allowlist (cache included)', async () => {
+    let allow = true;
+    const { prisma } = fakePrisma();
+    const service = new UserSessionService({
+      prisma,
+      now: () => 1_000_000,
+      authorized: (email) => allow && email === 'dono@exemplo.com',
+    });
+    const user = await service.findOrCreateUser(claims);
+    const { token } = await service.createSession(user.id);
+    assert.ok(await service.resolve(token), 'the allowlist still has the e-mail');
+
+    allow = false;
+    assert.equal(await service.resolve(token), null, 'the 30 s cache never skips the access policy');
+
+    allow = true;
+    assert.ok(await service.resolve(token), 'back in the allowlist: the session works again');
+
+    const other = await service.findOrCreateUser({ email: 'fora@exemplo.com' });
+    const otherSession = await service.createSession(other.id);
+    assert.equal(await service.resolve(otherSession.token), null, 'e-mail that is not on the allowlist');
+  });
+
   test('a resolved session is cached for 30 s', async () => {
     let now = 1_000_000;
     const { prisma } = fakePrisma();
