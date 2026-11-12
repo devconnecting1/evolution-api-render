@@ -20,7 +20,12 @@ export class RedisCache implements ICache {
   }
   async get(key: string): Promise<any> {
     try {
-      return JSON.parse(await this.client.get(this.buildKey(key)));
+      const data = await this.client.get(this.buildKey(key));
+      if (typeof data !== 'string') {
+        return null;
+      }
+
+      return JSON.parse(data);
     } catch (error) {
       this.logger.error(error);
     }
@@ -30,11 +35,11 @@ export class RedisCache implements ICache {
     try {
       const data = await this.client.hGet(this.buildKey(key), field);
 
-      if (data) {
-        return JSON.parse(data, BufferJSON.reviver);
+      if (typeof data !== 'string' || !data) {
+        return null;
       }
 
-      return null;
+      return JSON.parse(data, BufferJSON.reviver);
     } catch (error) {
       this.logger.error(error);
     }
@@ -118,11 +123,12 @@ export class RedisCache implements ICache {
     try {
       const match = `${this.buildKey('')}${appendCriteria ? `${appendCriteria}:` : ''}*`;
       const keys = [];
-      for await (const key of this.client.scanIterator({
+      // redis 6: each iteration is a batch of keys returned by SCAN, not a single key
+      for await (const batch of this.client.scanIterator({
         MATCH: match,
         COUNT: 100,
       })) {
-        keys.push(key);
+        keys.push(...batch);
       }
 
       return [...new Set(keys)];
