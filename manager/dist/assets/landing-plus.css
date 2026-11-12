@@ -768,3 +768,67 @@
     font-size: 16px;
   }
 }
+
+/* ------------------------------------------------------------------ site com 6 seções (proposta O) */
+.hero-meta {
+  margin-top: 16px;
+  color: var(--on-deep-2, var(--text-2));
+  font-size: 14px;
+}
+.cmp-more {
+  margin-top: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--bg);
+}
+.cmp-more > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 20px;
+  cursor: pointer;
+  list-style: none;
+}
+.cmp-more > summary::-webkit-details-marker {
+  display: none;
+}
+.cmp-more > summary .cmp-title {
+  margin: 0;
+  font-size: 18px;
+}
+.cmp-more > summary .ico {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s ease;
+}
+.cmp-more[open] > summary .ico {
+  transform: rotate(180deg);
+}
+.cmp-more > summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.cmp-more .cmp-scroll {
+  margin: 0 16px 16px;
+}
+.faq-more > summary {
+  color: var(--text-2);
+}
+.faq-nested {
+  margin-top: 0;
+  border-top: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cmp-more > summary .ico {
+    transition: none;
+  }
+}
+/* no celular, Recursos e Como funciona mostram o texto; as telas ilustrativas ficam no tour do produto */
+@media (max-width: 560px) {
+  #recursos .mock,
+  #recursos .caption,
+  #como-funciona .mock {
+    display: none;
+  }
+}
