@@ -60,14 +60,14 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
   `CONTROL_MODELS` de `src/api/repository/instance-db/routing.ts`.
 
 ### Checagens no GitHub (não rode a suíte localmente)
-O push não roda lint, prettier, testes nem build. Ao abrir o PR, o workflow `Check Code Quality` roda em
-`ubuntu-latest`:
+O push não roda lint, prettier, testes nem build. Ao abrir o PR, o GitHub Actions roda em `ubuntu-latest`:
 
-- `npm run lint:check` e `npm run format:check` (ESLint + Prettier);
-- `npm run build` (TypeScript + tsup);
-- `npm run test:types` e `npm run test:run` (unitários + integração com Postgres 16);
-- `python3 -I manager/patches/*.py --check`, `node manager/patches/landing-css.mjs --check` e o parse do bundle;
-- o título do PR no commitlint.
+- job `check-lint-and-build`: título do PR no commitlint, `npm run lint:check`, `npm run format:check` (ESLint + Prettier) e `npm run build` (TypeScript + tsup);
+- job `unit-tests`: `npm run test:types` e `npm run test:unit`;
+- job `integration-tests`: `npm run test:integration` com Postgres 16;
+- job `manager-patches`: `python3 -I manager/patches/*.py --check`, `node manager/patches/landing-css.mjs --check` e o parse do bundle;
+- workflow `Docker` (quando `Dockerfile`, `Docker/**`, `package.json`, `package-lock.json` ou `render.yaml` mudam): `docker build`;
+- workflow `Security`: Gitleaks e `npm audit`.
 
 O merge só acontece com todos verdes. Se um check falhar, rode localmente só o comando que ele aponta, para depurar:
 
@@ -317,11 +317,11 @@ The project follows comprehensive development standards defined in `.cursor/rule
 
 ## Testing Approach
 
-The project has a `node:test` suite (run with `tsx`), executed by CI (`Check Code Quality`):
+The project has a `node:test` suite (run with `tsx`), executed by CI in two parallel jobs (`unit-tests` and `integration-tests`):
 - **Unit tests** in `test/unit/**/*.test.ts`: `npm run test:unit`
 - **Integration tests** in `test/integration/**/*.test.ts` against a local Postgres: `npm run test:db:start`, then `npm run test:integration`
-- **Type-check of the tests**: `npm run test:types` (CI runs it; fakes must implement every method the code calls)
-- `npm run test:run` runs unit + integration; `npm test` is the watch mode
+- **Type-check of the tests**: `npm run test:types` (CI runs it in `unit-tests`; fakes must implement every method the code calls)
+- `npm run test:run` runs both locally; `npm test` is the watch mode
 - WhatsApp connection flows are still tested manually (never re-pair or log out a production number)
 
 ### Recommended Testing Strategy

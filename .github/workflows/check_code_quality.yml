@@ -88,7 +88,52 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
-  tests:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: evolution_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d evolution_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_PROVIDER: postgresql
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/evolution_test?schema=public
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install packages
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Type-check tests
+        run: npm run test:types
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+  integration-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -128,11 +173,8 @@ jobs:
       - name: Generate Prisma client
         run: npm run db:generate
 
-      - name: Type-check tests
-        run: npm run test:types
-
-      - name: Run tests (unit + integration)
-        run: npm run test:run
+      - name: Run integration tests
+        run: npm run test:integration
 
   manager-patches:
     runs-on: ubuntu-latest

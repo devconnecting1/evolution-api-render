@@ -699,18 +699,20 @@ npm run test:run
   e impede rede; para trocar um serviço, use `serverModuleOverrides`.
 - **Lacunas conhecidas:** não há teste de conexão Baileys real/pareamento (manual), não há integração MySQL e o
   `npm test` (watch) cobre só um subconjunto de `test/all.test.ts`.
-- **CI:** `Check Code Quality` roda lint, build, `test:types` e `test:run` com Postgres 16; `Security` roda
-  Gitleaks + `npm audit` (não bloqueia); `Deploy Manager` publica o painel; `Release` cria releases por tag.
+- **CI:** `Check Code Quality` roda lint, Prettier, build, `test:types`, unitários e integração em jobs separados
+  com Postgres 16; o workflow `Docker` valida a imagem; `Security` roda Gitleaks + `npm audit` (não bloqueia);
+  `Deploy Manager` publica o painel; `Release` cria releases por tag.
 
 ### 12.3 O que o GitHub roda em cada PR
 
 O workflow `Check Code Quality` roda, em `ubuntu-latest`:
 
-- `npm run lint:check` e `npm run format:check` (ESLint + Prettier);
-- `npm run build` (TypeScript + tsup);
-- `npm run test:types` e `npm run test:run` (unitários + integração com Postgres 16);
-- `python3 -I manager/patches/*.py --check`, `node manager/patches/landing-css.mjs --check` e o parse do bundle;
-- o título do PR no commitlint.
+- job `check-lint-and-build`: título do PR no commitlint, `npm run lint:check`, `npm run format:check` (ESLint + Prettier) e `npm run build` (TypeScript + tsup);
+- job `unit-tests`: `npm run test:types` e `npm run test:unit`;
+- job `integration-tests`: `npm run test:integration` com Postgres 16;
+- job `manager-patches`: `python3 -I manager/patches/*.py --check`, `node manager/patches/landing-css.mjs --check` e o parse do bundle;
+- workflow `Docker` (quando `Dockerfile`, `Docker/**`, `package.json`, `package-lock.json` ou `render.yaml` mudam): `docker build`;
+- workflow `Security`: Gitleaks e `npm audit`.
 
 O push não roda nada disso: não há mais hooks de pre-commit, pre-push ou commit-msg. Se um check do GitHub falhar,
 rode localmente só o comando apontado, para depurar:

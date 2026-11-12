@@ -66,7 +66,7 @@ VERCEL_TOKEN="<token da Vercel>" npx -y vercel@65.2.0 deploy --prod --yes --arch
 ```
 
 - Mudanças de env no `render.yaml` são aplicadas no deploy seguinte (Blueprint auto-sync). Se não aplicar: Render > Blueprint > **Sync**.
-- **CI:** `Check Code Quality` roda lint e prettier, build, `npm run test:types`, os testes unitários e de integração (Postgres 16) e os checks dos patches do painel; `Security` roda Gitleaks + `npm audit` (só relatório); Dependabot abre atualizações semanais.
+- **CI:** `Check Code Quality` roda lint e prettier, build, `test:types`, unitários e integração em jobs separados (Postgres 16) e os checks dos patches do painel; o workflow `Docker` valida a imagem; `Security` roda Gitleaks + `npm audit` (só relatório); Dependabot abre atualizações semanais.
 - **Testes locais:** só para depurar um check vermelho do GitHub: `npm run test:unit`; integração com `npm run test:db:start` e depois `npm run test:integration` (veja `test/scripts/local-postgres.sh`).
 - **Build:** o `tsup` empacota cada arquivo de `src` com sourcemap e já passa do heap padrão do Node (~2 GB). O `Dockerfile` (estágio de build) e o CI usam `NODE_OPTIONS=--max-old-space-size=4096`; se precisar rodar localmente para depurar, use `NODE_OPTIONS=--max-old-space-size=4096 npm run build`. O push não roda build.
 
