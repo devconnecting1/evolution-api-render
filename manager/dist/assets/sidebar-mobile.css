@@ -1,0 +1,24 @@
+/* WhatsAI Manager: a gaveta do menu da instancia ocupa a tela toda no celular (manager/patches/sidebar-mobile.py).
+   Antes: abaixo de 1024 px a gaveta da instancia comecava 60 px abaixo do topo e escondia o topo com o nome WhatsAI,
+   entao parecia cortada ao lado da gaveta do espaco de trabalho (que abre inteira). Agora ela cobre a tela toda como
+   a do espaco de trabalho, mostra o mesmo topo com o nome WhatsAI, rola por dentro quando o menu e maior que a tela e
+   fecha tocando fora (a camada escura cobre a tela inteira). Acima de 1023 px nada muda. */
+@media (max-width: 1023px) {
+  [data-wa-layout].wa-is [data-wa-sidebar] {
+    top: 0;
+    bottom: 0;
+    height: auto;
+    max-height: none;
+    overflow-y: auto;
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+  [data-wa-layout].wa-is .wa-is-top {
+    display: flex;
+  }
+  [data-wa-layout].wa-is .wa-is-top .wa-ut-side-collapse {
+    display: none;
+  }
+  [data-wa-layout].wa-is .wa-overlay {
+    inset: 0;
+  }
+}
