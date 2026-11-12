@@ -8,7 +8,7 @@
 2. viewer - "Ver planilha" opens the same workbook inside the panel (GET /leads/:instance/export.json): a grid with
    column letters and row numbers, the colours, merged cells and links of the file, the tabs Resumo and Leads at the
    bottom, first 300 rows of each, and "Baixar .xlsx". Styles in assets/leads.css (viewer block).
-3. html   - raises the bundle ?v= to CACHE_VERSION and leads.css to ?v=2.
+3. html   - raises the bundle ?v= to CACHE_VERSION and leads.css to CSS_VERSION (only up).
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: groups whose marker is present are skipped. Order: after leads.py and panel-polish.py.
@@ -25,7 +25,9 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 CACHE_VERSION = '34'
+CSS_VERSION = '3'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
+CSS_TAG = '/assets/leads.css?v='
 
 
 class PatchError(Exception):
@@ -141,6 +143,20 @@ def bump_index(html):
     return html[:start] + CACHE_VERSION + html[end:]
 
 
+def bump_css(html):
+    pos = html.find(CSS_TAG)
+    if pos < 0 or html.count(CSS_TAG) != 1:
+        raise PatchError('index.html: leads.css link expected once')
+    start = pos + len(CSS_TAG)
+    end = start
+    while end < len(html) and html[end].isdigit():
+        end += 1
+    current = html[start:end]
+    if current and int(current) >= int(CSS_VERSION):
+        return html
+    return html[:start] + CSS_VERSION + html[end:]
+
+
 def main():
     check = '--check' in sys.argv[1:]
     s = open(BUNDLE, encoding='utf-8').read()
@@ -148,7 +164,7 @@ def main():
     missing = [name for name, _ in GROUPS if marker(name) not in s]
     if bump_index(html) != html:
         missing.append('index.html cache version')
-    if '/assets/leads.css?v=1"' in html:
+    if bump_css(html) != html:
         missing.append('leads.css version')
     if check:
         print('ok: all groups applied' if not missing else f'missing: {missing}')
@@ -161,10 +177,10 @@ def main():
         s = marker(name) + fn(s)
         report.append(f'{name}: applied')
     open(BUNDLE, 'w', encoding='utf-8').write(s)
-    new_html = bump_index(html).replace('/assets/leads.css?v=1"', '/assets/leads.css?v=2"')
+    new_html = bump_css(bump_index(html))
     if new_html != html:
         open(INDEX, 'w', encoding='utf-8').write(new_html)
-        report.append(f'index.html: bundle ?v={CACHE_VERSION}')
+        report.append(f'index.html: bundle ?v={CACHE_VERSION}, leads.css ?v={CSS_VERSION}')
     print('\n'.join(report))
     return 0
 
