@@ -153,7 +153,8 @@ jobs:
 
       - name: Install manager patch dependencies
         run: |
-          python3 -m pip install --break-system-packages --quiet fonttools brotli
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends python3-fonttools python3-brotli
           python3 -I -c "import fontTools, brotli"
 
       - name: Check manager patches
