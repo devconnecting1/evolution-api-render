@@ -63,7 +63,8 @@ npm run lint        # ESLint with auto-fix
 npm run lint:check  # ESLint check only
 npm run format:check  # Prettier check (src and test)
 
-# As checagens (lint, prettier, build, tipos, testes e patches do painel) rodam no GitHub Actions.
+# As checagens (lint, prettier, build, tipos, unitários, integração, patches do painel e docker) rodam no GitHub Actions.
+# Jobs: check-lint-and-build, unit-tests, integration-tests, manager-patches e Docker.
 # O push não roda hooks locais; use os comandos acima só para depurar um check vermelho.
 
 # Commit with conventional commits
