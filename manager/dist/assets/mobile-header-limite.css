@@ -1,0 +1,7 @@
+/* WhatsAI Manager: no usage/plan chip in the header on phones (manager/patches/mobile-header-limite.py).
+   The chip keeps living on the desktop and in the "Plano e limites" page. */
+@media (max-width: 640px) {
+  [data-wa-header] .wa-ut-usage {
+    display: none;
+  }
+}
