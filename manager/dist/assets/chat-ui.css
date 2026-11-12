@@ -1,3 +1,4 @@
+/*whatsai-patch:acabamento-listas:p0*/
 /*
  * WhatsAI Manager: "Conversas" page (light theme), loaded after render-style.css.
  * Written by hand; the markup hooks come from manager/patches/chat-ui.py:
@@ -325,7 +326,7 @@
 }
 .wa-chat-empty svg {
   margin-bottom: 4px;
-  color: #8a9592;
+  color: var(--m-text-3);
 }
 .wa-chat-empty-title {
   margin: 0;

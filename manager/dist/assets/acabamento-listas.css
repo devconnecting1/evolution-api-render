@@ -1,0 +1,317 @@
+/*
+ * WhatsAI Manager: acabamento das listas (Leads e Processos) e Notificações.
+ * Linked after every other stylesheet by manager/patches/acabamento-listas.py. Written by hand; colors only with
+ * the var(--m-*) tokens of minimal.css, so light and dark follow the theme chosen in the panel.
+ *
+ *   .wa-fin-th      header cell with a discreet icon + the column name (accessible name comes from the text)
+ *   .wa-fin-status  status chip with a dot; opens the .wa-fin-menu (role=menu) rendered in a portal
+ *   .wa-fin-page    Notificações page; .wa-fin-item is one of the three counters
+ *   .wa-fin-nav-n   counter next to "Notificações" in the instance sidebar
+ *   P0 of the UX review: Leads table fits 1440 px; Instâncias keeps the actions column sticky and narrows the
+ *   owner column below 1500 px
+ */
+
+/* ========================================================================================= column headers */
+.wa-fin-th {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.wa-fin-th svg {
+  flex: none;
+  color: var(--m-text-3);
+}
+
+/* ========================================================================================= status chip + menu */
+.wa-fin-stwrap {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+}
+.wa-fin-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  max-width: 100%;
+  padding: 0 8px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-pill);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wa-fin-status:hover {
+  background: var(--m-hover);
+}
+.wa-fin-status:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+.wa-fin-status svg {
+  flex: none;
+  color: var(--m-text-3);
+}
+.wa-fin-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--m-text-3);
+}
+.wa-fin-status[data-status="qualificado"] .wa-fin-dot,
+.wa-fin-status[data-status="cliente"] .wa-fin-dot,
+.wa-fin-dot[data-status="qualificado"],
+.wa-fin-dot[data-status="cliente"] {
+  background: var(--m-ok);
+}
+.wa-fin-status[data-status="em_atendimento"] .wa-fin-dot,
+.wa-fin-dot[data-status="em_atendimento"] {
+  background: var(--m-primary);
+}
+.wa-fin-status[data-status="descartado"] .wa-fin-dot,
+.wa-fin-dot[data-status="descartado"] {
+  background: var(--m-bad);
+}
+.wa-fin-menu {
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+}
+.wa-fin-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--m-text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.wa-fin-opt span:nth-child(2) {
+  flex: 1 1 auto;
+}
+.wa-fin-opt svg {
+  flex: none;
+  color: var(--m-primary);
+}
+.wa-fin-opt:hover,
+.wa-fin-opt:focus-visible {
+  background: var(--m-hover);
+  outline: none;
+}
+.wa-fin-opt:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--m-primary);
+}
+
+/* ========================================================================================= Notificações */
+.wa-fin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: var(--m-content);
+  margin: 0 auto;
+  padding: 0 0 32px;
+  color: var(--m-text);
+}
+.wa-fin-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wa-fin-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+}
+.wa-fin-muted {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+.wa-fin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wa-fin-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: var(--m-surface);
+}
+.wa-fin-item[data-empty="true"] {
+  background: var(--m-bg);
+}
+.wa-fin-item-ic {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--m-tint);
+  color: var(--m-text);
+}
+.wa-fin-item[data-empty="true"] .wa-fin-item-ic {
+  background: var(--m-hover);
+  color: var(--m-text-2);
+}
+.wa-fin-item-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.wa-fin-item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.wa-fin-item-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.wa-fin-foot {
+  margin: 0;
+  color: var(--m-text-3);
+  font-size: 12px;
+  line-height: 18px;
+}
+.wa-fin-nav-n {
+  order: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: auto;
+  padding: 0 5px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================================================================= P0 #80: last column */
+/* Leads: the icons on the headers added width and the last column was being cut at 1440 px. The header icon is
+   smaller, cell padding goes from 10 to 8 px and the name column from 200 to 170 px, so the table fits the
+   1038 px content area at 1440 px; below that it scrolls inside its own box (bottom scrollbar, no cut). */
+.wl-table th,
+.wl-table td {
+  padding-right: 8px;
+  padding-left: 8px;
+}
+.wl-name {
+  max-width: 170px;
+}
+.wl-trunc {
+  max-width: 140px;
+}
+/* Instâncias: keep the last column (row actions) visible when the table scrolls. Below 1500 px the owner column
+   was pushing it out; the min-width and the cell padding drop a little so the table fits at 1440 px. */
+@media (min-width: 1024px) {
+  #root .wa-ut-table :is(th, td):last-child {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    background: var(--m-bg);
+    box-shadow: -1px 0 0 var(--m-border);
+  }
+  #root .wa-ut-table th:last-child {
+    z-index: 3;
+  }
+  #root .wa-ut-table tbody tr.wa-ut-row:hover td:last-child {
+    background: var(--m-surface);
+  }
+  #root .wa-ut-table tbody tr[data-selected="true"] td:last-child,
+  #root .wa-ut-table tbody tr[data-open="true"] td:last-child {
+    background: var(--m-tint);
+  }
+}
+/* Instâncias: below 1500 px the owner column was pushing the last column out. Narrow it and the cell padding a
+   little, and lower the table min-width, so the actions column fits at 1440 px without hiding content. */
+@media (max-width: 1500px) {
+  #root .wa-ut-table {
+    min-width: 980px;
+  }
+  #root .wa-ut-table th,
+  #root .wa-ut-table td {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+  #root .wa-ut-table .wa-ut-c-name {
+    min-width: 190px;
+    max-width: 230px;
+  }
+  .wa-ut-owner {
+    max-width: 150px;
+  }
+}
+@media (max-width: 1100px) {
+  #root .wa-ut-table {
+    min-width: 900px;
+  }
+  #root .wa-ut-table .wa-ut-c-name {
+    min-width: 170px;
+    max-width: 200px;
+  }
+  .wa-ut-owner {
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 700px) {
+  .wa-fin-item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .wa-fin-item .wa-tw-sbtn {
+    width: 100%;
+    justify-content: center;
+  }
+  .wa-fin-item-text {
+    flex-basis: calc(100% - 46px);
+  }
+}
