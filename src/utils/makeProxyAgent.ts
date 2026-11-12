@@ -26,13 +26,10 @@ function selectProxyAgent(proxyUrl: string): HttpsProxyAgent<string> | SocksProx
       return new HttpsProxyAgent(url);
     case PROXY_SOCKS_PROTOCOL:
     case PROXY_SOCKS5_PROTOCOL: {
-      let urlSocks = '';
-
-      if (url.username && url.password) {
-        urlSocks = `socks://${url.username}:${url.password}@${url.hostname}:${url.port}`;
-      } else {
-        urlSocks = `socks://${url.hostname}:${url.port}`;
-      }
+      const urlSocks =
+        url.username && url.password
+          ? `socks://${url.username}:${url.password}@${url.hostname}:${url.port}`
+          : `socks://${url.hostname}:${url.port}`;
 
       return new SocksProxyAgent(urlSocks);
     }

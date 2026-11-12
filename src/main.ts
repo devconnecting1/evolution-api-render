@@ -38,9 +38,8 @@ async function bootstrap() {
   const logger = new Logger('SERVER');
   const app = express();
 
-  let providerFiles: ProviderFiles = null;
   if (configService.get<ProviderSession>('PROVIDER').ENABLED) {
-    providerFiles = new ProviderFiles(configService);
+    const providerFiles = new ProviderFiles(configService);
     await providerFiles.onModuleInit();
     logger.info('Provider:Files - ON');
   }

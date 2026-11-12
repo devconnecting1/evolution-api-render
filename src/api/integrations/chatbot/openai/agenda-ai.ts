@@ -348,7 +348,7 @@ export async function runToolLoop(
     const used = toolCalls.slice(0, MAX_CALLS_PER_ROUND);
     convo.push({ role: 'assistant', content: message.content ?? null, tool_calls: used });
     for (const call of used) {
-      let args: any = {};
+      let args: any;
       try {
         args = call.function.arguments ? JSON.parse(call.function.arguments) : {};
       } catch {

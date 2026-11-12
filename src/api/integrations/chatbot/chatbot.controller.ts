@@ -211,7 +211,7 @@ export class ChatbotController {
     instance: InstanceDto,
     session?: IntegrationSession,
   ) {
-    let findBot: any = null;
+    let findBot: any;
 
     if (!session) {
       findBot = await findBotByTrigger(botRepository, content, instance.instanceId);

@@ -560,7 +560,6 @@ export class ChatwootService {
     const phoneNumbers = this.getNumbers(query);
     const searchableFields = this.getSearchableFields();
 
-    // eslint-disable-next-line prettier/prettier
     if (contacts.length === 2 && this.getClientCwConfig().mergeBrazilContacts && query.startsWith('+55')) {
       const contact = this.mergeBrazilianContacts(contacts);
       if (contact) {
