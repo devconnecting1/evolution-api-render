@@ -60,6 +60,8 @@ o roteiro para ele concluir e repetir a verificação.
 
 ## Artefato e recomendações
 
+- Revisão da entrega (12/11): `readmes/REVISAO-ENTREGA.md` e a seção "Entregue × proposto" do artefato. É o roteiro
+  da próxima rodada.
 - Use `readmes/ARTEFATO-COMPARACAO.md` como checklist visual.
 - Lacunas já registradas: V em etapas (2 e 3); X sem fonte real de cobrança; C com visões só no navegador; Y com
   estado em memória; S com bundle único; L sem capturas; M, N e AA sem PR dedicado; P, Q, R, T, U, Z e O sem
