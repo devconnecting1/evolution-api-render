@@ -1,0 +1,222 @@
+/* WhatsAI Manager: Atendente IA com seções e linguagem simples (proposal H, manager/patches/atendente-ia.py).
+   A navegação fica à esquerda do formulário (uma seção visível por vez) e vira uma faixa horizontal no celular.
+   Só tokens var(--m-*): claro e escuro valem. Medidas do painel: título 20/600, botões 32, cantos de item 4,
+   cartões 8, conteúdo em 1040px. */
+
+/* cabeçalho da página: uma linha de descrição e o atalho para testar */
+.wa-ai-desc {
+  margin: 6px 0 0;
+  color: var(--m-text-2);
+  font-size: 13.5px;
+  line-height: 20px;
+}
+.wa-ai-test {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-item);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.wa-ai-test:hover {
+  border-color: var(--m-border-strong);
+  background: var(--m-hover);
+}
+
+/* formulário do atendente: navegação de seções à esquerda */
+.wa-ai-form {
+  position: relative;
+  padding-left: 224px;
+}
+.wa-ai-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 204px;
+}
+.wa-ai-nav-title {
+  margin: 0 0 8px;
+  padding: 0 8px;
+  color: var(--m-text-3);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+.wa-ai-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wa-ai-nav-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 20px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wa-ai-nav-btn:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-ai-nav-btn[aria-current='true'] {
+  background: var(--m-selected);
+  color: var(--m-text);
+  font-weight: 500;
+}
+
+/* uma seção por vez; as seções condicionais (tipo Assistente) somem da navegação */
+.wa-ai-form .wa-ai-sec {
+  display: none;
+}
+.wa-ai-form[data-sec='identidade'] .wa-ai-sec[data-sec='identidade'],
+.wa-ai-form[data-sec='modelo'] .wa-ai-sec[data-sec='modelo'],
+.wa-ai-form[data-sec='instrucoes'] .wa-ai-sec[data-sec='instrucoes'],
+.wa-ai-form[data-sec='quando'] .wa-ai-sec[data-sec='quando'],
+.wa-ai-form[data-sec='avancado'] .wa-ai-sec[data-sec='avancado'],
+.wa-ai-form[data-sec='pausa'] .wa-ai-sec[data-sec='pausa'],
+.wa-ai-form[data-sec='mensagens'] .wa-ai-sec[data-sec='mensagens'],
+.wa-ai-form[data-sec='midia'] .wa-ai-sec[data-sec='midia'] {
+  display: block;
+}
+.wa-ai-form:not(:has(.wa-ai-body section[data-sec='instrucoes'])) .wa-ai-nav-btn[data-sec='instrucoes'] {
+  display: none;
+}
+/* os títulos internos repetiam a navegação; o texto de apoio da mídia fica */
+.wa-ai-form .wa-ai-sec > div.flex.flex-col {
+  margin: 0 0 4px;
+}
+.wa-ai-form .wa-ai-sec > div.flex.flex-col > h3,
+.wa-ai-form .wa-ai-sec > div.flex.flex-col > [class~='h-[1px]'] {
+  display: none;
+}
+
+/* rodapé de cada seção */
+.wa-ai-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--m-border);
+}
+.wa-ai-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-item);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+.wa-ai-btn-primary {
+  border-color: var(--m-primary);
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+}
+.wa-ai-btn-primary:hover {
+  border-color: var(--m-primary-hover);
+  background: var(--m-primary-hover);
+}
+.wa-ai-btn-ghost {
+  background: transparent;
+  color: var(--m-text-2);
+}
+.wa-ai-btn-ghost:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+/* ações do atendente (excluir): o Salvar é o de cada seção e as Sessões já estão no topo */
+.wa-ai-form .wa-ai-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--m-border);
+}
+.wa-ai-form .wa-ai-foot::before {
+  content: 'Outras ações';
+  color: var(--m-text-3);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+.wa-ai-form .wa-ai-foot > button {
+  display: none;
+}
+.wa-ai-form .wa-ai-foot > div {
+  margin-top: 0;
+}
+.wa-ai-form .wa-ai-foot button[type='submit'] {
+  display: none;
+}
+
+/* celular e tablet estreito: navegação em faixa horizontal acima do formulário */
+@media (max-width: 767px) {
+  /* o atalho de teste não cabe ao lado dos quatro botões de ícone: desce para a linha de baixo */
+  div:has(> .wa-ai-test) {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .wa-ai-test {
+    order: 2;
+  }
+  .wa-ai-form {
+    padding-left: 0;
+  }
+  .wa-ai-nav {
+    position: static;
+    width: auto;
+    margin-bottom: 16px;
+  }
+  .wa-ai-nav-title {
+    display: none;
+  }
+  .wa-ai-nav-list {
+    flex-direction: row;
+    gap: 4px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .wa-ai-nav-btn {
+    width: auto;
+    flex: none;
+    border: 1px solid var(--m-border);
+    border-radius: 999px;
+    padding: 0 12px;
+  }
+  .wa-ai-nav-btn[aria-current='true'] {
+    border-color: var(--m-border-strong);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-ai-test,
+  .wa-ai-nav-btn,
+  .wa-ai-btn {
+    transition: none;
+  }
+}
