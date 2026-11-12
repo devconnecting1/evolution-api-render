@@ -19,7 +19,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.repository == 'devconnecting1/evolution-api-render'
+    if: github.repository == 'devconnecting1/whatsai-api' || github.repository == 'devconnecting1/evolution-api-render'
     env:
       VERCEL_ORG_ID: team_L4ydLNVlb1XnoQd49WIvXRfw
       VERCEL_PROJECT_ID: prj_1qlhQq1PuLn20KRs2FK0fsD0GIvU
