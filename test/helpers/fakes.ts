@@ -143,7 +143,7 @@ export const unsupportedParamError = (param: 'max_tokens' | 'max_completion_toke
     400,
     { error: { message, type: 'invalid_request_error', param, code: 'unsupported_parameter' } },
     undefined,
-    {} as any,
+    new Headers(),
   );
 };
 
@@ -152,7 +152,7 @@ export const apiError = (status: number, message: string) =>
     status,
     { error: { message, type: 'server_error', param: null, code: null } },
     undefined,
-    {} as any,
+    new Headers(),
   );
 
 /** Baileys-like message as handed to the chatbot emit. */
