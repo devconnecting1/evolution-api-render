@@ -70,11 +70,7 @@ const IMAGE_UNAVAILABLE_NOTE = '[imagem não pôde ser processada]';
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
 type MediaTokenType =
-  | 'audioMessage'
-  | 'imageMessage'
-  | 'videoMessage'
-  | 'documentMessage'
-  | 'documentWithCaptionMessage';
+  'audioMessage' | 'imageMessage' | 'videoMessage' | 'documentMessage' | 'documentWithCaptionMessage';
 
 /** A media line of the content built by getConversationMessage: "<type>|<message id or media url>|<caption>". */
 type MediaToken = { type: MediaTokenType; id: string; caption: string };
