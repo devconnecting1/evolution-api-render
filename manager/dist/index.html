@@ -15,9 +15,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="WhatsAI" />
-    <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" crossorigin href="/assets/index-DsIrum0U.css?v=3" />
-    <link rel="stylesheet" href="/assets/geist.css?v=2" />
+    <link rel="stylesheet" href="/assets/geist.css?v=3" />
     <!-- whatsai-patch:responsive:html -->
     <link rel="stylesheet" href="/assets/responsive.css?v=1" />
     <!-- whatsai-patch:home-redesign:html -->
@@ -65,10 +65,12 @@
     <link rel="stylesheet" href="/assets/page-frame.css?v=1" />
     <!-- whatsai-patch:chat-lead-panel:html -->
     <link rel="stylesheet" href="/assets/chat-lead-panel.css?v=1" />
+    <!-- whatsai-patch:perf-boot:html -->
+    <link rel="stylesheet" href="/assets/boot.css?v=1" />
     <script src="/assets/client-portal.js?v=10"></script>
-    <script src="/assets/panel-a11y.js?v=1"></script>
+    <script src="/assets/panel-a11y.js?v=1" defer></script>
     <script src="/assets/help-shortcuts.js?v=1"></script>
-    <script type="module" crossorigin src="/assets/index-b29a5d7a.js?v=60"></script>
+    <script type="module" crossorigin src="/assets/index-b29a5d7a.js?v=61"></script>
       <!-- whatsai-patch:db-mode:html -->
       <!-- whatsai-patch:panel-polish:html -->
       <!-- whatsai-patch:client-portal:html -->
@@ -80,6 +82,13 @@
       <!-- whatsai-patch:help-menu:html -->
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="wa-boot" class="wa-boot" role="status" aria-live="polite">
+        <span class="wa-boot-brand" aria-hidden="true">WhatsAI</span>
+        <p class="wa-boot-text">Carregando o painel…</p>
+        <span class="wa-boot-bar" aria-hidden="true"><span class="wa-boot-bar-fill"></span></span>
+        <p class="wa-boot-hint">Está demorando mais que o normal. <a href="">Recarregar a página</a>.</p>
+      </div>
+    </div>
   </body>
 </html>

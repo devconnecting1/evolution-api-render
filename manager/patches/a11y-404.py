@@ -9,8 +9,9 @@
             aria-required-children) and day labels that did not match the visible text. The week becomes a group of
             labelled day groups; the visible headers stay.
 3. nav    - sidebar items: the link itself gets the button look instead of a link inside a <button tabindex=-1>.
-4. html   - loads /assets/panel-a11y.js (main landmark, tab title per page, names for unlabelled switches) and raises
-            the bundle ?v= to CACHE_VERSION.
+4. html   - loads /assets/panel-a11y.js with defer (main landmark, tab title per page, names for unlabelled
+            switches; it reads and writes attributes only, so it does not need to block the parser) and raises the
+            bundle ?v= to CACHE_VERSION.
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: groups whose marker is present are skipped. Order: after chat-live.py.
@@ -29,7 +30,8 @@ INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 CACHE_VERSION = '49'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 A11Y_VERSION = '1'
-A11Y_TAG = '<script src="/assets/panel-a11y.js?v=' + A11Y_VERSION + '"></script>'
+A11Y_TAG = '<script src="/assets/panel-a11y.js?v=' + A11Y_VERSION + '" defer></script>'
+A11Y_TAG_BLOCKING = '<script src="/assets/panel-a11y.js?v=' + A11Y_VERSION + '"></script>'
 
 
 class PatchError(Exception):
@@ -130,12 +132,15 @@ def patch_index(html):
     if not current or int(current) < int(CACHE_VERSION):
         html = html[:start] + CACHE_VERSION + html[end:]
     if A11Y_TAG not in html:
-        if '/assets/panel-a11y.js' in html:
+        if A11Y_TAG_BLOCKING in html:
+            html = html.replace(A11Y_TAG_BLOCKING, A11Y_TAG, 1)
+        elif '/assets/panel-a11y.js' in html:
             raise PatchError('index.html: panel-a11y.js present with another version; edit A11Y_VERSION')
-        anchor = '    <script type="module" crossorigin src="/assets/index-b29a5d7a.js'
-        if html.count(anchor) != 1:
-            raise PatchError('index.html: module script line expected once')
-        html = html.replace(anchor, '    ' + A11Y_TAG + '\n' + anchor, 1)
+        else:
+            anchor = '    <script type="module" crossorigin src="/assets/index-b29a5d7a.js'
+            if html.count(anchor) != 1:
+                raise PatchError('index.html: module script line expected once')
+            html = html.replace(anchor, '    ' + A11Y_TAG + '\n' + anchor, 1)
     return html
 
 
