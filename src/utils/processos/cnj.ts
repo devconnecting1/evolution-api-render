@@ -119,8 +119,7 @@ export function aliasFor(digits: string): string | null {
 export const tribunalLabel = (alias: string | null | undefined): string => String(alias ?? '').toUpperCase();
 
 export type ParsedCnj =
-  | { ok: true; digits: string; formatted: string; alias: string | null }
-  | { ok: false; input: string; error: string };
+  { ok: true; digits: string; formatted: string; alias: string | null } | { ok: false; input: string; error: string };
 
 /** Validates one number typed or pasted by the user (formatted or 20 digits). Messages in PT-BR. */
 export function parseCnj(input: string): ParsedCnj {
