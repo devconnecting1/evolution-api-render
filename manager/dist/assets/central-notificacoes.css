@@ -1,0 +1,299 @@
+/*
+ * WhatsAI Manager: central de notificações (manager/patches/central-notificacoes.py, proposta Y).
+ * Só tokens var(--m-*), então claro e escuro valem. O sino copia a medida dos outros ícones do cabeçalho
+ * (32px; 28px dentro das barras do topo), o painel é um popover no computador e uma folha sob o cabeçalho no
+ * celular. Cor só com significado: vermelho na desconexão, âmbar no plano e nos processos, neutro na agenda.
+ */
+
+.wa-notif {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.wa-notif-btn {
+  position: relative;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--m-radius-pill);
+  background: transparent;
+  color: var(--m-text);
+  cursor: pointer;
+}
+.wa-notif-btn:hover,
+.wa-notif-btn[aria-expanded="true"] {
+  background: var(--m-hover);
+}
+.wa-ut-top-actions .wa-notif-btn,
+[data-wa-header] > div:last-child .wa-notif-btn {
+  width: 28px;
+  height: 28px;
+}
+.wa-notif-btn:focus-visible,
+.wa-notif-all:focus-visible,
+.wa-notif-tab:focus-visible,
+.wa-notif-act:focus-visible,
+.wa-notif-check:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wa-notif-badge {
+  position: absolute;
+  top: -1px;
+  right: -2px;
+  display: inline-grid;
+  min-width: 16px;
+  height: 16px;
+  place-items: center;
+  padding: 0 4px;
+  border: 2px solid var(--m-bg);
+  border-radius: var(--m-radius-pill);
+  background: var(--m-bad);
+  color: var(--m-on-primary);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ painel */
+.wa-notif-panel {
+  position: fixed;
+  top: var(--wan-top, 56px);
+  right: var(--wan-right, 16px);
+  z-index: 120;
+  display: flex;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  max-height: min(560px, calc(100vh - 72px));
+  flex-direction: column;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+}
+.wa-notif-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 6px;
+}
+.wa-notif-h {
+  flex: 1 1 auto;
+  margin: 0;
+  color: var(--m-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.wa-notif-all {
+  flex: none;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  cursor: pointer;
+}
+.wa-notif-all:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-notif-all:disabled {
+  color: var(--m-text-3);
+  cursor: default;
+}
+.wa-notif-all:disabled:hover {
+  background: transparent;
+}
+.wa-notif-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 12px 8px;
+  border-bottom: 1px solid var(--m-border);
+}
+.wa-notif-tab {
+  display: inline-flex;
+  height: 26px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  cursor: pointer;
+}
+.wa-notif-tab:hover {
+  background: var(--m-hover);
+}
+.wa-notif-tab[aria-pressed="true"] {
+  border-color: var(--m-border-strong);
+  background: var(--m-surface);
+  color: var(--m-text);
+}
+.wa-notif-n {
+  display: inline-grid;
+  min-width: 16px;
+  height: 16px;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+  font-size: 11px;
+  line-height: 1;
+}
+.wa-notif-list {
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+}
+.wa-notif-item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 2px 10px;
+  padding: 10px 8px;
+  border-radius: var(--m-radius-item);
+}
+.wa-notif-item + .wa-notif-item {
+  border-top: 1px solid var(--m-border);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.wa-notif-item:hover {
+  background: var(--m-surface);
+}
+.wa-notif-item[data-seen="true"] .wa-notif-ic {
+  opacity: 0.7;
+}
+.wa-notif-item[data-seen="true"] .wa-notif-title {
+  color: var(--m-text-2);
+  font-weight: 400;
+}
+.wa-notif-ic {
+  display: inline-grid;
+  grid-row: 1 / span 2;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+}
+.wa-notif-item[data-tone="bad"] .wa-notif-ic {
+  background: var(--m-chip-red);
+  color: var(--m-chip-red-text);
+}
+.wa-notif-item[data-tone="warn"] .wa-notif-ic {
+  background: var(--m-chip-amber);
+  color: var(--m-chip-amber-text);
+}
+.wa-notif-txt {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  padding-top: 1px;
+}
+.wa-notif-title {
+  color: var(--m-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+.wa-notif-meta {
+  overflow: hidden;
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+}
+.wa-notif-foot {
+  display: flex;
+  grid-column: 2;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+.wa-notif-act {
+  display: inline-flex;
+  height: 24px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-item);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  text-decoration: none;
+}
+.wa-notif-act:hover {
+  background: var(--m-hover);
+}
+.wa-notif-check {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  cursor: pointer;
+}
+.wa-notif-check:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-notif-empty {
+  margin: 0;
+  padding: 28px 16px 32px;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+}
+.wa-notif-empty strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--m-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* celular: folha sob o cabeçalho, sem sair da tela */
+@media (max-width: 640px) {
+  .wa-notif-panel {
+    position: fixed;
+    top: 56px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 72px);
+  }
+}
+
+/* "salvo", "copiado" e os demais avisos descem para baixo do cabeçalho (proposta Y). Sem cabeçalho (login),
+   continuam no canto de sempre. */
+body:has([data-wa-header]) .Toastify__toast-container--top-right,
+body:has(.wa-ut-top) .Toastify__toast-container--top-right {
+  top: 56px;
+}
