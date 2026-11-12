@@ -10,6 +10,7 @@ import { AgendaController } from './controllers/agenda.controller';
 import { BusinessController } from './controllers/business.controller';
 import { CallController } from './controllers/call.controller';
 import { ChatController } from './controllers/chat.controller';
+import { ExportController } from './controllers/export.controller';
 import { GroupController } from './controllers/group.controller';
 import { InstanceController } from './controllers/instance.controller';
 import { LabelController } from './controllers/label.controller';
@@ -52,6 +53,7 @@ import { adminAlertsConfigFromEnv, AdminAlertsService } from './services/admin-a
 import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
+import { ExportService } from './services/export.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
 import { GoogleLoginService } from './services/google-login.service';
 import { LeadsService } from './services/leads.service';
@@ -156,6 +158,9 @@ export const usageService = new UsageService(prismaRepository, {
 /** "Acesso do cliente": códigos de acesso do cliente com módulos escolhidos (src/utils/client-access.ts). */
 export const clientAccessService = new ClientAccessService({ prisma: prismaRepository });
 export const usageController = new UsageController(usageService, prismaRepository);
+/** "Exportar dados da instância": read-only ZIP of the instance data (src/api/services/export.service.ts). */
+export const exportService = new ExportService(prismaRepository);
+export const exportController = new ExportController(exportService, prismaRepository);
 
 // "Processos" (DataJud + DJEN): one instance (in-memory ticker state, rate limits, AI context provider)
 const processosConfig = configService.get<Processos>('PROCESSOS');
