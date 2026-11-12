@@ -75,7 +75,7 @@ export class UsageRouter extends RouterBroker {
           request: req,
           schema: null,
           ClassRef: BillingEntryDto,
-          execute: (instance, data) => usageController.updateBilling(instance, req.params.id, data),
+          execute: (instance, data) => usageController.updateBilling(instance, req.params.id as string, data),
         });
 
         res.set('Cache-Control', 'no-store');
@@ -86,7 +86,7 @@ export class UsageRouter extends RouterBroker {
           request: req,
           schema: null,
           ClassRef: InstanceDto,
-          execute: (instance) => usageController.removeBilling(instance, req.params.id),
+          execute: (instance) => usageController.removeBilling(instance, req.params.id as string),
         });
 
         res.status(HttpStatus.OK).json(response);

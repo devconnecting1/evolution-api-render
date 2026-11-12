@@ -31,12 +31,12 @@ export class ClientAccessRouter {
         });
       })
       .get('/:instanceName', authGuard.adminOnly, async (req: Request, res: Response) => {
-        const instance = await this.instance(req.params.instanceName);
+        const instance = await this.instance(req.params.instanceName as string);
         res.set('Cache-Control', 'no-store');
         return res.status(HttpStatus.OK).json(await clientAccessService.view(instance.id, instance.name));
       })
       .post('/:instanceName', authGuard.adminOnly, async (req: Request, res: Response) => {
-        const instance = await this.instance(req.params.instanceName);
+        const instance = await this.instance(req.params.instanceName as string);
         const body = req.body && typeof req.body === 'object' ? req.body : {};
         try {
           const result = await clientAccessService.save(instance.id, instance.name, body);
@@ -48,7 +48,7 @@ export class ClientAccessRouter {
         }
       })
       .delete('/:instanceName', authGuard.adminOnly, async (req: Request, res: Response) => {
-        const instance = await this.instance(req.params.instanceName);
+        const instance = await this.instance(req.params.instanceName as string);
         return res.status(HttpStatus.OK).json(await clientAccessService.revoke(instance.id, instance.name));
       });
   }

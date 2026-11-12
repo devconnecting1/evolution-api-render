@@ -72,6 +72,13 @@ async function bootstrap() {
     compression(),
   );
 
+  // Express 5 leaves req.body undefined when no parser matched; the routes and guards expect an object.
+  app.use((req, _res, next) => {
+    if (req.body === undefined) req.body = {};
+    next();
+  });
+  app.set('query parser', 'extended');
+
   app.set('view engine', 'hbs');
   app.set('views', join(ROOT_DIR, 'views'));
   app.use(express.static(join(ROOT_DIR, 'public')));
@@ -84,6 +91,8 @@ async function bootstrap() {
   app.use(
     (err: Error, req: Request, res: Response, next: NextFunction) => {
       if (err) {
+        const rawStatus = err['status'];
+        const status = Number.isInteger(rawStatus) && rawStatus >= 100 && rawStatus <= 999 ? rawStatus : 500;
         const webhook = configService.get<Webhook>('WEBHOOK');
 
         if (webhook.EVENTS.ERRORS_WEBHOOK && webhook.EVENTS.ERRORS_WEBHOOK != '' && webhook.EVENTS.ERRORS) {
@@ -98,7 +107,7 @@ async function bootstrap() {
             data: {
               error: err['error'] || 'Internal Server Error',
               message: err['message'] || 'Internal Server Error',
-              status: err['status'] || 500,
+              status: status,
               response: {
                 message: err['message'] || 'Internal Server Error',
               },
@@ -116,8 +125,8 @@ async function bootstrap() {
           httpService.post('', errorData);
         }
 
-        return res.status(err['status'] || 500).json({
-          status: err['status'] || 500,
+        return res.status(status).json({
+          status: status,
           error: err['error'] || 'Internal Server Error',
           response: {
             message: err['message'] || 'Internal Server Error',

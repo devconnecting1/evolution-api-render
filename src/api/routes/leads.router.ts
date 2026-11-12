@@ -126,7 +126,7 @@ export class LeadsRouter extends RouterBroker {
           request: req,
           schema: null,
           ClassRef: InstanceDto,
-          execute: (instance) => leadsController.get(instance, req.params.id),
+          execute: (instance) => leadsController.get(instance, req.params.id as string),
         });
         res.set('Cache-Control', 'no-store');
         res.status(HttpStatus.OK).json(response);
@@ -136,7 +136,7 @@ export class LeadsRouter extends RouterBroker {
           request: req,
           schema: leadPatchSchema,
           ClassRef: LeadPatchDto,
-          execute: (instance, data) => leadsController.update(instance, req.params.id, data),
+          execute: (instance, data) => leadsController.update(instance, req.params.id as string, data),
         });
         res.status(HttpStatus.OK).json(response);
       })
@@ -145,7 +145,7 @@ export class LeadsRouter extends RouterBroker {
           request: req,
           schema: null,
           ClassRef: InstanceDto,
-          execute: (instance) => leadsController.remove(instance, req.params.id),
+          execute: (instance) => leadsController.remove(instance, req.params.id as string),
         });
         res.status(HttpStatus.OK).json(response);
       });

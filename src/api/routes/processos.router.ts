@@ -65,7 +65,7 @@ export class ProcessosRouter extends RouterBroker {
         });
         res.set('Cache-Control', 'no-store');
         res.set('Content-Type', 'text/csv; charset=utf-8');
-        res.set('Content-Disposition', `attachment; filename="processos-${req.params.instanceName}.csv"`);
+        res.set('Content-Disposition', `attachment; filename="processos-${req.params.instanceName as string}.csv"`);
         res.status(HttpStatus.OK).send(csv);
       })
       .get(
@@ -91,12 +91,12 @@ export class ProcessosRouter extends RouterBroker {
       .put(
         `${base}/oab/:oabId`,
         ...guards,
-        handle(oabWatchSchema, OabWatchDto, (i, d, r) => processosController.updateOab(i, r.params.oabId, d)),
+        handle(oabWatchSchema, OabWatchDto, (i, d, r) => processosController.updateOab(i, r.params.oabId as string, d)),
       )
       .delete(
         `${base}/oab/:oabId`,
         ...guards,
-        handle(null, InstanceDto, (i, _d, r) => processosController.removeOab(i, r.params.oabId)),
+        handle(null, InstanceDto, (i, _d, r) => processosController.removeOab(i, r.params.oabId as string)),
       )
       .get(
         `${base}/publicacoes`,
@@ -126,27 +126,29 @@ export class ProcessosRouter extends RouterBroker {
       .get(
         `${base}/:id`,
         ...guards,
-        handle(null, InstanceDto, (i, _d, r) => processosController.get(i, r.params.id)),
+        handle(null, InstanceDto, (i, _d, r) => processosController.get(i, r.params.id as string)),
       )
       .put(
         `${base}/:id`,
         ...guards,
-        handle(processUpdateSchema, ProcessBodyDto, (i, d, r) => processosController.update(i, r.params.id, d)),
+        handle(processUpdateSchema, ProcessBodyDto, (i, d, r) =>
+          processosController.update(i, r.params.id as string, d),
+        ),
       )
       .delete(
         `${base}/:id`,
         ...guards,
-        handle(null, InstanceDto, (i, _d, r) => processosController.remove(i, r.params.id)),
+        handle(null, InstanceDto, (i, _d, r) => processosController.remove(i, r.params.id as string)),
       )
       .post(
         `${base}/:id/sync`,
         ...guards,
-        handle(null, InstanceDto, (i, _d, r) => processosController.sync(i, r.params.id)),
+        handle(null, InstanceDto, (i, _d, r) => processosController.sync(i, r.params.id as string)),
       )
       .post(
         `${base}/:id/seen`,
         ...guards,
-        handle(null, InstanceDto, (i, _d, r) => processosController.seen(i, r.params.id)),
+        handle(null, InstanceDto, (i, _d, r) => processosController.seen(i, r.params.id as string)),
       );
   }
 }
