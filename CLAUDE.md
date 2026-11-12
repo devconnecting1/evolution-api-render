@@ -57,6 +57,7 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
   fica com o Claude Code do dono, que tem os MCPs; agentes sem MCP registram a pendência no PR. Mudança na conexão do
   WhatsApp (Baileys) só entra depois de testada com um número de teste.
 - Handoff e roteiro completo das conferências com MCP: `readmes/HANDOFF-CLAUDE-CODE.md`.
+- Próxima rodada de correções do Artefato do Projeto: `readmes/REVISAO-ENTREGA.md`.
 - Migrations sempre aditivas, em `prisma/postgresql-migrations` **e** `prisma/mysql-migrations`, com o modelo nos três
   schemas (`postgresql`, `mysql`, `psql_bouncer`). Tabela global (procurada antes de saber a instância) entra em
   `CONTROL_MODELS` de `src/api/repository/instance-db/routing.ts`.
