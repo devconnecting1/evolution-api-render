@@ -1,0 +1,558 @@
+/*
+ * WhatsAI Manager: celular, listas em linhas empilhadas (manager/patches/celular-listas.py).
+ * Linked last by the patch. Written by hand; colors only with the var(--m-*) tokens of minimal.css.
+ *
+ * Below 640 px each table row becomes a block: name, the main information and the chips. Secondary fields
+ * (phone, class, last sync, counters, owner) stay out of the block and keep living in the side panel.
+ * The page-level secondary actions of Leads and Processos go to a "..." menu; the tabs scroll sideways.
+ * Everything here is inside max-width media queries or hidden by default, so the desktop (>= 640 px) keeps
+ * its look. The two new menus are only rendered on phones:
+ *   .wl-head-actions > .wa-tw-popwrap   "..." of the Leads header (desktop buttons stay in .wl-head-btns)
+ *   .cell-more                          "..." of the Processos view bar (desktop keeps the CSV button)
+ * Lists already stacked elsewhere are left alone: credentials (760 px), Observability (container query) and
+ * the Agenda/Publicações cards. The upstream integration lists (Dify, EvoAI, EvolutionBot, Flowise, N8N,
+ * OpenAI, Typebot sessions) get a generic block fallback at the end.
+ */
+
+/* =========================================================================================
+   Leads header: the three secondary buttons live inside .wl-head-btns so the desktop row is
+   identical to before; below 640 px the group hides and the "..." popover shows instead.
+   ========================================================================================= */
+.wl-head-btns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.wl-head-actions > .wa-tw-popwrap {
+  display: none;
+}
+.wl-more-item,
+.cell-more-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.wl-more-item:hover,
+.cell-more-item:hover {
+  background: var(--m-hover);
+}
+.wl-more-item:focus-visible,
+.cell-more-item:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--m-primary);
+}
+.wl-more-item:disabled,
+.cell-more-item:disabled {
+  background: transparent;
+  color: var(--m-text-3);
+  cursor: default;
+}
+
+/* =========================================================================================
+   Processos view bar: "..." menu with the CSV export (the labeled button stays on desktop).
+   ========================================================================================= */
+.cell-more {
+  position: relative;
+  display: none;
+}
+.cell-more-btn {
+  width: 28px;
+  padding: 0;
+  justify-content: center;
+}
+.cell-more-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 184px;
+  padding: 4px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+}
+
+/* =========================================================================================
+   Phones (< 640 px)
+   ========================================================================================= */
+@media (max-width: 639px) {
+  /* ------------------------------------------------------------------ Leads: page bar */
+  .wl-head-btns {
+    display: none;
+  }
+  .wl-head-actions > .wa-tw-popwrap {
+    display: inline-flex;
+  }
+  /* icon-only trigger; the label stays for screen readers */
+  .wl-head-actions > .wa-tw-popwrap .wa-tw-lbtn {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+    border: 1px solid var(--m-border);
+    border-radius: var(--m-radius-field);
+  }
+  /* title and "..." share the first line; the description wraps below the title */
+  .wl-head .wl-head-text {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .wl-head .wl-head-actions {
+    width: auto;
+  }
+  .wl-head-actions > .wa-tw-popwrap .wa-tw-lbtn > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ------------------------------------------------------------------ Leads: stacked rows */
+  .wl-table-wrap {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .wl-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .wl-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .wl-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .wl-table .wl-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    column-gap: 6px;
+    row-gap: 4px;
+    padding: 12px;
+    border: 1px solid var(--m-border);
+    border-radius: var(--m-radius-card);
+    background: var(--m-bg);
+  }
+  .wl-table .wl-row:hover {
+    background: var(--m-surface);
+  }
+  .wl-table .wl-row[aria-selected="true"] {
+    border-color: var(--m-tint-line);
+    background: var(--m-tint);
+  }
+  .wl-table .wl-row:hover > td,
+  .wl-table .wl-row[aria-selected="true"] > td {
+    background: transparent;
+  }
+  .wl-table .wl-row > td {
+    display: block;
+    height: auto;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    white-space: normal;
+  }
+  /* 1 name, 2 phone (hidden), 3 area, 4 city, 5 priority, 6 status, 7 waiting, 8 last message */
+  .wl-table .wl-row > td:nth-child(1) {
+    grid-column: 1 / 4;
+    grid-row: 1;
+  }
+  .wl-table .wl-row > td:nth-child(2) {
+    display: none;
+  }
+  .wl-table .wl-row > td:nth-child(3) {
+    grid-column: 1;
+    grid-row: 2;
+    color: var(--m-text-2);
+    font-size: 13px;
+  }
+  .wl-table .wl-row > td:nth-child(4) {
+    grid-column: 2 / 5;
+    grid-row: 2;
+    color: var(--m-text-2);
+    font-size: 13px;
+  }
+  .wl-table .wl-row > td:nth-child(3):not(:has(.wl-dim)) + td:nth-child(4)::before {
+    content: "· ";
+    color: var(--m-text-3);
+  }
+  .wl-table .wl-row > td:nth-child(3):has(.wl-dim) {
+    display: none;
+  }
+  .wl-table .wl-row > td:nth-child(3):has(.wl-dim) + td:nth-child(4) {
+    grid-column: 1 / 5;
+  }
+  .wl-table .wl-row > td:nth-child(4):has(.wl-dim) {
+    display: none;
+  }
+  .wl-table .wl-row > td:nth-child(5) {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: start;
+  }
+  .wl-table .wl-row > td:nth-child(6) {
+    grid-column: 2 / 4;
+    grid-row: 3;
+    justify-self: start;
+    min-width: 0;
+  }
+  .wl-table .wl-row > td:nth-child(7) {
+    grid-column: 4;
+    grid-row: 3;
+    justify-self: end;
+  }
+  .wl-table .wl-row > td:nth-child(7):has(.wl-dim) {
+    display: none;
+  }
+  .wl-table .wl-row > td:nth-child(8) {
+    grid-column: 4;
+    grid-row: 1;
+    align-self: start;
+    color: var(--m-text-2);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .wl-table .wl-row .wl-name {
+    max-width: none;
+    overflow: visible;
+    gap: 1px;
+  }
+  .wl-table .wl-row .wl-name strong {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 20px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .wl-table .wl-row .wl-name span {
+    font-size: 12px;
+    line-height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .wl-table .wl-row .wl-trunc {
+    display: inline;
+    max-width: none;
+    overflow: visible;
+    white-space: normal;
+  }
+  .wl-pager {
+    justify-content: center;
+    padding-top: 4px;
+  }
+
+  /* ------------------------------------------------------------------ Processos: page bar */
+  .wp-csv-btn {
+    display: none;
+  }
+  .cell-more {
+    display: inline-flex;
+  }
+
+  /* ------------------------------------------------------------------ Processos: stacked rows */
+  .wp-table-wrap {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+  }
+  .wp-table {
+    display: block;
+    width: 100%;
+  }
+  .wp-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .wp-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .wp-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    padding: 12px;
+    border: 1px solid var(--m-border);
+    border-radius: var(--m-radius-card);
+    background: var(--m-bg);
+  }
+  .wp-table tbody tr:hover {
+    background: var(--m-surface);
+  }
+  .wp-table tbody tr[aria-selected="true"] {
+    background: var(--m-hover);
+  }
+  .wp-table tbody tr > td {
+    display: block;
+    flex: 0 0 auto;
+    height: auto;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    white-space: normal;
+  }
+  /* 1 number, 2 alias/client, 3 court, 4 class (hidden), 5 last movement, 6 updated (hidden), 7 status */
+  .wp-table tbody tr > td:nth-child(1) {
+    order: 3;
+    color: var(--m-text-2);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .wp-table tbody tr > td:nth-child(2) {
+    order: 1;
+    flex: 1 1 60%;
+    min-width: 0;
+    padding-right: 4px;
+  }
+  .wp-table tbody tr > td:nth-child(2) .wp-cell2 > span:first-child {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 20px;
+    overflow-wrap: anywhere;
+  }
+  .wp-table tbody tr > td:nth-child(3) {
+    order: 4;
+    color: var(--m-text-2);
+    font-size: 12px;
+  }
+  .wp-table tbody tr > td:nth-child(3)::before {
+    content: "· ";
+    color: var(--m-text-3);
+  }
+  .wp-table tbody tr > td:nth-child(4) {
+    display: none;
+  }
+  .wp-table tbody tr > td:nth-child(5) {
+    order: 5;
+    flex: 1 1 100%;
+  }
+  .wp-table tbody tr > td:nth-child(5) .wp-cell2 {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 6px;
+  }
+  .wp-table tbody tr > td:nth-child(5) .wp-ellipsis {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+  }
+  .wp-table tbody tr > td:nth-child(6) {
+    display: none;
+  }
+  .wp-table tbody tr > td:nth-child(7) {
+    order: 2;
+    margin-left: auto;
+  }
+
+  /* ------------------------------------------------------------------ Instâncias: stacked rows */
+  #root .wa-ut-tablewrap {
+    overflow: visible;
+  }
+  #root .wa-ut-table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  #root .wa-ut-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  #root .wa-ut-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+  }
+  #root .wa-ut-table tr.wa-ut-row {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    padding: 12px 44px 12px 12px;
+    border: 1px solid var(--m-border);
+    border-radius: var(--m-radius-card);
+    background: var(--m-bg);
+  }
+  #root .wa-ut-table tr.wa-ut-row:hover {
+    background: var(--m-surface);
+  }
+  #root .wa-ut-table tr.wa-ut-row[data-selected="true"],
+  #root .wa-ut-table tr.wa-ut-row[data-open="true"] {
+    background: var(--m-tint);
+  }
+  #root .wa-ut-table tr.wa-ut-row > td {
+    display: block;
+    height: auto;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    white-space: normal;
+  }
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-check {
+    display: none;
+  }
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-name {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-menu {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: auto;
+    padding: 0;
+  }
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-num {
+    order: 2;
+  }
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-status {
+    order: 3;
+  }
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-int {
+    order: 4;
+  }
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-db {
+    order: 5;
+  }
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-created {
+    order: 6;
+    color: var(--m-text-3);
+    font-size: 12px;
+  }
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-msgs,
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-contacts,
+  #root .wa-ut-table tr.wa-ut-row > .wa-ut-c-owner {
+    display: none;
+  }
+
+  /* ------------------------------------------------------------------ tabs scroll sideways */
+  .wp-tabs,
+  .wp-seg,
+  .wa-tw-segs {
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .wp-tabs::-webkit-scrollbar,
+  .wp-seg::-webkit-scrollbar,
+  .wa-tw-segs::-webkit-scrollbar {
+    display: none;
+  }
+  .wp-tab-btn,
+  .wp-seg-btn,
+  .wa-tw-seg {
+    flex: 0 0 auto;
+  }
+  #root .wa-ut-ptabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  #root .wa-ut-ptabs::-webkit-scrollbar {
+    display: none;
+  }
+  #root .wa-ut-ptabs > [role="tab"] {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* ------------------------------------------------------------------ upstream integration lists */
+  div.rounded-md.border:has(> div.relative.w-full.overflow-auto > table.caption-bottom) {
+    border: 0;
+    border-radius: 0;
+  }
+  div.rounded-md.border > div.relative.w-full.overflow-auto > table.caption-bottom {
+    display: block;
+    width: 100%;
+  }
+  div.rounded-md.border > div.relative.w-full.overflow-auto > table.caption-bottom > thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  div.rounded-md.border > div.relative.w-full.overflow-auto > table.caption-bottom > tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  div.rounded-md.border > div.relative.w-full.overflow-auto > table.caption-bottom > tbody > tr {
+    display: block;
+    padding: 10px 12px;
+    border: 1px solid var(--m-border);
+    border-radius: var(--m-radius-card);
+    background: var(--m-bg);
+  }
+  div.rounded-md.border > div.relative.w-full.overflow-auto > table.caption-bottom > tbody > tr:hover {
+    background: var(--m-surface);
+  }
+  div.rounded-md.border > div.relative.w-full.overflow-auto > table.caption-bottom > tbody > tr > td {
+    display: block;
+    width: auto;
+    max-width: none;
+    padding: 2px 0;
+    border: 0;
+    white-space: normal;
+  }
+}
