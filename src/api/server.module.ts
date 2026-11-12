@@ -2,6 +2,7 @@ import { CacheEngine } from '@cache/cacheengine';
 import { Auth, Chatwoot, configService, Database, Processos, ProviderSession } from '@config/env.config';
 import { eventEmitter } from '@config/event.config';
 import { Logger } from '@config/logger.config';
+import { parseAllowlist } from '@utils/google-login';
 import { openaiHealthRegistry } from '@utils/openai-health';
 import { setProcessAiContextProvider } from '@utils/processos/aiContext';
 
@@ -51,6 +52,7 @@ import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
+import { GoogleLoginService } from './services/google-login.service';
 import { LeadsService } from './services/leads.service';
 import { WAMonitoringService } from './services/monitor.service';
 import { OpenaiHealthService } from './services/openai-health.service';
@@ -60,6 +62,7 @@ import { retentionDaysFromEnv, RetentionService } from './services/retention.ser
 import { SettingsService } from './services/settings.service';
 import { TemplateService } from './services/template.service';
 import { UsageService } from './services/usage.service';
+import { UserSessionService } from './services/user-session.service';
 
 const logger = new Logger('WA MODULE');
 
@@ -189,6 +192,26 @@ export const googleCalendarService = new GoogleCalendarService(prismaRepository,
   secret:
     process.env.GOOGLE_TOKEN_KEY?.trim() || `apikey:${configService.get<Auth>('AUTHENTICATION').API_KEY.KEY ?? ''}`,
   log: (level, message) => googleLogger[level](message),
+});
+// "Equipe" (proposta V, etapa 1): login com Google por pessoa + sessões revogáveis. Sem as envs, o recurso fica
+// desligado e a chave global continua entrando (break-glass). Nada aqui chama o Google ao subir a API.
+const teamLogger = new Logger('Equipe');
+export const userSessionService = new UserSessionService({
+  prisma: prismaRepository,
+  log: (message) => teamLogger.warn(message),
+});
+export const googleLoginService = new GoogleLoginService({
+  clientId: process.env.GOOGLE_LOGIN_CLIENT_ID?.trim() || process.env.GOOGLE_CLIENT_ID?.trim() || undefined,
+  clientSecret: process.env.GOOGLE_LOGIN_CLIENT_SECRET?.trim() || process.env.GOOGLE_CLIENT_SECRET?.trim() || undefined,
+  redirectUri:
+    process.env.GOOGLE_LOGIN_REDIRECT_URI?.trim() || (serverUrl ? `${serverUrl}/auth/google/callback` : undefined),
+  returnUrl: process.env.GOOGLE_LOGIN_RETURN_URL?.trim() || 'https://whatsaibr.vercel.app/manager/login',
+  allowlist: parseAllowlist(process.env.GOOGLE_LOGIN_OWNER_EMAILS),
+  secret:
+    process.env.GOOGLE_LOGIN_STATE_SECRET?.trim() ||
+    process.env.GOOGLE_TOKEN_KEY?.trim() ||
+    `apikey:${configService.get<Auth>('AUTHENTICATION').API_KEY.KEY ?? ''}`,
+  log: (level, message) => teamLogger[level](message),
 });
 export const agendaService = new AgendaService(prismaRepository, waMonitor, { google: googleCalendarService });
 export const agendaController = new AgendaController(agendaService, prismaRepository, googleCalendarService);

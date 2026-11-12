@@ -1,12 +1,13 @@
 import { InstanceDto } from '@api/dto/instance.dto';
 import { cachedInstanceToken } from '@api/guards/instance-token-cache';
 import { safeEqual } from '@api/integrations/mcp/mcp.auth';
-import { clientAccessService, prismaRepository } from '@api/server.module';
+import { clientAccessService, prismaRepository, userSessionService } from '@api/server.module';
 import { Auth, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { ForbiddenException, UnauthorizedException } from '@exceptions';
 import { authThrottle, clientIp } from '@utils/auth-throttle';
 import { clientRouteAllowed, isClientKey, normalizeClientPath } from '@utils/client-access';
+import { isSessionToken } from '@utils/google-login';
 import { NextFunction, Request, Response } from 'express';
 
 const logger = new Logger('GUARD');
@@ -53,7 +54,20 @@ async function checkApikey(req: Request, key: string | undefined, next: NextFunc
     throw new UnauthorizedException();
   }
 
+  // Break-glass: the global key always passes, whatever it looks like (even a "was_" prefix).
   if (safeEqual(key, env.KEY)) {
+    return next();
+  }
+
+  // Person session ("was_", Google login). Comes before the client code and the instance token: the prefixes do
+  // not overlap, so this is only about a clear precedence (global key > session > client > instance).
+  if (isSessionToken(key)) {
+    const session = await userSessionService.resolve(key).catch((error: any) => {
+      logger.error(error);
+      return null;
+    });
+    if (!session) throw new UnauthorizedException('Sua sessão expirou. Entre de novo com o Google.');
+    (req as any).userSession = session;
     return next();
   }
 
@@ -118,17 +132,41 @@ async function clientAccessGuard(req: Request, key: string, next: NextFunction) 
 }
 
 /**
- * Admin-only routes ("Chaves e credenciais"): ONLY the global AUTHENTICATION_API_KEY passes, compared in constant
- * time. Any other key gets 403, a valid instance token included, and the instance tokens are never even looked up
- * (no oracle telling a valid token from an invalid one). No key at all: 401, as in `apikey`.
+ * Admin-only routes ("Chaves e credenciais", "Equipe"): the global AUTHENTICATION_API_KEY (break-glass) or a valid
+ * person session passes. The global key is compared in constant time; any other key gets 403, a valid instance
+ * token included, and the instance tokens are never even looked up (no oracle telling a valid token from an invalid
+ * one). No key at all: 401, as in `apikey`. In V1 everyone on the allowlist is an owner; roles arrive in V2.
  */
-export function createAdminOnlyGuard(globalKey: () => string | undefined) {
+export function createAdminOnlyGuard(
+  globalKey: () => string | undefined,
+  resolveSession: (token: string) => Promise<any | null> = (token) => userSessionService.resolve(token),
+) {
   return function adminOnlyGuard(req: Request, res: Response, next: NextFunction) {
     const key = req.get('apikey');
     const ip = clientIp(req.headers);
 
     if (key && safeEqual(key, globalKey())) {
       return next();
+    }
+    if (key && isSessionToken(key)) {
+      // async path handled explicitly: the guard also runs outside the app (unit tests) without async wrappers
+      Promise.resolve(resolveSession(key))
+        .then((session) => {
+          if (session) {
+            (req as any).userSession = session;
+            return next();
+          }
+          if (authThrottle.isBlocked(ip)) return tooManyAttempts(res, ip);
+          authThrottle.recordFailure(ip);
+          try {
+            throw new UnauthorizedException('Sua sessão expirou. Entre de novo com o Google.');
+          } catch (error) {
+            next(error);
+          }
+          return undefined;
+        })
+        .catch(next);
+      return;
     }
     if (authThrottle.isBlocked(ip)) {
       return tooManyAttempts(res, ip);

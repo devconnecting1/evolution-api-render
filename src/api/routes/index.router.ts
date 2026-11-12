@@ -18,6 +18,7 @@ import path from 'path';
 
 import { AdminDbRouter } from './admin-db.router';
 import { AgendaRouter } from './agenda.router';
+import { AuthRouter } from './auth.router';
 import { BusinessRouter } from './business.router';
 import { CallRouter } from './call.router';
 import { ChatRouter } from './chat.router';
@@ -35,6 +36,7 @@ import { ProxyRouter } from './proxy.router';
 import { RetentionRouter } from './retention.router';
 import { MessageRouter } from './sendMessage.router';
 import { SettingsRouter } from './settings.router';
+import { TeamRouter } from './team.router';
 import { TemplateRouter } from './template.router';
 import { UsageRouter } from './usage.router';
 import { ViewsRouter } from './view.router';
@@ -251,6 +253,9 @@ router
   .use('/processos', new ProcessosRouter(...guards).router)
   .use('/leads', new LeadsRouter(...guards).router)
   .use('/agenda', new AgendaRouter(...guards).router)
+  .use('/auth', new AuthRouter().router)
+  // "Equipe" (proposta V, etapa 1): quem entrou com Google e as sessões ativas
+  .use('/team', new TeamRouter().router)
   .use('/client-access', new ClientAccessRouter().router)
   .use('/openai-health', new OpenaiHealthRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)

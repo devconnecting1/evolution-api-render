@@ -1104,3 +1104,34 @@ model GlobalSetting {
   value     Json     @db.JsonB
   updatedAt DateTime @updatedAt @db.Timestamp
 }
+
+/// "Equipe" (proposta V, etapa 1): uma pessoa por e-mail liberado em GOOGLE_LOGIN_OWNER_EMAILS que já entrou.
+/// Fica no banco principal (plano de controle): o e-mail é procurado antes de saber a instância.
+model User {
+  id          String        @id @default(cuid())
+  email       String        @unique @db.VarChar(320)
+  name        String?       @db.VarChar(200)
+  picture     String?       @db.VarChar(500)
+  lastLoginAt DateTime?     @db.Timestamp
+  createdAt   DateTime      @default(now()) @db.Timestamp
+  updatedAt   DateTime      @updatedAt @db.Timestamp
+  UserSession UserSession[]
+}
+
+/// Sessão de uma pessoa: só o SHA-256 do token ("was_...") é guardado; revogada por revokedAt.
+model UserSession {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique @db.VarChar(64)
+  userAgent  String?   @db.VarChar(255)
+  ip         String?   @db.VarChar(64)
+  lastSeenAt DateTime? @db.Timestamp
+  expiresAt  DateTime  @db.Timestamp
+  revokedAt  DateTime? @db.Timestamp
+  createdAt  DateTime  @default(now()) @db.Timestamp
+  updatedAt  DateTime  @updatedAt @db.Timestamp
+  User       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+
+  @@index([userId])
+  @@index([expiresAt])
+}
