@@ -1,5 +1,5 @@
 import { CacheEngine } from '@cache/cacheengine';
-import { Auth, Chatwoot, configService, Database, Processos, ProviderSession } from '@config/env.config';
+import { Auth, Billing, Chatwoot, configService, Database, Processos, ProviderSession } from '@config/env.config';
 import { eventEmitter } from '@config/event.config';
 import { Logger } from '@config/logger.config';
 import { parseAllowlist } from '@utils/google-login';
@@ -51,6 +51,7 @@ import { createInstanceDatabases, createRoutedRepository } from './repository/in
 import { PrismaRepository } from './repository/repository.service';
 import { adminAlertsConfigFromEnv, AdminAlertsService } from './services/admin-alerts.service';
 import { AgendaService } from './services/agenda.service';
+import { BillingService } from './services/billing.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
 import { ExportService } from './services/export.service';
@@ -159,9 +160,12 @@ export const retentionService = new RetentionService({
 export const usageService = new UsageService(prismaRepository, {
   onDaily: (instanceId) => retentionService.runOncePerDay(instanceId),
 });
+/** "Cobrança manual": entries and receipts; the provider data comes from BILLING_PROVIDER_* (server only). */
+const billingConfig = configService.get<Billing>('BILLING');
+export const billingService = new BillingService({ prisma: prismaRepository, provider: () => billingConfig });
 /** "Acesso do cliente": códigos de acesso do cliente com módulos escolhidos (src/utils/client-access.ts). */
 export const clientAccessService = new ClientAccessService({ prisma: prismaRepository });
-export const usageController = new UsageController(usageService, prismaRepository);
+export const usageController = new UsageController(usageService, prismaRepository, billingService);
 /** "Exportar dados da instância": read-only ZIP of the instance data (src/api/services/export.service.ts). */
 export const exportService = new ExportService(prismaRepository);
 export const exportController = new ExportController(exportService, prismaRepository);

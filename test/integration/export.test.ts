@@ -10,6 +10,7 @@ import { inflateRawSync } from 'node:zlib';
 import { ExportController } from '@api/controllers/export.controller';
 import { UsageController } from '@api/controllers/usage.controller';
 import { UsageRouter } from '@api/routes/usage.router';
+import { BillingService } from '@api/services/billing.service';
 import { ExportService } from '@api/services/export.service';
 import { UsageService } from '@api/services/usage.service';
 import express from 'express';
@@ -138,7 +139,11 @@ describe('export and billing (integration)', { skip: SKIP_INTEGRATION }, () => {
     h = await new OpenaiHarness().start();
     const usage = new UsageService(h.prisma);
     serverModuleOverrides.exportController = new ExportController(new ExportService(h.prisma), h.prisma);
-    serverModuleOverrides.usageController = new UsageController(usage, h.prisma);
+    serverModuleOverrides.usageController = new UsageController(
+      usage,
+      h.prisma,
+      new BillingService({ prisma: h.prisma, provider: () => ({}) }),
+    );
 
     const app = express();
     app.use(express.json());
@@ -222,7 +227,7 @@ describe('export and billing (integration)', { skip: SKIP_INTEGRATION }, () => {
     });
   });
 
-  test('billing answers the plan of "Plano e limites" and the honest empty history', async () => {
+  test('billing: plan and manual history (empty when nothing was registered)', async () => {
     const a = await seed('d');
     await (serverModuleOverrides.usageController as UsageController).saveLimits(
       { instanceName: a.name } as any,
@@ -233,10 +238,14 @@ describe('export and billing (integration)', { skip: SKIP_INTEGRATION }, () => {
     assert.equal(response.status, 200);
     const body = (await response.json()) as any;
     assert.equal(body.instance, a.name);
-    assert.equal(body.source, 'none');
+    assert.equal(body.source, 'manual');
     assert.deepEqual(body.plan, { name: 'Essencial', monthlyResponses: 2000, configured: true });
     assert.equal(body.nextDueDate, null);
+    assert.equal(body.openPeriod, null);
+    assert.equal(body.paymentMethod, null);
+    assert.deepEqual(body.totals, { paidCents: 0, pendingCents: 0, overdueCents: 0 });
     assert.deepEqual(body.history, []);
-    assert.deepEqual(body.invoice, { legalName: null, taxId: null, email: null, address: null, updatedAt: null });
+    assert.equal(body.provider.configured, false);
+    assert.deepEqual(body.provider.missing, ['BILLING_PROVIDER_NAME', 'BILLING_PROVIDER_DOC', 'BILLING_PROVIDER_CITY']);
   });
 });

@@ -333,6 +333,8 @@ export type Chatwoot = {
 export type Openai = { ENABLED: boolean; API_KEY_GLOBAL?: string };
 /** "Processos": DataJud public key (default: the current one published by the CNJ), optional DJEN relay, ticker. */
 export type Processos = { DATAJUD_API_KEY: string; DATAJUD_BASE_URL?: string; DJEN_BASE_URL?: string; TICKER: boolean };
+/** Dados do prestador (pessoa física) que saem no recibo de cobrança; nunca no código. */
+export type Billing = { PROVIDER_NAME?: string; PROVIDER_DOC?: string; PROVIDER_CITY?: string };
 export type Dify = { ENABLED: boolean };
 export type N8n = { ENABLED: boolean };
 export type Evoai = { ENABLED: boolean };
@@ -418,6 +420,7 @@ export interface Env {
   CHATWOOT: Chatwoot;
   OPENAI: Openai;
   PROCESSOS: Processos;
+  BILLING: Billing;
   DIFY: Dify;
   N8N: N8n;
   EVOAI: Evoai;
@@ -837,6 +840,11 @@ export class ConfigService {
         DATAJUD_BASE_URL: process.env?.DATAJUD_BASE_URL || undefined,
         DJEN_BASE_URL: process.env?.DJEN_BASE_URL || undefined,
         TICKER: process.env?.PROCESSOS_TICKER !== 'false',
+      },
+      BILLING: {
+        PROVIDER_NAME: process.env?.BILLING_PROVIDER_NAME || undefined,
+        PROVIDER_DOC: process.env?.BILLING_PROVIDER_DOC || undefined,
+        PROVIDER_CITY: process.env?.BILLING_PROVIDER_CITY || undefined,
       },
       DIFY: {
         ENABLED: process.env?.DIFY_ENABLED === 'true',

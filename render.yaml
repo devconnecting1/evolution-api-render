@@ -56,6 +56,12 @@ services:
         value: "false"
       - key: AUTHENTICATION_API_KEY
         sync: false
+      - key: BILLING_PROVIDER_NAME
+        sync: false
+      - key: BILLING_PROVIDER_DOC
+        sync: false
+      - key: BILLING_PROVIDER_CITY
+        sync: false
       - key: AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES
         value: "false"
       - key: TELEMETRY_ENABLED

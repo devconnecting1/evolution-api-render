@@ -2,7 +2,8 @@ import { once } from 'node:events';
 
 import { RouterBroker } from '@api/abstract/abstract.router';
 import { InstanceDto } from '@api/dto/instance.dto';
-import { UsageLimitsDto } from '@api/dto/usage.dto';
+import { BillingEntryDto, UsageLimitsDto } from '@api/dto/usage.dto';
+import { authGuard } from '@api/guards/auth.guard';
 import { exportController, usageController } from '@api/server.module';
 import { usageLimitsSchema } from '@validate/validate.schema';
 import { RequestHandler, Router } from 'express';
@@ -46,7 +47,7 @@ export class UsageRouter extends RouterBroker {
         res.set('Cache-Control', 'no-store');
         res.status(HttpStatus.OK).json(response);
       })
-      // Cobrança: no billing source in the system yet, so the answer is honestly empty (see UsageController.getBilling)
+      // Cobrança manual: the administrator writes; the client code with the module "plano" only reads.
       .get(this.routerPath('billing'), ...guards, async (req, res) => {
         const response = await this.dataValidate<InstanceDto>({
           request: req,
@@ -56,6 +57,38 @@ export class UsageRouter extends RouterBroker {
         });
 
         res.set('Cache-Control', 'no-store');
+        res.status(HttpStatus.OK).json(response);
+      })
+      .post(this.routerPath('billing'), authGuard.adminOnly, async (req, res) => {
+        const response = await this.dataValidate<BillingEntryDto>({
+          request: req,
+          schema: null,
+          ClassRef: BillingEntryDto,
+          execute: (instance, data) => usageController.createBilling(instance, data),
+        });
+
+        res.set('Cache-Control', 'no-store');
+        res.status(HttpStatus.CREATED).json(response);
+      })
+      .patch(this.routerPath('billing') + '/:id', authGuard.adminOnly, async (req, res) => {
+        const response = await this.dataValidate<BillingEntryDto>({
+          request: req,
+          schema: null,
+          ClassRef: BillingEntryDto,
+          execute: (instance, data) => usageController.updateBilling(instance, req.params.id, data),
+        });
+
+        res.set('Cache-Control', 'no-store');
+        res.status(HttpStatus.OK).json(response);
+      })
+      .delete(this.routerPath('billing') + '/:id', authGuard.adminOnly, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => usageController.removeBilling(instance, req.params.id),
+        });
+
         res.status(HttpStatus.OK).json(response);
       })
       // Exportação completa: the ZIP is written while the rows are read (streaming, nothing buffered in memory)
