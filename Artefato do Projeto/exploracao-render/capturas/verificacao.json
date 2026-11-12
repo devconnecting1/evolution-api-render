@@ -1,0 +1,152 @@
+{
+  "report": [
+    {
+      "label": "desktop/visao-geral-claro",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "desktop/conversas-claro",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "desktop/plano-claro",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "desktop/visao-geral-escuro",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "desktop/conversas-escuro",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "desktop/plano-escuro",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "tablet/visao-geral-claro",
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "tablet/conversas-claro",
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "tablet/plano-claro",
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "tablet/visao-geral-escuro",
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "tablet/conversas-escuro",
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "tablet/plano-escuro",
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "mobile/visao-geral-claro",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "mobile/conversas-claro",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "mobile/plano-claro",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "mobile/visao-geral-escuro",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "mobile/conversas-escuro",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "mobile/plano-escuro",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "interacoes/toast-conversas-desktop-claro.png",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "theme": "light",
+      "ok": true
+    },
+    {
+      "label": "interacoes/toast-conversas-desktop-escuro.png",
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "theme": "dark",
+      "ok": true
+    },
+    {
+      "label": "interacoes/menu-mobile-claro.png",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "theme": "light",
+      "ok": true
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,23 @@
+{
+  "name": "whatsai-exploracao-render",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Exploração visual do painel do WhatsAI com o design system do Render (DDS). Dados fictícios.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.7.0",
+    "render-dds": "https://github.com/R4ph-t/DDS/archive/refs/tags/v0.8.6.tar.gz"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^6.4.6"
+  }
+}

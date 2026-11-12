@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>WhatsAI · Exploração visual com o DDS do Render</title>
+    <script>
+      (function () {
+        var key = "whatsai-dds-exploracao";
+        var params = new URLSearchParams(window.location.search);
+        var tema = params.get("tema");
+        var salvo = null;
+        try {
+          salvo = window.localStorage.getItem(key);
+        } catch (e) {}
+        var escolhido = tema === "escuro" ? "dark" : tema === "claro" ? "light" : salvo;
+        if (escolhido === "dark" || escolhido === "light") {
+          try {
+            window.localStorage.setItem(key, escolhido);
+          } catch (e) {}
+          document.documentElement.classList.add(escolhido);
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
