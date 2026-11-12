@@ -614,12 +614,12 @@ publique valores. Se um token vazar, rotacione no provedor e no Render.
 ### 11.5 Fluxo de branch, PR e deploy
 
 1. Uma branch por tarefa a partir de `origin/main`.
-2. Rode a suíte completa (unitários, tipos, lint e integração) e faça o push com
-   `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
+2. Faça o push com `git push -u origin <branch>`. Não há hook local: lint, prettier, build, tipos, unitários,
+   integração e patches do painel rodam no GitHub Actions.
 3. Abra o PR no formato de `.github/pull_request_template.md`; o CI precisa ficar verde.
 4. Agentes que só desenvolvem (DeepSeek, Cursor e outros) **param aqui**. O Claude Code do dono (com os MCPs de
    Neon, Render, Vercel e WhatsAI) revisa e faz o squash com `commit_message` explícita (Conventional Commits,
-   cabeçalho ≤100 chars) assim que a suíte estiver verde, a qualquer hora.
+   cabeçalho ≤100 chars) assim que as checagens estiverem verdes, a qualquer hora.
 5. `[skip render]` no título do squash quando a mudança é só estática.
 6. Depois de deploy que reinicia a API, confira o deploy `live` no Render e o estado da instância (`open`).
 
@@ -702,7 +702,18 @@ npm run test:run
 - **CI:** `Check Code Quality` roda lint, build, `test:types` e `test:run` com Postgres 16; `Security` roda
   Gitleaks + `npm audit` (não bloqueia); `Deploy Manager` publica o painel; `Release` cria releases por tag.
 
-### 12.3 O que rodar antes de cada push
+### 12.3 O que o GitHub roda em cada PR
+
+O workflow `Check Code Quality` roda, em `ubuntu-latest`:
+
+- `npm run lint:check` e `npm run format:check` (ESLint + Prettier);
+- `npm run build` (TypeScript + tsup);
+- `npm run test:types` e `npm run test:run` (unitários + integração com Postgres 16);
+- `python3 -I manager/patches/*.py --check`, `node manager/patches/landing-css.mjs --check` e o parse do bundle;
+- o título do PR no commitlint.
+
+O push não roda nada disso: não há mais hooks de pre-commit, pre-push ou commit-msg. Se um check do GitHub falhar,
+rode localmente só o comando apontado, para depurar:
 
 ```bash
 DATABASE_PROVIDER=postgresql npm run db:generate   # se mudou schema
@@ -710,9 +721,6 @@ npx tsx --test "test/unit/**/*.test.ts"
 npm run test:types && npx tsc --noEmit -p . && npx eslint src test --ext .ts
 # integração com o Postgres descartável (acima)
 ```
-
-O hook de pre-push roda `npm run build` e `npm run lint:check`; o pre-commit roda `lint-staged`; o commit-msg roda
-commitlint.
 
 ---
 
@@ -959,8 +967,8 @@ for f in manager/patches/*.py; do python3 -I "$f" --check; done
 npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null
 node manager/patches/landing-css.mjs --check
 
-# Push (hook roda eslint + tsc)
-NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>
+# Push (as checagens rodam no GitHub Actions)
+git push -u origin <branch>
 ```
 
 ## Apêndice C — glossário

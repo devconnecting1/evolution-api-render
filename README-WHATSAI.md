@@ -66,13 +66,13 @@ VERCEL_TOKEN="<token da Vercel>" npx -y vercel@65.2.0 deploy --prod --yes --arch
 ```
 
 - Mudanças de env no `render.yaml` são aplicadas no deploy seguinte (Blueprint auto-sync). Se não aplicar: Render > Blueprint > **Sync**.
-- **CI:** `Check Code Quality` roda lint, build, `npm run test:types` e os testes unitários e de integração (Postgres local); `Security` roda Gitleaks + `npm audit` (só relatório); Dependabot abre atualizações semanais.
-- **Testes locais:** `npm run test:unit`; integração com `npm run test:db:start` e depois `npm run test:integration` (veja `test/scripts/local-postgres.sh`).
-- **Build:** o `tsup` empacota cada arquivo de `src` com sourcemap e já passa do heap padrão do Node (~2 GB). O `Dockerfile` (estágio de build) e o CI usam `NODE_OPTIONS=--max-old-space-size=4096`; localmente rode `NODE_OPTIONS=--max-old-space-size=4096 npm run build`. Para `git push` com o hook de pre-push (que faz o build), use `NODE_OPTIONS=--max-old-space-size=6144 git push`.
+- **CI:** `Check Code Quality` roda lint e prettier, build, `npm run test:types`, os testes unitários e de integração (Postgres 16) e os checks dos patches do painel; `Security` roda Gitleaks + `npm audit` (só relatório); Dependabot abre atualizações semanais.
+- **Testes locais:** só para depurar um check vermelho do GitHub: `npm run test:unit`; integração com `npm run test:db:start` e depois `npm run test:integration` (veja `test/scripts/local-postgres.sh`).
+- **Build:** o `tsup` empacota cada arquivo de `src` com sourcemap e já passa do heap padrão do Node (~2 GB). O `Dockerfile` (estágio de build) e o CI usam `NODE_OPTIONS=--max-old-space-size=4096`; se precisar rodar localmente para depurar, use `NODE_OPTIONS=--max-old-space-size=4096 npm run build`. O push não roda build.
 
 ## 4. Painel, site e manual (build sem fonte)
 
-Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/` (`*.py`; no site, `landing-css.mjs` e `pwa-icons.mjs`): troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (o maior `CACHE_VERSION` dos patches; hoje `?v=48`). Depois de qualquer patch: `for f in manager/patches/*.py; do python3 -I "$f" --check; done` e `npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null`. Se o manager for reconstruído do zero, reaplique todos.
+Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/` (`*.py`; no site, `landing-css.mjs` e `pwa-icons.mjs`): troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (o maior `CACHE_VERSION` dos patches; hoje `?v=58`). Depois de qualquer patch: `for f in manager/patches/*.py; do python3 -I "$f" --check; done` e `npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null`. Se o manager for reconstruído do zero, reaplique todos.
 
 | Área | Patch / arquivos | O que faz |
 |---|---|---|

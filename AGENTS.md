@@ -61,6 +61,10 @@ npm run start:prod
 # Linting and formatting
 npm run lint        # ESLint with auto-fix
 npm run lint:check  # ESLint check only
+npm run format:check  # Prettier check (src and test)
+
+# As checagens (lint, prettier, build, tipos, testes e patches do painel) rodam no GitHub Actions.
+# O push não roda hooks locais; use os comandos acima só para depurar um check vermelho.
 
 # Commit with conventional commits
 npm run commit      # Interactive commit with Commitizen
