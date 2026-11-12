@@ -13,6 +13,8 @@ WORKDIR /evolution
 COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY ./tsup.config.ts ./
+# postinstall (npm ci) runs this: export fix for Baileys rc12+ under tsx
+COPY ./scripts/fix-whatsapp-rust-bridge.cjs ./scripts/
 
 RUN git config --global url."https://github.com/".insteadOf "ssh://git@github.com/" && \
     git config --global --add url."https://github.com/".insteadOf "git@github.com:" && \
