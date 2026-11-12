@@ -63,7 +63,6 @@ html.menu-open .site-head {
 
 /* ------------------------------------------------------------------------------- seções alternadas */
 #como-funciona,
-#canais,
 #segmentos,
 #duvidas,
 #ia-equipe,
@@ -84,9 +83,7 @@ html.menu-open .site-head {
 
 /* -------------------------------------------------------------------- faixas grafite no meio da página */
 #tour,
-.section-tight[aria-labelledby="metrics-title"],
-#sigilo,
-#seguranca {
+#sigilo {
   --text: #ffffff;
   --text-2: var(--on-deep-2);
   --text-3: #b3b3b3;
@@ -99,14 +96,14 @@ html.menu-open .site-head {
   background: var(--deep);
   color: var(--text);
 }
-:is(#tour, #sigilo, #seguranca, .section-tight[aria-labelledby="metrics-title"]) .h2 .soft {
+:is(#tour, #sigilo) .h2 .soft {
   color: var(--lime);
 }
-:is(#tour, #sigilo, #seguranca, .section-tight[aria-labelledby="metrics-title"]) :focus-visible {
+:is(#tour, #sigilo) :focus-visible {
   outline-color: var(--lime);
 }
 /* cards and mockups inside the bands keep the light (page) tokens */
-:is(#tour .tour, #sigilo .card, #seguranca .card, #sigilo .card-white, #seguranca .card-white) {
+:is(#tour .tour, #sigilo .card, #sigilo .card-white) {
   --text: #1a1a1a;
   --text-2: #5e5e5e;
   --text-3: #666666;
@@ -116,13 +113,6 @@ html.menu-open .site-head {
   --tint-text: #1a1a1a;
   color: var(--text);
 }
-.section-tight[aria-labelledby="metrics-title"] .numbers > div::before {
-  background: var(--lime);
-}
-.section-tight[aria-labelledby="metrics-title"] .numbers strong {
-  color: #ffffff;
-}
-
 /* ------------------------------------------------------------------------------------------ modo escuro */
 @media (prefers-color-scheme: dark) {
   :root {
@@ -157,7 +147,6 @@ html.menu-open .site-head {
     background: rgba(16, 16, 14, 0.92);
   }
   #como-funciona,
-  #canais,
   #segmentos,
   #duvidas,
   #ia-equipe,
@@ -168,17 +157,12 @@ html.menu-open .site-head {
     --line-strong: #3a3a34;
   }
   #tour,
-  .section-tight[aria-labelledby="metrics-title"],
-  #sigilo,
-  #seguranca {
+  #sigilo {
     --text: #ffffe3;
     --text-3: #a3a394;
     border-block: 1px solid #2e2e29;
   }
-  .section-tight[aria-labelledby="metrics-title"] .numbers strong {
-    color: #ffffe3;
-  }
-  :is(#tour .tour, #sigilo .card, #seguranca .card, #sigilo .card-white, #seguranca .card-white) {
+  :is(#tour .tour, #sigilo .card, #sigilo .card-white) {
     --text: #ffffe3;
     --text-2: #999989;
     --text-3: #8c8c7d;

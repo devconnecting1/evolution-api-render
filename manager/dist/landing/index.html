@@ -47,9 +47,9 @@
     <meta name="twitter:image" content="https://whatsaibr.vercel.app/assets/images/og-whatsai.png?v=2" />
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/landing.bundle.css?v=5eaa90adac" />
+    <link rel="stylesheet" href="/assets/landing.bundle.css?v=cb64117d81" />
     <!-- whatsai-patch:theme:landing -->
-    <script src="/assets/landing.js?v=6" defer></script>
+    <script src="/assets/landing.js?v=7" defer></script>
     <script src="/assets/landing-pixels.js?v=2" defer></script>
 
     <script type="application/ld+json">
@@ -156,7 +156,7 @@
         <nav class="nav" id="menu" aria-label="Principal" data-nav>
           <ul class="nav-links">
             <li><a href="#como-funciona">Como funciona</a></li>
-            <li class="nav-opt"><a href="#recursos">Recursos</a></li>
+            <li><a href="#tour">Produto</a></li>
             <li><a href="#segmentos">Segmentos</a></li>
             <li><a href="#planos">Planos</a></li>
             <li><a href="#duvidas">Dúvidas</a></li>
@@ -361,42 +361,20 @@
               </figure>
             </li>
           </ol>
-        </div>
-      </section>
-
-      <!-- === sem x com -->
-      <section class="section" id="antes-depois" aria-labelledby="vs-title">
-        <div class="wrap">
-          <div class="section-head section-head-c">
-            <h2 id="vs-title" class="h2">Sem WhatsAI, o cliente espera. <span class="soft">Com WhatsAI, ele é atendido.</span></h2>
-          </div>
-          <div class="vs">
-            <article class="vs-col vs-without" aria-labelledby="vs-without-h">
-              <h3 id="vs-without-h" class="vs-h">Sem WhatsAI</h3>
-              <div class="mess">
-                <svg class="mess-lines" viewBox="0 0 400 420" preserveAspectRatio="none" aria-hidden="true">
-                  <g class="mess-knot">
-                    <ellipse cx="200" cy="34" rx="34" ry="20" transform="rotate(-18 200 34)" />
-                    <ellipse cx="200" cy="34" rx="30" ry="18" transform="rotate(32 200 34)" />
-                    <ellipse cx="200" cy="34" rx="26" ry="15" transform="rotate(78 200 34)" />
-                    <ellipse cx="202" cy="32" rx="18" ry="11" transform="rotate(-50 202 32)" />
-                  </g>
-                  <path class="mess-path" d="M200 56c-8 30-90 18-96 54s70 26 92 58-120 20-110 70 150 4 170 44-60 40-120 56 40 50 70 70" />
-                  <path class="mess-path" d="M214 58c40 20 110 30 96 70s-150 30-130 76 140 6 120 62-120 30-80 86" />
-                </svg>
-                <ul class="mess-boxes">
-                  <li style="--x: 8%; --y: 15%; --r: -3deg">Mensagem das 23h sem resposta</li>
-                  <li style="--x: 52%; --y: 24%; --r: 2deg">Cliente pergunta de novo</li>
-                  <li style="--x: 14%; --y: 40%; --r: 2deg">Áudio que ninguém ouviu</li>
-                  <li style="--x: 50%; --y: 52%; --r: -2deg">40 conversas abertas de manhã</li>
-                  <li style="--x: 4%; --y: 66%; --r: -1deg">“Qual o horário?” pela 10ª vez</li>
-                  <li style="--x: 54%; --y: 78%; --r: 3deg">Retorno esquecido</li>
-                  <li style="--x: 20%; --y: 88%; --r: -2deg">Cliente desiste</li>
-                </ul>
-              </div>
-            </article>
-            <article class="vs-col vs-with" aria-labelledby="vs-with-h">
-              <h3 id="vs-with-h" class="vs-h">Com WhatsAI</h3>
+          <h3 class="h3 vs-title">Sem WhatsAI, o cliente espera. <span class="muted">Com WhatsAI, ele é atendido.</span></h3>
+          <div class="vs-compact">
+            <div class="vs-side vs-without" aria-labelledby="vs-without-h">
+              <h4 id="vs-without-h" class="vs-h">Sem WhatsAI</h4>
+              <ul class="vs-notes">
+                <li>Mensagem das 23h sem resposta</li>
+                <li>Cliente pergunta de novo</li>
+                <li>Áudio que ninguém ouviu</li>
+                <li>40 conversas abertas de manhã</li>
+                <li>Cliente desiste</li>
+              </ul>
+            </div>
+            <div class="vs-side vs-with" aria-labelledby="vs-with-h">
+              <h4 id="vs-with-h" class="vs-h">Com WhatsAI</h4>
               <ol class="flow">
                 <li><time>22:47</time><b>O cliente pergunta</b><span>“Vocês atendem sábado?”</span></li>
                 <li><time>22:47</time><b>A IA responde em segundos</b><span>com o horário e as regras do seu negócio</span></li>
@@ -404,7 +382,7 @@
                 <li><time>08:02</time><b>A equipe assume quando quiser</b><span>a IA pausa sozinha naquela conversa</span></li>
               </ol>
               <p class="flow-end"><svg class="ico" aria-hidden="true"><use href="#i-check-circle" /></svg>Cliente atendido, a qualquer hora</p>
-            </article>
+            </div>
           </div>
         </div>
       </section>
@@ -412,17 +390,20 @@
       <!-- === tour do produto (abas acessíveis: role=tablist, setas/Home/End em /assets/landing.js; cada aba mostra um
            mockup em HTML de uma tela do painel atual + o que ela faz. Dados fictícios; ao mudar um dado, atualize o aria-label) -->
       <section class="section" id="tour" aria-labelledby="tour-title">
+        <span id="recursos" class="anchor-alias" aria-hidden="true"></span>
         <div class="wrap">
           <div class="section-head">
-            <h2 id="tour-title" class="h2">O painel por dentro. <span class="soft">Cada tela, como ela é hoje.</span></h2>
-            <p class="section-lead">Conversas, contato, plano, horário e o estado do serviço num só lugar. Os exemplos usam dados fictícios.</p>
+            <h2 id="tour-title" class="h2">O produto por dentro. <span class="soft">Um recurso por aba, com a tela real.</span></h2>
+            <p class="section-lead">Conversas, pausa humana, áudio e PDF, instruções, plano, horário e o estado do serviço num só lugar. Os exemplos usam dados fictícios.</p>
           </div>
           <div class="tour" data-tabs>
-            <div class="tour-tabs" role="tablist" aria-label="Telas do painel">
+            <div class="tour-tabs" role="tablist" aria-label="Recursos e telas do painel">
               <button class="tour-tab" type="button" role="tab" id="tt-conversas" aria-controls="tp-conversas" aria-selected="true"><svg class="ico" aria-hidden="true"><use href="#i-chat" /></svg>Conversas</button>
-              <button class="tour-tab" type="button" role="tab" id="tt-contato" aria-controls="tp-contato" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-panel" /></svg>Painel do contato</button>
+              <button class="tour-tab" type="button" role="tab" id="tt-pausa" aria-controls="tp-pausa" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-pause" /></svg>Pausa humana</button>
+              <button class="tour-tab" type="button" role="tab" id="tt-midia" aria-controls="tp-midia" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-mic" /></svg>Áudio e PDF</button>
+              <button class="tour-tab" type="button" role="tab" id="tt-instrucoes" aria-controls="tp-instrucoes" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-bot" /></svg>Instruções</button>
               <button class="tour-tab" type="button" role="tab" id="tt-plano" aria-controls="tp-plano" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-gauge" /></svg>Plano e limites</button>
-              <button class="tour-tab" type="button" role="tab" id="tt-horario" aria-controls="tp-horario" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>Horário de atendimento</button>
+              <button class="tour-tab" type="button" role="tab" id="tt-horario" aria-controls="tp-horario" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>Horário</button>
               <button class="tour-tab" type="button" role="tab" id="tt-obs" aria-controls="tp-obs" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-activity" /></svg>Observabilidade</button>
             </div>
             <div class="tour-panels">
@@ -473,54 +454,92 @@
                 </figure>
               </div>
 
-              <!-- aba: Painel do contato -->
-              <div class="tour-panel" role="tabpanel" id="tp-contato" aria-labelledby="tt-contato" tabindex="0" hidden>
+              <!-- aba: Pausa humana (o recurso principal; copiada do antigo cartão de recursos) -->
+              <div class="tour-panel" role="tabpanel" id="tp-pausa" aria-labelledby="tt-pausa" tabindex="0" hidden>
+                <span id="pausa" class="anchor-alias" aria-hidden="true"></span>
                 <div class="tour-copy">
-                  <h3 class="h3">O contato inteiro num painel ao lado da conversa</h3>
+                  <p class="chip chip-sm">Recurso principal</p>
+                  <h3 class="h3">A equipe respondeu? A IA sai da conversa sozinha.</h3>
+                  <p>Quando alguém da equipe escreve pelo celular, WhatsApp Web ou Desktop, a IA pausa só naquela conversa. Depois do tempo que você definir sem mensagem da equipe, ela volta a atender. Sem botão, sem esquecer de reativar.</p>
                   <ul class="checks">
-                    <li>Nome, número e o estado da IA naquela conversa: ativa ou pausada até um horário</li>
-                    <li>Pausar ou retomar a IA com um botão, sempre com confirmação antes</li>
-                    <li>Quantas mensagens, a primeira e a última, e atalhos para copiar o número ou abrir no WhatsApp</li>
+                    <li>Pausa por conversa: os outros clientes continuam sendo atendidos</li>
+                    <li>Volta sozinha depois do tempo combinado, por exemplo 2 horas</li>
+                    <li>Precisa pausar uma conversa específica? Você pausa ou retoma a IA pelo painel, em um clique, ou pede para a nossa equipe.</li>
                   </ul>
                 </div>
                 <figure class="tour-mock">
-                  <div class="ui-win" role="img" aria-label="Exemplo da conversa com Paulo R. e o painel do contato aberto ao lado: telefone +55 11 9•••• 4321, IA neste contato ativa e o botão Pausar IA, 12 mensagens, nenhuma não lida, primeira mensagem em 28/10 às 14:05 e última hoje às 10:12, e as ações rápidas Copiar número e Abrir no WhatsApp. Por cima da conversa, a confirmação: Pausar a IA para Paulo R.? A IA para de responder este contato até alguém retomar; a equipe continua atendendo pelo WhatsApp normalmente. Botões Cancelar e Pausar IA.">
-                    <div class="ui-win-top"><ol class="ui-crumbs"><li>Instâncias</li><li>recepcao</li><li>Conversas</li></ol><span class="ui-search"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg><span class="ui-search-t">Buscar</span><kbd class="ui-kbd">Ctrl K</kbd></span></div>
-                    <div class="ui-win-body tm-contact">
-                      <div class="tm-chat">
-                        <div class="ap-chat-head">
-                          <span class="ui-av">PR</span>
-                          <b>Paulo R.</b>
-                          <span class="ui-ibtn is-on"><svg class="ico" aria-hidden="true"><use href="#i-panel" /></svg></span>
-                        </div>
-                        <ol class="thread thread-sm">
-                          <li class="b b-in">Bom dia! Queria falar com a doutora sobre o resultado do exame.<time>10:08</time></li>
-                          <li class="b b-out b-ai"><span class="b-who">IA</span>Claro! Vou avisar a equipe. Pode me dizer o seu nome completo?<time>10:08</time></li>
-                          <li class="b b-in">Paulo Ribeiro. Prefiro falar com uma pessoa.<time>10:12</time></li>
-                        </ol>
-                        <div class="ui-dialog">
-                          <p class="ui-dialog-t">Pausar a IA para Paulo R.?</p>
-                          <p class="ui-dialog-d">A IA para de responder este contato até alguém retomar. A equipe continua atendendo pelo WhatsApp normalmente.</p>
-                          <p class="ui-dialog-f"><span class="ui-btn">Cancelar</span><span class="ui-btn ui-btn-primary">Pausar IA</span></p>
-                        </div>
-                      </div>
-                      <div class="ap-panel tm-panel">
-                        <p class="cp-head">Contato<span class="ui-ibtn"><svg class="ico" aria-hidden="true"><use href="#i-close" /></svg></span></p>
-                        <div class="cp">
-                          <p class="cp-who"><span class="ui-av ui-av-lg">PR</span><b>Paulo R.</b></p>
-                          <dl class="cp-kv">
-                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-phone" /></svg>Telefone</dt><dd>+55 11 9•••• 4321</dd></div>
-                            <div class="cp-ai"><dt><svg class="ico" aria-hidden="true"><use href="#i-sparkle" /></svg>IA neste contato</dt><dd><span class="ui-badge"><i class="dot dot-ok"></i>Ativa</span><span class="ui-btn is-pressed"><svg class="ico" aria-hidden="true"><use href="#i-pause" /></svg>Pausar IA</span></dd></div>
-                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-msgs" /></svg>Mensagens</dt><dd>12</dd></div>
-                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-eye" /></svg>Não lidas</dt><dd>0</dd></div>
-                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-cal" /></svg>Primeira mensagem</dt><dd>28/10, 14:05</dd></div>
-                            <div><dt><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>Última mensagem</dt><dd>Hoje, 10:12</dd></div>
-                          </dl>
-                          <p class="cp-sub">Ações rápidas</p>
-                          <p class="cp-actions"><span class="ui-btn"><svg class="ico" aria-hidden="true"><use href="#i-copy" /></svg>Copiar número</span><span class="ui-btn"><svg class="ico" aria-hidden="true"><use href="#i-external" /></svg>Abrir no WhatsApp</span></p>
-                        </div>
-                      </div>
+                  <div class="sheet" role="img" aria-label="Exemplo da tabela de sessões do bot da recepção: Carla, pausada, volta em 1 hora e 40 minutos; Roberto, IA ativa; Juliana, pausada, volta em 35 minutos; Loja Centro, pausada manualmente; Marcos, encerrada.">
+                    <p class="sheet-h sheet-h-row"><span>Sessões · bot recepcao</span><span class="seg"><b>Todas 5</b><span>Pausadas 3</span></span></p>
+                    <table class="tbl">
+                      <thead><tr><th>Contato</th><th>Status</th><th class="t-last">Última mensagem</th></tr></thead>
+                      <tbody>
+                        <tr><td><span class="av av-sm">CM</span>Carla M.</td><td><span class="seal"><i class="dot dot-warn"></i>Pausada · volta em 1h40</span></td><td class="t-last">Ana respondeu às 14:20</td></tr>
+                        <tr><td><span class="av av-sm">RS</span>Roberto S.</td><td><span class="seal"><i class="dot dot-ok"></i>Ativa</span></td><td class="t-last">Qual o valor da consulta?</td></tr>
+                        <tr><td><span class="av av-sm">JP</span>Juliana P.</td><td><span class="seal"><i class="dot dot-warn"></i>Pausada · volta em 35 min</span></td><td class="t-last">Bruno respondeu às 13:35</td></tr>
+                        <tr><td><span class="av av-sm">LC</span>Loja Centro</td><td><span class="seal"><i class="dot dot-mute"></i>Pausada manualmente</span></td><td class="t-last">Atendimento manual</td></tr>
+                        <tr><td><span class="av av-sm">MT</span>Marcos T.</td><td><span class="seal"><i class="dot dot-off"></i>Encerrada</span></td><td class="t-last">Obrigado!</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <figcaption class="caption">Ilustrativo · dados fictícios</figcaption>
+                </figure>
+              </div>
+
+              <!-- aba: Áudio, foto e PDF -->
+              <div class="tour-panel" role="tabpanel" id="tp-midia" aria-labelledby="tt-midia" tabindex="0" hidden>
+                <span id="midia" class="anchor-alias" aria-hidden="true"></span>
+                <div class="tour-copy">
+                  <h3 class="h3">O cliente manda áudio, foto ou PDF. A IA entende.</h3>
+                  <p>Áudios de até 5 minutos são transcritos no WhatsApp Web (na API oficial, a Meta não informa a duração). Fotos são lidas, e a IA lê PDFs de até 20 páginas e 10 MB.</p>
+                  <ul class="checks">
+                    <li>Transcrição, descrição da foto e resumo do PDF viram texto para a IA responder</li>
+                    <li>Imagens e documentos não ficam no histórico que a IA usa</li>
+                    <li>O cliente não precisa repetir o que já mandou</li>
+                  </ul>
+                </div>
+                <figure class="tour-mock">
+                  <div class="sheet sheet-stack" role="img" aria-label="Exemplo de três mensagens com mídia: um áudio de 8 segundos e a transcrição perguntando se o apartamento da Rua das Flores está disponível; uma foto descrita pela IA como um tênis branco com a pergunta se há outra cor; um PDF de 3 páginas resumido como contrato de locação de 12 meses.">
+                    <div class="media-row">
+                      <span class="mini-pill"><svg class="ico" aria-hidden="true"><use href="#i-mic" /></svg>Áudio · 0:08</span>
+                      <p><small>Transcrição</small>“O apartamento da Rua das Flores ainda está disponível?”</p>
                     </div>
+                    <div class="media-row">
+                      <span class="mini-pill"><svg class="ico" aria-hidden="true"><use href="#i-image" /></svg>Foto</span>
+                      <p><small>Descrição</small>Tênis branco de corrida, cliente pergunta se tem em outra cor.</p>
+                    </div>
+                    <div class="media-row">
+                      <span class="mini-pill"><svg class="ico" aria-hidden="true"><use href="#i-file" /></svg>PDF · 3 páginas</span>
+                      <p><small>Resumo</small>Contrato de locação, 12 meses, reajuste anual pelo IGP-M.</p>
+                    </div>
+                  </div>
+                  <figcaption class="caption">Ilustrativo · dados fictícios</figcaption>
+                </figure>
+              </div>
+
+              <!-- aba: Instruções do negócio -->
+              <div class="tour-panel" role="tabpanel" id="tp-instrucoes" aria-labelledby="tt-instrucoes" tabindex="0" hidden>
+                <span id="instrucoes" class="anchor-alias" aria-hidden="true"></span>
+                <div class="tour-copy">
+                  <h3 class="h3">Instruções do seu negócio, em linguagem simples</h3>
+                  <p>A IA da OpenAI segue o que montamos com você: o que a empresa faz, como falar e o que nunca responder. Ela lembra do que o cliente já disse, de 2 a 100 mensagens.</p>
+                  <ul class="checks">
+                    <li>Horários, serviços, preços e o jeito de falar do seu negócio viram as instruções</li>
+                    <li>A IA não pede CPF, senha ou cartão, nem promete o que não está nas instruções</li>
+                    <li>Você revisa e aprova o texto antes de a IA entrar no ar</li>
+                  </ul>
+                </div>
+                <figure class="tour-mock">
+                  <div class="sheet sheet-code" role="img" aria-label="Exemplo das instruções do bot da recepção: negócio Clínica Bem-Estar; horário de segunda a sexta das 8h às 18h e sábado das 8h às 12h; tom cordial e frases curtas; nunca pedir CPF ou senha nem prometer diagnóstico; memória de 40 mensagens; pausa humana de 2 horas.">
+                    <p class="sheet-h">recepcao · instruções</p>
+<pre class="code"><span class="c-com"># Assistente virtual da recepção</span>
+<span class="c-key">negocio</span>: "Clínica Bem-Estar"
+<span class="c-key">horario</span>: "seg a sex, 8h às 18h · sáb, 8h às 12h"
+<span class="c-key">tom</span>: "cordial, frases curtas"
+<span class="c-key">nunca</span>:
+  - pedir CPF, senha ou cartão
+  - prometer diagnóstico
+<span class="c-key">memoria</span>: 40  <span class="c-com"># mensagens</span>
+<span class="c-key">pausa_humana</span>: 2h</pre>
                   </div>
                   <figcaption class="caption">Ilustrativo · dados fictícios</figcaption>
                 </figure>
@@ -652,362 +671,93 @@
         </div>
       </section>
 
-      <!-- === recursos -->
-      <section class="section" id="recursos" aria-labelledby="recursos-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="recursos-title" class="h2">Um atendente que não dorme, <span class="soft">com você no controle.</span></h2>
-          </div>
-
-          <div class="grid grid-2 feats">
-            <!-- recurso: IA 24 h (lista de segmentos) -->
-            <article class="card feat feat-words" aria-labelledby="f0-title">
-              <h3 id="f0-title" class="words">
-                Uma IA que responde 24 horas, com as informações do seu negócio, para
-                <span>clínicas, escritórios de advocacia, lojas, imobiliárias, prestadores de serviço, consultórios, academias,
-                escolas, salões, pet shops, restaurantes…</span>
-              </h3>
-            </article>
-
-            <!-- recurso: vários números -->
-            <article class="card feat" aria-labelledby="f4-title">
-              <h3 id="f4-title" class="h3">Recepção, vendas e filial, cada um com a sua IA</h3>
-              <p>Cada número (recepção, vendas, filial) tem a própria IA e as próprias instruções.</p>
-              <figure class="mock">
-                <div class="sheet" role="img" aria-label="Exemplo da lista de instâncias: recepcao-clinica conectada por WhatsApp Web com IA ativa, loja-centro conectada pela Cloud API da Meta com IA ativa, e comercial aguardando a leitura do QR code.">
-                  <p class="sheet-h sheet-h-row"><span>Instâncias · 3</span><span class="mini-pill"><svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg>Nova</span></p>
-                  <ul class="rows">
-                    <li><span class="r-ico"><svg class="ico" aria-hidden="true"><use href="#i-phone" /></svg></span><span class="r-main"><b>recepcao-clinica</b><small>WhatsApp Web · IA ativa</small></span><span class="seal"><i class="dot dot-ok"></i>Conectada</span></li>
-                    <li><span class="r-ico"><svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg></span><span class="r-main"><b>loja-centro</b><small>Cloud API (Meta) · IA ativa</small></span><span class="seal"><i class="dot dot-ok"></i>Conectada</span></li>
-                    <li><span class="r-ico"><svg class="ico" aria-hidden="true"><use href="#i-qr" /></svg></span><span class="r-main"><b>comercial</b><small>WhatsApp Web</small></span><span class="seal"><i class="dot dot-warn"></i>Aguardando QR</span></li>
-                  </ul>
-                </div>
-                <figcaption class="caption">Ilustrativo</figcaption>
-              </figure>
-            </article>
-
-            <!-- recurso principal: pausa humana -->
-            <article class="card feat feat-wide feat-hl" id="pausa" aria-labelledby="f2-title">
-              <div class="feat-copy">
-                <p class="chip chip-sm">Recurso principal</p>
-                <h3 id="f2-title" class="h3 h3-lg">A equipe respondeu? A IA sai da conversa sozinha.</h3>
-                <p>
-                  Quando alguém da equipe escreve pelo celular, WhatsApp Web ou Desktop, a IA pausa só naquela conversa. Depois
-                  do tempo que você definir sem mensagem da equipe, ela volta a atender. Sem botão, sem esquecer de reativar.
-                </p>
-                <ul class="checks">
-                  <li>Pausa por conversa: os outros clientes continuam sendo atendidos</li>
-                  <li>Volta sozinha depois do tempo combinado, por exemplo 2 horas</li>
-                  <li>Precisa pausar uma conversa específica? Você pausa ou retoma a IA pelo painel, em um clique, ou pede para a nossa equipe.</li>
-                </ul>
-              </div>
-              <figure class="mock">
-                <div class="sheet" role="img" aria-label="Exemplo da tabela de sessões do bot da recepção: Carla, pausada, volta em 1 hora e 40 minutos; Roberto, IA ativa; Juliana, pausada, volta em 35 minutos; Loja Centro, pausada manualmente; Marcos, encerrada.">
-                  <p class="sheet-h sheet-h-row"><span>Sessões · bot recepcao</span><span class="seg"><b>Todas 5</b><span>Pausadas 3</span></span></p>
-                  <table class="tbl">
-                    <thead><tr><th>Contato</th><th>Status</th><th class="t-last">Última mensagem</th></tr></thead>
-                    <tbody>
-                      <tr><td><span class="av av-sm">CM</span>Carla M.</td><td><span class="seal"><i class="dot dot-warn"></i>Pausada · volta em 1h40</span></td><td class="t-last">Ana respondeu às 14:20</td></tr>
-                      <tr><td><span class="av av-sm">RS</span>Roberto S.</td><td><span class="seal"><i class="dot dot-ok"></i>Ativa</span></td><td class="t-last">Qual o valor da consulta?</td></tr>
-                      <tr><td><span class="av av-sm">JP</span>Juliana P.</td><td><span class="seal"><i class="dot dot-warn"></i>Pausada · volta em 35 min</span></td><td class="t-last">Bruno respondeu às 13:35</td></tr>
-                      <tr><td><span class="av av-sm">LC</span>Loja Centro</td><td><span class="seal"><i class="dot dot-mute"></i>Pausada manualmente</span></td><td class="t-last">Atendimento manual</td></tr>
-                      <tr><td><span class="av av-sm">MT</span>Marcos T.</td><td><span class="seal"><i class="dot dot-off"></i>Encerrada</span></td><td class="t-last">Obrigado!</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-                <figcaption class="caption">Ilustrativo</figcaption>
-              </figure>
-            </article>
-
-            <!-- recurso: mídia -->
-            <article class="card feat" id="midia" aria-labelledby="f3-title">
-              <h3 id="f3-title" class="h3">O cliente manda áudio, foto ou PDF. A IA entende.</h3>
-              <p>Áudios de até 5 minutos são transcritos no WhatsApp Web (na API oficial, a Meta não informa a duração). Fotos são lidas, e a IA lê PDFs de até 20 páginas e 10 MB.</p>
-              <figure class="mock">
-                <div class="sheet sheet-stack" role="img" aria-label="Exemplo de três mensagens com mídia: um áudio de 8 segundos e a transcrição perguntando se o apartamento da Rua das Flores está disponível; uma foto descrita pela IA como um tênis branco com a pergunta se há outra cor; um PDF de 3 páginas resumido como contrato de locação de 12 meses.">
-                  <div class="media-row">
-                    <span class="mini-pill"><svg class="ico" aria-hidden="true"><use href="#i-mic" /></svg>Áudio · 0:08</span>
-                    <p><small>Transcrição</small>“O apartamento da Rua das Flores ainda está disponível?”</p>
-                  </div>
-                  <div class="media-row">
-                    <span class="mini-pill"><svg class="ico" aria-hidden="true"><use href="#i-image" /></svg>Foto</span>
-                    <p><small>Descrição</small>Tênis branco de corrida, cliente pergunta se tem em outra cor.</p>
-                  </div>
-                  <div class="media-row">
-                    <span class="mini-pill"><svg class="ico" aria-hidden="true"><use href="#i-file" /></svg>PDF · 3 páginas</span>
-                    <p><small>Resumo</small>Contrato de locação, 12 meses, reajuste anual pelo IGP-M.</p>
-                  </div>
-                </div>
-                <figcaption class="caption">Ilustrativo</figcaption>
-              </figure>
-            </article>
-
-            <!-- recurso: instruções -->
-            <article class="card feat" aria-labelledby="f1-title">
-              <h3 id="f1-title" class="h3">Instruções do seu negócio, em linguagem simples</h3>
-              <p>A IA da OpenAI segue o que montamos com você: o que a empresa faz, como falar e o que nunca responder. Ela lembra do que o cliente já disse, de 2 a 100 mensagens.</p>
-              <figure class="mock">
-                <div class="sheet sheet-code" role="img" aria-label="Exemplo das instruções do bot da recepção: negócio Clínica Bem-Estar; horário de segunda a sexta das 8h às 18h e sábado das 8h às 12h; tom cordial e frases curtas; nunca pedir CPF ou senha nem prometer diagnóstico; memória de 40 mensagens; pausa humana de 2 horas.">
-                  <p class="sheet-h">recepcao · instruções</p>
-<pre class="code"><span class="c-com"># Assistente virtual da recepção</span>
-<span class="c-key">negocio</span>: "Clínica Bem-Estar"
-<span class="c-key">horario</span>: "seg a sex, 8h às 18h · sáb, 8h às 12h"
-<span class="c-key">tom</span>: "cordial, frases curtas"
-<span class="c-key">nunca</span>:
-  - pedir CPF, senha ou cartão
-  - prometer diagnóstico
-<span class="c-key">memoria</span>: 40  <span class="c-com"># mensagens</span>
-<span class="c-key">pausa_humana</span>: 2h</pre>
-                </div>
-                <figcaption class="caption">Ilustrativo</figcaption>
-              </figure>
-            </article>
-
-            <!-- recurso: observabilidade -->
-            <article class="card feat feat-wide" aria-labelledby="f5-title">
-              <div class="feat-copy">
-                <h3 id="f5-title" class="h3 h3-lg">A gente acompanha servidor, banco e conexões e age antes de virar problema.</h3>
-                <p>
-                  A nossa equipe monitora memória, banco de dados, deploys e conexões do WhatsApp, com alerta quando algum
-                  limite está perto do fim.
-                </p>
-                <ul class="checks">
-                  <li>Memória, CPU, banco e mensagens das últimas 24 horas</li>
-                  <li>Alerta de limite estourado ou projetado para o mês</li>
-                  <li>Estado de cada número conectado</li>
-                </ul>
-              </div>
-              <figure class="mock">
-                <div class="sheet" role="img" aria-label="Exemplo do painel de observabilidade: alerta de que o banco está em 82 por cento do armazenamento; servidor com 39 por cento de memória; banco com 82 por cento do armazenamento, perto do limite; 137 mensagens nas últimas 24 horas; WhatsApp com 2 de 3 números conectados.">
-                  <p class="alert"><i class="dot dot-warn"></i><span><b>1 alerta: perto do limite.</b> Banco: 82% do armazenamento do plano</span></p>
-                  <div class="metrics-mini">
-                    <div class="mm">
-                      <span class="mm-k"><svg class="ico" aria-hidden="true"><use href="#i-server" /></svg>Servidor · memória</span>
-                      <span class="mm-v">39%</span>
-                      <span class="bar"><i style="width: 39%"></i></span>
-                      <span class="mm-l">200 MB de 512 MB</span>
-                    </div>
-                    <div class="mm">
-                      <span class="mm-k"><svg class="ico" aria-hidden="true"><use href="#i-db" /></svg>Banco · armazenamento</span>
-                      <span class="mm-v">82%<span class="seal"><i class="dot dot-warn"></i>Perto do limite</span></span>
-                      <span class="bar bar-warn"><i style="width: 82%"></i></span>
-                      <span class="mm-l">410 MB de 500 MB</span>
-                    </div>
-                    <div class="mm">
-                      <span class="mm-k"><svg class="ico" aria-hidden="true"><use href="#i-chat" /></svg>Mensagens · 24 h</span>
-                      <span class="mm-v">137</span>
-                      <span class="spark" aria-hidden="true"><i style="height: 30%"></i><i style="height: 45%"></i><i style="height: 25%"></i><i style="height: 60%"></i><i style="height: 80%"></i><i style="height: 55%"></i><i style="height: 70%"></i><i style="height: 95%"></i><i style="height: 65%"></i><i style="height: 40%"></i></span>
-                      <span class="mm-l">pico às 10h</span>
-                    </div>
-                    <div class="mm">
-                      <span class="mm-k"><svg class="ico" aria-hidden="true"><use href="#i-phone" /></svg>WhatsApp</span>
-                      <span class="mm-v">2 de 3<span class="seal"><i class="dot dot-bad"></i>1 desconectado</span></span>
-                      <span class="bar"><i style="width: 67%"></i></span>
-                      <span class="mm-l">números conectados</span>
-                    </div>
-                  </div>
-                </div>
-                <figcaption class="caption">Ilustrativo</figcaption>
-              </figure>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <!-- === números -->
-      <section class="section section-tight" aria-labelledby="metrics-title">
-        <div class="wrap">
-          <h2 id="metrics-title" class="h2 h2-sm">O produto em números</h2>
-          <ul class="stats">
-            <li class="stat">
-              <div class="stat-top"><strong class="stat-n">24 h</strong>
-                <svg class="stat-viz" viewBox="0 0 112 44" aria-hidden="true"><g class="v-bars"><rect x="2" y="4" width="12" height="28" rx="3"/><rect x="18" y="4" width="12" height="28" rx="3"/><rect x="34" y="4" width="12" height="28" rx="3"/><rect x="50" y="4" width="12" height="28" rx="3"/><rect x="66" y="4" width="12" height="28" rx="3"/><rect x="82" y="4" width="12" height="28" rx="3"/><rect x="98" y="4" width="12" height="28" rx="3"/></g><g class="v-lbl"><text x="8" y="43">S</text><text x="24" y="43">T</text><text x="40" y="43">Q</text><text x="56" y="43">Q</text><text x="72" y="43">S</text><text x="88" y="43">S</text><text x="104" y="43">D</text></g></svg>
-              </div>
-              <p class="stat-t">Atendimento todos os dias</p>
-              <p class="stat-d">Madrugada, fim de semana e feriado: ninguém fica sem resposta.</p>
-            </li>
-            <li class="stat">
-              <div class="stat-top"><strong class="stat-n">100</strong>
-                <svg class="stat-viz" viewBox="0 0 112 44" aria-hidden="true"><g class="v-lines"><rect x="40" y="4" width="70" height="8" rx="4"/><rect x="2" y="18" width="62" height="8" rx="4" class="v-dim"/><rect x="30" y="32" width="80" height="8" rx="4"/></g></svg>
-              </div>
-              <p class="stat-t">Mensagens de memória</p>
-              <p class="stat-d">A IA lembra do que o cliente já disse. Ninguém repete a história.</p>
-            </li>
-            <li class="stat">
-              <div class="stat-top"><strong class="stat-n">20 pág.</strong>
-                <svg class="stat-viz" viewBox="0 0 112 44" aria-hidden="true"><g class="v-docs"><rect x="58" y="2" width="30" height="38" rx="4" class="v-dim"/><rect x="68" y="5" width="30" height="38" rx="4"/><path d="M74 15h18M74 22h18M74 29h12" class="v-ink"/></g></svg>
-              </div>
-              <p class="stat-t">PDF lido de ponta a ponta</p>
-              <p class="stat-d">Contrato, laudo ou orçamento: a IA entende e resume, até 10 MB.</p>
-            </li>
-            <li class="stat">
-              <div class="stat-top"><strong class="stat-n">5 min</strong>
-                <svg class="stat-viz" viewBox="0 0 112 44" aria-hidden="true"><g class="v-wave"><rect x="2" y="18" width="5" height="8" rx="2.5"/><rect x="11" y="12" width="5" height="20" rx="2.5"/><rect x="20" y="6" width="5" height="32" rx="2.5"/><rect x="29" y="14" width="5" height="16" rx="2.5"/><rect x="38" y="9" width="5" height="26" rx="2.5"/><rect x="47" y="16" width="5" height="12" rx="2.5"/><rect x="56" y="4" width="5" height="36" rx="2.5"/><rect x="65" y="12" width="5" height="20" rx="2.5"/><rect x="74" y="17" width="5" height="10" rx="2.5"/><rect x="83" y="10" width="5" height="24" rx="2.5"/><rect x="92" y="15" width="5" height="14" rx="2.5"/><rect x="101" y="19" width="5" height="6" rx="2.5"/></g></svg>
-              </div>
-              <p class="stat-t">De áudio transcrito</p>
-              <p class="stat-d">O cliente manda áudio, a IA entende e responde por escrito.</p>
-            </li>
-          </ul>
-          <p class="fine">Limites padrão do produto, ajustáveis na configuração de cada número.</p>
-        </div>
-      </section>
-
       <!-- === segmentos -->
       <section class="section" id="segmentos" aria-labelledby="seg-title">
         <div class="wrap">
           <div class="section-head">
             <h2 id="seg-title" class="h2">As perguntas de sempre, <span class="soft">respondidas em segundos.</span></h2>
-            <p class="section-lead">Exemplos do que a IA responde em cada tipo de negócio, com as informações que você fornece.</p>
+            <p class="section-lead">Escolha o segmento e veja exemplos do que a IA responde, com as informações que você fornece.</p>
           </div>
-          <ul class="grid grid-3">
-            <li class="card segment">
-              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-health" /></svg></span>
-              <h3 class="h3">Clínicas e consultórios</h3>
-              <ul class="asks">
-                <li>“Vocês aceitam o meu convênio?”</li>
-                <li>“Quanto custa a avaliação?”</li>
-                <li>“Precisa de jejum para o exame?”</li>
-              </ul>
-              <p class="muted">Informa e pré-agenda. Dúvida clínica vai para a equipe.</p>
-            </li>
-            <li class="card segment">
-              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-scale" /></svg></span>
-              <h3 class="h3">Escritórios de advocacia</h3>
-              <ul class="asks">
-                <li>“Vocês atendem causa trabalhista?”</li>
-                <li>“Quais documentos levo na consulta?”</li>
-                <li>“Tem horário na quinta à tarde?”</li>
-              </ul>
-              <p class="muted">Triagem e agendamento, sem prometer resultado, conforme as regras da OAB.</p>
-            </li>
-            <li class="card segment">
-              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-bag" /></svg></span>
-              <h3 class="h3">Lojas</h3>
-              <ul class="asks">
-                <li>“Tem esse modelo no tamanho 40?”</li>
-                <li>“Vocês entregam no meu bairro?”</li>
-                <li>“Aceitam Pix? Parcelam?”</li>
-              </ul>
-              <p class="muted">Responde sobre produtos, prazos e pagamento. A venda fecha com a equipe.</p>
-            </li>
-            <li class="card segment">
-              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-home" /></svg></span>
-              <h3 class="h3">Imobiliárias</h3>
-              <ul class="asks">
-                <li>“O apartamento ainda está disponível?”</li>
-                <li>“Aceita pet? Qual o valor do condomínio?”</li>
-                <li>“Posso visitar no sábado?”</li>
-              </ul>
-              <p class="muted">Qualifica o interessado e passa o contato pronto para o corretor.</p>
-            </li>
-            <li class="card segment">
-              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-tool" /></svg></span>
-              <h3 class="h3">Prestadores de serviço</h3>
-              <ul class="asks">
-                <li>“Vocês atendem na minha região?”</li>
-                <li>“Quanto fica um orçamento?”</li>
-                <li>“Qual o próximo horário livre?”</li>
-              </ul>
-              <p class="muted">Coleta os dados do pedido e organiza a fila de orçamentos.</p>
-            </li>
-            <li class="card segment segment-cta">
-              <h3 class="h3">O seu negócio não está na lista?</h3>
-              <p>Se o seu cliente pergunta pelo WhatsApp, a IA pode responder. Vamos ver o seu caso.</p>
-              <a class="btn btn-primary" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero saber se funciona para o meu negócio.">Falar no WhatsApp</a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- === segurança -->
-      <section class="section" id="seguranca" aria-labelledby="seg2-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="seg2-title" class="h2">Atendimento automático, <span class="soft">com regras claras.</span></h2>
-            <p class="section-lead">Boas práticas que entram na configuração de todo cliente.</p>
+          <div class="tour seg-selector" data-tabs>
+            <div class="tour-tabs" role="tablist" aria-label="Segmentos">
+              <button class="tour-tab" type="button" role="tab" id="seg-t-advocacia" aria-controls="seg-advocacia" aria-selected="true"><svg class="ico" aria-hidden="true"><use href="#i-scale" /></svg>Escritórios de advocacia</button>
+              <button class="tour-tab" type="button" role="tab" id="seg-t-clinica" aria-controls="seg-clinica" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-health" /></svg>Clínicas</button>
+              <button class="tour-tab" type="button" role="tab" id="seg-t-loja" aria-controls="seg-loja" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-bag" /></svg>Lojas</button>
+              <button class="tour-tab" type="button" role="tab" id="seg-t-imobiliaria" aria-controls="seg-imobiliaria" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-home" /></svg>Imobiliárias</button>
+              <button class="tour-tab" type="button" role="tab" id="seg-t-servicos" aria-controls="seg-servicos" aria-selected="false" tabindex="-1"><svg class="ico" aria-hidden="true"><use href="#i-tool" /></svg>Serviços</button>
+            </div>
+            <div class="tour-panels">
+              <div class="tour-panel" role="tabpanel" id="seg-advocacia" aria-labelledby="seg-t-advocacia" tabindex="0">
+                <div class="tour-copy">
+                  <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-scale" /></svg></span>
+                  <h3 class="h3">Escritórios de advocacia</h3>
+                  <p class="muted">Triagem e organização dos atendimentos, sem prometer resultado, conforme as regras da OAB.</p>
+                </div>
+                <ul class="asks seg-asks">
+                  <li>“Vocês atendem causa trabalhista?”</li>
+                  <li>“Quais documentos levo na consulta?”</li>
+                  <li>“Tem horário na quinta à tarde?”</li>
+                </ul>
+              </div>
+              <div class="tour-panel" role="tabpanel" id="seg-clinica" aria-labelledby="seg-t-clinica" tabindex="0" hidden>
+                <div class="tour-copy">
+                  <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-health" /></svg></span>
+                  <h3 class="h3">Clínicas e consultórios</h3>
+                  <p class="muted">Informa e pré-agenda. Dúvida clínica vai para a equipe.</p>
+                </div>
+                <ul class="asks seg-asks">
+                  <li>“Vocês aceitam o meu convênio?”</li>
+                  <li>“Quanto custa a avaliação?”</li>
+                  <li>“Precisa de jejum para o exame?”</li>
+                </ul>
+              </div>
+              <div class="tour-panel" role="tabpanel" id="seg-loja" aria-labelledby="seg-t-loja" tabindex="0" hidden>
+                <div class="tour-copy">
+                  <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-bag" /></svg></span>
+                  <h3 class="h3">Lojas</h3>
+                  <p class="muted">Responde sobre produtos, prazos e pagamento. A venda fecha com a equipe.</p>
+                </div>
+                <ul class="asks seg-asks">
+                  <li>“Tem esse modelo no tamanho 40?”</li>
+                  <li>“Vocês entregam no meu bairro?”</li>
+                  <li>“Aceitam Pix? Parcelam?”</li>
+                </ul>
+              </div>
+              <div class="tour-panel" role="tabpanel" id="seg-imobiliaria" aria-labelledby="seg-t-imobiliaria" tabindex="0" hidden>
+                <div class="tour-copy">
+                  <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-home" /></svg></span>
+                  <h3 class="h3">Imobiliárias</h3>
+                  <p class="muted">Qualifica o interessado e passa o contato pronto para o corretor.</p>
+                </div>
+                <ul class="asks seg-asks">
+                  <li>“O apartamento ainda está disponível?”</li>
+                  <li>“Aceita pet? Qual o valor do condomínio?”</li>
+                  <li>“Posso visitar no sábado?”</li>
+                </ul>
+              </div>
+              <div class="tour-panel" role="tabpanel" id="seg-servicos" aria-labelledby="seg-t-servicos" tabindex="0" hidden>
+                <div class="tour-copy">
+                  <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-tool" /></svg></span>
+                  <h3 class="h3">Prestadores de serviço</h3>
+                  <p class="muted">Coleta os dados do pedido e organiza a fila de orçamentos.</p>
+                </div>
+                <ul class="asks seg-asks">
+                  <li>“Vocês atendem na minha região?”</li>
+                  <li>“Quanto fica um orçamento?”</li>
+                  <li>“Qual o próximo horário livre?”</li>
+                </ul>
+              </div>
+            </div>
           </div>
-          <ul class="trust">
-            <li>
-              <svg class="ico" aria-hidden="true"><use href="#i-bot" /></svg>
-              <h3 class="h4">A IA se apresenta como assistente</h3>
-              <p>O cliente sabe que está falando com uma assistente virtual. Quando o cliente pede uma pessoa, a IA avisa que a equipe vai continuar, e sua equipe assume respondendo no WhatsApp.</p>
-            </li>
-            <li>
-              <svg class="ico" aria-hidden="true"><use href="#i-lock" /></svg>
-              <h3 class="h4">Orientada a não pedir dados sensíveis</h3>
-              <p>As instruções orientam a IA a nunca pedir senhas, CPF ou dados de cartão.</p>
-            </li>
-            <li>
-              <svg class="ico" aria-hidden="true"><use href="#i-eye" /></svg>
-              <h3 class="h4">Dados usados só no atendimento</h3>
-              <p>
-                As mensagens servem para responder o cliente. Transcrições e PDFs não vão para os logs, e imagens e documentos não
-                ficam no histórico que a IA usa.
-              </p>
-            </li>
-            <li>
-              <svg class="ico" aria-hidden="true"><use href="#i-user" /></svg>
-              <h3 class="h4">A equipe sempre no controle</h3>
-              <p>A IA pausa sozinha quando alguém da equipe responde. Precisa pausar uma conversa específica? Você pausa ou retoma a IA pelo painel do contato, ou pede para a nossa equipe.</p>
-            </li>
-            <li>
-              <svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg>
-              <h3 class="h4">LGPD por escrito</h3>
-              <p>Termo de tratamento de dados e aviso ao contato de que o atendimento usa IA. Guardamos só o necessário.</p>
-            </li>
-            <li>
-              <svg class="ico" aria-hidden="true"><use href="#i-alert" /></svg>
-              <h3 class="h4">Transparência sobre o canal</h3>
-              <p>O WhatsApp Web não é oficial e pode ter o número bloqueado. Para mais garantia, a API oficial da Meta.</p>
-            </li>
-          </ul>
-          <a class="sec-cta" href="/seguranca">
-            <span>
-              <span class="h4">Segurança, em detalhes</span>
-              <p>HTTPS obrigatório, acesso conferido no servidor, códigos guardados só como hash, credenciais cifradas e prazo de guarda das mensagens. Tudo explicado sem selos que não temos.</p>
-              <span class="sec-link">Ver como protegemos os dados<svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg></span>
-            </span>
-            <span class="sec-cta-tiles" aria-hidden="true">
-              <span class="t3 t3--deep"><span class="t3-face"><span class="t3-disc"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" /><path d="M8.5 12l2.5 2.5 4.5-4.5" /></svg></span></span></span>
-              <span class="t3 t3--cream"><span class="t3-face"><span class="t3-disc"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /><path d="M12 15v2" /></svg></span></span></span>
-            </span>
-          </a>
-        </div>
-      </section>
-
-      <!-- === canais -->
-      <section class="section" id="canais" aria-labelledby="canais-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="canais-title" class="h2">WhatsApp Web ou API oficial da Meta. <span class="soft">Você escolhe.</span></h2>
-            <p class="section-lead">
-              Conexão em minutos; IA no ar em até 5 dias úteis. Use o número que você já tem ou vá para a API oficial quando precisar de mais garantia e volume.
-            </p>
+          <p class="seg-more">O seu negócio não está na lista? Se o seu cliente pergunta pelo WhatsApp, a IA pode responder. <a class="link" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero saber se funciona para o meu negócio.">Falar no WhatsApp</a></p>
+          <div class="num-row" role="list" aria-label="Limites do produto">
+            <div role="listitem"><strong>24 h</strong><span>Atendimento todos os dias, inclusive fim de semana e feriado</span></div>
+            <div role="listitem"><strong>100</strong><span>mensagens de memória por conversa</span></div>
+            <div role="listitem"><strong>20 pág.</strong><span>por PDF, até 10 MB</span></div>
+            <div role="listitem"><strong>5 min</strong><span>por áudio transcrito</span></div>
           </div>
-          <div class="grid grid-2">
-            <article class="card channel">
-              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-qr" /></svg></span>
-              <h3 class="h3">WhatsApp Web</h3>
-              <p class="muted">Conexão por QR code</p>
-              <ul class="checks">
-                <li>Usa o número e o celular que a empresa já tem</li>
-                <li>Conexão em minutos, sem aprovação da Meta</li>
-                <li>Pausa humana automática quando a equipe responde</li>
-              </ul>
-              <p class="note"><i class="dot dot-warn"></i>Não é um canal oficial da Meta: o número pode ser bloqueado, principalmente com disparos em massa.</p>
-            </article>
-            <article class="card channel">
-              <span class="ico-box"><svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg></span>
-              <h3 class="h3">WhatsApp Cloud API</h3>
-              <p class="muted">API oficial da Meta</p>
-              <ul class="checks">
-                <li>Canal oficial, com verificação da empresa pela Meta</li>
-                <li>Coexistence: o app no celular e a API no mesmo número, sujeito à aprovação da Meta</li>
-                <li>Modelos de mensagem aprovados pela Meta (lembretes automáticos exigem integração)</li>
-              </ul>
-              <p class="note"><i class="dot dot-mute"></i>A Meta cobra por algumas categorias de mensagem. Com Coexistence, a IA também pausa quando a equipe responde pelo app WhatsApp Business.</p>
-            </article>
-          </div>
+          <p class="fine">Limites do produto, ajustáveis na configuração de cada número. Não são resultados prometidos.</p>
+          <p class="seg-note"><b>Atendimento automático com regras claras.</b> A IA se apresenta como assistente, é orientada a não pedir dados sensíveis e pausa quando a equipe assume. <a class="link" href="/seguranca">Ver como protegemos os dados</a></p>
         </div>
       </section>
 
@@ -1018,7 +768,8 @@
             <h2 id="planos-title" class="h2">Implantação uma vez, mensalidade mês a mês. <span class="soft">Sem fidelidade.</span></h2>
             <p class="section-lead">
               A implantação configura a IA com você. A mensalidade cobre a IA, o servidor, o banco de dados e o suporte. Cada
-              plano é para 1 número de WhatsApp; precisa de mais, é só somar números adicionais.
+              plano é para 1 número de WhatsApp; precisa de mais, é só somar números adicionais. A conexão muda o preço e o
+              risco: WhatsApp Web pelo QR code ou API oficial da Meta.
             </p>
           </div>
           <ul class="plans">
@@ -1088,13 +839,29 @@
               </ul>
             </li>
           </ul>
+          <div class="channels-mini" id="canais" aria-labelledby="canais-title">
+            <h3 id="canais-title" class="h3">WhatsApp Web ou API oficial da Meta</h3>
+            <p class="channels-lead">Conexão em minutos; IA no ar em até 5 dias úteis. Use o número que você já tem ou vá para a API oficial quando precisar de mais garantia e volume.</p>
+            <div class="grid grid-2">
+              <article class="card">
+                <h4 class="h4">WhatsApp Web</h4>
+                <p>QR code, sem aprovação da Meta, usando o número e o celular que a empresa já tem.</p>
+                <p class="note"><i class="dot dot-warn"></i>Não é um canal oficial: o número pode ser bloqueado, principalmente com disparos em massa.</p>
+              </article>
+              <article class="card">
+                <h4 class="h4">API oficial da Meta</h4>
+                <p>Canal oficial com verificação da empresa. Coexistence mantém o app no mesmo número, sujeito à aprovação da Meta.</p>
+                <p class="note"><i class="dot dot-mute"></i>A Meta cobra por algumas categorias de mensagem.</p>
+              </article>
+            </div>
+          </div>
           <div class="addon" aria-labelledby="addon-title">
             <div class="addon-copy">
               <h3 id="addon-title" class="h4">Mais de um número? Cada um é uma instância completa do seu plano.</h3>
               <p>
-                Recepção, vendas ou filial: o número adicional tem os mesmos recursos e a mesma franquia de respostas do
-                plano, com IA, instruções, banco de dados e espaço no servidor próprios. Custa cerca de 35% menos que um plano
-                novo, porque o treinamento, o suporte e as integrações são da empresa e não se repetem.
+                Recepção, vendas ou filial: cada número tem a própria IA e as próprias instruções, com os mesmos recursos e
+                a mesma franquia de respostas do plano, banco de dados e espaço no servidor próprios. Custa cerca de 35% menos
+                que um plano novo, porque o treinamento, o suporte e as integrações são da empresa e não se repetem.
               </p>
             </div>
             <div class="addon-scroll" role="region" aria-label="Preço do número adicional por plano" tabindex="0">
@@ -1176,6 +943,17 @@
               <p>Ela responde com base nas informações que você forneceu. Quando o assunto sai disso, a orientação é dizer que a equipe vai retornar. Se houver uma falha técnica, o cliente não recebe mensagem técnica de erro.</p>
             </details>
             <details>
+              <summary>O WhatsApp pode bloquear o meu número?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
+              <p>No WhatsApp Web, que não é um canal oficial, existe esse risco, principalmente com disparos em massa. O WhatsAI é feito para responder quem chama, não para disparar. Para reduzir esse risco, use a API oficial da Meta.</p>
+            </details>
+            <details>
+              <summary>Dá para testar antes de fechar?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
+              <p>Sim. O piloto de 14 dias custa R$ 690, e esse valor é abatido da implantação se você seguir com um plano.</p>
+            </details>
+            <details class="faq-more">
+              <summary>Ver mais 8 perguntas<svg class="ico" aria-hidden="true"><use href="#i-chev-d" /></svg></summary>
+              <div class="faq faq-nested">
+            <details>
               <summary>Como a minha equipe assume uma conversa?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
               <p>É só responder o cliente pelo WhatsApp, no celular, no WhatsApp Web ou no Desktop. A IA pausa sozinha naquela conversa e volta depois do tempo combinado sem mensagens da equipe. Na API oficial, isso vale com Coexistence, quando a equipe responde pelo app WhatsApp Business.</p>
             </details>
@@ -1188,23 +966,12 @@
               <p>Sim, nos planos Profissional e Premium. Com a Agenda ligada, a IA mostra os horários livres, marca, remarca ou cancela pelo WhatsApp, e o cliente recebe lembretes com pedido de confirmação. Você define as regras e pode exigir que a equipe aprove cada horário. Na API oficial, os lembretes saem dentro da janela de 24 horas da Meta.</p>
             </details>
             <details>
-              <summary>O WhatsApp pode bloquear o meu número?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>No WhatsApp Web, que não é um canal oficial, existe esse risco, principalmente com disparos em massa. O WhatsAI é feito para responder quem chama, não para disparar. Para reduzir esse risco, use a API oficial da Meta.</p>
-            </details>
-            <details class="faq-more">
-              <summary>Ver mais 6 perguntas<svg class="ico" aria-hidden="true"><use href="#i-chev-d" /></svg></summary>
-              <div class="faq faq-nested">
-            <details>
               <summary>Quem paga o uso da OpenAI?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
               <p>O custo da IA já está incluído na mensalidade, dentro da franquia de respostas do plano. Se preferir usar a conta OpenAI da sua empresa, combinamos na proposta.</p>
             </details>
             <details>
               <summary>O que acontece se passar da franquia de respostas?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
               <p>A IA continua respondendo. Cada bloco de 1.000 respostas além da franquia do plano custa R$ 49.</p>
-            </details>
-            <details>
-              <summary>Dá para testar antes de fechar?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>Sim. O piloto de 14 dias custa R$ 690, e esse valor é abatido da implantação se você seguir com um plano.</p>
             </details>
             <details>
               <summary>Tem fidelidade ou multa para cancelar?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
@@ -1220,13 +987,8 @@
             </details>              </div>
             </details>
           </div>
-        </div>
-      </section>
-
-      <!-- === contato / CTA final -->
-      <section class="section cta" id="contato" aria-labelledby="cta-title">
-        <div class="wrap">
-          <div class="card card-soft cta-in band">
+          <div class="cta" id="contato">
+            <div class="card card-soft cta-in band">
             <h2 id="cta-title" class="h2">Veja o WhatsAI atendendo <span class="soft">os clientes do seu negócio.</span></h2>
             <p class="section-lead">
               Numa demonstração curta, mostramos a IA respondendo com as informações da sua empresa e a sua equipe assumindo a
@@ -1240,6 +1002,7 @@
               <svg class="ico" aria-hidden="true"><use href="#i-chat" /></svg>
               <span>WhatsApp: <a href="#contato" data-wa-phone data-wa-msg="Olá! Vi o site do WhatsAI e quero tirar algumas dúvidas.">fale com a gente pelo WhatsApp</a></span>
             </p>
+            </div>
           </div>
         </div>
       </section>
@@ -1257,7 +1020,6 @@
             <ul>
               <li><a href="#como-funciona">Como funciona</a></li>
               <li><a href="#tour">Tour do produto</a></li>
-              <li><a href="#recursos">Recursos</a></li>
               <li><a href="#canais">WhatsApp Web ou API oficial</a></li>
               <li><a href="#planos">Planos</a></li>
               <li><a href="#duvidas">Dúvidas</a></li>
@@ -1267,9 +1029,10 @@
           <nav class="foot-col" aria-labelledby="fc2">
             <h2 id="fc2" class="foot-h">Recursos</h2>
             <ul>
-              <li><a href="#recursos">IA 24 horas</a></li>
+              <li><a href="#tour">IA 24 horas</a></li>
               <li><a href="#pausa">Pausa humana automática</a></li>
               <li><a href="#midia">Áudio, foto e PDF</a></li>
+              <li><a href="#instrucoes">Instruções e horários</a></li>
               <li><a href="/seguranca">Segurança e LGPD</a></li>
               <li><a href="/privacidade">Política de privacidade</a></li>
               <li><a href="/termos">Termos de uso</a></li>
@@ -1278,11 +1041,11 @@
           <nav class="foot-col" aria-labelledby="fc3">
             <h2 id="fc3" class="foot-h">Segmentos</h2>
             <ul>
-              <li><a href="#segmentos">Advocacia</a></li>
-              <li><a href="#segmentos">Clínicas</a></li>
-              <li><a href="#segmentos">Lojas</a></li>
-              <li><a href="#segmentos">Imobiliárias</a></li>
-              <li><a href="#segmentos">Serviços</a></li>
+              <li><a href="#seg-advocacia">Advocacia</a></li>
+              <li><a href="#seg-clinica">Clínicas</a></li>
+              <li><a href="#seg-loja">Lojas</a></li>
+              <li><a href="#seg-imobiliaria">Imobiliárias</a></li>
+              <li><a href="#seg-servicos">Serviços</a></li>
             </ul>
           </nav>
           <nav class="foot-col" aria-labelledby="fc4">

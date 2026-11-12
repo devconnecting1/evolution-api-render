@@ -167,6 +167,9 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
 
   // ------------------------------------------------------------------ product tour tabs (WAI-ARIA tabs)
   // Automatic activation: arrows Left/Right (wrapping), Home and End move focus and select; Tab goes into the panel.
+  // Deep links open the tab: #pausa, #midia, #instrucoes, #seg-clinica and the panel ids (#tp-pausa) select the tab
+  // and scroll to the tour box, so the footer and linked pages reach the right tab.
+  const tabBoxes = [];
   document.querySelectorAll('[data-tabs]').forEach(function (box) {
     const tabs = Array.prototype.slice.call(box.querySelectorAll('[role="tab"]'));
     const select = function (tab, focus) {
@@ -197,7 +200,34 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
         }
       });
     });
+    tabBoxes.push({ box: box, tabs: tabs, select: select });
   });
+  const openHashTab = function () {
+    let id = '';
+    try {
+      id = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+    } catch (e) {
+      id = window.location.hash.replace(/^#/, '');
+    }
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (!target) return;
+    const wanted = target.closest('[role="tabpanel"]') || target;
+    tabBoxes.some(function (entry) {
+      const tab = entry.tabs.find(function (t) {
+        const controls = t.getAttribute('aria-controls');
+        return controls === wanted.id || t.id === wanted.id || controls === id || t.id === id;
+      });
+      if (!tab) return false;
+      entry.select(tab, false);
+      entry.box.scrollIntoView({ block: 'start' });
+      return true;
+    });
+  };
+  if (tabBoxes.length) {
+    openHashTab();
+    window.addEventListener('hashchange', openHashTab);
+  }
 
   // ------------------------------------------------------------------ mobile contact bar: only after the hero button scrolls away
   // and not over the contact section (it repeats the same button). Without IntersectionObserver it stays on, as before.
