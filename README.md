@@ -49,7 +49,7 @@ Painel e site (manager/dist, servidos pela Vercel)
 
 ## Stack
 
-- Node.js 20+, TypeScript e Express.
+- Node.js 24+, TypeScript e Express.
 - Prisma com PostgreSQL (Neon) ou MySQL.
 - Baileys, Cloud API da Meta e OpenAI.
 - Redis/Key Value para cache.

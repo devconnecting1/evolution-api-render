@@ -176,5 +176,8 @@
       "minimatch": "^11.0.1"
     },
     "link-preview-js": "$link-preview-js"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   }
 }

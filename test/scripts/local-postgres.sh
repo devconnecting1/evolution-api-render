@@ -10,7 +10,7 @@
 # When run as root the server runs as the `postgres` user, which must be able to reach TEST_PG_DIR.
 #
 # Alternative with Docker:
-#   docker run --rm -d --name evolution-test-pg -e POSTGRES_PASSWORD=postgres -p 55439:5432 postgres:16
+#   docker run --rm -d --name evolution-test-pg -e POSTGRES_PASSWORD=postgres -p 55439:5432 postgres:18
 #   export TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:55439/postgres
 set -euo pipefail
 
