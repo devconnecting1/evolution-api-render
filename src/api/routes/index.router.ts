@@ -1,3 +1,4 @@
+import { auditGlobalKey, createAuditMiddleware } from '@api/guards/audit.middleware';
 import { authGuard } from '@api/guards/auth.guard';
 import { instanceExistsGuard, instanceLoggedGuard } from '@api/guards/instance.guard';
 import Telemetry from '@api/guards/telemetry.guard';
@@ -7,7 +8,7 @@ import { EventRouter } from '@api/integrations/event/event.router';
 import { defaultMcpDeps } from '@api/integrations/mcp/mcp.deps';
 import { createMcpRouter } from '@api/integrations/mcp/mcp.router';
 import { StorageRouter } from '@api/integrations/storage/storage.router';
-import { prismaRepository, waMonitor } from '@api/server.module';
+import { auditLogService, prismaRepository, waMonitor } from '@api/server.module';
 import { Auth, configService, Database, Facebook, Openai } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
@@ -18,6 +19,7 @@ import path from 'path';
 
 import { AdminDbRouter } from './admin-db.router';
 import { AgendaRouter } from './agenda.router';
+import { AuditRouter } from './audit.router';
 import { BusinessRouter } from './business.router';
 import { CallRouter } from './call.router';
 import { ChatRouter } from './chat.router';
@@ -35,6 +37,7 @@ import { ProxyRouter } from './proxy.router';
 import { RetentionRouter } from './retention.router';
 import { MessageRouter } from './sendMessage.router';
 import { SettingsRouter } from './settings.router';
+import { TeamRouter } from './team.router';
 import { TemplateRouter } from './template.router';
 import { UsageRouter } from './usage.router';
 import { ViewsRouter } from './view.router';
@@ -53,6 +56,9 @@ const router: Router = Router();
 const serverConfig = configService.get('SERVER');
 const databaseConfig = configService.get<Database>('DATABASE');
 const guards = [instanceExistsGuard, instanceLoggedGuard, authGuard['apikey']];
+
+// "Registro de ações": records the listed actions when they finish with success (src/utils/audit-log.ts)
+router.use(createAuditMiddleware(() => auditLogService, auditGlobalKey));
 
 const telemetry = new Telemetry();
 const credentialsLogger = new Logger('CREDENTIALS');
@@ -252,6 +258,8 @@ router
   .use('/leads', new LeadsRouter(...guards).router)
   .use('/agenda', new AgendaRouter(...guards).router)
   .use('/client-access', new ClientAccessRouter().router)
+  // "Equipe": chaves por pessoa com papel (src/utils/team-access.ts)
+  .use('/team', new TeamRouter().router)
   .use('/openai-health', new OpenaiHealthRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
   // Neon project quota and database wake log: global key only, never touch the database
@@ -259,6 +267,8 @@ router
   .use('/admin/retention', new RetentionRouter().router)
   // IP do cliente que o limite de chaves erradas usa (diagnóstico, só a chave global)
   .use('/admin/client-ip', new ClientIpRouter().router)
+  // "Registro de ações": só a chave global
+  .use('/admin/audit', new AuditRouter().router)
   .use('/admin', new AdminDbRouter().router)
   // "Chaves e credenciais": only the global key (adminOnlyGuard), never an instance token
   .use(

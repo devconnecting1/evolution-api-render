@@ -1,8 +1,9 @@
 import { RouterBroker } from '@api/abstract/abstract.router';
 import { InstanceDto, SetPresenceDto } from '@api/dto/instance.dto';
-import { clientAccessService, instanceController, waMonitor } from '@api/server.module';
+import { clientAccessService, instanceController, teamAccessService, waMonitor } from '@api/server.module';
 import { ConfigService } from '@config/env.config';
 import { clientInstanceView, isClientKey } from '@utils/client-access';
+import { isTeamKey, teamInstanceView } from '@utils/team-access';
 import { instanceSchema, presenceOnlySchema } from '@validate/validate.schema';
 import { RequestHandler, Router } from 'express';
 
@@ -63,6 +64,19 @@ export class InstanceRouter extends RouterBroker {
           const grant = await clientAccessService.resolve(key);
           const list = grant ? await waMonitor.instanceInfo([grant.instanceName]) : [];
           return res.status(HttpStatus.OK).json((list ?? []).map((item: any) => clientInstanceView(item, key)));
+        }
+
+        // "Equipe": only the instances of the key, without the instance token (the panel would use it and skip the role)
+        if (isTeamKey(key)) {
+          const grant = (req as any).teamAccess ?? (await teamAccessService.resolve(key));
+          if (!grant) return res.status(HttpStatus.OK).json([]);
+          const wanted = typeof req.query?.instanceName === 'string' ? req.query.instanceName : null;
+          let names: string[] | null = grant.instanceNames;
+          if (wanted) names = !names || names.includes(wanted) ? [wanted] : [];
+          // a scoped instance that was removed meanwhile must not fail the whole list (instanceInfo throws on it)
+          if (names) names = names.filter((name) => !!waMonitor.waInstances?.[name]);
+          const list = names && !names.length ? [] : await waMonitor.instanceInfo(names ?? undefined);
+          return res.status(HttpStatus.OK).json((list ?? []).map((item: any) => teamInstanceView(item, key)));
         }
 
         const response = await this.dataValidate<InstanceDto>({

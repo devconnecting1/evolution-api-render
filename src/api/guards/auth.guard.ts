@@ -1,12 +1,13 @@
 import { InstanceDto } from '@api/dto/instance.dto';
 import { cachedInstanceToken } from '@api/guards/instance-token-cache';
 import { safeEqual } from '@api/integrations/mcp/mcp.auth';
-import { clientAccessService, prismaRepository } from '@api/server.module';
+import { clientAccessService, prismaRepository, teamAccessService } from '@api/server.module';
 import { Auth, configService, Database } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { ForbiddenException, UnauthorizedException } from '@exceptions';
 import { authThrottle, clientIp } from '@utils/auth-throttle';
 import { clientRouteAllowed, isClientKey, normalizeClientPath } from '@utils/client-access';
+import { isTeamKey, teamRouteAllowed } from '@utils/team-access';
 import { NextFunction, Request, Response } from 'express';
 
 const logger = new Logger('GUARD');
@@ -40,7 +41,11 @@ async function apikey(req: Request, res: Response, next: NextFunction) {
   try {
     return await checkApikey(req, key, next);
   } catch (error) {
-    if (error instanceof UnauthorizedException) authThrottle.recordFailure(ip);
+    // the exceptions of src/exceptions throw a plain { status, error, message } object, never an instance, so the
+    // `instanceof` alone never matched and wrong keys were not counted
+    if (error instanceof UnauthorizedException || (error as { status?: number })?.status === 401) {
+      authThrottle.recordFailure(ip);
+    }
     throw error;
   }
 }
@@ -59,6 +64,10 @@ async function checkApikey(req: Request, key: string | undefined, next: NextFunc
 
   if (isClientKey(key)) {
     return clientAccessGuard(req, key, next);
+  }
+
+  if (isTeamKey(key)) {
+    return teamKeyGuard(req, key, next);
   }
 
   if ((req.originalUrl.includes('/instance/create') || req.originalUrl.includes('/instance/fetchInstances')) && !key) {
@@ -118,6 +127,40 @@ async function clientAccessGuard(req: Request, key: string, next: NextFunction) 
 }
 
 /**
+ * "Equipe" (`wat_...` key, src/utils/team-access.ts): only the instances of the key and only what its role allows.
+ * Routes without an instance in the path are closed except a short list (fetchInstances, who am I). Decided here,
+ * on the server, for every request; the instance token is never handed to a team key (teamInstanceView).
+ */
+async function teamKeyGuard(req: Request, key: string, next: NextFunction) {
+  let grant = null;
+  try {
+    grant = await teamAccessService.resolve(key);
+  } catch (error) {
+    logger.error(error);
+  }
+  if (!grant) {
+    throw new UnauthorizedException();
+  }
+
+  const instanceName = (req.params as unknown as InstanceDto)?.instanceName;
+  if (instanceName && grant.instanceNames && !grant.instanceNames.includes(instanceName)) {
+    throw new ForbiddenException('Esta chave não tem acesso a esta instância.');
+  }
+
+  const path = normalizeClientPath(req.originalUrl, instanceName);
+  if (!teamRouteAllowed(req.method, path, grant.role, !!instanceName)) {
+    throw new ForbiddenException(
+      grant.role === 'leitura'
+        ? 'Esta chave é só de leitura.'
+        : 'Esta função fica com o dono do painel. Peça a quem administra o WhatsAI.',
+    );
+  }
+
+  (req as any).teamAccess = grant;
+  return next();
+}
+
+/**
  * Admin-only routes ("Chaves e credenciais"): ONLY the global AUTHENTICATION_API_KEY passes, compared in constant
  * time. Any other key gets 403, a valid instance token included, and the instance tokens are never even looked up
  * (no oracle telling a valid token from an invalid one). No key at all: 401, as in `apikey`.
@@ -136,8 +179,9 @@ export function createAdminOnlyGuard(globalKey: () => string | undefined) {
     if (!key) {
       throw new UnauthorizedException();
     }
-    // a wrong key here is a guess at the global key (valid instance tokens and client codes are not wrong keys)
-    if (!isClientKey(key)) authThrottle.recordFailure(ip);
+    // a wrong key here is a guess at the global key (valid instance tokens, client codes and team keys are not
+    // wrong keys: the panel of a team member may call an owner page and must not get its IP blocked)
+    if (!isClientKey(key) && !isTeamKey(key)) authThrottle.recordFailure(ip);
     throw new ForbiddenException('Apenas o administrador (chave global) tem acesso.');
   };
 }

@@ -48,6 +48,7 @@ import { createInstanceDatabases, createRoutedRepository } from './repository/in
 import { PrismaRepository } from './repository/repository.service';
 import { adminAlertsConfigFromEnv, AdminAlertsService } from './services/admin-alerts.service';
 import { AgendaService } from './services/agenda.service';
+import { AuditLogService } from './services/audit-log.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
@@ -58,6 +59,7 @@ import { ProcessosService } from './services/processos.service';
 import { ProxyService } from './services/proxy.service';
 import { retentionDaysFromEnv, RetentionService } from './services/retention.service';
 import { SettingsService } from './services/settings.service';
+import { TeamAccessService } from './services/team-access.service';
 import { TemplateService } from './services/template.service';
 import { UsageService } from './services/usage.service';
 
@@ -150,6 +152,12 @@ export const usageService = new UsageService(prismaRepository, {
 });
 /** "Acesso do cliente": códigos de acesso do cliente com módulos escolhidos (src/utils/client-access.ts). */
 export const clientAccessService = new ClientAccessService({ prisma: prismaRepository });
+export const teamAccessService = new TeamAccessService({ prisma: prismaRepository });
+const auditLogger = new Logger('Audit');
+export const auditLogService = new AuditLogService({
+  prisma: prismaRepository,
+  logger: { warn: (m) => auditLogger.warn(m) },
+});
 export const usageController = new UsageController(usageService, prismaRepository);
 
 // "Processos" (DataJud + DJEN): one instance (in-memory ticker state, rate limits, AI context provider)

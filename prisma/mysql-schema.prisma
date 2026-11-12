@@ -1098,3 +1098,38 @@ model GlobalSetting {
   value     Json     @db.Json
   updatedAt DateTime @updatedAt @db.Timestamp
 }
+
+/// "Equipe": chave de acesso por pessoa (só o hash), com papel ("equipe" ou "leitura") e, opcionalmente, a lista de
+/// instâncias (ids) que ela vê; NULL = todas. Fica no banco principal: a chave é procurada antes de saber a instância.
+model TeamKey {
+  id         String    @id @default(cuid())
+  name       String    @db.VarChar(80)
+  role       String    @db.VarChar(16)
+  instances  Json?     @db.Json
+  enabled    Boolean   @default(true)
+  keyHash    String    @unique @db.VarChar(64)
+  keyHint    String    @db.VarChar(12)
+  lastUsedAt DateTime? @db.Timestamp
+  createdAt  DateTime? @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp
+  updatedAt  DateTime  @updatedAt @db.Timestamp
+}
+
+/// "Registro de ações": quem fez o quê, quando e em qual instância. Sem conteúdo de mensagens nem segredos; o nome da
+/// instância é texto (sem FK) para o registro de uma exclusão continuar existindo. Guardado por 180 dias.
+model AuditLog {
+  id           String    @id @default(cuid())
+  createdAt    DateTime  @default(dbgenerated("CURRENT_TIMESTAMP")) @db.Timestamp
+  actor        String    @db.VarChar(120)
+  actorKind    String    @db.VarChar(16)
+  type         String    @db.VarChar(24)
+  action       String    @db.VarChar(120)
+  instanceName String?   @db.VarChar(120)
+  target       String?   @db.VarChar(160)
+  method       String    @db.VarChar(8)
+  path         String    @db.VarChar(200)
+  status       Int
+  ip           String?   @db.VarChar(64)
+
+  @@index([createdAt])
+  @@index([instanceName, createdAt])
+}
