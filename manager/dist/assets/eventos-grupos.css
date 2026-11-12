@@ -1,0 +1,210 @@
+/*whatsai-patch:eventos-grupos:css*/
+/*
+ * WhatsAI Manager: eventos em grupos, com teste de envio (prosta I do artefato WhatsAI frente a Twenty e Frappe).
+ * Escrito a mao; somente tokens var(--m-*) de minimal.css/theme.css, entao claro e escuro seguem o tema do painel.
+ * Carregado depois de page-frame.css por manager/patches/eventos-grupos.py.
+ *
+ *   .wa-eventos          bloco que substitui a lista plana de 26 codigos nas telas Webhook, WebSocket, RabbitMQ e SQS
+ *   .wa-eventos-toolbar  "Enviar teste" (acao que a tela ja tem) e a explicacao do que ele faz
+ *   .wa-eventos-result   resposta do servidor: verde quando aceita, vermelho quando recusa
+ *   .wa-eventos-group    grupo recolhivel (Mensagens, Conexao do WhatsApp, Conversas e contatos, Grupos e automacoes)
+ *   .wa-eventos-row      um evento: nome em portugues, codigo tecnico pequeno e o interruptor
+ */
+
+.wa-eventos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.wa-eventos-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 2px 0 8px;
+}
+
+.wa-eventos-test {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--m-border-input);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wa-eventos-test:hover:not(:disabled) {
+  background: var(--m-hover);
+}
+
+.wa-eventos-test:disabled {
+  cursor: progress;
+  opacity: 0.65;
+}
+
+.wa-eventos-test:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+
+.wa-eventos-hint {
+  margin: 0;
+  color: var(--m-text-3);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.wa-eventos-result {
+  margin: 0 0 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.wa-eventos-result.is-ok {
+  border-color: var(--m-ok);
+  background: var(--m-chip-green);
+  color: var(--m-chip-green-text);
+}
+
+.wa-eventos-result.is-bad {
+  border-color: var(--m-bad);
+  background: var(--m-chip-red);
+  color: var(--m-chip-red-text);
+}
+
+.wa-eventos-group {
+  border-top: 1px solid var(--m-border);
+}
+
+.wa-eventos-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wa-eventos-head:hover {
+  background: var(--m-hover);
+}
+
+.wa-eventos-head:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+
+.wa-eventos-chev {
+  display: inline-flex;
+  flex: none;
+  color: var(--m-text-3);
+  transition: transform 0.15s ease;
+}
+
+.wa-eventos-head[aria-expanded="true"] .wa-eventos-chev {
+  transform: rotate(90deg);
+}
+
+.wa-eventos-htext {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.wa-eventos-count {
+  flex: none;
+  color: var(--m-text-3);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.wa-eventos-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 6px 22px;
+}
+
+.wa-eventos-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 7px 0;
+  border-top: 1px solid var(--m-border);
+}
+
+.wa-eventos-list > .wa-eventos-row:first-child {
+  border-top: 0;
+}
+
+.wa-eventos-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.wa-eventos-name {
+  color: var(--m-text);
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.wa-eventos-code {
+  color: var(--m-text-3);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 15px;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .wa-eventos-list {
+    padding-left: 12px;
+  }
+
+  .wa-eventos-row {
+    gap: 8px;
+  }
+
+  .wa-eventos-head {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-eventos-chev {
+    transition: none;
+  }
+}
