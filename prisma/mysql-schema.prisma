@@ -1127,6 +1127,11 @@ model User {
   name        String?       @db.VarChar(200)
   picture     String?       @db.VarChar(500)
   lastLoginAt DateTime?     @db.Timestamp
+  /// Papel no painel: "dono", "equipe" ou "leitura". Hoje toda pessoa da allowlist entra como dona; as regras por
+  /// papel chegam com a etapa 3, sem mudar o login Google atual.
+  role        String        @default("dono") @db.VarChar(16)
+  /// Instâncias liberadas para a pessoa (ids); NULL = todas. Reservado para a etapa 3 (login Google com papel).
+  instances   Json?         @db.Json
   createdAt   DateTime      @default(now()) @db.Timestamp
   updatedAt   DateTime      @updatedAt @db.Timestamp
   UserSession UserSession[]
@@ -1148,4 +1153,41 @@ model UserSession {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+/// "Equipe": chave de acesso por pessoa (só o hash SHA-256), com papel ("dono", "equipe" ou "leitura") e,
+/// opcionalmente, a lista de instâncias (ids) que ela vê; NULL = todas. Fica no banco principal: a chave é
+/// procurada antes de saber a instância.
+model TeamKey {
+  id         String    @id @default(cuid())
+  name       String    @db.VarChar(80)
+  role       String    @db.VarChar(16)
+  instances  Json?     @db.Json
+  enabled    Boolean   @default(true)
+  keyHash    String    @unique @db.VarChar(64)
+  keyHint    String    @db.VarChar(12)
+  lastUsedAt DateTime? @db.Timestamp
+  createdAt  DateTime? @default(now()) @db.Timestamp
+  updatedAt  DateTime  @updatedAt @db.Timestamp
+}
+
+/// "Registro de ações": quem fez o quê, quando e em qual instância. Sem conteúdo de mensagens nem segredos; o nome da
+/// instância é texto (sem FK) para o registro de uma exclusão continuar existindo. Guardado por 180 dias por padrão
+/// (AUDIT_RETENTION_DAYS); a limpeza roda na primeira gravação do dia, sem timer.
+model AuditLog {
+  id           String    @id @default(cuid())
+  createdAt    DateTime  @default(now()) @db.Timestamp
+  actor        String    @db.VarChar(120)
+  actorKind    String    @db.VarChar(16)
+  type         String    @db.VarChar(24)
+  action       String    @db.VarChar(120)
+  instanceName String?   @db.VarChar(120)
+  target       String?   @db.VarChar(160)
+  method       String    @db.VarChar(8)
+  path         String    @db.VarChar(200)
+  status       Int
+  ip           String?   @db.VarChar(64)
+
+  @@index([createdAt])
+  @@index([instanceName, createdAt])
 }

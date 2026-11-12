@@ -1,0 +1,358 @@
+/*
+ * WhatsAI panel: "Equipe" and "Registro de ações" (proposal V). Only the design tokens (var(--m-*)), so the same
+ * styles serve the light and the dark theme. Linked after the other panel stylesheets by manager/patches/team-audit.py;
+ * the markup comes from team-admin.js.
+ */
+
+/* a team key of the "equipe"/"leitura" roles does not see the owner pages (the server refuses them anyway) */
+html[data-wa-team-role='equipe'] li:has(> a[href='/manager/equipe']),
+html[data-wa-team-role='equipe'] li:has(> a[href='/manager/registro']),
+html[data-wa-team-role='equipe'] li:has(> a[href='/manager/chaves']),
+html[data-wa-team-role='equipe'] li:has(> a[href='/manager/retencao']),
+html[data-wa-team-role='leitura'] li:has(> a[href='/manager/equipe']),
+html[data-wa-team-role='leitura'] li:has(> a[href='/manager/registro']),
+html[data-wa-team-role='leitura'] li:has(> a[href='/manager/chaves']),
+html[data-wa-team-role='leitura'] li:has(> a[href='/manager/retencao']),
+html[data-wa-team-role='equipe'] a[href='/manager/equipe'],
+html[data-wa-team-role='equipe'] a[href='/manager/registro'],
+html[data-wa-team-role='equipe'] a[href='/manager/chaves'],
+html[data-wa-team-role='equipe'] a[href='/manager/retencao'],
+html[data-wa-team-role='leitura'] a[href='/manager/equipe'],
+html[data-wa-team-role='leitura'] a[href='/manager/registro'],
+html[data-wa-team-role='leitura'] a[href='/manager/chaves'],
+html[data-wa-team-role='leitura'] a[href='/manager/retencao'] {
+  display: none !important;
+}
+
+.wa-team-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 1080px;
+  padding: 4px 0 32px;
+  color: var(--m-text);
+}
+
+.wa-team-page [hidden],
+.wa-team-fresh[hidden],
+.wa-team-form[hidden],
+.wa-team-checks[hidden] {
+  display: none !important;
+}
+
+.wa-team-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wa-team-head .wa-page-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--m-text);
+}
+
+.wa-team-lead {
+  margin: 0;
+  max-width: 72ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--m-text-2);
+}
+
+.wa-team-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.wa-team-h2 {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--m-text);
+}
+
+.wa-team-card {
+  gap: 14px;
+}
+
+.wa-team-form {
+  gap: 14px;
+}
+
+.wa-team-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.wa-team-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--m-text-2);
+}
+
+.wa-team-input {
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--m-border-input);
+  border-radius: var(--m-radius-field, 6px);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.wa-team-input:focus-visible,
+.wa-team-check input:focus-visible,
+.wa-team-link:focus-visible,
+.wa-team-page .wa-portal-btn:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+
+.wa-team-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px 12px;
+  margin-top: 8px;
+}
+
+.wa-team-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--m-text);
+}
+
+.wa-team-error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--m-bad);
+}
+
+.wa-team-fresh {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--m-tint-line);
+  border-radius: var(--m-radius-card);
+  background: var(--m-tint);
+  color: var(--m-tint-text);
+}
+
+.wa-team-fresh-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wa-team-fresh-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wa-team-key {
+  overflow-wrap: anywhere;
+  padding: 6px 8px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field, 6px);
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+.wa-team-empty {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--m-text-2);
+}
+
+.wa-team-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field, 6px);
+}
+
+.wa-team-scroll:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+
+.wa-team-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.wa-team-table th {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--m-border);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.wa-team-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--m-border);
+  color: var(--m-text);
+  vertical-align: middle;
+}
+
+.wa-team-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.wa-team-table td code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--m-text-2);
+}
+
+.wa-team-nowrap {
+  white-space: nowrap;
+}
+
+.wa-team-td-act {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.wa-team-link {
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--m-radius-item, 4px);
+  background: transparent;
+  color: var(--m-bad);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.wa-team-link:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.wa-team-link:hover {
+  background: var(--m-hover);
+}
+
+.wa-team-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--m-radius-pill, 999px);
+  background: var(--m-chip-gray, var(--m-tint));
+  color: var(--m-chip-gray-text, var(--m-tint-text));
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.wa-team-chip[data-role='dono'] {
+  background: var(--m-chip-purple);
+  color: var(--m-chip-purple-text);
+}
+
+.wa-team-chip[data-role='equipe'] {
+  background: var(--m-chip-blue);
+  color: var(--m-chip-blue-text);
+}
+
+.wa-team-chip[data-role='leitura'] {
+  background: var(--m-chip-gray);
+  color: var(--m-chip-gray-text);
+}
+
+.wa-team-chip[data-on='1'] {
+  background: var(--m-chip-green);
+  color: var(--m-chip-green-text);
+}
+
+.wa-team-chip[data-on='0'] {
+  background: var(--m-chip-gray);
+  color: var(--m-chip-gray-text);
+}
+
+.wa-team-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  align-items: end;
+}
+
+.wa-team-date {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--m-text-2);
+}
+
+.wa-team-date .wa-team-input {
+  width: 100%;
+}
+
+.wa-team-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--m-text-2);
+}
+
+@media (max-width: 640px) {
+  .wa-team-page {
+    padding-bottom: 24px;
+  }
+
+  .wa-team-head .wa-page-title {
+    font-size: 20px;
+  }
+
+  .wa-team-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .wa-team-label {
+    margin-top: 6px;
+  }
+
+  .wa-team-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wa-team-table {
+    min-width: 560px;
+  }
+
+  .wa-team-pager {
+    justify-content: space-between;
+  }
+}

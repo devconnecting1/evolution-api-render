@@ -51,6 +51,7 @@ import { createInstanceDatabases, createRoutedRepository } from './repository/in
 import { PrismaRepository } from './repository/repository.service';
 import { adminAlertsConfigFromEnv, AdminAlertsService } from './services/admin-alerts.service';
 import { AgendaService } from './services/agenda.service';
+import { AuditLogService, auditRetentionDaysFromEnv } from './services/audit-log.service';
 import { BillingService } from './services/billing.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
@@ -65,6 +66,7 @@ import { ProcessosService } from './services/processos.service';
 import { ProxyService } from './services/proxy.service';
 import { retentionDaysFromEnv, RetentionService } from './services/retention.service';
 import { SettingsService } from './services/settings.service';
+import { TeamAccessService } from './services/team-access.service';
 import { TemplateService } from './services/template.service';
 import { UsageService } from './services/usage.service';
 import { UserSessionService } from './services/user-session.service';
@@ -165,6 +167,15 @@ const billingConfig = configService.get<Billing>('BILLING');
 export const billingService = new BillingService({ prisma: prismaRepository, provider: () => billingConfig });
 /** "Acesso do cliente": códigos de acesso do cliente com módulos escolhidos (src/utils/client-access.ts). */
 export const clientAccessService = new ClientAccessService({ prisma: prismaRepository });
+/** "Equipe": chaves por pessoa com papel e instâncias, guardadas só como hash (src/utils/team-access.ts). */
+export const teamAccessService = new TeamAccessService({ prisma: prismaRepository });
+/** "Registro de ações": uma linha por ação registrada; retenção configurável (AUDIT_RETENTION_DAYS, padrão 180). */
+const auditLogger = new Logger('Audit');
+export const auditLogService = new AuditLogService({
+  prisma: prismaRepository,
+  retentionDays: auditRetentionDaysFromEnv(),
+  logger: { warn: (message) => auditLogger.warn(message) },
+});
 export const usageController = new UsageController(usageService, prismaRepository, billingService);
 /** "Exportar dados da instância": read-only ZIP of the instance data (src/api/services/export.service.ts). */
 export const exportService = new ExportService(prismaRepository);
