@@ -32,6 +32,8 @@ const CONTROL_MODELS = new Set([
   'billingEntry',
   'user',
   'userSession',
+  'teamKey',
+  'auditLog',
 ]);
 /** Tabelas cuja chave da instância se chama `sessionId`. */
 const SESSION_KEY_MODELS = new Set(['session', 'authStateKey']);

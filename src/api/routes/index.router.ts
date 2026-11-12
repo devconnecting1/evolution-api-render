@@ -1,3 +1,4 @@
+import { auditGlobalKey, createAuditMiddleware } from '@api/guards/audit.middleware';
 import { authGuard } from '@api/guards/auth.guard';
 import { instanceExistsGuard, instanceLoggedGuard } from '@api/guards/instance.guard';
 import Telemetry from '@api/guards/telemetry.guard';
@@ -7,7 +8,7 @@ import { EventRouter } from '@api/integrations/event/event.router';
 import { defaultMcpDeps } from '@api/integrations/mcp/mcp.deps';
 import { createMcpRouter } from '@api/integrations/mcp/mcp.router';
 import { StorageRouter } from '@api/integrations/storage/storage.router';
-import { prismaRepository, waMonitor } from '@api/server.module';
+import { auditLogService, prismaRepository, waMonitor } from '@api/server.module';
 import { Auth, configService, Database, Facebook, Openai } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
@@ -18,6 +19,7 @@ import path from 'path';
 
 import { AdminDbRouter } from './admin-db.router';
 import { AgendaRouter } from './agenda.router';
+import { AuditRouter } from './audit.router';
 import { AuthRouter } from './auth.router';
 import { BusinessRouter } from './business.router';
 import { CallRouter } from './call.router';
@@ -218,6 +220,8 @@ try {
 
 router
   .use((req, res, next) => telemetry.collectTelemetry(req, res, next))
+  // "Registro de ações": after the response, only successful actions listed in src/utils/audit-log.ts
+  .use(createAuditMiddleware(() => auditLogService, auditGlobalKey))
 
   .get('/', async (req, res) => {
     res.status(HttpStatus.OK).json({
@@ -266,6 +270,8 @@ router
   .use('/admin/retention', new RetentionRouter().router)
   // IP do cliente que o limite de chaves erradas usa (diagnóstico, só a chave global)
   .use('/admin/client-ip', new ClientIpRouter().router)
+  // "Registro de ações": mais novo primeiro, filtros e exportação em CSV (chave global ou papel Dono)
+  .use('/admin/audit', new AuditRouter().router)
   .use('/admin', new AdminDbRouter().router)
   // "Chaves e credenciais": only the global key (adminOnlyGuard), never an instance token
   .use(
