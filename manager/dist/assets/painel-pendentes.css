@@ -1,0 +1,468 @@
+/*
+ * WhatsAI Manager: pendencias em uma fonte so, erro com codigo e Atendente IA no notebook
+ * (manager/patches/painel-pendentes.py). Linked before design-system.css, after the page styles.
+ * Only the var(--m-*) tokens of minimal.css/theme.css: light and dark follow the panel theme.
+ *
+ *   .wa-fin-*     Notificacoes page; the items are the same ones the bell (window.WaNotif) shows.
+ *   .wa-errcode   line with the error code and time that erros-codigo.js injects in the error states.
+ *   .wa-ai-layout Atendente IA: below 1366px the bot list stacks above the form, so the form keeps its width.
+ *   .wa-ai-hours  "Horario de atendimento" section of the Atendente IA (GET/POST /usage/limits).
+ */
+
+/* ===================================================================================== Notificacoes */
+.wa-fin-head {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wa-fin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.wa-fin-count {
+  display: inline-flex;
+  height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.wa-fin-count[data-done="true"] {
+  color: var(--m-ok);
+}
+.wa-fin-all {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-item);
+  background: var(--m-bg);
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+.wa-fin-all:hover {
+  border-color: var(--m-border-strong);
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-fin-all:focus-visible,
+.wa-fin-seen:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wa-fin-item-acts {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.wa-fin-seen {
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1;
+  cursor: pointer;
+}
+.wa-fin-seen:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-fin-item[data-tone="bad"] .wa-fin-item-ic {
+  background: var(--m-chip-red);
+  color: var(--m-chip-red-text);
+}
+.wa-fin-item[data-tone="warn"] .wa-fin-item-ic {
+  background: var(--m-chip-amber);
+  color: var(--m-chip-amber-text);
+}
+.wa-fin-item[data-seen="true"] .wa-fin-item-title {
+  color: var(--m-text-2);
+  font-weight: 500;
+}
+.wa-fin-item[data-seen="true"] .wa-fin-item-ic {
+  opacity: 0.75;
+}
+.wa-fin-item-title {
+  display: block;
+}
+.wa-fin-item-actions-link {
+  flex: none;
+}
+.wa-fin-loading {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13.5px;
+  line-height: 20px;
+}
+.wa-fin-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--m-border);
+  border-left: 3px solid var(--m-bad);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-size: 13.5px;
+  line-height: 20px;
+}
+.wa-fin-error p {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .wa-fin-actions {
+    width: 100%;
+  }
+  .wa-fin-item-acts {
+    width: 100%;
+    margin-left: 0;
+  }
+  .wa-fin-item-acts .wa-tw-sbtn {
+    flex: 1 1 auto;
+    width: auto;
+  }
+  .wa-fin-seen {
+    flex: 1 1 auto;
+  }
+}
+
+/* ==================================================================================== erro com codigo */
+.wa-errcode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  margin: 10px 0 0;
+  color: var(--m-text-2);
+  font-size: 12.5px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.wa-errcode-code {
+  color: var(--m-text);
+  font-weight: 500;
+}
+.wa-errcode-sep {
+  color: var(--m-text-3);
+}
+.wa-errcode-copy {
+  padding: 1px 4px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 18px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.wa-errcode-copy:hover {
+  background: var(--m-hover);
+}
+.wa-errcode-copy:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wa-errcode-copy[data-copied="true"] {
+  text-decoration: none;
+  color: var(--m-ok);
+}
+
+/* ========================================================================== Atendente IA no notebook */
+/*
+ * Below 1366px the resizable two-pane group becomes one column: the bot list is a compact horizontal strip on
+ * top and the form takes the full width. The form keeps its own two columns (section nav + fields), so no field
+ * is squeezed by the bot list anymore. Above 1366px the original resizable layout is untouched.
+ */
+@media (min-width: 768px) and (max-width: 1365px) {
+  .wa-ai-layout {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  .wa-ai-layout > [data-panel] {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    flex: none !important;
+    overflow: visible !important;
+  }
+  .wa-ai-layout > [data-panel-resize-handle-id],
+  .wa-ai-layout > [data-panel-resize-handle-enabled] {
+    display: none !important;
+  }
+  .wa-ai-layout > [data-panel]:first-child {
+    padding-right: 0 !important;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--m-border);
+  }
+  .wa-ai-layout > [data-panel]:first-child > div {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+  .wa-ai-layout > [data-panel]:first-child > div > button {
+    width: auto !important;
+    min-width: 190px;
+    flex: 1 1 190px;
+    max-width: 320px;
+  }
+  .wa-ai-layout > [data-panel]:last-child {
+    padding-top: 16px;
+  }
+}
+
+/* ====================================================================== Horario de atendimento (WaAI) */
+/* atendente-ia.css hides every section and shows only the one picked in the nav; this is the new one */
+.wa-ai-form[data-sec='horario'] .wa-ai-sec[data-sec='horario'] {
+  display: block;
+}
+.wa-ai-hours {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.wa-ai-hours-hint {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+.wa-ai-hours-group {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+}
+.wa-ai-hours-legend {
+  padding: 0 4px;
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wa-ai-hours-option {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  cursor: pointer;
+}
+.wa-ai-hours-option + .wa-ai-hours-option {
+  margin-top: 8px;
+}
+.wa-ai-hours-option:hover {
+  background: var(--m-hover);
+}
+.wa-ai-hours-option[data-checked="true"] {
+  border-color: var(--m-primary);
+  background: var(--m-tint);
+}
+.wa-ai-hours-option:focus-within {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wa-ai-hours-option input {
+  flex: none;
+  margin: 3px 0 0;
+  accent-color: var(--m-primary);
+}
+.wa-ai-hours-option > span {
+  display: flex;
+  flex-direction: column;
+}
+.wa-ai-hours-option-title {
+  color: var(--m-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 20px;
+}
+.wa-ai-hours-option-text {
+  margin-top: 2px;
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+.wa-ai-hours-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.wa-ai-hours-field:first-of-type {
+  max-width: 280px;
+}
+.wa-ai-hours-label {
+  color: var(--m-text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wa-ai-hours-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--m-border-input);
+  border-radius: var(--m-radius-field);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+}
+.wa-ai-hours-input:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wa-ai-hours-textarea {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  line-height: 20px;
+  resize: vertical;
+}
+.wa-ai-hours-week {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+}
+.wa-ai-hours-day {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 6px 12px;
+}
+.wa-ai-hours-day + .wa-ai-hours-day {
+  border-top: 1px solid var(--m-border);
+}
+.wa-ai-hours-day-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--m-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.wa-ai-hours-day-name input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--m-primary);
+}
+.wa-ai-hours-day-name input:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+.wa-ai-hours-times {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.wa-ai-hours-time {
+  width: 128px;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.wa-ai-hours-sep,
+.wa-ai-hours-closed,
+.wa-ai-hours-note {
+  color: var(--m-text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+.wa-ai-hours-note {
+  margin: 0;
+}
+.wa-ai-hours-error {
+  padding: 8px 12px;
+  border-left: 3px solid var(--m-bad);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-size: 13.5px;
+  line-height: 20px;
+}
+.wa-ai-hours-error p,
+.wa-ai-hours-error ul {
+  margin: 0;
+}
+.wa-ai-hours-error ul {
+  padding-left: 18px;
+}
+.wa-ai-hours-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+.wa-ai-hours-loading {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 13.5px;
+  line-height: 20px;
+}
+
+@media (max-width: 767px) {
+  .wa-ai-hours-day {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+  .wa-ai-hours-times {
+    gap: 6px;
+  }
+  .wa-ai-hours-time {
+    width: 128px;
+  }
+  .wa-ai-hours-field:first-of-type {
+    max-width: none;
+  }
+  .wa-ai-hours-actions .wa-ai-btn {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-fin-all,
+  .wa-fin-seen,
+  .wa-errcode-copy,
+  .wa-ai-hours-option {
+    transition: none;
+  }
+}
