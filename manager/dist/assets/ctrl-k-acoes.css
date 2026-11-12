@@ -1,0 +1,14 @@
+/*
+ * WhatsAI Manager: ações no menu Ctrl K (manager/patches/ctrl-k-acoes.py, proposta E).
+ * O menu continua sendo o .wa-tw-cmd do twenty-layout.css; aqui só o alinhamento do atalho e do texto de apoio.
+ * Só tokens var(--m-*).
+ */
+/*whatsai-patch:ctrl-k-acoes:css*/
+.wa-tw-cmd-meta.wa-tw-cmd-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.wa-tw-cmd-meta .wa-tw-kbd {
+  margin: 0;
+}
