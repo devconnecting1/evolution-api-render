@@ -75,6 +75,10 @@
       "dest": "/landing/seguranca.html"
     },
     {
+      "src": "^/novidades/?$",
+      "dest": "/landing/novidades.html"
+    },
+    {
       "src": "^/privacidade/?$",
       "dest": "/landing/privacidade.html"
     },
