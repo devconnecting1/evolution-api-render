@@ -229,7 +229,6 @@ export class SystemProbe {
     const readFile = d.readFile ?? defaultReadFile;
     const now = d.now ?? Date.now;
     const notes: string[] = [];
-    let partial = false;
 
     const [cpu, database, sessions, cacheState] = await Promise.all([
       this.sampleCpu(readFile),
@@ -340,7 +339,7 @@ export class SystemProbe {
     if (sessions.error) notes.push('Não foi possível ler as sessões de chatbot.');
     if (cacheState.problem) notes.push(cacheState.problem);
 
-    partial =
+    const partial =
       worstStatus(metrics) !== 'ok' ||
       database.errors.length > 0 ||
       Boolean(sessions.error) ||
@@ -566,7 +565,7 @@ export class SystemProbe {
     const cache = this.deps.cache;
 
     if (cache?.redisEnabled) {
-      let state: RedisState = { state: 'absent' };
+      let state: RedisState;
       try {
         state = cache.redisState
           ? await withTimeout(cache.redisState(), CACHE_TIMEOUT_MS, 'timeout')

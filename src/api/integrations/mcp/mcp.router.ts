@@ -70,7 +70,7 @@ export function createMcpRouter(getDeps: () => McpDeps, limiter = new FailedAuth
         .json(rpcError(-32000, 'Muitas tentativas de autenticação falharam. Tente mais tarde.', requestId(req)));
     }
 
-    let auth: McpAuth | null = null;
+    let auth: McpAuth | null;
     try {
       auth = await authenticate(deps);
     } catch (error) {

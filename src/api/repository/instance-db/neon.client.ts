@@ -69,7 +69,7 @@ export class NeonClient {
   async waitForOperations(projectId: string, timeoutMs = 90_000, intervalMs = 2_000): Promise<void> {
     const deadline = Date.now() + timeoutMs;
     for (;;) {
-      let pending = false;
+      let pending: boolean;
       try {
         const { data } = await this.http.get(`/projects/${projectId}/operations`);
         const ops: any[] = data?.operations ?? [];

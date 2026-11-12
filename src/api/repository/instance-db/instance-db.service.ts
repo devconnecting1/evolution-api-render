@@ -177,7 +177,7 @@ export class InstanceDatabaseService<C extends MinimalClient = MinimalClient> {
   async init(): Promise<void> {
     if (!this.deps?.control?.instanceDatabase) return;
     const { control, logger } = this.deps;
-    let rows: any[] = [];
+    let rows: any[];
     try {
       rows = await control.instanceDatabase.findMany({ where: { status: 'ready' } });
     } catch (error) {

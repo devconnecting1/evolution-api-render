@@ -18,7 +18,7 @@ export function listDocs(docsDirs: string[]): DocFile[] {
   const docs = new Map<string, DocFile>();
 
   for (const dir of docsDirs) {
-    let entries: string[] = [];
+    let entries: string[];
     try {
       entries = fs.readdirSync(dir);
     } catch {
