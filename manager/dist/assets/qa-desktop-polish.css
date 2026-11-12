@@ -1,0 +1,473 @@
+/*
+ * WhatsAI Manager: polimento visual de desktop da auditoria de 12/11/2026 (manager/patches/qa-desktop-polish.py).
+ * Vinculado depois de qa-polish.css e antes de design-system.css; o design-system continua sendo a ultima folha.
+ * So tokens var(--m-*), entao claro e escuro seguem o tema escolhido no painel.
+ *
+ *   Leads > Quadro ....... cinco colunas visiveis no desktop; rolagem com barra e sombra de borda quando ainda rola
+ *   Conversas vazia ...... icone do estado vazio via mask, visivel nos dois temas (sem SVG branco fixo)
+ *   Moldura .............. listas em 1040 px e formularios em 760 px, H1/cards/toolbar na mesma borda
+ *   Paginas globais ...... trilha + H1 no mesmo ritmo vertical, sem repetir o titulo da barra de cima
+ *   Controles ............ checkbox/radio/switch desenhados com tokens, com contraste no escuro
+ *   Integracoes .......... ponto de status verde (ligada) e cinza (desligada)
+ *   Atendente IA ......... chip Ligado/Desligado nos cards (o texto "chatBot" e traduzido pelo JS)
+ *   Novo atendente ....... cabecalho/rodape fixos e corpo rolavel
+ *   Dialogos ............. X de fechar tambem nos dialogos de credencial e de confirmacao
+ *   Tabelas .............. Processos sem estouro lateral; Chaves sem divisores verticais
+ *   Instancias ........... mesma coluna de 1040 px das outras paginas
+ *   Conversas ............ rotulos do painel do contato sem quebra de linha
+ *   Portal do cliente .... "Sair" no rodape da lateral do cliente
+ *   Notificacoes ......... seta de navegacao interna no lugar do icone de link externo
+ */
+
+:root {
+  --page-max-list: 1040px;
+  --page-max-form: 760px;
+}
+
+/* ================================================================================== Leads > Quadro */
+/* No desktop cada coluna de status divide a largura da pagina, entao as cinco ficam alcancaveis. */
+@media (min-width: 1280px) {
+  .wl-board-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .wl-pins {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 8px 10px;
+  }
+  .wl-pins-head {
+    flex: 0 0 auto;
+  }
+  .wl-pins-list {
+    flex: 1 1 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .wl-pin {
+    border: 1px solid var(--m-border);
+  }
+  .wl-pins .wl-hint {
+    flex: 1 1 100%;
+  }
+  .wl-board {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 10px;
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+  .wl-col {
+    flex: initial;
+    min-width: 0;
+  }
+}
+
+/* Enquanto ainda rola (tablet e desktop estreito): barra visivel e sombra na borda direita. */
+.wl-board {
+  scrollbar-width: thin;
+  scrollbar-color: var(--m-border-strong) transparent;
+}
+.wl-board::-webkit-scrollbar {
+  height: 10px;
+}
+.wl-board::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wl-board::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--m-border-strong);
+  background-clip: padding-box;
+}
+.wl-board::-webkit-scrollbar-thumb:hover {
+  background: var(--m-text-3);
+  background-clip: padding-box;
+}
+@media (max-width: 1279px) {
+  .wl-board-main {
+    position: relative;
+  }
+  .wl-board-main::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 12px;
+    width: 36px;
+    border-radius: 0 var(--m-radius-card) var(--m-radius-card) 0;
+    background: linear-gradient(to right, transparent, var(--m-bg));
+    pointer-events: none;
+  }
+}
+
+/* ===================================================================== Conversas vazia e portal do cliente */
+/* O SVG branco fixo sumia no tema escuro (fundo creme). A mascara recorta o icone no proprio tom primario:
+   no claro o recorte mostra o fundo claro; no escuro, o fundo escuro. Vale para os dois temas. */
+.wa-start::before {
+  background: var(--m-primary);
+  -webkit-mask-image: linear-gradient(#000, #000),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v11H9l-5 4z'/%3E%3Cpath d='M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%, 20px 20px;
+  -webkit-mask-position: 0 0, center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-composite: xor;
+  mask-image: linear-gradient(#000, #000),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v11H9l-5 4z'/%3E%3Cpath d='M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01'/%3E%3C/svg%3E");
+  mask-size: 100% 100%, 20px 20px;
+  mask-position: 0 0, center;
+  mask-repeat: no-repeat;
+  mask-composite: exclude;
+}
+
+/* ============================================================================== moldura das paginas da instancia */
+/* Acesso do cliente e Conexao sao formularios: 760 px centrados. Contatos da IA e lista: 1040 px, como Leads. */
+@media (min-width: 1024px) {
+  #root [data-wa-layout].wa-is .wa-is-page > .wa-portal-page:not(.wa-portal-global) {
+    width: 100%;
+    max-width: var(--page-max-form);
+    margin-inline: auto;
+  }
+  #root [data-wa-layout].wa-is .wa-is-page > .wa-portal-page:has(.wa-ci) {
+    max-width: var(--page-max-list);
+  }
+}
+
+/* Processos: 8 px de respiro lateral em cada celula devolve os 15 px que estouravam o cartao. */
+@media (min-width: 1024px) {
+  .wp-table th,
+  .wp-table td {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+  .wp-table .wp-ellipsis {
+    max-width: 140px;
+  }
+}
+
+/* ========================================================================== paginas globais: trilha + titulo */
+/* A barra de cima repetia o titulo que ja aparece no H1 da pagina. Fica so a acao (menu, tema, busca). */
+@media (min-width: 1024px) {
+  .wa-ut-top p.wa-ut-title {
+    display: none;
+  }
+}
+/* Chaves, Observabilidade e Retencao começam na mesma altura: 16 px abaixo da barra. */
+@media (min-width: 1024px) {
+  .wa-shell-body > :is(.wo-page, .wv-page, .wa-portal-global) {
+    padding-top: 16px;
+  }
+  /* Observabilidade: a trilha fica a 4 px do H1, como nas paginas que ganharam a mesma trilha. */
+  .wo-head {
+    gap: 4px;
+  }
+}
+.wa-page-crumbs {
+  margin: 0;
+}
+.wa-portal-head > .wa-page-crumbs {
+  margin: 0 0 4px;
+}
+
+/* ========================================================================================= controles nativos */
+#root :is(.wa-ci-check, .wa-portal-mod input[type="checkbox"], .wa-portal-mod input[type="radio"], .wc-check input[type="checkbox"]) {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-grid;
+  flex: none;
+  place-content: center;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--m-border-input);
+  border-radius: 4px;
+  background: var(--m-bg);
+  accent-color: var(--m-primary);
+  cursor: pointer;
+}
+#root .wa-portal-mod input[type="radio"] {
+  border-radius: 50%;
+}
+#root :is(.wa-ci-check, .wa-portal-mod input[type="checkbox"], .wa-portal-mod input[type="radio"], .wc-check input[type="checkbox"]):checked {
+  border-color: var(--m-primary);
+  background: var(--m-primary);
+}
+#root :is(.wa-ci-check, .wa-portal-mod input[type="checkbox"], .wc-check input[type="checkbox"]):checked::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: var(--m-on-primary);
+  clip-path: polygon(14% 44%, 0 65%, 40% 100%, 100% 16%, 83% 0, 38% 60%);
+}
+#root .wa-portal-mod input[type="radio"]:checked::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--m-on-primary);
+}
+#root :is(.wa-ci-check, .wa-portal-mod input[type="checkbox"], .wa-portal-mod input[type="radio"], .wc-check input[type="checkbox"]):focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+}
+
+/* liga/desliga unico = switch (Acesso do cliente ligado); caixas de multipla escolha continuam checkbox */
+#root .wa-portal-switch input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--m-border-input);
+  border-radius: 999px;
+  box-sizing: border-box;
+  background: var(--m-surface);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+#root .wa-portal-switch input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--m-text-3);
+  clip-path: none;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+#root .wa-portal-switch input[type="checkbox"]:checked {
+  border-color: var(--m-primary);
+  background: var(--m-primary);
+}
+#root .wa-portal-switch input[type="checkbox"]:checked::before {
+  background: var(--m-on-primary);
+  transform: translateX(16px);
+}
+
+/* ================================================================================== Integracoes: ponto de status */
+.wa-int-state .wa-int-dot {
+  width: 8px;
+  height: 8px;
+}
+.wa-int-state[data-on="true"] .wa-int-dot {
+  background: var(--m-ok);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--m-ok) 22%, transparent);
+}
+.wa-int-state[data-on="false"] .wa-int-dot {
+  background: var(--m-text-3);
+}
+
+/* ==================================================================================== Atendente IA: chip de status */
+.wa-ai-bot-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  margin-top: 2px;
+  padding: 0 8px;
+  border: 1px solid var(--m-border);
+  border-radius: 999px;
+  background: var(--m-bg);
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.wa-ai-bot-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--m-text-3);
+}
+.wa-ai-bot-status[data-on="true"] {
+  color: var(--m-text);
+}
+.wa-ai-bot-status[data-on="true"]::before {
+  background: var(--m-ok);
+}
+
+/* ================================================================== Atendente IA > Novo atendente (dialogo) */
+/* Cabecalho e rodape ficam parados; so o corpo do formulario rola. Antes o botao Salvar ficava fora da tela. */
+[role="dialog"]:has(> form > .wa-ai-body) {
+  display: flex;
+  flex-direction: column;
+  max-height: min(calc(100dvh - 48px), 760px);
+  overflow: hidden;
+}
+[role="dialog"]:has(> form > .wa-ai-body) > form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+[role="dialog"]:has(> form > .wa-ai-body) > form > .wa-ai-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-right: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--m-border-strong) transparent;
+}
+[role="dialog"]:has(> form > .wa-ai-body) > form > .wa-ai-body::-webkit-scrollbar {
+  width: 10px;
+}
+[role="dialog"]:has(> form > .wa-ai-body) > form > .wa-ai-body::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--m-border-strong);
+  background-clip: padding-box;
+}
+[role="dialog"]:has(> form > .wa-ai-body) > form > div:last-child {
+  flex: none;
+  padding-top: 12px;
+  border-top: 1px solid var(--m-border);
+}
+
+/* ================================================================================= dialogos: X de fechar */
+.wv-dialog,
+dialog.wa-ask {
+  position: relative;
+}
+.wa-dialog-x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  cursor: pointer;
+}
+.wa-dialog-x:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-dialog-x:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 1px;
+}
+.wa-dialog-x svg {
+  width: 16px;
+  height: 16px;
+}
+/* confirmacao vermelha cheia: no escuro o texto branco sobre o coral nao passava no contraste */
+.wa-portal-btn-danger-solid {
+  color: var(--m-bg);
+}
+
+/* ================================================================================= Chaves: divisores verticais */
+.wv-cell + .wv-cell {
+  border-left: 0;
+}
+
+/* ================================================================================= Eventos: Marcar/Desmarcar */
+.wa-bulk-actions {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+/* ============================================================================================== Instancias */
+/* Lista larga por decisao do projeto: no 1440 ela precisa da largura toda para nao esconder colunas.
+   Acima de 1600 px a tabela para de esticar e fica centrada em 1280 px, com a barra de cima na mesma borda. */
+@media (min-width: 1600px) {
+  .wa-ut-app .wa-ut-main > .wa-ut-top,
+  .wa-ut-app .wa-ut-main > .wa-ut-tablewrap,
+  .wa-ut-app .wa-ut-main > .wa-ut-foot {
+    width: min(100%, 1280px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+  .wa-ut-app .wa-ut-main > .wa-ut-top {
+    padding-right: 0;
+    padding-left: 0;
+  }
+}
+
+/* ================================================================= Conversas: rotulos do painel do contato */
+/* Rotulos de uma linha; os longos viram campo empilhado (rotulo em cima, valor embaixo), marcados pelo JS. */
+@media (min-width: 1024px) {
+  #root .wa-tw-fields.wa-ut-props .wa-tw-field:not(.wa-tw-field--stack) {
+    grid-template-columns: 144px minmax(0, 1fr);
+  }
+  #root .wa-tw-fields.wa-ut-props .wa-tw-field--stack {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #root .wa-tw-fields.wa-ut-props .wa-tw-field--stack dt {
+    border-right: 0;
+  }
+  #root .wa-tw-fields.wa-ut-props .wa-tw-field dd {
+    flex-wrap: wrap;
+  }
+}
+
+/* ============================================================== Portal do cliente: "Sair" no rodape da lateral */
+.wa-client-logout {
+  margin-top: auto;
+}
+.wa-client-logout button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+.wa-client-logout button:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wa-client-logout button svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--m-text-3);
+}
+.wa-client-logout button:hover svg {
+  color: var(--m-text);
+}
+.wa-client-logout button:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 1px;
+}
+
+/* ========================================================================= Notificacoes: seta de navegacao interna */
+/* As acoes "Ver leads", "Ver agenda" e "Ver processos" navegam dentro do painel: chevron, nao link externo. */
+.wa-fin-item .wa-tw-sbtn svg {
+  display: none;
+}
+.wa-fin-item .wa-tw-sbtn::after {
+  content: "";
+  display: inline-block;
+  flex: none;
+  width: 13px;
+  height: 13px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / 13px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / 13px no-repeat;
+}
