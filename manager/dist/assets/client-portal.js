@@ -4,8 +4,8 @@
  * - Client (token "wac_..."): the menu keeps only his modules (WaPortal.nav, used by the patched sidebar), any
  *   other screen redirects to his first module, and "Conexão" shows the WhatsApp state and the QR code. The
  *   server applies the same list to every request (src/utils/client-access.ts); hiding here is only comfort.
- * - Administrator (global key): "Acesso do cliente" page of the instance: turn on, pick the modules, create a
- *   new code (shown once), remove. "Conexão" is hidden (the administrator has the full panel).
+ * - Administrator (global key): "Acesso do cliente" page of the instance and "Conexão" with the WhatsApp state,
+ *   QR code, instance token, restart and disconnect (moved out of the top of Visão Geral).
  * Everyone with Conversas: "Contatos da IA" page (list of the AI sessions, pause/resume one or many contacts).
  * Administrator: "Retenção (LGPD)" page (/manager/retencao) with the deadline of every instance.
  * Every tab: checks for a new version of the panel and reloads (hidden tab) or offers "Atualizar".
@@ -124,7 +124,11 @@
     var ok = m && m[1] === current.instanceId && allowedPaths().indexOf(m[2]) >= 0;
     if (!ok && location.pathname.replace(/\/+$/, '') !== '/manager/login') {
       var target = home();
-      if (target && target !== location.pathname) location.replace(target);
+      if (target && target !== location.pathname) {
+        // a page outside the modules: say so on the page the client lands on, instead of switching screens silently
+        if (m) { try { sessionStorage.setItem('wa-portal-denied', '1'); } catch (e) { /* private mode */ } }
+        location.replace(target);
+      }
     }
   }
 
@@ -146,8 +150,55 @@
     });
   }
 
+  function deniedNotice() {
+    var flag = null;
+    try { flag = sessionStorage.getItem('wa-portal-denied'); sessionStorage.removeItem('wa-portal-denied'); } catch (e) { flag = null; }
+    if (!flag) return;
+    var close = h('button', { type: 'button', class: 'wa-portal-toast-x', 'aria-label': 'Fechar aviso', text: '×' });
+    var box = h('div', { class: 'wa-portal-toast', role: 'status' }, [
+      h('span', { text: 'Esta área não está liberada para o seu acesso. Se precisar dela, peça a quem configurou o seu atendimento.' }),
+      close,
+    ]);
+    var done = function () { if (box.parentNode) box.parentNode.removeChild(box); };
+    close.addEventListener('click', done);
+    setTimeout(done, 8000);
+    (document.body || document.documentElement).appendChild(box);
+  }
+
+  // First access of a client code on this device: what the area is for and what this code can do. Once per instance.
+  var CAN = {
+    conversas: 'Ler e responder as conversas e pausar ou retomar a IA',
+    leads: 'Acompanhar a triagem dos contatos',
+    agenda: 'Ver, marcar e remarcar horários',
+    processos: 'Acompanhar os processos e as publicações',
+    plano: 'Ver o uso do plano no mês',
+    conexao: 'Ver o estado do WhatsApp e reconectar se cair',
+  };
+  function welcomeNotice() {
+    if (!current || !current.instanceId) return;
+    var key = 'wa-portal-welcome-' + current.instanceId;
+    if (ls(key)) return;
+    var items = (current.modules || []).map(function (m) { return CAN[m]; }).filter(Boolean);
+    if (!items.length) return;
+    var ok = h('button', { type: 'button', class: 'wa-portal-btn', text: 'Entendi' });
+    var box = h('section', { class: 'wa-portal-welcome', role: 'dialog', 'aria-labelledby': 'wa-portal-welcome-t' }, [
+      h('h2', { id: 'wa-portal-welcome-t', class: 'wa-portal-welcome-title', text: 'Boas-vindas à área do cliente' }),
+      h('p', { class: 'wa-portal-hint', text: 'Com o seu código de acesso você pode:' }),
+      h('ul', { class: 'wa-portal-welcome-list' }, items.map(function (t) { return h('li', { text: t }); })),
+      h('p', { class: 'wa-portal-hint', text: 'O que não aparece no menu fica com quem configurou o seu atendimento.' }),
+      ok,
+    ]);
+    ok.addEventListener('click', function () {
+      lsSet(key, '1');
+      if (box.parentNode) box.parentNode.removeChild(box);
+    });
+    (document.body || document.documentElement).appendChild(box);
+    try { ok.focus({ preventScroll: true }); } catch (e) { ok.focus(); }
+  }
+
   if (client) {
     document.documentElement.setAttribute('data-wa-portal', 'client');
+    if (document.body) { deniedNotice(); welcomeNotice(); } else document.addEventListener('DOMContentLoaded', function () { deniedNotice(); welcomeNotice(); });
     guardRoute();
     refreshClient();
     setInterval(guardRoute, 250);
@@ -168,12 +219,103 @@
     return h('div', { class: 'wa-portal-head' }, [h('h1', { class: 'wa-page-title', text: text }), lead ? h('p', { class: 'wa-portal-lead', text: lead }) : null]);
   }
 
-  // Conexão (client): state, QR code, pairing code.
+  // Administrator part of "Conexão": the instance token (moved out of the top of Visão Geral) and the two actions
+  // only the administrator has. Never shown to a client code: the page renders this box only without a wac_ token.
+  function maskToken(value) {
+    return String(value || '').replace(/\w/g, '*');
+  }
+
+  function adminBox(inst) {
+    var box = h('div', { class: 'wa-portal-admin' });
+    var token = inst.token || '';
+    var hidden = maskToken(token) || '—';
+    var shown = false;
+    var code = h('code', { text: hidden });
+    var reveal = h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Mostrar', 'aria-pressed': 'false' });
+    var copy = h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Copiar' });
+    reveal.addEventListener('click', function () {
+      shown = !shown;
+      code.textContent = shown ? token || '—' : hidden;
+      reveal.textContent = shown ? 'Ocultar' : 'Mostrar';
+      reveal.setAttribute('aria-pressed', shown ? 'true' : 'false');
+    });
+    copy.addEventListener('click', function () {
+      if (!token) return;
+      (navigator.clipboard ? navigator.clipboard.writeText(token) : Promise.reject()).then(function () {
+        copy.textContent = 'Copiado';
+        setTimeout(function () { copy.textContent = 'Copiar'; }, 2000);
+      }, function () { copy.textContent = 'Selecione e copie'; });
+    });
+
+    box.appendChild(h('h2', { class: 'wa-portal-subtitle', text: 'Token da instância' }));
+    box.appendChild(h('p', { class: 'wa-portal-hint', text: 'Quem tem este token acessa esta instância pela API. Trate como uma senha; a chave global não aparece aqui.' }));
+    box.appendChild(h('div', { class: 'wa-portal-token' }, [code, reveal, copy]));
+
+    var msg = h('p', { class: 'wa-portal-msg', role: 'status', 'aria-live': 'polite' });
+    var restart = h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Reiniciar conexão' });
+    var disconnect = h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-danger', text: 'Desconectar' });
+    restart.addEventListener('click', function () {
+      ask({
+        title: 'Reiniciar a conexão?',
+        text: 'O WhatsApp desta instância é reiniciado. As mensagens voltam assim que a conexão abrir; se o celular estiver sem internet, a instância fica desconectada até ele voltar.',
+        action: 'Reiniciar',
+      }).then(function (yes) {
+        if (!yes) return;
+        restart.disabled = true;
+        msg.textContent = 'Reiniciando…';
+        request('POST', '/instance/restart/' + encodeURIComponent(inst.name)).then(function () {
+          msg.textContent = 'Reiniciado. O estado atualiza em alguns segundos.';
+        }, function (e) { msg.textContent = e.message; }).then(function () { restart.disabled = false; });
+      });
+    });
+    disconnect.addEventListener('click', function () {
+      ask({
+        title: 'Desconectar o WhatsApp?',
+        text: 'A instância "' + inst.name + '" para de enviar e receber mensagens até ser conectada de novo pelo QR code ou pelo código de pareamento.',
+        action: 'Desconectar',
+        danger: true,
+      }).then(function (yes) {
+        if (!yes) return;
+        disconnect.disabled = true;
+        msg.textContent = 'Desconectando…';
+        request('DELETE', '/instance/logout/' + encodeURIComponent(inst.name)).then(function () {
+          msg.textContent = 'Desconectado. Use "Mostrar QR code" para conectar de novo.';
+        }, function (e) { msg.textContent = e.message; }).then(function () { disconnect.disabled = false; });
+      });
+    });
+
+    box.appendChild(h('h2', { class: 'wa-portal-subtitle', text: 'Reiniciar e desconectar' }));
+    box.appendChild(h('p', { class: 'wa-portal-hint', text: 'Reiniciar mantém o pareamento. Desconectar desfaz o pareamento: só conecte de novo com o celular do escritório em mãos.' }));
+    box.appendChild(h('div', { class: 'wa-portal-actions' }, [restart, disconnect]));
+    box.appendChild(msg);
+    return box;
+  }
+
+  // Conexão (administrator): the instance comes from the path; the token and the actions render after it loads.
+  function renderConexaoAdmin(root) {
+    var id = instanceIdFromPath();
+    var loading = h('section', { class: 'wa-portal-card', 'aria-busy': 'true' }, [h('p', { class: 'wa-portal-hint', text: 'Carregando…' })]);
+    root.appendChild(title('Conexão', 'Estado do WhatsApp, token da instância e reconectar.'));
+    root.appendChild(loading);
+    request('GET', '/instance/fetchInstances').then(function (list) {
+      var inst = (list || []).filter(function (i) { return i && i.id === id; })[0];
+      if (!inst) throw new Error('Instância não encontrada.');
+      root.textContent = '';
+      renderConexao(root, inst.name, inst);
+    }).catch(function (e) {
+      loading.removeAttribute('aria-busy');
+      loading.textContent = e.status === 401 || e.status === 403
+        ? 'Entre com a chave global para ver o token e reiniciar a conexão.'
+        : 'Não foi possível carregar: ' + e.message;
+    });
+  }
+
+  // Conexão (client and administrator): state, QR code, pairing code.
   // The server answers the first "connect" before WhatsApp has produced a QR code (it waits only 2 s), and WhatsApp
   // replaces the code every ~20 s, so while the client is pairing the page asks again every 5 s and swaps the image.
   // Stops after 3 minutes (the code stops being renewed); "Mostrar QR code" starts again.
-  function renderConexao(root) {
-    var name = current && current.instanceName;
+  function renderConexao(root, instanceName, adminInstance) {
+    var name = instanceName || (current && current.instanceName);
     var status = h('p', { class: 'wa-portal-status', role: 'status', 'aria-live': 'polite', text: 'Verificando…' });
     var qrBox = h('div', { class: 'wa-portal-qr' });
     var button = h('button', { type: 'button', class: 'wa-portal-btn', text: 'Mostrar QR code', hidden: true });
@@ -227,6 +369,7 @@
     function stopPairing(text) {
       pairingSince = 0;
       button.disabled = false;
+      button.hidden = lastState === 'open';
       note(text);
     }
     function showCode(d) {
@@ -236,9 +379,24 @@
       shown = key;
       if (d.base64) {
         qrBox.appendChild(h('img', { src: d.base64, alt: 'QR code para conectar o WhatsApp', width: '264', height: '264' }));
-        qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: 'No celular: WhatsApp > Aparelhos conectados > Conectar um aparelho, e aponte para o código. O código muda sozinho a cada poucos segundos; esta tela acompanha.' }));
+        qrBox.appendChild(h('ol', { class: 'wa-portal-steps' }, [
+          h('li', { text: 'No celular deste número, abra o WhatsApp.' }),
+          h('li', { text: 'Toque em Aparelhos conectados e depois em Conectar um aparelho.' }),
+          h('li', { text: 'Aponte a câmera para o código. Ele muda sozinho a cada poucos segundos; esta tela acompanha.' }),
+        ]));
       }
-      if (d.pairingCode) qrBox.appendChild(h('p', { class: 'wa-portal-hint', text: 'Ou use o código de pareamento: ' + d.pairingCode }));
+      if (d.pairingCode) {
+        var copy = h('button', { type: 'button', class: 'wa-portal-btn wa-portal-btn-line', text: 'Copiar' });
+        copy.addEventListener('click', function () {
+          var ok = function () { copy.textContent = 'Copiado'; setTimeout(function () { copy.textContent = 'Copiar'; }, 2000); };
+          try { navigator.clipboard.writeText(d.pairingCode).then(ok, function () {}); } catch (e) { /* no clipboard */ }
+        });
+        qrBox.appendChild(h('div', { class: 'wa-portal-pair' }, [
+          h('p', { class: 'wa-portal-pair-title', text: 'Sem câmera? Conecte com o código' }),
+          h('div', { class: 'wa-portal-pair-row' }, [h('code', { class: 'wa-portal-pair-code', text: d.pairingCode }), copy]),
+          h('p', { class: 'wa-portal-hint', text: 'Em Conectar um aparelho, toque em "Conectar com número de telefone" e digite este código.' }),
+        ]));
+      }
     }
     function fetchCode() {
       if (!pairingSince) return;
@@ -257,7 +415,7 @@
       var open = state === 'open';
       status.textContent = open ? 'WhatsApp conectado.' : pairingSince ? 'Aguardando a leitura do QR code…' : state === 'connecting' ? 'Conectando…' : 'WhatsApp desconectado.';
       status.setAttribute('data-state', open ? 'ok' : 'bad');
-      button.hidden = open;
+      button.hidden = open || !!pairingSince;
       who.hidden = !open || !who.firstChild;
       if (open) loadWho();
       if (state && state !== lastState) { lastState = state; drawTips(open); }
@@ -274,14 +432,22 @@
     }
     button.addEventListener('click', function () {
       button.disabled = true;
+      button.hidden = true;
       pairingSince = Date.now();
       note('Gerando o QR code…');
       status.textContent = 'Aguardando a leitura do QR code…';
       fetchCode();
     });
 
-    root.appendChild(title('Conexão', 'Estado do WhatsApp deste número.'));
-    root.appendChild(h('section', { class: 'wa-portal-card' }, [status, who, button, qrBox, tips]));
+    root.appendChild(title('Conexão', adminInstance
+      ? 'Estado do WhatsApp, token da instância e reconectar.'
+      : 'Estado do WhatsApp deste número.'));
+    var card = h('section', { class: 'wa-portal-card' }, [status, who]);
+    if (adminInstance) card.appendChild(adminBox(adminInstance));
+    card.appendChild(button);
+    card.appendChild(qrBox);
+    card.appendChild(tips);
+    root.appendChild(card);
     check();
     timer = setInterval(check, 5000);
   }
@@ -693,7 +859,7 @@
       var page = el.getAttribute('data-wa-portal-page');
       if (page === 'conexao') {
         if (client) renderConexao(el);
-        else el.appendChild(title('Conexão', 'Para o administrador, o estado e o QR code ficam na lista de instâncias e na Visão Geral.'));
+        else renderConexaoAdmin(el);
       } else if (page === 'acesso-cliente') {
         if (client) location.replace(home());
         else renderAcesso(el);
@@ -719,10 +885,10 @@
     /** Styled confirmation (Promise<boolean>), for pages outside the Radix dialogs. */
     ask: ask,
     labels: LABELS,
-    /** Sidebar filter: a client keeps only his modules; the administrator does not see "Conexão". */
+    /** Sidebar filter: a client keeps only his modules; the administrator sees every item, "Conexão" included. */
     nav: function (item) {
       if (!item) return false;
-      if (!client) return item.id !== 'conexao';
+      if (!client) return true;
       return allowedPaths().indexOf(item.path) >= 0;
     },
   };

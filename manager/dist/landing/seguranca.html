@@ -40,9 +40,9 @@
     <meta name="twitter:image" content="https://whatsaibr.vercel.app/assets/images/og-whatsai.png?v=2" />
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/landing.bundle.css?v=e4e7c05357" />
+    <link rel="stylesheet" href="/assets/landing.bundle.css?v=5eaa90adac" />
     <!-- whatsai-patch:theme:landing -->
-    <script src="/assets/landing.js?v=5" defer></script>
+    <script src="/assets/landing.js?v=6" defer></script>
       </head>
   <body data-wa-origin="site" class="sec-page">
     <!-- ícones de linha (traço 1.5, cantos arredondados), desenhados à mão -->
@@ -149,6 +149,7 @@
               O que o WhatsAI faz para proteger os dados de quem fala com a sua empresa, explicado sem rodeios. Aqui só
               entra o que está implementado e pode ser conferido.
             </p>
+            <p class="sec-updated">Atualizado em <time datetime="2026-11-12">12 de novembro de 2026</time> · <a href="#mudancas">O que mudou</a></p>
             <div class="actions">
               <a class="btn btn-primary btn-lg" href="#medidas">Ver as medidas</a>
               <a class="btn btn-quiet btn-lg" href="#reportar">Reportar uma falha</a>
@@ -157,8 +158,11 @@
               <ol>
                 <li><a href="#medidas"><span class="sec-toc-n">[1]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Oito camadas de proteção</span></a></li>
                 <li><a href="#fluxo"><span class="sec-toc-n">[2]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Como os dados circulam</span></a></li>
-                <li><a href="#lgpd"><span class="sec-toc-n">[3]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>LGPD na prática</span></a></li>
-                <li><a href="#reportar"><span class="sec-toc-n">[4]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Reportar uma falha</span></a></li>
+                <li><a href="#onde"><span class="sec-toc-n">[3]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Onde ficam os dados</span></a></li>
+                <li><a href="#lgpd"><span class="sec-toc-n">[4]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>LGPD e os seus direitos</span></a></li>
+                <li><a href="#incidentes"><span class="sec-toc-n">[5]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Se algo der errado</span></a></li>
+                <li><a href="#reportar"><span class="sec-toc-n">[6]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Reportar uma falha</span></a></li>
+                <li><a href="#perguntas"><span class="sec-toc-n">[7]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Perguntas</span></a></li>
               </ol>
             </nav>
           </div>
@@ -283,11 +287,34 @@
         </div>
       </section>
 
+      <!-- === onde ficam os dados -->
+      <section class="section" id="onde" aria-labelledby="onde-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="onde-title" class="h2">Onde ficam os dados, <span class="soft">e quem mais os recebe.</span></h2>
+            <p class="section-lead">Os serviços que o WhatsAI usa para funcionar (os suboperadores), para que serve cada um e em que país ficam. Hoje os dados ficam nos Estados Unidos: é uma transferência internacional, feita com provedores que mantêm auditorias de segurança próprias.</p>
+          </div>
+          <div class="sec-table-wrap" role="region" aria-label="Tabela dos serviços que recebem dados" tabindex="0">
+            <table class="sec-table">
+              <thead><tr><th scope="col">Serviço</th><th scope="col">Para quê</th><th scope="col">O que recebe</th><th scope="col">Onde</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Render</th><td data-label="Para quê">Servidor da API</td><td data-label="O que recebe">As mensagens enquanto são processadas</td><td data-label="Onde">EUA (Ohio)</td></tr>
+                <tr><th scope="row">Neon</th><td data-label="Para quê">Banco de dados</td><td data-label="O que recebe">Conversas, contatos, fichas de triagem e agenda</td><td data-label="Onde">EUA (Ohio)</td></tr>
+                <tr><th scope="row">OpenAI</th><td data-label="Para quê">Respostas da IA e transcrição de áudio</td><td data-label="O que recebe">O trecho da conversa necessário para responder</td><td data-label="Onde">EUA</td></tr>
+                <tr><th scope="row">Vercel</th><td data-label="Para quê">Site e painel</td><td data-label="O que recebe">Só os arquivos das páginas; nenhuma conversa fica guardada lá</td><td data-label="Onde">Rede global</td></tr>
+                <tr><th scope="row">Meta</th><td data-label="Para quê">API oficial do WhatsApp, quando a empresa escolhe</td><td data-label="O que recebe">As mensagens desse canal</td><td data-label="Onde">Meta</td></tr>
+                <tr><th scope="row">Google</th><td data-label="Para quê">Google Agenda, só se a empresa conectar</td><td data-label="O que recebe">Os horários marcados</td><td data-label="Onde">Google</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- === LGPD -->
       <section class="section" id="lgpd" aria-labelledby="lgpd-title">
         <div class="wrap">
           <div class="section-head">
-            <h2 id="lgpd-title" class="h2">LGPD na prática, <span class="soft">não só no contrato.</span></h2>
+            <h2 id="lgpd-title" class="h2">LGPD e os seus direitos, <span class="soft">não só no contrato.</span></h2>
             <p class="section-lead">A sua empresa é a controladora dos dados; o WhatsAI é o operador. É assim que isso aparece no dia a dia.</p>
           </div>
           <div class="sec-split">
@@ -297,6 +324,7 @@
               <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Nada é apagado do WhatsApp.</strong> A limpeza vale só para o nosso banco: o celular da empresa e o do contato continuam com a conversa inteira.</span></li>
               <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Dados mínimos.</strong> A ficha de triagem guarda só o necessário, e números de documento informados na conversa são descartados.</span></li>
               <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Logs sem conteúdo sensível.</strong> Transcrições de áudio e textos de PDF não vão para os registros do sistema.</span></li>
+              <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Cópia, correção e exclusão.</strong> Quem conversou com a sua empresa pede a ela; a sua empresa pede ao WhatsAI pelo WhatsApp, e respondemos em até 15 dias. Ao encerrar o contrato, apagamos a instância e os dados dela do banco do WhatsAI.</span></li>
               <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>A IA não treina com as suas conversas.</strong> Pela política da OpenAI para a API, os dados enviados não são usados para treinar modelos.</span></li>
             </ul>
             <aside class="sec-note" aria-labelledby="sec-note-h">
@@ -308,6 +336,31 @@
         </div>
       </section>
 
+      <!-- === incidentes e cópias -->
+      <section class="section" id="incidentes" aria-labelledby="inc-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="inc-title" class="h2">Se algo der errado, <span class="soft">o que acontece.</span></h2>
+            <p class="section-lead">Nenhum sistema é imune a falhas. O compromisso é agir rápido e contar o que houve.</p>
+          </div>
+          <div class="sec-duo">
+            <div class="sec-box">
+              <h3 class="h4">Incidente com dados</h3>
+              <ol class="sec-steps">
+                <li>Contemos o problema e preservamos os registros do que aconteceu.</li>
+                <li>Avisamos a sua empresa sem demora, com o que já se sabe, quem foi afetado e o que foi feito.</li>
+                <li>Ajudamos a sua empresa, que é a controladora, a decidir sobre a comunicação à ANPD e às pessoas afetadas.</li>
+              </ol>
+            </div>
+            <div class="sec-box" id="copias">
+              <h3 class="h4">Cópias e recuperação</h3>
+              <p>O banco de dados guarda o histórico das alterações das últimas 6 horas: dá para voltá-lo a um momento anterior se uma falha corromper os dados.</p>
+              <p>As mensagens continuam também no WhatsApp da empresa e no do contato; a limpeza por prazo de guarda vale só para o banco do WhatsAI.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- === reportar -->
       <section class="section" id="reportar" aria-labelledby="rep-title">
         <div class="wrap">
@@ -315,13 +368,63 @@
             <div class="t3 t3--deep t3-mini" aria-hidden="true"><div class="t3-face"><div class="t3-disc"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg></div></div></div>
             <div>
               <h2 id="rep-title" class="h2 h2-sm">Encontrou uma falha?</h2>
-              <p>Conte para a gente antes de divulgar. Respondemos em até 2 dias úteis, corrigimos e avisamos você quando estiver resolvido.</p>
+              <p>Conte para a gente antes de divulgar. Respondemos em até 2 dias úteis, corrigimos e avisamos você quando estiver resolvido. Quem reporta de boa-fé, sem acessar dados de terceiros nem tirar o serviço do ar, não será processado por isso.</p>
+              <div class="sec-scope">
+                <div><h3 class="h4">Dentro do escopo</h3><ul><li>O site e o painel em whatsaibr.vercel.app</li><li>A API do WhatsAI</li><li>A área do cliente (/acesso)</li></ul></div>
+                <div><h3 class="h4">Fora do escopo</h3><ul><li>Excesso de acessos para derrubar o serviço</li><li>Golpes por telefone ou e-mail contra a equipe</li><li>O próprio WhatsApp e os provedores listados acima</li></ul></div>
+                <div><h3 class="h4">O que enviar</h3><ul><li>O endereço e os passos para repetir o problema</li><li>O que dá para fazer com ele</li><li>Como falar com você</li></ul></div>
+              </div>
               <div class="actions">
                 <a class="btn btn-primary" href="#reportar" data-wa-cta data-wa-msg="Olá! Encontrei um possível problema de segurança no WhatsAI e quero reportar.">Reportar pelo WhatsApp</a>
                 <a class="btn btn-quiet" href="/.well-known/security.txt">security.txt</a>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+      <!-- === perguntas -->
+      <section class="section" id="perguntas" aria-labelledby="per-title">
+        <div class="wrap faq-in">
+          <div class="section-head">
+            <h2 id="per-title" class="h2">Perguntas sobre segurança</h2>
+          </div>
+          <div class="faq">
+            <details>
+              <summary>Quem da equipe WhatsAI vê as conversas?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
+              <p>O acesso ao painel de administração é restrito a quem opera o WhatsAI, e as conversas só são abertas para dar suporte ou corrigir um problema a pedido da sua empresa.</p>
+            </details>
+            <details>
+              <summary>A IA pode inventar uma resposta?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
+              <p>Pode errar, como qualquer pessoa. Ela responde com as informações que a sua empresa cadastrou, não dá parecer nem promete resultado, e a equipe pode assumir a conversa a qualquer momento: a IA pausa sozinha quando alguém responde pelo WhatsApp.</p>
+            </details>
+            <details>
+              <summary>E se o WhatsApp bloquear o número?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
+              <p>O risco existe na conexão por QR code, que não é oficial. Para eliminá-lo, use a API oficial da Meta, que o WhatsAI também suporta. Em qualquer caso, as conversas já guardadas não se perdem.</p>
+            </details>
+            <details>
+              <summary>Dá para apagar tudo de uma vez?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
+              <p>Sim. Peça pelo WhatsApp: apagamos a instância e os dados dela do banco do WhatsAI. O prazo de guarda também pode ser reduzido para que as mensagens antigas saiam sozinhas todos os dias.</p>
+            </details>
+            <details>
+              <summary>Os dados saem do Brasil?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
+              <p>Sim. Os servidores e o banco ficam nos Estados Unidos, e a IA é da OpenAI. A lista completa, com o que cada serviço recebe, está em <a href="#onde">Onde ficam os dados</a>.</p>
+            </details>
+            <details>
+              <summary>Onde está o termo de tratamento de dados?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
+              <p>O termo é assinado com cada cliente, junto com a contratação. Se precisar de uma cópia, peça pelo WhatsApp.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- === o que mudou -->
+      <section class="section" id="mudancas" aria-labelledby="mud-title">
+        <div class="wrap">
+          <h2 id="mud-title" class="h2 h2-sm">O que mudou</h2>
+          <ul class="sec-changes">
+            <li><time datetime="2026-11-12">12/11/2026</time><span>Entraram onde ficam os dados, os seus direitos, o que fazemos num incidente, cópias e recuperação, o escopo para reportar falhas e as perguntas.</span></li>
+            <li><time datetime="2026-11-11">11/11/2026</time><span>Primeira versão desta página.</span></li>
+          </ul>
         </div>
       </section>
     </main>
@@ -342,6 +445,7 @@
               <li><a href="/#canais">WhatsApp Web ou API oficial</a></li>
               <li><a href="/#planos">Planos</a></li>
               <li><a href="/#duvidas">Dúvidas</a></li>
+              <li><a href="/novidades">Novidades</a></li>
             </ul>
           </nav>
           <nav class="foot-col" aria-labelledby="fc2">

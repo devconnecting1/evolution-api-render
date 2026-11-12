@@ -13,6 +13,13 @@ on:
       - "runWithProvider.js"
       - "test/**"
       - ".eslintrc.js"
+      - ".prettierrc.js"
+      - "commitlint.config.js"
+      - "Dockerfile"
+      - "Docker/**"
+      - "render.yaml"
+      - "manager/**"
+      - "scripts/**"
       - ".github/workflows/check_code_quality.yml"
   push:
     branches: [main, develop]
@@ -26,6 +33,13 @@ on:
       - "runWithProvider.js"
       - "test/**"
       - ".eslintrc.js"
+      - ".prettierrc.js"
+      - "commitlint.config.js"
+      - "Dockerfile"
+      - "Docker/**"
+      - "render.yaml"
+      - "manager/**"
+      - "scripts/**"
       - ".github/workflows/check_code_quality.yml"
   workflow_dispatch:
 
@@ -54,8 +68,17 @@ jobs:
       - name: Install packages
         run: npm ci --no-audit --no-fund
 
+      - name: Check PR title
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | npx commitlint --verbose
+
       - name: Check linting
         run: npm run lint:check
+
+      - name: Check formatting
+        run: npm run format:check
 
       - name: Generate Prisma client
         run: npm run db:generate
@@ -65,7 +88,52 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
-  tests:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: evolution_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d evolution_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_PROVIDER: postgresql
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/evolution_test?schema=public
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install packages
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Type-check tests
+        run: npm run test:types
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+  integration-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -105,8 +173,37 @@ jobs:
       - name: Generate Prisma client
         run: npm run db:generate
 
-      - name: Type-check tests
-        run: npm run test:types
+      - name: Run integration tests
+        run: npm run test:integration
 
-      - name: Run tests (unit + integration)
-        run: npm run test:run
+  manager-patches:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install packages
+        run: npm ci --no-audit --no-fund
+
+      - name: Install manager patch dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends python3-fonttools python3-brotli
+          python3 -I -c "import fontTools, brotli"
+
+      - name: Check manager patches
+        run: for f in manager/patches/*.py; do python3 -I "$f" --check; done
+
+      - name: Check landing CSS
+        run: node manager/patches/landing-css.mjs --check
+
+      - name: Check bundle syntax
+        run: npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null

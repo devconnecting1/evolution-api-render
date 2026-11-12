@@ -1,3 +1,4 @@
+/*whatsai-patch:acabamento-listas:p0*/
 /*
  * WhatsAI Manager: entry screens (login, "/" and instance list). Written by hand, linked by
  * manager/patches/home-redesign.py. Everything is scoped to [data-wa-home] (set by that patch), so the
@@ -23,11 +24,12 @@
 
 [data-wa-home] .wa-btn-ink {
   background: var(--wa-ink);
-  color: #fff;
+  color: var(--wa-paper);
   border-radius: var(--wa-radius);
 }
 [data-wa-home] .wa-btn-ink:hover {
-  background: #262626;
+  background: var(--wa-ink);
+  box-shadow: inset 0 0 0 999px rgb(0 0 0 / 0.06);
 }
 [data-wa-home] .wa-btn-line {
   border-color: var(--wa-ink);

@@ -9,14 +9,14 @@
     <meta name="robots" content="noindex" />
     <!-- Entrada do cliente ("Acesso do cliente"): só o código de acesso, que o administrador cria no painel. -->
     <meta name="wa-api" content="https://evolution-api-x93o.onrender.com" />
-    <title>Entrar · WhatsAI</title>
+    <title>Área do cliente · WhatsAI</title>
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg?v=3" />
     <link rel="manifest" href="/acesso/acesso.webmanifest" />
     <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=3" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="WhatsAI" />
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/geist.css?v=2" />
+    <link rel="stylesheet" href="/assets/geist.css?v=3" />
     <style>
       :root {
         --bg: #f5f5f5;
@@ -137,15 +137,28 @@
         outline-offset: 2px;
       }
       .error {
-        min-height: 1.4em;
         margin: 10px 0 0;
         color: var(--bad);
         font-size: 14px;
       }
-      .note {
-        margin: 18px 0 0;
+      .error:empty {
+        display: none;
+      }
+      .help {
+        margin: 14px 0 0;
         color: var(--text-2);
         font-size: 13px;
+        text-align: center;
+      }
+      .stack {
+        width: 100%;
+        max-width: 400px;
+      }
+      .note {
+        margin: 16px 4px 0;
+        color: var(--text-2);
+        font-size: 13px;
+        text-align: center;
       }
       .install[hidden] {
         display: none;
@@ -161,6 +174,12 @@
         padding-bottom: max(16px, env(safe-area-inset-bottom));
         text-align: center;
       }
+      footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px 18px;
+      }
       footer a {
         color: var(--text-2);
         font-size: 13px;
@@ -170,9 +189,10 @@
   <body>
     <header><a class="brand" href="/">WhatsAI</a></header>
     <main>
+      <div class="stack">
       <section class="card" aria-labelledby="t">
-        <h1 id="t">Entrar</h1>
-        <p class="lead" id="lead">Use o código de acesso que você recebeu.</p>
+        <h1 id="t">Área do cliente</h1>
+        <p class="lead" id="lead">Entre com o código de acesso que você recebeu.</p>
         <form id="f" novalidate>
           <label for="code">Código de acesso</label>
           <input id="code" name="code" type="password" autocomplete="current-password" spellcheck="false" autocapitalize="off" required aria-describedby="err" />
@@ -180,10 +200,12 @@
           <button id="go" type="submit">Entrar</button>
           <button id="install" class="install" type="button" hidden>Instalar o app</button>
         </form>
-        <p class="note">No computador ou no celular, você pode instalar como app: no Chrome ou Edge, "Instalar app"; no iPhone, Compartilhar e depois "Adicionar à Tela de Início".</p>
+        <p class="help">Não tem o código? Peça a quem configurou o seu atendimento.</p>
       </section>
+      <p class="note">Dá para instalar como app: no Chrome ou no Edge, "Instalar app"; no iPhone, Compartilhar e depois "Adicionar à Tela de Início".</p>
+      </div>
     </main>
-    <footer><a href="/manager/login" id="admin">Entrar como administrador</a></footer>
+    <footer><a href="/privacidade">Privacidade</a><a href="/termos">Termos</a><a href="/manager/login" id="admin">Entrar como administrador</a></footer>
     <script>
       (function () {
         'use strict';

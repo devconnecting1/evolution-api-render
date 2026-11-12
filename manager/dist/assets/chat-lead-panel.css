@@ -1,0 +1,249 @@
+/*
+ * WhatsAI panel: "Ficha do lead" beside the conversation (patch chat-lead-panel.py).
+ * Sits inside the existing right side panel of Conversas (twenty-layout.css): contact name on top, then the lead
+ * summary card, then the contact fields. Only the var(--m-*) tokens of minimal.css/theme.css, so light and dark
+ * follow the panel theme. Buttons reuse .wa-tw-sbtn (28px in bars/panels); chips reuse .wl-chip (leads.css).
+ */
+
+.wa-lp {
+  margin: 8px 0 12px;
+  padding: 12px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+}
+
+.wa-lp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.wa-lp-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--m-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.wa-lp-title svg {
+  flex: none;
+  color: var(--m-text-3);
+}
+
+/* IA ativa / pausada: dot + text, never colour alone */
+.wa-lp-ai {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-pill);
+  background: var(--m-bg);
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.wa-lp-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--m-text-3);
+}
+
+.wa-lp-ai[data-tone="ok"] .wa-lp-dot {
+  background: var(--m-ok);
+}
+
+.wa-lp-ai[data-tone="warn"] .wa-lp-dot {
+  background: var(--m-warn);
+}
+
+.wa-lp-ai[data-tone="bad"] .wa-lp-dot {
+  background: var(--m-bad);
+}
+
+.wa-lp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.wa-lp-chips .wl-chip {
+  background: var(--m-bg);
+}
+
+.wa-lp-muted {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.wa-lp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.wa-lp-note {
+  margin: 8px 0 0;
+  color: var(--m-warn);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.wa-lp-next {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 8px 0 0;
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.wa-lp-next strong {
+  color: var(--m-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.wa-lp-sec {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--m-border);
+}
+
+.wa-lp-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.wa-lp-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-pill);
+  background: var(--m-bg);
+  color: var(--m-text-2);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.wa-lp-procs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wa-lp-procs li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.wa-lp-procs strong {
+  overflow: hidden;
+  color: var(--m-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wa-lp-mono {
+  color: var(--m-text-2);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 15px;
+}
+
+.wa-lp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.wa-lp-actions .wa-tw-sbtn {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.wa-lp-assume {
+  font-weight: 600;
+}
+
+.wa-lp-hint {
+  margin: 8px 0 0;
+  color: var(--m-text-3);
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.wa-lp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--m-primary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wa-lp-link:hover {
+  color: var(--m-primary-hover);
+  text-decoration: underline;
+}
+
+.wa-lp-link:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+  border-radius: var(--m-radius-item);
+}
+
+/* the phone bottom sheet is wider than the desktop panel: keep the buttons on one line when they fit */
+@media (max-width: 767px) {
+  .wa-lp-actions .wa-tw-sbtn {
+    height: 36px;
+    font-size: 13px;
+  }
+}

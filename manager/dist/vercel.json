@@ -13,6 +13,13 @@
       "continue": true
     },
     {
+      "src": "^/assets/(.*)$",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      },
+      "continue": true
+    },
+    {
       "src": "^/\\.well-known/security\\.txt$",
       "dest": "/security.txt",
       "headers": {
@@ -75,6 +82,10 @@
       "dest": "/landing/seguranca.html"
     },
     {
+      "src": "^/novidades/?$",
+      "dest": "/landing/novidades.html"
+    },
+    {
       "src": "^/privacidade/?$",
       "dest": "/landing/privacidade.html"
     },
@@ -90,8 +101,13 @@
       "dest": "/observability/index.html"
     },
     {
-      "src": "^/(.*)$",
+      "src": "^/manager(/.*)?$",
       "dest": "/index.html"
+    },
+    {
+      "src": "^/(.*)$",
+      "status": 404,
+      "dest": "/404.html"
     }
   ]
 }

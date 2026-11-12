@@ -1,0 +1,97 @@
+/*whatsai-patch:perf-boot:boot*/
+/* WhatsAI Manager: static boot screen (manager/patches/perf-boot.py).
+   Shown by index.html while the ~1.5 MB panel bundle downloads, parses and renders, then removed by React when it
+   takes over #root (React clears the container on the first render). No inline script: the whole thing is HTML and
+   this stylesheet, so the CSP stays the same. Uses only tokens from theme.css, so light and dark are covered.
+   The bar is the only motion; prefers-reduced-motion gets a still bar. The "demorando" hint links to a reload and
+   stays invisible (and out of the tab order) for the first 12 seconds, so it does not distract a normal load.
+   Any edit to this file needs CSS_VERSION bumped in manager/patches/perf-boot.py. */
+
+#wa-boot {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  background: var(--m-canvas, #f5f5f5);
+  color: var(--m-text, #1a1a1a);
+  text-align: center;
+}
+
+/* Belt and braces: if React ever appends its tree instead of replacing the container, the boot screen goes away. */
+#root:has(> :not(#wa-boot)) #wa-boot {
+  display: none;
+}
+
+.wa-boot-brand {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.wa-boot-text {
+  margin: 0;
+  font-size: 14px;
+  color: var(--m-text-2, #5e5e5e);
+}
+
+.wa-boot-bar {
+  display: block;
+  width: min(180px, 60vw);
+  height: 3px;
+  border-radius: 999px;
+  background: var(--m-border, #e0e0e0);
+  overflow: hidden;
+}
+
+.wa-boot-bar-fill {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--m-text-3, #666666);
+  animation: wa-boot-move 1.2s ease-in-out infinite;
+}
+
+@keyframes wa-boot-move {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(350%);
+  }
+}
+
+.wa-boot-hint {
+  margin: 0;
+  max-width: 340px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--m-text-2, #5e5e5e);
+  visibility: hidden;
+  opacity: 0;
+  animation: wa-boot-hint-in 1ms linear 12s forwards;
+}
+
+.wa-boot-hint a {
+  color: var(--m-text, #1a1a1a);
+  text-underline-offset: 2px;
+}
+
+@keyframes wa-boot-hint-in {
+  to {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-boot-bar-fill {
+    width: 100%;
+    opacity: 0.6;
+    animation: none;
+  }
+}

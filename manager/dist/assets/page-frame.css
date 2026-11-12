@@ -1,0 +1,42 @@
+/* WhatsAI panel: one header and one width for every page (proposal G, manager/patches/page-frame.py).
+   The instance pages already share a 20 px / 600 title aligned to the content column; the workspace pages
+   (Chaves e credenciais, Observabilidade geral, Retenção) used 24 px, an extra label and their own widths. */
+
+/* workspace pages: same title as the instance pages */
+.wv-title,
+.wo-page .wo-title,
+[data-wa-portal-page='retencao'] .wa-page-title {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* "Painel WhatsAI" above the title of Chaves: no other page has it */
+.wv-head .wv-crumb {
+  display: none;
+}
+/* Observabilidade inside an instance repeated the breadcrumb that the header already shows */
+.wa-is-page .wo-crumbs {
+  display: none;
+}
+/* Retenção: same column as Chaves (left aligned, 1040 px), the form keeps a readable width */
+[data-wa-portal-page='retencao'] {
+  width: 100%;
+  max-width: var(--m-content, 1040px);
+  margin: 0 auto;
+  padding: 40px 24px 48px;
+}
+[data-wa-portal-page='retencao'] > .wa-portal-card {
+  max-width: 760px;
+}
+@media (max-width: 640px) {
+  [data-wa-portal-page='retencao'] {
+    padding: 24px 16px 40px;
+  }
+}
+/* Observabilidade geral: the same 1040 px column as Chaves and Retenção (inside an instance the shell sets it) */
+.wo-page {
+  max-width: var(--m-content, 1040px);
+  margin-left: auto;
+  margin-right: auto;
+}

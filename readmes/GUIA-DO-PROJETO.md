@@ -567,8 +567,8 @@ HTML de `manager/dist`, atualize o hash SHA-256 em `manager/dist/vercel.json` (o
   `Docker/scripts/deploy_database.sh` (migrations) antes de `npm run start:prod`.
 - O plano Free dorme após ~15 min sem tráfego; um job no cron-job.org faz `GET /` a cada 5 min. A primeira
   chamada após dormir pode levar ~50 s.
-- **Mudanças em `src/`, `prisma/`, `Dockerfile` ou `render.yaml` reiniciam a API (~4 min).** Em horário comercial
-  (9h–19h, Brasília), só faça o merge com OK do dono; fora disso, pode.
+- **Mudanças em `src/`, `prisma/`, `Dockerfile` ou `render.yaml` reiniciam a API (~4 min).** O dono autorizou o
+  merge a qualquer hora com a suíte verde; depois, confira o deploy `live` e a instância `open`.
 - Mudanças só estáticas (`manager/dist`, docs, `scripts/`) terminam o título do squash com `[skip render]`.
 
 ### 11.2 Vercel (site e painel)
@@ -614,12 +614,16 @@ publique valores. Se um token vazar, rotacione no provedor e no Render.
 ### 11.5 Fluxo de branch, PR e deploy
 
 1. Uma branch por tarefa a partir de `origin/main`.
-2. PR no formato de `.github/pull_request_template.md`.
-3. CI verde (`Check Code Quality`).
-4. Squash merge com `commit_message` explícita (Conventional Commits, cabeçalho ≤100 chars).
-5. Push com `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
-6. `[skip render]` no título do squash quando a mudança é só estática.
-7. Depois de deploy que reinicia a API, confira o deploy `live` no Render e o estado da instância (`open`).
+2. Faça o push com `git push -u origin <branch>`. Não há hook local: lint, prettier, build, tipos, unitários,
+   integração e patches do painel rodam no GitHub Actions.
+3. Abra o PR no formato de `.github/pull_request_template.md`; o CI precisa ficar verde.
+4. Agentes que só desenvolvem (DeepSeek, Cursor e outros) **param aqui**. O Claude Code do dono (com os MCPs de
+   Neon, Render, Vercel e WhatsAI) revisa e faz o squash com `commit_message` explícita (Conventional Commits,
+   cabeçalho ≤100 chars) assim que as checagens estiverem verdes, a qualquer hora.
+5. `[skip render]` no título do squash quando a mudança é só estática.
+6. Depois de deploy que reinicia a API, a conferência do deploy `live` no Render e do estado da instância (`open`)
+   fica com o Claude Code do dono, que tem os MCPs; agentes sem MCP registram a pendência no PR. O roteiro completo
+   de handoff está em `readmes/HANDOFF-CLAUDE-CODE.md`.
 
 ### 11.6 Conferências somente-leitura (produção)
 
@@ -697,10 +701,23 @@ npm run test:run
   e impede rede; para trocar um serviço, use `serverModuleOverrides`.
 - **Lacunas conhecidas:** não há teste de conexão Baileys real/pareamento (manual), não há integração MySQL e o
   `npm test` (watch) cobre só um subconjunto de `test/all.test.ts`.
-- **CI:** `Check Code Quality` roda lint, build, `test:types` e `test:run` com Postgres 16; `Security` roda
-  Gitleaks + `npm audit` (não bloqueia); `Deploy Manager` publica o painel; `Release` cria releases por tag.
+- **CI:** `Check Code Quality` roda lint, Prettier, build, `test:types`, unitários e integração em jobs separados
+  com Postgres 16; o workflow `Docker` valida a imagem; `Security` roda Gitleaks + `npm audit` (não bloqueia);
+  `Deploy Manager` publica o painel; `Release` cria releases por tag.
 
-### 12.3 O que rodar antes de cada push
+### 12.3 O que o GitHub roda em cada PR
+
+O workflow `Check Code Quality` roda, em `ubuntu-latest`:
+
+- job `check-lint-and-build`: título do PR no commitlint, `npm run lint:check`, `npm run format:check` (ESLint + Prettier) e `npm run build` (TypeScript + tsup);
+- job `unit-tests`: `npm run test:types` e `npm run test:unit`;
+- job `integration-tests`: `npm run test:integration` com Postgres 16;
+- job `manager-patches`: `python3 -I manager/patches/*.py --check`, `node manager/patches/landing-css.mjs --check` e o parse do bundle;
+- workflow `Docker` (quando `Dockerfile`, `Docker/**`, `package.json`, `package-lock.json` ou `render.yaml` mudam): `docker build`;
+- workflow `Security`: Gitleaks e `npm audit`.
+
+O push não roda nada disso: não há mais hooks de pre-commit, pre-push ou commit-msg. Se um check do GitHub falhar,
+rode localmente só o comando apontado, para depurar:
 
 ```bash
 DATABASE_PROVIDER=postgresql npm run db:generate   # se mudou schema
@@ -708,9 +725,6 @@ npx tsx --test "test/unit/**/*.test.ts"
 npm run test:types && npx tsc --noEmit -p . && npx eslint src test --ext .ts
 # integração com o Postgres descartável (acima)
 ```
-
-O hook de pre-push roda `npm run build` e `npm run lint:check`; o pre-commit roda `lint-staged`; o commit-msg roda
-commitlint.
 
 ---
 
@@ -726,6 +740,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 - O thread principal revisa, consolida e fica com o que é **dependente ou sensível**: deploy, produção, WhatsApp
   do cliente e qualquer ação destrutiva.
 - Registre as decisões e mudanças no PR, em PT-BR, com recomendações.
+- **Merge:** agentes que só desenvolvem abrem o PR, deixam o CI verde e param. O Claude Code do dono (com os MCPs
+  de Neon, Render, Vercel e WhatsAI) revisa e faz o merge assim que a suíte estiver verde, a qualquer hora.
 
 ### 13.2 Nunca
 
@@ -738,6 +754,10 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
 - Identificador de modelo de IA em commits, PRs ou código.
 - Commitar o `.gitignore` local (um plugin do ambiente o altera; é sempre ` M .gitignore` e fica fora).
 - Mandar `reasoning_effort` à OpenAI.
+- Fazer merge de PR sendo um agente que só desenvolve (DeepSeek, Cursor e outros): só o Claude Code do dono faz.
+- Fazer merge sem a suíte completa verde (unitários, tipos, lint e integração).
+- Usar emojis em código, docs, commits, PRs ou respostas.
+- Usar runner self-hosted ou pago nos workflows; sempre `ubuntu-latest` (GitHub-hosted, gratuito).
 
 ### 13.3 Antes de mexer
 
@@ -746,7 +766,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
    são estáticos (`[skip render]`).
 3. Se for mudar banco, planeje migration aditiva nos dois providers e nos três schemas; crie snapshot no Neon.
 4. Se for mudar o painel, rode os `--check` dos patches e o esbuild; se mudar HTML inline, atualize a CSP.
-5. Rode os testes e o lint antes do push; abra o PR no template; faça squash com mensagem explícita.
+5. Rode a suíte completa e o lint antes do push; abra o PR no template e pare. Não faça merge: o dono/Claude Code
+   dele revisa e aprova. Workflows sempre em `ubuntu-latest`.
 
 ### 13.4 Onde olhar primeiro
 
@@ -898,6 +919,8 @@ Estas regras vêm do `CLAUDE.md` e valem para qualquer agente que trabalhe neste
   observabilidade (§10), decisões (§11), bot OpenAI (§12), auditoria (§13), MCP (§14), limites (§15), leads (§16),
   Processos (§17), Agenda (§18) e Acesso do cliente (§19).
 - Banco por instância: [`docs/arquitetura/banco-por-instancia.md`](../docs/arquitetura/banco-por-instancia.md)
+- UI/UX: [`docs/ux-recomendacoes.md`](../docs/ux-recomendacoes.md) — análise contra Twenty CRM e ERPNext, com
+  recomendações priorizadas.
 - Docs espelhados: `docs/vendors/render/llms-full.txt`, `docs/vendors/neon/llms-full.txt`,
   `docs/vendors/vercel/llms-full.txt` (atualize com `bash scripts/update-vendor-docs.sh`)
 - MCP: `src/api/integrations/mcp/` e `whatsai://docs/<nome>`
@@ -948,8 +971,8 @@ for f in manager/patches/*.py; do python3 -I "$f" --check; done
 npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null
 node manager/patches/landing-css.mjs --check
 
-# Push (hook roda eslint + tsc)
-NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>
+# Push (as checagens rodam no GitHub Actions)
+git push -u origin <branch>
 ```
 
 ## Apêndice C — glossário

@@ -66,13 +66,13 @@ VERCEL_TOKEN="<token da Vercel>" npx -y vercel@65.2.0 deploy --prod --yes --arch
 ```
 
 - Mudanças de env no `render.yaml` são aplicadas no deploy seguinte (Blueprint auto-sync). Se não aplicar: Render > Blueprint > **Sync**.
-- **CI:** `Check Code Quality` roda lint, build, `npm run test:types` e os testes unitários e de integração (Postgres local); `Security` roda Gitleaks + `npm audit` (só relatório); Dependabot abre atualizações semanais.
-- **Testes locais:** `npm run test:unit`; integração com `npm run test:db:start` e depois `npm run test:integration` (veja `test/scripts/local-postgres.sh`).
-- **Build:** o `tsup` empacota cada arquivo de `src` com sourcemap e já passa do heap padrão do Node (~2 GB). O `Dockerfile` (estágio de build) e o CI usam `NODE_OPTIONS=--max-old-space-size=4096`; localmente rode `NODE_OPTIONS=--max-old-space-size=4096 npm run build`. Para `git push` com o hook de pre-push (que faz o build), use `NODE_OPTIONS=--max-old-space-size=6144 git push`.
+- **CI:** `Check Code Quality` roda lint e prettier, build, `test:types`, unitários e integração em jobs separados (Postgres 16) e os checks dos patches do painel; o workflow `Docker` valida a imagem; `Security` roda Gitleaks + `npm audit` (só relatório); Dependabot abre atualizações semanais.
+- **Testes locais:** só para depurar um check vermelho do GitHub: `npm run test:unit`; integração com `npm run test:db:start` e depois `npm run test:integration` (veja `test/scripts/local-postgres.sh`).
+- **Build:** o `tsup` empacota cada arquivo de `src` com sourcemap e já passa do heap padrão do Node (~2 GB). O `Dockerfile` (estágio de build) e o CI usam `NODE_OPTIONS=--max-old-space-size=4096`; se precisar rodar localmente para depurar, use `NODE_OPTIONS=--max-old-space-size=4096 npm run build`. O push não roda build.
 
 ## 4. Painel, site e manual (build sem fonte)
 
-Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/` (`*.py`; no site, `landing-css.mjs` e `pwa-icons.mjs`): troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (o maior `CACHE_VERSION` dos patches; hoje `?v=48`). Depois de qualquer patch: `for f in manager/patches/*.py; do python3 -I "$f" --check; done` e `npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null`. Se o manager for reconstruído do zero, reaplique todos.
+Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/index-b29a5d7a.js`). Toda mudança no painel é um **patch determinístico** em `manager/patches/` (`*.py`; no site, `landing-css.mjs` e `pwa-icons.mjs`): troca de trechos exatos do bundle, com marcador (rodar de novo não duplica), `--check` (sai com erro se algo não foi aplicado) e cache bust do bundle no `index.html` (o maior `CACHE_VERSION` dos patches; hoje `?v=69`). Depois de qualquer patch: `for f in manager/patches/*.py; do python3 -I "$f" --check; done` e `npx esbuild manager/dist/assets/index-b29a5d7a.js --log-level=error --format=esm > /dev/null`. Se o manager for reconstruído do zero, reaplique todos.
 
 | Área | Patch / arquivos | O que faz |
 |---|---|---|
@@ -111,6 +111,25 @@ Instância > **Comportamento** (mesmos campos do Evolution API, `POST /settings/
 | Visualizar Status | Marca status dos contatos como vistos (o contato vê) e guarda os status; desligado, `status@broadcast` é ignorado | Desligado |
 
 Licença: o painel não mostra créditos de autor. O aviso de uso do Evolution API pedido pela licença (condição 1b do `LICENSE`: visível a administradores e acessível pela documentação) fica no rodapé do **Manual** e neste documento.
+
+### 4.2 Novidades do painel (12/11/2026)
+
+O pacote do Artefato do Projeto (27 propostas) mudou o painel e o site:
+
+- **Ajuda e novidades**: menu Ajuda nos três cabeçalhos, atalhos `?`, `G+C`, `G+L` e `P`, e a página pública `/novidades`.
+- **Ficha do lead**: página própria com abas e a ficha ao lado da conversa, com processos vinculados e as ações de assumir/retomar a IA.
+- **Leads**: acabamento das listas (ícones, datas relativas e notificações), quadro por status com arrastar e visões fixadas no navegador.
+- **Atendente IA**: formulário em seções, com linguagem simples.
+- **Integrações**: catálogo com um cartão por integração e estado ligada/desligada; eventos de Webhook, WebSocket, RabbitMQ e SQS em grupos, com teste de envio.
+- **Ctrl K**: além de buscar, executa ações (pausar/retomar IA, agendar, mudar status do lead, adicionar processo e exportar planilha).
+- **Celular**: listas de Leads, Processos e Instâncias viram cartões abaixo de 640 px; abas rolam de lado.
+- **Visão Geral**: números da semana, agenda do dia e alertas no lugar do cartão técnico; o token e as ações destrutivas ficam em Conexão.
+- **Cobrança e exportação**: abas Cobrança e Exportar dados em Plano e limites; ZIP em streaming com CSVs de conversas, mensagens, contatos, leads e agenda.
+- **Central de notificações**: sino no cabeçalho com desconexão, limite do plano, processos e agenda, com atalho para resolver.
+- **Sistema visual**: medidas, cantos, tipografia e largura iguais em todas as telas; primeiro acesso com boot screen, cache imutável e fonte versionada.
+- **Equipe (etapa 1)**: API de login por pessoa com Google, sessão revogável e quadro de acessos. O painel ainda entra pela chave global; a tela de login e os papéis entram na etapa 2.
+
+As propostas de componentes, formatos e movimento (M, N e AA) já estavam nas telas anteriores. O detalhamento, as capturas e as decisões de cada letra ficam no `Artefato do Projeto/WhatsAI frente a Twenty e Frappe.md`.
 
 ## 5. Onboarding de cliente (runbook)
 

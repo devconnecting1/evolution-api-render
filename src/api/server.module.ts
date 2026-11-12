@@ -2,6 +2,7 @@ import { CacheEngine } from '@cache/cacheengine';
 import { Auth, Chatwoot, configService, Database, Processos, ProviderSession } from '@config/env.config';
 import { eventEmitter } from '@config/event.config';
 import { Logger } from '@config/logger.config';
+import { parseAllowlist } from '@utils/google-login';
 import { openaiHealthRegistry } from '@utils/openai-health';
 import { setProcessAiContextProvider } from '@utils/processos/aiContext';
 
@@ -9,10 +10,12 @@ import { AgendaController } from './controllers/agenda.controller';
 import { BusinessController } from './controllers/business.controller';
 import { CallController } from './controllers/call.controller';
 import { ChatController } from './controllers/chat.controller';
+import { ExportController } from './controllers/export.controller';
 import { GroupController } from './controllers/group.controller';
 import { InstanceController } from './controllers/instance.controller';
 import { LabelController } from './controllers/label.controller';
 import { LeadsController } from './controllers/leads.controller';
+import { OverviewController } from './controllers/overview.controller';
 import { ProcessosController } from './controllers/processos.controller';
 import { ProxyController } from './controllers/proxy.controller';
 import { SendMessageController } from './controllers/sendMessage.controller';
@@ -50,16 +53,20 @@ import { adminAlertsConfigFromEnv, AdminAlertsService } from './services/admin-a
 import { AgendaService } from './services/agenda.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
+import { ExportService } from './services/export.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
+import { GoogleLoginService } from './services/google-login.service';
 import { LeadsService } from './services/leads.service';
 import { WAMonitoringService } from './services/monitor.service';
 import { OpenaiHealthService } from './services/openai-health.service';
+import { OverviewService } from './services/overview.service';
 import { ProcessosService } from './services/processos.service';
 import { ProxyService } from './services/proxy.service';
 import { retentionDaysFromEnv, RetentionService } from './services/retention.service';
 import { SettingsService } from './services/settings.service';
 import { TemplateService } from './services/template.service';
 import { UsageService } from './services/usage.service';
+import { UserSessionService } from './services/user-session.service';
 
 const logger = new Logger('WA MODULE');
 
@@ -151,6 +158,9 @@ export const usageService = new UsageService(prismaRepository, {
 /** "Acesso do cliente": códigos de acesso do cliente com módulos escolhidos (src/utils/client-access.ts). */
 export const clientAccessService = new ClientAccessService({ prisma: prismaRepository });
 export const usageController = new UsageController(usageService, prismaRepository);
+/** "Exportar dados da instância": read-only ZIP of the instance data (src/api/services/export.service.ts). */
+export const exportService = new ExportService(prismaRepository);
+export const exportController = new ExportController(exportService, prismaRepository);
 
 // "Processos" (DataJud + DJEN): one instance (in-memory ticker state, rate limits, AI context provider)
 const processosConfig = configService.get<Processos>('PROCESSOS');
@@ -167,6 +177,12 @@ export const processosService = new ProcessosService(prismaRepository, waMonitor
 });
 export const processosController = new ProcessosController(processosService);
 setProcessAiContextProvider((instanceId, remoteJid) => processosService.aiContext(instanceId, remoteJid));
+
+// "Visão Geral com o resultado do escritório": read-only numbers of the first screen; no timer, only when the panel opens
+export const overviewService = new OverviewService(prismaRepository, {
+  processesBadge: (instanceId) => processosService.badge(instanceId),
+});
+export const overviewController = new OverviewController(overviewService, prismaRepository);
 
 // "Leads (triagem)": the bot hands every answered conversation to it (in the background); same instance as the routes
 export const leadsService = new LeadsService(prismaRepository, usageService, waMonitor, {
@@ -189,6 +205,26 @@ export const googleCalendarService = new GoogleCalendarService(prismaRepository,
   secret:
     process.env.GOOGLE_TOKEN_KEY?.trim() || `apikey:${configService.get<Auth>('AUTHENTICATION').API_KEY.KEY ?? ''}`,
   log: (level, message) => googleLogger[level](message),
+});
+// "Equipe" (proposta V, etapa 1): login com Google por pessoa + sessões revogáveis. Sem as envs, o recurso fica
+// desligado e a chave global continua entrando (break-glass). Nada aqui chama o Google ao subir a API.
+const teamLogger = new Logger('Equipe');
+export const userSessionService = new UserSessionService({
+  prisma: prismaRepository,
+  log: (message) => teamLogger.warn(message),
+});
+export const googleLoginService = new GoogleLoginService({
+  clientId: process.env.GOOGLE_LOGIN_CLIENT_ID?.trim() || process.env.GOOGLE_CLIENT_ID?.trim() || undefined,
+  clientSecret: process.env.GOOGLE_LOGIN_CLIENT_SECRET?.trim() || process.env.GOOGLE_CLIENT_SECRET?.trim() || undefined,
+  redirectUri:
+    process.env.GOOGLE_LOGIN_REDIRECT_URI?.trim() || (serverUrl ? `${serverUrl}/auth/google/callback` : undefined),
+  returnUrl: process.env.GOOGLE_LOGIN_RETURN_URL?.trim() || 'https://whatsaibr.vercel.app/manager/login',
+  allowlist: parseAllowlist(process.env.GOOGLE_LOGIN_OWNER_EMAILS),
+  secret:
+    process.env.GOOGLE_LOGIN_STATE_SECRET?.trim() ||
+    process.env.GOOGLE_TOKEN_KEY?.trim() ||
+    `apikey:${configService.get<Auth>('AUTHENTICATION').API_KEY.KEY ?? ''}`,
+  log: (level, message) => teamLogger[level](message),
 });
 export const agendaService = new AgendaService(prismaRepository, waMonitor, { google: googleCalendarService });
 export const agendaController = new AgendaController(agendaService, prismaRepository, googleCalendarService);

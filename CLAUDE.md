@@ -18,7 +18,9 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
 
 ### Comunicação
 - Sempre em **português (PT-BR)**, linguagem simples, com recomendações. O dono do projeto dá autonomia
-  ("faça da melhor forma"): implementar, abrir PR e fazer o merge quando o CI estiver verde, avisando o que mudou.
+  ("faça da melhor forma"): implementar, abrir PR e avisar o que mudou. Sobre o merge: o merge é do Claude Code do dono (o que tem os MCPs de Neon, Render, Vercel e WhatsAI): ele revisa e faz o
+  squash assim que a suíte estiver verde, a qualquer hora (pedido do dono em 11/11/2026). Agentes que só desenvolvem
+  (DeepSeek, Cursor e outros) abrem o PR e param.
 - Pergunte só o que só ele pode decidir (números de telefone, apagar dados, gastos, mudar algo do cliente em produção).
 
 ### Múltiplos agentes
@@ -38,19 +40,39 @@ no GitHub (e nos recursos MCP `whatsai://docs`): o painel não tem mais Manual; 
 - Identificador de modelo de IA em commits, PRs ou código.
 - Commitar o `.gitignore` local (um plugin do ambiente o altera; é sempre ` M .gitignore` e fica fora).
 - Mandar `reasoning_effort` à OpenAI: os modelos usam o raciocínio padrão.
+- Fazer merge de PR sendo um agente que só desenvolve (DeepSeek, Cursor e outros): só o Claude Code do dono faz.
+- Fazer merge sem as checagens do GitHub verdes (lint, prettier, build, tipos, unitários, integração e patches do
+  painel).
+- Usar emojis em código, docs, commits, PRs ou respostas.
 
 ### Git, PR e deploy
-- Uma branch por tarefa a partir de `origin/main`; PR no formato de `.github/pull_request_template.md`; squash merge
-  com `commit_message` explícita. Cabeçalho do commit com até 100 caracteres (commitlint, Conventional Commits).
-- Push: `NODE_OPTIONS=--max-old-space-size=6144 git push -u origin <branch>` (o hook roda eslint + tsc).
+- Uma branch por tarefa a partir de `origin/main`; PR no formato de `.github/pull_request_template.md`. O squash usa
+  `commit_message` explícita e cabeçalho de até 100 caracteres (commitlint, Conventional Commits).
+- Workflows sempre em `ubuntu-latest` (GitHub-hosted, gratuito); não use runner self-hosted ou pago.
+- Push: `git push -u origin <branch>`. Não há hook local: lint, prettier, build, tipos, unitários, integração e
+  patches do painel rodam no GitHub Actions.
 - Mudança só estática (`manager/dist`, docs, `scripts/`): termine o título do squash com `[skip render]`.
-- Mudança em `src/` ou `prisma/` reinicia a API (~4 min): em horário comercial (9h–19h, Brasília) só com OK do dono;
-  fora disso, pode fazer o merge.
+- Mudança em `src/`, `prisma/`, `Dockerfile` ou `render.yaml` reinicia a API (~4 min); o dono autorizou o merge a
+  qualquer hora com as checagens verdes. Depois do deploy, a conferência do `live` no Render e da instância `open`
+  fica com o Claude Code do dono, que tem os MCPs; agentes sem MCP registram a pendência no PR. Mudança na conexão do
+  WhatsApp (Baileys) só entra depois de testada com um número de teste.
+- Handoff e roteiro completo das conferências com MCP: `readmes/HANDOFF-CLAUDE-CODE.md`.
 - Migrations sempre aditivas, em `prisma/postgresql-migrations` **e** `prisma/mysql-migrations`, com o modelo nos três
   schemas (`postgresql`, `mysql`, `psql_bouncer`). Tabela global (procurada antes de saber a instância) entra em
   `CONTROL_MODELS` de `src/api/repository/instance-db/routing.ts`.
 
-### Antes de cada push
+### Checagens no GitHub (não rode a suíte localmente)
+O push não roda lint, prettier, testes nem build. Ao abrir o PR, o GitHub Actions roda em `ubuntu-latest`:
+
+- job `check-lint-and-build`: título do PR no commitlint, `npm run lint:check`, `npm run format:check` (ESLint + Prettier) e `npm run build` (TypeScript + tsup);
+- job `unit-tests`: `npm run test:types` e `npm run test:unit`;
+- job `integration-tests`: `npm run test:integration` com Postgres 16;
+- job `manager-patches`: `python3 -I manager/patches/*.py --check`, `node manager/patches/landing-css.mjs --check` e o parse do bundle;
+- workflow `Docker` (quando `Dockerfile`, `Docker/**`, `package.json`, `package-lock.json` ou `render.yaml` mudam): `docker build`;
+- workflow `Security`: Gitleaks e `npm audit`.
+
+O merge só acontece com todos verdes. Se um check falhar, rode localmente só o comando que ele aponta, para depurar:
+
 ```bash
 DATABASE_PROVIDER=postgresql npm run db:generate          # depois de mudar schema
 npx tsx --test "test/unit/**/*.test.ts"                   # unitários
@@ -59,6 +81,7 @@ npm run test:types && npx tsc --noEmit -p . && npx eslint src test --ext .ts
 export TEST_PG_DIR=/tmp/evo-pg TEST_PG_PORT=55471 TEST_DATABASE_URL='postgresql://postgres@127.0.0.1:55471/evolution_test?schema=public'
 npm run test:db:start && npm run test:integration
 ```
+
 Nos testes, `test/helpers/setup.ts` troca o `@api/server.module` por um proxy: para substituir um serviço dele, use
 `serverModuleOverrides` (`test/helpers/chatbot-emit.ts`).
 
@@ -296,11 +319,11 @@ The project follows comprehensive development standards defined in `.cursor/rule
 
 ## Testing Approach
 
-The project has a `node:test` suite (run with `tsx`), executed by CI (`Check Code Quality`):
+The project has a `node:test` suite (run with `tsx`), executed by CI in two parallel jobs (`unit-tests` and `integration-tests`):
 - **Unit tests** in `test/unit/**/*.test.ts`: `npm run test:unit`
 - **Integration tests** in `test/integration/**/*.test.ts` against a local Postgres: `npm run test:db:start`, then `npm run test:integration`
-- **Type-check of the tests**: `npm run test:types` (CI runs it; fakes must implement every method the code calls)
-- `npm run test:run` runs unit + integration; `npm test` is the watch mode
+- **Type-check of the tests**: `npm run test:types` (CI runs it in `unit-tests`; fakes must implement every method the code calls)
+- `npm run test:run` runs both locally; `npm test` is the watch mode
 - WhatsApp connection flows are still tested manually (never re-pair or log out a production number)
 
 ### Recommended Testing Strategy

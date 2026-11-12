@@ -33,7 +33,7 @@
 [data-wa-layout].wa-is [data-wa-nav] > li:first-child.wa-nav-label {
   margin-top: 4px;
 }
-[data-wa-layout].wa-is [data-wa-nav] > li > button,
+[data-wa-layout].wa-is [data-wa-nav] > li > :is(button, .wa-nb),
 [data-wa-layout].wa-is [data-wa-nav] > li > div > button {
   height: 30px;
   min-height: 30px;
@@ -47,12 +47,12 @@
   font-weight: 400;
   line-height: 20px;
 }
-[data-wa-layout].wa-is [data-wa-nav] > li > button:hover,
+[data-wa-layout].wa-is [data-wa-nav] > li > :is(button, .wa-nb):hover,
 [data-wa-layout].wa-is [data-wa-nav] > li > div > button:hover {
   background: var(--m-hover);
   color: var(--m-text);
 }
-[data-wa-layout].wa-is [data-wa-nav] > li > button.bg-secondary {
+[data-wa-layout].wa-is [data-wa-nav] > li > :is(button, .wa-nb).bg-secondary {
   background: var(--m-selected);
   box-shadow: none;
   color: var(--m-text);
@@ -68,15 +68,15 @@
 [data-wa-layout].wa-is [data-wa-nav] > li > div > button.bg-secondary:hover {
   background: var(--m-hover);
 }
-[data-wa-layout].wa-is [data-wa-nav] > li > button svg,
+[data-wa-layout].wa-is [data-wa-nav] > li > :is(button, .wa-nb) svg,
 [data-wa-layout].wa-is [data-wa-nav] > li > div > button svg {
   flex: none;
   width: 15px;
   height: 15px;
   color: var(--m-text-3);
 }
-[data-wa-layout].wa-is [data-wa-nav] > li > button.bg-secondary svg,
-[data-wa-layout].wa-is [data-wa-nav] > li > button:hover svg,
+[data-wa-layout].wa-is [data-wa-nav] > li > :is(button, .wa-nb).bg-secondary svg,
+[data-wa-layout].wa-is [data-wa-nav] > li > :is(button, .wa-nb):hover svg,
 [data-wa-layout].wa-is [data-wa-nav] > li > div > button:hover svg {
   color: var(--m-text);
 }

@@ -3,7 +3,9 @@
 This document provides comprehensive guidelines for AI agents (Claude, GPT, Cursor, etc.) working with the Evolution API codebase.
 
 > **Project guide (WhatsAI fork):** [`readmes/GUIA-DO-PROJETO.md`](readmes/GUIA-DO-PROJETO.md) — architecture, message flow, MCP, panel/site, deploy, tests, screenshots and prioritized recommendations.
-> **Working rules:** [`CLAUDE.md`](CLAUDE.md).
+> **Working rules:** [`CLAUDE.md`](CLAUDE.md). Development agents (DeepSeek, Cursor, ...) open the PR and stop;
+> the owner's Claude Code (with the Neon, Render and Vercel MCPs) reviews and merges once the full suite is green,
+> at any hour. Never merge without the full test suite green. Workflows use `ubuntu-latest`. No emojis.
 
 ## Project Overview
 
@@ -59,6 +61,11 @@ npm run start:prod
 # Linting and formatting
 npm run lint        # ESLint with auto-fix
 npm run lint:check  # ESLint check only
+npm run format:check  # Prettier check (src and test)
+
+# As checagens (lint, prettier, build, tipos, unitários, integração, patches do painel e docker) rodam no GitHub Actions.
+# Jobs: check-lint-and-build, unit-tests, integration-tests, manager-patches e Docker.
+# O push não roda hooks locais; use os comandos acima só para depurar um check vermelho.
 
 # Commit with conventional commits
 npm run commit      # Interactive commit with Commitizen

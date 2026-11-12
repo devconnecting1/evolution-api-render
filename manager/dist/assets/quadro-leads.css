@@ -1,0 +1,424 @@
+/*
+ * WhatsAI Manager: "Leads em quadro por status e visões fixadas" (proposta C).
+ * Linked after ficha-lead.css by manager/patches/quadro-leads.py. Written by hand; colors only with the var(--m-*)
+ * tokens of minimal.css, so light and dark follow the theme chosen in the panel.
+ *
+ *   .wl-mode        Lista / Quadro toggle in the toolbar
+ *   .wl-board-shell board area: pinned views column + five status columns (216 px + fluid on desktop)
+ *   .wl-pins        pinned views ("Fixar visão"), with the counter of each view
+ *   .wl-col         one status column: header with dot, name and API count; scrollable card list
+ *   .wl-card        one lead card (draggable, opens the drawer; status menu in the footer for touch screens)
+ *   .wl-col-more    "Ver todos (n)" when the page shows fewer cards than the API count
+ *
+ * Dragging uses the native HTML5 drag-and-drop (desktop); the status menu in each card is the keyboard and touch
+ * alternative and calls the same changeStatus of the list.
+ */
+
+/* ========================================================================================= Lista / Quadro */
+.wl-mode {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: var(--m-surface);
+}
+.wl-mode-btn {
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--m-radius-field);
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+.wl-mode-btn:hover {
+  color: var(--m-text);
+  background: var(--m-hover);
+}
+.wl-mode-btn[aria-pressed="true"] {
+  background: var(--m-bg);
+  color: var(--m-text);
+  box-shadow: 0 0 0 1px var(--m-border);
+}
+.wl-mode-btn:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 1px;
+}
+
+/* ========================================================================================= board + pinned views */
+.wl-board-shell {
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+.wl-pins {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+}
+.wl-pins-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--m-text-2);
+}
+.wl-pins-head svg {
+  flex: none;
+  color: var(--m-text-3);
+}
+.wl-pins-title {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.wl-pins-n {
+  flex: none;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 11px;
+  text-align: center;
+}
+.wl-pins-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wl-pin {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  border-radius: var(--m-radius-item);
+}
+.wl-pin:hover {
+  background: var(--m-hover);
+}
+.wl-pin-main {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.wl-pin-main:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: -2px;
+}
+.wl-pin-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wl-pin-n {
+  flex: none;
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.wl-pin-x {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 2px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text-3);
+  cursor: pointer;
+}
+.wl-pin-x:hover {
+  background: var(--m-hover);
+  color: var(--m-bad);
+}
+.wl-pin-x:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 1px;
+}
+
+/* ========================================================================================= columns */
+.wl-board-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.wl-board {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 2px 2px 10px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+.wl-col {
+  display: flex;
+  flex: 0 0 264px;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+  max-height: min(68vh, 720px);
+  padding: 8px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-surface);
+  scroll-snap-align: start;
+}
+.wl-col[data-over="true"] {
+  border-color: var(--m-primary);
+  background: var(--m-tint);
+  box-shadow: var(--m-ring);
+}
+.wl-col-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 2px;
+}
+.wl-col-title {
+  flex: 1 1 auto;
+  margin: 0;
+  overflow: hidden;
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.wl-col-n {
+  flex: none;
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-bg);
+  color: var(--m-text-2);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.wl-col-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 1px;
+  overflow-y: auto;
+}
+.wl-col-empty {
+  margin: 0;
+  padding: 14px 6px;
+  color: var(--m-text-3);
+  font-size: 12px;
+  text-align: center;
+}
+.wl-col-more {
+  height: 28px;
+  border: 1px dashed var(--m-border-strong);
+  border-radius: var(--m-radius-field);
+  background: transparent;
+  color: var(--m-text-2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.wl-col-more:hover {
+  background: var(--m-hover);
+  color: var(--m-text);
+}
+.wl-col-more:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 1px;
+}
+.wl-board-note {
+  padding: 0 2px;
+}
+
+/* ========================================================================================= cards */
+.wl-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-item);
+  background: var(--m-bg);
+  cursor: pointer;
+}
+.wl-card:hover {
+  border-color: var(--m-border-strong);
+  background: var(--m-hover);
+}
+.wl-card:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 1px;
+}
+.wl-card[data-dragging="true"] {
+  opacity: 0.55;
+}
+.wl-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+.wl-card-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--m-text);
+  font-size: 13px;
+  line-height: 18px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wl-card-name strong {
+  font-weight: 500;
+}
+.wl-card-name:hover strong {
+  text-decoration: underline;
+}
+.wl-card-name:focus-visible {
+  outline: 2px solid var(--m-primary);
+  outline-offset: 2px;
+  border-radius: var(--m-radius-field);
+}
+.wl-card-meta {
+  margin: 0;
+  overflow: hidden;
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wl-card-step {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--m-text);
+  font-size: 12px;
+  line-height: 16px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.wl-card-miss {
+  margin: 0;
+  overflow: hidden;
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wl-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.wl-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+}
+.wl-card-when {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--m-text-3);
+  font-size: 11px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wl-card-status {
+  flex: none;
+}
+
+/* ========================================================================================= responsive */
+@media (max-width: 1024px) {
+  .wl-board-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .wl-pins {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 8px;
+  }
+  .wl-pins-head {
+    flex: none;
+  }
+  .wl-pins-list {
+    flex: 1 1 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .wl-pin {
+    border: 1px solid var(--m-border);
+  }
+  .wl-pins .wl-hint {
+    flex: 1 1 100%;
+  }
+  .wl-col {
+    max-height: min(60vh, 560px);
+  }
+}
+
+@media (max-width: 640px) {
+  .wl-mode {
+    order: -1;
+  }
+  .wl-col {
+    flex-basis: 84vw;
+    max-height: min(58vh, 520px);
+  }
+}

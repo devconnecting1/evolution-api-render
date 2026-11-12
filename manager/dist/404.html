@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex" />
+    <!-- Endereço que não existe no site (vercel.json responde 404 com esta página). O painel tem a própria tela de erro. -->
+    <title>Página não encontrada · WhatsAI</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg?v=3" />
+    <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/geist.css?v=3" />
+    <style>
+      :root {
+        --bg: #f5f5f5;
+        --text: #1a1a1a;
+        --text-2: #5e5e5e;
+        --line: #cccccc;
+        --primary: #1a1a1a;
+        --on-primary: #ffffff;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #10100e;
+          --text: #ffffe3;
+          --text-2: #b8b8a6;
+          --line: #606055;
+          --primary: #ffffe3;
+          --on-primary: #10100e;
+          color-scheme: dark;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      header {
+        padding: 20px 16px;
+      }
+      .brand {
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+      }
+      main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        text-align: center;
+      }
+      .box {
+        max-width: 440px;
+      }
+      .code {
+        margin: 0 0 6px;
+        color: var(--text-2);
+        font-size: 13px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0 0 24px;
+        color: var(--text-2);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--text);
+        font-weight: 500;
+        text-decoration: none;
+      }
+      .btn-pri {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: var(--on-primary);
+      }
+      a:focus-visible {
+        outline: 2px solid var(--text);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <header><a class="brand" href="/">WhatsAI</a></header>
+    <main>
+      <div class="box">
+        <p class="code">Erro 404</p>
+        <h1>Esta página não existe</h1>
+        <p>O endereço pode ter mudado ou estar incompleto.</p>
+        <div class="actions">
+          <a class="btn btn-pri" href="/">Ir para o início</a>
+          <a class="btn" href="/manager/">Entrar no painel</a>
+          <a class="btn" href="/acesso">Área do cliente</a>
+          <a class="btn" href="/novidades">Novidades</a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

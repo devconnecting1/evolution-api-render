@@ -1,0 +1,280 @@
+/*
+ * WhatsAI Manager: menu "Ajuda" do cabeçalho e diálogo de atalhos (manager/patches/help-menu.py, proposta W).
+ * Só tokens var(--m-*), então claro e escuro valem. Desktop: popover ancorado no botão; celular: folha na base,
+ * com o mesmo conteúdo. O botão tem 32px (28px dentro das barras do topo), como o tema e os outros ícones do
+ * cabeçalho; itens de 40px, cantos de 6px e cartões/menus de 8px.
+ */
+
+.wa-help {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.wa-help-btn {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--m-radius-pill);
+  background: transparent;
+  color: var(--m-text);
+  cursor: pointer;
+}
+.wa-help-btn:hover,
+.wa-help-btn[aria-expanded="true"] {
+  background: var(--m-hover);
+}
+.wa-ut-top-actions .wa-help-btn,
+[data-wa-header] > div:last-child .wa-help-btn {
+  width: 28px;
+  height: 28px;
+}
+.wa-help-btn:focus-visible,
+.wa-help-item:focus-visible,
+.wa-help-all:focus-visible,
+.wa-help-news a:focus-visible {
+  outline: none;
+  box-shadow: var(--m-ring);
+}
+
+/* ------------------------------------------------------------------ menu */
+.wa-help-scrim {
+  display: none;
+}
+.wa-help-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 80;
+  display: grid;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+  box-shadow: var(--m-shadow-menu);
+}
+.wa-help-label {
+  margin: 0;
+  padding: 6px 8px 4px;
+  color: var(--m-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+}
+.wa-help-item {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--m-radius-item);
+  background: transparent;
+  color: var(--m-text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.wa-help-item:hover,
+.wa-help-item:focus-visible {
+  background: var(--m-hover);
+}
+.wa-help-item > svg {
+  flex: none;
+  color: var(--m-text-2);
+}
+.wa-help-item-text {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.wa-help-item-hint {
+  color: var(--m-text-2);
+  font-size: 12px;
+  line-height: 16px;
+}
+.wa-help-kbd {
+  display: inline-flex;
+  min-width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-item);
+  background: var(--m-surface);
+  color: var(--m-text-2);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.wa-help-sep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--m-border);
+}
+.wa-help-news ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wa-help-news a {
+  display: grid;
+  gap: 1px;
+  padding: 6px 8px;
+  border-radius: var(--m-radius-item);
+  color: var(--m-text);
+  font-size: 13px;
+  line-height: 18px;
+  text-decoration: none;
+}
+.wa-help-news a:hover {
+  background: var(--m-hover);
+}
+.wa-help-news time {
+  color: var(--m-text-3);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.wa-help-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: var(--m-radius-item);
+  color: var(--m-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+}
+.wa-help-all:hover {
+  background: var(--m-hover);
+}
+.wa-help-all svg {
+  color: var(--m-text-2);
+}
+
+/* ------------------------------------------------------------------ diálogo de atalhos */
+.wa-help-dialog {
+  width: min(440px, calc(100vw - 24px));
+  max-width: 440px;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-card);
+  background: var(--m-bg);
+  color: var(--m-text);
+}
+.wa-help-dialog h2 {
+  margin: 0;
+  color: var(--m-text);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 26px;
+  letter-spacing: -0.01em;
+}
+.wa-help-dialog p {
+  margin: 4px 0 0;
+  color: var(--m-text-2);
+  font-size: 14px;
+  line-height: 20px;
+}
+.wa-help-keys {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+.wa-help-keys > div {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  border-bottom: 1px solid var(--m-border);
+}
+.wa-help-keys > div:last-child {
+  border-bottom: 0;
+}
+.wa-help-keys dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  margin: 0;
+  color: var(--m-text);
+}
+.wa-help-keys dd {
+  margin: 0;
+  color: var(--m-text-2);
+  font-size: 14px;
+  line-height: 20px;
+}
+.wa-help-plus {
+  color: var(--m-text-3);
+  font-size: 11px;
+  line-height: 1;
+}
+.wa-help-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ------------------------------------------------------------------ celular: folha na base */
+@media (max-width: 640px) {
+  .wa-help-menu {
+    position: fixed;
+    inset: auto 8px 8px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - 16px);
+    overflow: auto;
+    padding: 8px;
+    overscroll-behavior: contain;
+  }
+  .wa-help-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 79;
+    display: block;
+    background: var(--m-veil);
+    opacity: 0.35;
+  }
+  .wa-help-item {
+    min-height: 44px;
+  }
+  .wa-help-keys > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    padding: 8px 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wa-help-btn,
+  .wa-help-item,
+  .wa-help-news a,
+  .wa-help-all {
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+}
