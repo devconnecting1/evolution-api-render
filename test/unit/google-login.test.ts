@@ -36,7 +36,8 @@ const options = (over: Record<string, unknown> = {}) => ({
 const idToken = (claims: Record<string, unknown>) =>
   ['header', Buffer.from(JSON.stringify(claims)).toString('base64url'), 'signature'].join('.');
 
-const googleFetch = (claims: Record<string, unknown>, calls: any[] = []) =>
+const googleFetch =
+  (claims: Record<string, unknown>, calls: any[] = []) =>
   async (url: string, init: any) => {
     calls.push({ url, init });
     return { ok: true, status: 200, json: async () => ({ id_token: idToken(claims), scope: 'openid email profile' }) };
@@ -178,13 +179,12 @@ describe('equipe: google login service', () => {
     await assert.rejects(service.finish({ code: 'c', state, cookieNonce: 'other' }), /neste navegador/);
     await assert.rejects(service.finish({ code: 'c', state: 'bad', cookieNonce: nonce }), /expirou/);
     const expired = signLoginState('state-secret', NOW - 11 * 60_000);
-    await assert.rejects(
-      service.finish({ code: 'c', state: expired.state, cookieNonce: expired.nonce }),
-      /expirou/,
-    );
+    await assert.rejects(service.finish({ code: 'c', state: expired.state, cookieNonce: expired.nonce }), /expirou/);
     await assert.rejects(service.finish({ code: 'c', state, cookieNonce: nonce, error: 'access_denied' }), /cancelado/);
     const refused = new GoogleLoginService(
-      options({ fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ error: 'invalid_grant' }) }) }) as any,
+      options({
+        fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ error: 'invalid_grant' }) }),
+      }) as any,
     );
     await assert.rejects(refused.finish({ code: 'c', state, cookieNonce: nonce }), /recusou/);
   });

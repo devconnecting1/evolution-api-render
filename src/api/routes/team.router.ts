@@ -79,9 +79,7 @@ export class TeamRouter {
         const { session, global } = context(req);
         const id = typeof req.body?.id === 'string' ? req.body.id : '';
         if (!id) throw new BadRequestException('Informe o id da sessão.');
-        const revoked = global
-          ? await users().revokeSession(id)
-          : await users().revokeSession(id, session.userId);
+        const revoked = global ? await users().revokeSession(id) : await users().revokeSession(id, session.userId);
         if (!revoked) throw new NotFoundException('Sessão não encontrada.');
         return res.status(HttpStatus.OK).json({ revoked: true, id });
       });

@@ -16,12 +16,10 @@
  * GOOGLE_LOGIN_STATE_SECRET (default derived from GOOGLE_TOKEN_KEY or the global key). Without client id/secret or
  * without the allowlist, the feature is off and the status endpoint says so.
  */
-import { randomBytes } from 'crypto';
-
 import {
   claimsFromIdToken,
-  GoogleLoginClaims,
   GOOGLE_LOGIN_TOKEN_URL,
+  GoogleLoginClaims,
   LOGIN_CODE_TTL_MS,
   loginAuthUrl,
   parseAllowlist,
@@ -29,6 +27,7 @@ import {
   signLoginState,
   verifyLoginState,
 } from '@utils/google-login';
+import { randomBytes } from 'crypto';
 
 export type GoogleLoginFetch = (
   url: string,
@@ -157,7 +156,10 @@ export class GoogleLoginService {
     }).catch(() => null);
     const data: any = response ? await response.json().catch(() => ({})) : {};
     if (!response?.ok || !data?.id_token) {
-      this.log('warn', `Google login token exchange failed: HTTP ${response?.status ?? 'sem resposta'} ${data?.error ?? ''}`);
+      this.log(
+        'warn',
+        `Google login token exchange failed: HTTP ${response?.status ?? 'sem resposta'} ${data?.error ?? ''}`,
+      );
       throw new GoogleLoginError('O Google recusou o login. Tente de novo.');
     }
     const claims = claimsFromIdToken(data.id_token, this.options.clientId);

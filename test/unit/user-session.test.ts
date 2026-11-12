@@ -147,7 +147,12 @@ describe('equipe: user and session service', () => {
 });
 
 describe('equipe: auth guard precedence', () => {
-  const run = async (key: string | null, url = '/leads/GuardA', method = 'GET', params: any = { instanceName: 'GuardA' }) => {
+  const run = async (
+    key: string | null,
+    url = '/leads/GuardA',
+    method = 'GET',
+    params: any = { instanceName: 'GuardA' },
+  ) => {
     const req: any = {
       get: (header: string) => (header.toLowerCase() === 'apikey' ? key : undefined),
       headers: {},
@@ -188,9 +193,7 @@ describe('equipe: auth guard precedence', () => {
     serverModuleOverrides.clientAccessService = {
       resolve: async (token: string) => {
         clientCalls++;
-        return token === clientKey
-          ? { instanceId: 'i1', instanceName: 'GuardA', modules: ['leads'] }
-          : null;
+        return token === clientKey ? { instanceId: 'i1', instanceName: 'GuardA', modules: ['leads'] } : null;
       },
     };
     const prisma = { instance: { findUnique: async ({ where }: any) => ({ name: where.name, token: instanceToken }) } };
@@ -248,7 +251,8 @@ describe('equipe: auth guard precedence', () => {
           const returned = guard({ get: () => key, headers: {} }, res, (error?: any) =>
             resolve({ next: !error, error }),
           );
-          if (returned && typeof returned.catch === 'function') returned.catch((error: any) => resolve({ next: false, error }));
+          if (returned && typeof returned.catch === 'function')
+            returned.catch((error: any) => resolve({ next: false, error }));
         } catch (error) {
           resolve({ next: false, error });
         }

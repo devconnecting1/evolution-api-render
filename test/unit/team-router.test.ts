@@ -56,13 +56,14 @@ before(async () => {
   app.use('/team', new TeamRouter({ googleLogin: owner, users }).router);
   app.get('/disabled/status', (_req, res) => res.json(disabled.status()));
   app.get('/admin-only', authGuard.adminOnly, (_req, res) => res.json({ ok: true }));
-  app.use((err: any, _req: any, res: any, _next: any) =>
-    res.status(err?.status || 500).json({
+  app.use((err: any, _req: any, res: any, _next: any) => {
+    void _next;
+    return res.status(err?.status || 500).json({
       status: err?.status || 500,
       error: err?.error || 'Internal Server Error',
       response: { message: err?.message || 'Internal Server Error' },
-    }),
-  );
+    });
+  });
   server = await new Promise<any>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });
@@ -85,7 +86,8 @@ const json = (path: string, body: any, key?: string | null) =>
   });
 
 const cookieOf = (res: any) => {
-  const list = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [res.headers.get('set-cookie')];
+  const list =
+    typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [res.headers.get('set-cookie')];
   return String(list.find((value: string) => value?.includes('wa_gl_state=')) ?? '').split(';')[0];
 };
 
@@ -97,7 +99,10 @@ describe('equipe HTTP: login with Google', () => {
 
     const app = express();
     app.use('/auth', new AuthRouter({ googleLogin: disabled, users }).router);
-    app.use((err: any, _req: any, res: any, _next: any) => res.status(err?.status || 500).json({ message: err?.message }));
+    app.use((err: any, _req: any, res: any, _next: any) => {
+      void _next;
+      return res.status(err?.status || 500).json({ message: err?.message });
+    });
     const local = await new Promise<any>((resolve) => {
       const s = app.listen(0, '127.0.0.1', () => resolve(s));
     });
@@ -105,7 +110,7 @@ describe('equipe HTTP: login with Google', () => {
     try {
       const start = await fetch(`${address}/auth/google`, { redirect: 'manual' });
       assert.equal(start.status, 503);
-      assert.match((await start.json()).response.message[0], /não está configurado/);
+      assert.match(((await start.json()) as any).response.message[0], /não está configurado/);
       const exchange = await fetch(`${address}/auth/google/exchange`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -153,7 +158,7 @@ describe('equipe HTTP: login with Google', () => {
 
     const exchange = await json('/auth/google/exchange', { code });
     assert.equal(exchange.status, 200);
-    const body = await exchange.json();
+    const body: any = await exchange.json();
     assert.match(body.token, /^was_[A-Za-z0-9_-]{43}$/);
     assert.equal(body.user.email, 'dono@exemplo.com');
     assert.equal(sessions[0].tokenHash, hashSessionToken(body.token));
@@ -163,7 +168,7 @@ describe('equipe HTTP: login with Google', () => {
 
     const me = await call('/team/me', { headers: { apikey: body.token } });
     assert.equal(me.status, 200);
-    const person = await me.json();
+    const person: any = await me.json();
     assert.equal(person.globalKey, false);
     assert.equal(person.user.email, 'dono@exemplo.com');
   });
@@ -190,14 +195,16 @@ describe('equipe HTTP: sessions and revocation', () => {
     assert.equal(noKey.status, 401);
 
     const clientCode = 'wac_' + 'c'.repeat(43);
-    const wrongKind = await call('/admin-only', { headers: { apikey: clientCode, 'cf-connecting-ip': '203.0.113.41' } });
+    const wrongKind = await call('/admin-only', {
+      headers: { apikey: clientCode, 'cf-connecting-ip': '203.0.113.41' },
+    });
     assert.equal(wrongKind.status, 403);
 
     const user = await users.findOrCreateUser({ email: 'dono@exemplo.com', name: 'Dono Exemplo' });
     const session = await users.createSession(user.id, { userAgent: 'Celular' });
     const own = await call('/team/sessions', { headers: { apikey: session.token } });
     assert.equal(own.status, 200);
-    const body = await own.json();
+    const body: any = await own.json();
     assert.equal(body.globalKey, false);
     assert.equal(body.sessions.length, 2, 'the session from the login above plus this one');
     assert.equal(body.sessions.find((row: any) => row.id === session.session.id)?.current, true);
@@ -206,7 +213,7 @@ describe('equipe HTTP: sessions and revocation', () => {
 
     const admin = await call('/team/sessions', { headers: { apikey: globalKey() } });
     assert.equal(admin.status, 200);
-    const overview = await admin.json();
+    const overview: any = await admin.json();
     assert.equal(overview.globalKey, true);
     assert.deepEqual(overview.allowlist, ['dono@exemplo.com']);
     assert.equal(overview.people[0].email, 'dono@exemplo.com');

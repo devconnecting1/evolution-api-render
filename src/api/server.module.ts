@@ -61,8 +61,8 @@ import { ProxyService } from './services/proxy.service';
 import { retentionDaysFromEnv, RetentionService } from './services/retention.service';
 import { SettingsService } from './services/settings.service';
 import { TemplateService } from './services/template.service';
-import { UserSessionService } from './services/user-session.service';
 import { UsageService } from './services/usage.service';
+import { UserSessionService } from './services/user-session.service';
 
 const logger = new Logger('WA MODULE');
 
@@ -202,11 +202,9 @@ export const userSessionService = new UserSessionService({
 });
 export const googleLoginService = new GoogleLoginService({
   clientId: process.env.GOOGLE_LOGIN_CLIENT_ID?.trim() || process.env.GOOGLE_CLIENT_ID?.trim() || undefined,
-  clientSecret:
-    process.env.GOOGLE_LOGIN_CLIENT_SECRET?.trim() || process.env.GOOGLE_CLIENT_SECRET?.trim() || undefined,
+  clientSecret: process.env.GOOGLE_LOGIN_CLIENT_SECRET?.trim() || process.env.GOOGLE_CLIENT_SECRET?.trim() || undefined,
   redirectUri:
-    process.env.GOOGLE_LOGIN_REDIRECT_URI?.trim() ||
-    (serverUrl ? `${serverUrl}/auth/google/callback` : undefined),
+    process.env.GOOGLE_LOGIN_REDIRECT_URI?.trim() || (serverUrl ? `${serverUrl}/auth/google/callback` : undefined),
   returnUrl: process.env.GOOGLE_LOGIN_RETURN_URL?.trim() || 'https://whatsaibr.vercel.app/manager/login',
   allowlist: parseAllowlist(process.env.GOOGLE_LOGIN_OWNER_EMAILS),
   secret:

@@ -10,12 +10,7 @@
  * - The service never reaches Google; it is tested with a fake Prisma in test/unit/user-session.test.ts and on a
  *   real PostgreSQL in test/integration/user-session.test.ts.
  */
-import {
-  generateSessionToken,
-  hashSessionToken,
-  isSessionToken,
-  PublicSession,
-} from '@utils/google-login';
+import { generateSessionToken, hashSessionToken, isSessionToken, PublicSession } from '@utils/google-login';
 
 export type SessionUser = {
   userId: string;
@@ -153,7 +148,9 @@ export class UserSessionService {
       },
     });
     this.touched.set(hash, now);
-    const user = await this.deps.prisma.user.findUnique({ where: { id: userId }, select: USER_SELECT }).catch(() => null);
+    const user = await this.deps.prisma.user
+      .findUnique({ where: { id: userId }, select: USER_SELECT })
+      .catch(() => null);
     if (user) {
       this.cache.set(hash, {
         at: now,

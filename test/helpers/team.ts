@@ -78,7 +78,10 @@ export function fakeTeamPrisma() {
           const user = users.find((candidate) => candidate.id === session.userId);
           return {
             ...session,
-            User: include?.User && user ? { id: user.id, email: user.email, name: user.name, picture: user.picture } : undefined,
+            User:
+              include?.User && user
+                ? { id: user.id, email: user.email, name: user.name, picture: user.picture }
+                : undefined,
           };
         });
       },
