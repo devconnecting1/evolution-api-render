@@ -52,6 +52,8 @@ export type SaveData = {
 export type DBConnection = {
   URI: string;
   CLIENT_NAME: string;
+  /** URL do pgbouncer, usada so pelo psql_bouncer no runtime. */
+  BOUNCER_URI?: string;
 };
 export type Database = {
   CONNECTION: DBConnection;
@@ -491,6 +493,7 @@ export class ConfigService {
         CONNECTION: {
           URI: process.env.DATABASE_CONNECTION_URI || '',
           CLIENT_NAME: process.env.DATABASE_CONNECTION_CLIENT_NAME || 'evolution',
+          BOUNCER_URI: process.env.DATABASE_BOUNCER_CONNECTION_URI || '',
         },
         PROVIDER: process.env.DATABASE_PROVIDER || 'postgresql',
         SAVE_DATA: {

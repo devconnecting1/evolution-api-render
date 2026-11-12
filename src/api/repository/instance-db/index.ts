@@ -1,6 +1,7 @@
 import { Logger } from '@config/logger.config';
 import { PrismaClient } from '@prisma/client';
 
+import { createPrismaAdapter } from '../prisma-adapter';
 import {
   buildEncryptionKey,
   InstanceDatabaseService,
@@ -41,7 +42,7 @@ export function createInstanceDatabases(control: PrismaClient): InstanceDatabase
     control: control as any,
     neon,
     encryptionKey: buildEncryptionKey(cfg.secret ?? 'unset'),
-    createClient: (url: string) => new PrismaClient({ datasourceUrl: url }) as any,
+    createClient: (url: string) => new PrismaClient({ adapter: createPrismaAdapter('postgresql', url) }) as any,
     migrate: prismaMigrateDeploy(),
     logger: {
       info: (m) => logger.info(m),

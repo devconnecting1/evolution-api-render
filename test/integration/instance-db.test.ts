@@ -12,6 +12,7 @@ import { InstanceDatabaseService } from '@api/repository/instance-db/instance-db
 import { NeonClient } from '@api/repository/instance-db/neon.client';
 import { createRoutedRepository } from '@api/repository/instance-db/routing';
 import { deriveKey } from '@api/repository/instance-db/secret-box';
+import { createPrismaAdapter } from '@api/repository/prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 
 import { migrateTestDatabase, SKIP_INTEGRATION } from '../helpers/integration';
@@ -57,7 +58,7 @@ describe('instance-db (integration)', { skip: SKIP_INTEGRATION }, () => {
 
   before(async () => {
     migrateTestDatabase();
-    control = new PrismaClient({ datasourceUrl: baseUrl });
+    control = new PrismaClient({ adapter: createPrismaAdapter('postgresql', baseUrl) });
     await control.$executeRawUnsafe(`DROP DATABASE IF EXISTS "${tenantDbName}"`);
 
     const neon = {
@@ -78,7 +79,7 @@ describe('instance-db (integration)', { skip: SKIP_INTEGRATION }, () => {
         neon,
         encryptionKey: deriveKey('integration'),
         createClient: (url) => {
-          const c = new PrismaClient({ datasourceUrl: url });
+          const c = new PrismaClient({ adapter: createPrismaAdapter('postgresql', url) });
           clients.push(c);
           return c as any;
         },
@@ -130,14 +131,14 @@ describe('instance-db (integration)', { skip: SKIP_INTEGRATION }, () => {
     assert.ok(mapping?.connectionUri.startsWith('enc:v1:'));
     assert.ok(!mapping?.connectionUri.includes(tenantDbName), 'URL is not stored in clear text');
 
-    const tenant = new PrismaClient({ datasourceUrl: tenantUrl });
+    const tenant = new PrismaClient({ adapter: createPrismaAdapter('postgresql', tenantUrl) });
     clients.push(tenant);
     const mirrored = await tenant.instance.findUnique({ where: { id: OWN } });
     assert.equal(mirrored?.name, `Própria ${process.pid}`);
   });
 
   test('queries with instanceId go to the right database; shared instances are untouched', async () => {
-    const tenant = new PrismaClient({ datasourceUrl: tenantUrl });
+    const tenant = new PrismaClient({ adapter: createPrismaAdapter('postgresql', tenantUrl) });
     clients.push(tenant);
 
     await routed.message.create({ data: msg(OWN, `b-${process.pid}`) });
@@ -193,7 +194,7 @@ describe('instance-db (integration)', { skip: SKIP_INTEGRATION }, () => {
         neon: null,
         encryptionKey: deriveKey('integration'),
         createClient: (url) => {
-          const c = new PrismaClient({ datasourceUrl: url });
+          const c = new PrismaClient({ adapter: createPrismaAdapter('postgresql', url) });
           clients.push(c);
           return c as any;
         },
@@ -208,7 +209,7 @@ describe('instance-db (integration)', { skip: SKIP_INTEGRATION }, () => {
   });
 
   test('release removes the instance data (cascade) and keeps the project by default', async () => {
-    const tenant = new PrismaClient({ datasourceUrl: tenantUrl });
+    const tenant = new PrismaClient({ adapter: createPrismaAdapter('postgresql', tenantUrl) });
     clients.push(tenant);
     await svc.release(OWN);
     assert.equal(await tenant.instance.count({ where: { id: OWN } }), 0);

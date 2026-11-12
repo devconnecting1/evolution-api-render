@@ -9,6 +9,7 @@ on:
       - ".dockerignore"
       - "package.json"
       - "package-lock.json"
+      - "prisma7.config.ts"
       - "render.yaml"
       - ".github/workflows/docker.yml"
   push:
@@ -19,6 +20,7 @@ on:
       - ".dockerignore"
       - "package.json"
       - "package-lock.json"
+      - "prisma7.config.ts"
       - "render.yaml"
       - ".github/workflows/docker.yml"
   workflow_dispatch:

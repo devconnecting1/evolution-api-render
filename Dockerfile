@@ -26,6 +26,7 @@ COPY ./prisma ./prisma
 COPY ./manager ./manager
 COPY ./.env.example ./.env
 COPY ./runWithProvider.js ./
+COPY ./prisma7.config.ts ./
 # Manuals exposed by the MCP server as whatsai://docs/* (small Markdown files)
 COPY ./README-WHATSAI.md ./
 COPY ./readmes ./readmes
@@ -61,6 +62,7 @@ COPY --from=builder /evolution/public ./public
 COPY --from=builder /evolution/.env ./.env
 COPY --from=builder /evolution/Docker ./Docker
 COPY --from=builder /evolution/runWithProvider.js ./runWithProvider.js
+COPY --from=builder /evolution/prisma7.config.ts ./prisma7.config.ts
 COPY --from=builder /evolution/README-WHATSAI.md ./README-WHATSAI.md
 COPY --from=builder /evolution/readmes ./readmes
 COPY --from=builder /evolution/tsup.config.ts ./tsup.config.ts
