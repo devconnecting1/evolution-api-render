@@ -32,8 +32,9 @@ os ícones e o código são do WhatsAI.
 | Accent suave | `#f4f0ff` / `#2a0052` | `#e9f5ee` / `#12241a` | Fundo do item ativo e ícones de card, no verde da marca. |
 | Foco | `#8a05ff` / `#c29eff` | `#0e7a4d` / `#86efac` | Anel de foco visível por teclado. |
 | Nota | `#f4f0ff`, borda `#9b52fb`, texto `#1c0037` / `#1c0037`, borda `#48008c`, texto `#e7dbff` | `#e9f5ee`, borda `#1a9e5c`, texto `#0b3d26` / `#12241a`, borda `#1f5c3a`, texto `#c9f7d9` | Callout informativo no verde da marca. |
-| Atenção e limite | `#fce2fe`, borda `#f347ff`, texto `#2c001d` / `#2c001d`, borda `#5c0056`, texto `#fac7ff` | igual | Callout de risco. |
-| Código inline | fundo `#fafafa`, texto `#e23642` / fundo `#272727`, texto `#f0989e` | igual | Trecho curto no meio do texto. |
+| Atenção e limite | `#fce2fe`, borda `#f347ff`, texto `#2c001d` / `#2c001d`, borda `#5c0056`, texto `#fac7ff` | `#fdf0d5`, borda `#d97706`, texto `#5a3a00` / `#2a1f0c`, borda `#8a5a12`, texto `#fcd38d` | Callout de atenção em âmbar, no lugar do rosa do Render. |
+| Erro | `#fce2fe`, borda `#f347ff`, texto `#2c001d` / `#2c001d`, borda `#5c0056`, texto `#fac7ff` | `#fde2e1`, borda `#b42318`, texto `#5a1210` / `#2d1414`, borda `#7f2a2a`, texto `#fca5a5` | Callout de erro em vermelho, separado da atenção. |
+| Código inline | fundo `#fafafa`, texto `#e23642` / fundo `#272727`, texto `#f0989e` | fundo `#fafafa`, texto `#0d0d0d` / fundo `#272727`, texto `#ffffff` | Neutro, porque vermelho é reservado a erro. |
 | Bloco de código | fundo `#fafafa`, cabeçalho `#ffffff`, borda `#e3e3e3` / `#141414`, `#0d0d0d`, `#272727` | igual | Barra com linguagem e botão de copiar. |
 | Botão primário | fundo `#0d0d0d`, texto `#ffffff` / fundo `#ffffff`, texto `#0d0d0d` | igual | Hover preenche com o accent. |
 
@@ -133,3 +134,4 @@ sobrescrita apenas dentro da documentação.
 3. Adicionar feedback "Esta página foi útil?" e um link direto para abrir uma issue no GitHub.
 4. Guardar no navegador o estado dos grupos recolhidos da navegação.
 5. Incluir `/docs` na meta de Lighthouse e nas capturas automatizadas de 390, 768, 1024 e 1440 px, claro e escuro.
+6. Manter a semântica de cor do painel: verde = ok, âmbar = atenção e vermelho = erro; não voltar ao rosa/roxo do Render nos callouts.

@@ -155,18 +155,23 @@
     var scrim = document.querySelector('[data-scrim]');
     if (!toggle || !sidebar) return;
 
+    var savedScroll = 0;
+
     function isOpen() {
       return root.classList.contains('drawer-open');
     }
 
     function openDrawer() {
+      savedScroll = window.scrollY;
       root.classList.add('drawer-open');
       toggle.setAttribute('aria-expanded', 'true');
       if (scrim) scrim.hidden = false;
       var first = sidebar.querySelector('[data-drawer-close]') || sidebar.querySelector('a, button');
       if (first) {
         window.requestAnimationFrame(function () {
-          first.focus();
+          // preventScroll keeps the page where it was; the full-width drawer already covers the content.
+          first.focus({ preventScroll: true });
+          window.scrollTo(0, savedScroll);
         });
       }
     }
@@ -176,7 +181,13 @@
       root.classList.remove('drawer-open');
       toggle.setAttribute('aria-expanded', 'false');
       if (scrim) scrim.hidden = true;
-      if (returnFocus) toggle.focus();
+      if (returnFocus) {
+        // after removing drawer-open, wait for the drawer transition so the page has its full height again
+        window.setTimeout(function () {
+          toggle.focus({ preventScroll: true });
+          window.scrollTo({ top: savedScroll, behavior: 'instant' });
+        }, 220);
+      }
     }
 
     toggle.addEventListener('click', function () {
