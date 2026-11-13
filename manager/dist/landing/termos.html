@@ -1,8 +1,8 @@
 <!doctype html>
 <!--
-  WhatsAI: termos de uso (servidos em "/termos" pelo manager/dist/vercel.json). Link da tela de consentimento do
-  Google e do rodapé do site. Mesmo topo, navegação lateral, busca, índice, gaveta, tema e rodapé da documentação
-  pública (/docs); o que é próprio desta página fica em /landing/legal.css.
+  WhatsAI: termos de uso (servidos em "/termos" pelo manager/dist/vercel.json).
+  Layout de documento legal: topo simples sem busca, herói com grade, artigo de leitura e índice a partir de 1280.
+  A estrutura segue a página de termos do Render; marca, textos, tokens e CSS são do WhatsAI.
   REGRA: os termos dizem o que o serviço faz de verdade (planos sem fidelidade, 30 dias de aviso, franquia da IA,
   canal pelo QR code não oficial). Ao mudar preço, prazo ou recurso, mude esta página, a seção 6 do README e o site.
   Sem script ou estilo inline, sem emoji, sem dados reais de cliente.
@@ -43,212 +43,72 @@
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=1" />
     <link rel="stylesheet" href="/docs/docs.css?v=4" />
-    <link rel="stylesheet" href="/landing/legal.css?v=1" />
+    <link rel="stylesheet" href="/landing/legal.css?v=2" />
     <!-- Tema salvo é aplicado antes da primeira pintura; o restante do comportamento espera o DOM. -->
     <script src="/docs/docs.js?v=5"></script>
   </head>
-  <body data-search-parent="Termos de uso">
+  <body>
     <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 
     <!-- ícones de linha (traço 1.5, cantos arredondados), desenhados à mão -->
     <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
-        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
-        <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
-        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></symbol>
-        <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></symbol>
-        <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
         <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" /></symbol>
         <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z" /></symbol>
         <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></symbol>
         <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></symbol>
-        <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.8 2.8L16.5 9.5" /></symbol>
         <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l9 16H3z" /><path d="M12 9v5M12 17h.01" /></symbol>
         <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7h.01" /></symbol>
-        <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v18H6a2 2 0 01-2-2z" /><path d="M4 17h15" /></symbol>
-        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z" /><path d="M9 12l2 2 4-4" /></symbol>
-        <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10" /><path d="M4 7h16M6 7l-3 6h6zM18 7l-3 6h6z" /></symbol>
-        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /><path d="M12 15v2" /></symbol>
-        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0116 0" /></symbol>
-        <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3" /><path d="M12 4v4M9 13h.01M15 13h.01M9.5 17h5" /></symbol>
-        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /><path d="M9 10.5l2 2 4-4" /></symbol>
         <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.5.5l2-2a5 5 0 00-7-7L11 6" /><path d="M14 11a5 5 0 00-7.5-.5l-2 2a5 5 0 007 7L13 18" /></symbol>
       </defs>
     </svg>
 
-    <header class="topbar">
-      <div class="topbar-in">
-        <div class="topbar-brand">
-          <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
-          <span class="brand-sep" aria-hidden="true">/</span>
-          <span class="brand-doc">Termos de uso</span>
-        </div>
-
-        <div class="search" data-search-root>
-          <form class="search-form" role="search" action="#conteudo" data-search-form>
-            <label class="sr" for="legal-search">Buscar nesta página</label>
-            <svg class="search-ico" aria-hidden="true"><use href="#i-search" /></svg>
-            <input
-              id="legal-search"
-              type="search"
-              placeholder="Buscar nesta página"
-              autocomplete="off"
-              spellcheck="false"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-haspopup="listbox"
-              aria-expanded="false"
-              aria-controls="search-results"
-              data-search-input
-            />
-            <button class="search-clear" type="button" aria-label="Limpar busca" hidden data-search-clear>
-              <svg class="ico" aria-hidden="true"><use href="#i-close" /></svg>
-            </button>
-          </form>
-          <div class="search-panel" id="search-results" data-search-panel hidden>
-            <p class="search-count" aria-live="polite" data-search-count></p>
-            <ul class="search-list" role="listbox" aria-label="Resultados da busca" data-search-list></ul>
-            <p class="search-empty" data-search-empty hidden>Nenhuma seção encontrada. Tente outra palavra.</p>
-          </div>
-        </div>
-
-        <div class="top-actions">
-          <nav class="top-links" aria-label="Links do projeto">
-            <a href="/">Site</a>
-            <a class="top-doc" href="/docs">Documentação</a>
-          </nav>
+    <header class="legal-top">
+      <div class="legal-top-in">
+        <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+        <nav class="legal-top-nav" aria-label="Links do projeto">
+          <a href="/">Site</a>
+          <a href="/docs">Documentação</a>
           <a class="top-cta" href="/manager/login">Painel</a>
-          <div class="theme" data-theme>
-            <button class="icon-btn theme-btn" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Tema: Sistema" data-theme-toggle>
-              <svg class="ico theme-icon ti-system" aria-hidden="true"><use href="#i-monitor" /></svg>
-              <svg class="ico theme-icon ti-light" aria-hidden="true"><use href="#i-sun" /></svg>
-              <svg class="ico theme-icon ti-dark" aria-hidden="true"><use href="#i-moon" /></svg>
+        </nav>
+        <div class="theme" data-theme>
+          <button class="icon-btn theme-btn" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Tema: Sistema" data-theme-toggle>
+            <svg class="ico theme-icon ti-system" aria-hidden="true"><use href="#i-monitor" /></svg>
+            <svg class="ico theme-icon ti-light" aria-hidden="true"><use href="#i-sun" /></svg>
+            <svg class="ico theme-icon ti-dark" aria-hidden="true"><use href="#i-moon" /></svg>
+          </button>
+          <div class="theme-menu" id="theme-menu" role="menu" aria-label="Tema" hidden data-theme-menu>
+            <p class="theme-title">Tema</p>
+            <button type="button" role="menuitemradio" aria-checked="true" data-theme-set="system">
+              <svg class="ico" aria-hidden="true"><use href="#i-monitor" /></svg>Sistema
             </button>
-            <div class="theme-menu" id="theme-menu" role="menu" aria-label="Tema" hidden data-theme-menu>
-              <p class="theme-title">Tema</p>
-              <button type="button" role="menuitemradio" aria-checked="true" data-theme-set="system">
-                <svg class="ico" aria-hidden="true"><use href="#i-monitor" /></svg>Sistema
-              </button>
-              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="light">
-                <svg class="ico" aria-hidden="true"><use href="#i-sun" /></svg>Claro
-              </button>
-              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="dark">
-                <svg class="ico" aria-hidden="true"><use href="#i-moon" /></svg>Escuro
-              </button>
-            </div>
+            <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="light">
+              <svg class="ico" aria-hidden="true"><use href="#i-sun" /></svg>Claro
+            </button>
+            <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="dark">
+              <svg class="ico" aria-hidden="true"><use href="#i-moon" /></svg>Escuro
+            </button>
           </div>
         </div>
-
-        <button class="icon-btn drawer-btn" type="button" aria-expanded="false" aria-controls="legal-nav" aria-label="Abrir navegação" data-drawer-toggle>
-          <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
-        </button>
       </div>
     </header>
 
-    <div class="scrim" data-scrim hidden></div>
 
-    <div class="layout">
-      <aside class="sidebar" id="legal-nav" aria-label="Navegação da página" data-sidebar>
-        <div class="drawer-head">
-          <span>Navegação</span>
-          <button class="icon-btn" type="button" aria-label="Fechar navegação" data-drawer-close>
-            <svg class="ico" aria-hidden="true"><use href="#i-close" /></svg>
-          </button>
-        </div>
-        <nav class="side-nav" aria-label="Seções desta página" data-side-nav>
-          <div class="side-group" data-side-group>
-            <button class="side-label" type="button" aria-expanded="true" aria-controls="side-nesta" data-group-toggle>
-              <svg class="ico side-gico" aria-hidden="true"><use href="#i-scale" /></svg>
-              <span>Nesta página</span>
-              <svg class="ico side-chev" aria-hidden="true"><use href="#i-chev-down" /></svg>
-            </button>
-            <ul id="side-nesta">
-              <li><a href="#servico" data-nav-link>O que é o serviço</a></li>
-              <li><a href="#empresa" data-nav-link>Responsabilidades da empresa</a></li>
-              <li><a href="#ia" data-nav-link>Limites da IA</a></li>
-              <li><a href="#proibido" data-nav-link>O que não é permitido</a></li>
-              <li><a href="#planos" data-nav-link>Planos e cancelamento</a></li>
-              <li><a href="#disponibilidade" data-nav-link>Disponibilidade e terceiros</a></li>
-              <li><a href="#dados" data-nav-link>Dados e privacidade</a></li>
-              <li><a href="#responsabilidade" data-nav-link>Responsabilidade do WhatsAI</a></li>
-              <li><a href="#encerramento" data-nav-link>Suspensão e encerramento</a></li>
-              <li><a href="#gerais" data-nav-link>Disposições gerais</a></li>
-            </ul>
-          </div>
-        </nav>
-        <nav class="side-pages" aria-label="Páginas legais">
-          <p class="side-pages-title">Páginas legais</p>
-          <ul>
-            <li>
-              <a href="/seguranca">
-                <svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg>Segurança
-              </a>
-            </li>
-            <li>
-              <a href="/termos" aria-current="page">
-                <svg class="ico" aria-hidden="true"><use href="#i-scale" /></svg>Termos de uso
-              </a>
-            </li>
-            <li>
-              <a href="/privacidade">
-                <svg class="ico" aria-hidden="true"><use href="#i-lock" /></svg>Privacidade
-              </a>
-            </li>
-          </ul>
-        </nav>
-        <div class="side-foot">
-          <a class="side-doc" href="/docs">
-            <svg class="ico" aria-hidden="true"><use href="#i-book" /></svg>Abrir a documentação
-          </a>
-          <p>Conteúdo público do WhatsAI. Última revisão em 12/11/2026.</p>
-        </div>
-      </aside>
-
-      <main class="content legal-doc" id="conteudo" tabindex="-1">
-        <div class="legal-hero">
+    <main class="legal-page" id="conteudo" tabindex="-1">
+      <header class="legal-hero">
+        <div class="legal-shell legal-hero-in">
           <p class="eyebrow">Termos de uso</p>
           <h1 id="terms-title">Regras de uso do WhatsAI</h1>
-          <p class="hero-lead">
+          <p class="legal-hero-lead">
             O que o serviço faz, o que cabe à sua empresa, o que cabe ao WhatsAI e o que muda quando você cancela.
             Escrito em linguagem clara.
           </p>
-          <p class="legal-meta">
-            <span class="status-dot" aria-hidden="true"></span>
-            <span>Atualizados em <time datetime="2026-11-12">12 de novembro de 2026</time></span>
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#servico">Ler os termos</a>
-            <a class="btn btn-quiet" href="/privacidade">Política de privacidade</a>
-          </div>
-
-          <div class="legal-quick">
-            <a class="legal-quick-item" href="#planos">
-              <span class="legal-quick-top">
-                <span class="legal-quick-ico" aria-hidden="true"><svg class="ico"><use href="#i-check-circle" /></svg></span>
-                <span class="legal-quick-title">Sem fidelidade</span>
-              </span>
-              <span class="legal-quick-text">Mensalidade mês a mês, cancelamento com 30 dias de aviso e sem multa.</span>
-              <span class="legal-quick-go">Ver planos <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
-            </a>
-            <a class="legal-quick-item" href="#ia">
-              <span class="legal-quick-top">
-                <span class="legal-quick-ico" aria-hidden="true"><svg class="ico"><use href="#i-bot" /></svg></span>
-                <span class="legal-quick-title">A IA pode errar</span>
-              </span>
-              <span class="legal-quick-text">Ela responde com o que a empresa cadastrou; a equipe assume quando quiser.</span>
-              <span class="legal-quick-go">Entender os limites <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
-            </a>
-            <a class="legal-quick-item" href="#dados">
-              <span class="legal-quick-top">
-                <span class="legal-quick-ico" aria-hidden="true"><svg class="ico"><use href="#i-lock" /></svg></span>
-                <span class="legal-quick-title">Os dados são seus</span>
-              </span>
-              <span class="legal-quick-text">A empresa é dona dos dados; o WhatsAI só os trata para prestar o serviço.</span>
-              <span class="legal-quick-go">Como tratamos <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
-            </a>
-          </div>
         </div>
+      </header>
 
+      <div class="legal-body">
+        <article class="legal-article">
+          <p class="legal-updated">Atualizados em <time datetime="2026-11-12">12 de novembro de 2026</time></p>
         <p>
           Estes termos valem para as empresas e profissionais que contratam o WhatsAI e para quem usa o painel em nome
           delas. Ao usar o serviço, você concorda com eles. A proposta comercial assinada com cada empresa pode trazer
@@ -270,8 +130,8 @@
           </ul>
         </div>
 
-        <section class="doc-section" id="servico" aria-labelledby="servico-h" data-section data-title="O que é o serviço">
-          <h2 id="servico-h"><span class="legal-num" aria-hidden="true">01</span>O que é o serviço <a class="anchor" href="#servico" aria-label="Link para a seção O que é o serviço">#</a></h2>
+        <section class="doc-section" id="servico" aria-labelledby="servico-h" data-section>
+          <h2 id="servico-h">O que é o serviço <a class="anchor" href="#servico" aria-label="Link para a seção O que é o serviço">#</a></h2>
           <p>
             O WhatsAI responde o WhatsApp da empresa com inteligência artificial, seguindo as instruções definidas na
             implantação, e oferece um painel para a equipe acompanhar as conversas, pausar a IA, organizar os
@@ -284,8 +144,8 @@
           </ul>
         </section>
 
-        <section class="doc-section" id="empresa" aria-labelledby="empresa-h" data-section data-title="Responsabilidades da empresa">
-          <h2 id="empresa-h"><span class="legal-num" aria-hidden="true">02</span>Responsabilidades da empresa <a class="anchor" href="#empresa" aria-label="Link para a seção Responsabilidades da empresa">#</a></h2>
+        <section class="doc-section" id="empresa" aria-labelledby="empresa-h" data-section>
+          <h2 id="empresa-h">Responsabilidades da empresa <a class="anchor" href="#empresa" aria-label="Link para a seção Responsabilidades da empresa">#</a></h2>
           <ul class="doc-list">
             <li><strong>Informar os contatos</strong> de que o atendimento usa IA e ter base legal (LGPD) para tratar os dados de quem conversa com ela. A empresa é a controladora desses dados.</li>
             <li><strong>Cuidar das instruções da IA</strong> e das informações que passa para ela (horários, serviços, endereços), mantendo tudo correto e atualizado.</li>
@@ -295,8 +155,8 @@
           </ul>
         </section>
 
-        <section class="doc-section" id="ia" aria-labelledby="ia-h" data-section data-title="Limites da IA">
-          <h2 id="ia-h"><span class="legal-num" aria-hidden="true">03</span>Limites da IA <a class="anchor" href="#ia" aria-label="Link para a seção Limites da IA">#</a></h2>
+        <section class="doc-section" id="ia" aria-labelledby="ia-h" data-section>
+          <h2 id="ia-h">Limites da IA <a class="anchor" href="#ia" aria-label="Link para a seção Limites da IA">#</a></h2>
           <p>
             A IA ajuda no atendimento, mas <strong>pode errar ou entender mal</strong>. Ela não dá parecer jurídico,
             diagnóstico médico ou qualquer orientação profissional, não promete resultado e encaminha à equipe o que
@@ -316,8 +176,8 @@
           </div>
         </section>
 
-        <section class="doc-section" id="proibido" aria-labelledby="proibido-h" data-section data-title="O que não é permitido">
-          <h2 id="proibido-h"><span class="legal-num" aria-hidden="true">04</span>O que não é permitido <a class="anchor" href="#proibido" aria-label="Link para a seção O que não é permitido">#</a></h2>
+        <section class="doc-section" id="proibido" aria-labelledby="proibido-h" data-section>
+          <h2 id="proibido-h">O que não é permitido <a class="anchor" href="#proibido" aria-label="Link para a seção O que não é permitido">#</a></h2>
           <ul class="doc-list">
             <li>Enviar mensagens em massa não solicitadas (spam), golpes, conteúdo ilegal, discriminatório ou que engane o contato.</li>
             <li>Usar o serviço para coletar dados sem base legal, vigiar pessoas ou fazer perfil de contatos para outros fins.</li>
@@ -327,8 +187,8 @@
           <p>O descumprimento pode levar à suspensão imediata quando houver risco a terceiros ou ao sistema.</p>
         </section>
 
-        <section class="doc-section" id="planos" aria-labelledby="planos-h" data-section data-title="Planos, pagamento e cancelamento">
-          <h2 id="planos-h"><span class="legal-num" aria-hidden="true">05</span>Planos, pagamento e cancelamento <a class="anchor" href="#planos" aria-label="Link para a seção Planos, pagamento e cancelamento">#</a></h2>
+        <section class="doc-section" id="planos" aria-labelledby="planos-h" data-section>
+          <h2 id="planos-h">Planos, pagamento e cancelamento <a class="anchor" href="#planos" aria-label="Link para a seção Planos, pagamento e cancelamento">#</a></h2>
           <ul class="doc-list">
             <li>Os valores são os do plano contratado (veja <a href="/#planos">Planos</a>). A <strong>implantação</strong> é cobrada uma vez; a <strong>mensalidade</strong> é mês a mês, <strong>sem fidelidade</strong>.</li>
             <li>Cada plano tem uma <strong>franquia de respostas da IA</strong> por mês. Acima dela, cobra-se o excedente previsto no plano, ou a IA pausa, conforme a configuração combinada; o painel mostra o uso em tempo real.</li>
@@ -338,8 +198,8 @@
           </ul>
         </section>
 
-        <section class="doc-section" id="disponibilidade" aria-labelledby="disp-h" data-section data-title="Disponibilidade e serviços de terceiros">
-          <h2 id="disp-h"><span class="legal-num" aria-hidden="true">06</span>Disponibilidade e serviços de terceiros <a class="anchor" href="#disponibilidade" aria-label="Link para a seção Disponibilidade e serviços de terceiros">#</a></h2>
+        <section class="doc-section" id="disponibilidade" aria-labelledby="disp-h" data-section>
+          <h2 id="disp-h">Disponibilidade e serviços de terceiros <a class="anchor" href="#disponibilidade" aria-label="Link para a seção Disponibilidade e serviços de terceiros">#</a></h2>
           <p>
             O WhatsAI trabalha para manter o serviço no ar, mas não garante funcionamento sem interrupções: ele depende
             de serviços de terceiros (WhatsApp/Meta, OpenAI, Google, hospedagem e banco de dados), que têm seus próprios
@@ -348,8 +208,8 @@
           </p>
         </section>
 
-        <section class="doc-section" id="dados" aria-labelledby="dados-h" data-section data-title="Dados e privacidade">
-          <h2 id="dados-h"><span class="legal-num" aria-hidden="true">07</span>Dados e privacidade <a class="anchor" href="#dados" aria-label="Link para a seção Dados e privacidade">#</a></h2>
+        <section class="doc-section" id="dados" aria-labelledby="dados-h" data-section>
+          <h2 id="dados-h">Dados e privacidade <a class="anchor" href="#dados" aria-label="Link para a seção Dados e privacidade">#</a></h2>
           <p>
             Os dados da empresa e dos seus contatos continuam sendo da empresa. O WhatsAI os trata só para prestar o
             serviço, como operador, conforme a <a href="/privacidade">Política de privacidade</a>, o termo de tratamento
@@ -358,8 +218,8 @@
           </p>
         </section>
 
-        <section class="doc-section" id="responsabilidade" aria-labelledby="resp-h" data-section data-title="Responsabilidade do WhatsAI">
-          <h2 id="resp-h"><span class="legal-num" aria-hidden="true">08</span>Responsabilidade do WhatsAI <a class="anchor" href="#responsabilidade" aria-label="Link para a seção Responsabilidade do WhatsAI">#</a></h2>
+        <section class="doc-section" id="responsabilidade" aria-labelledby="resp-h" data-section>
+          <h2 id="resp-h">Responsabilidade do WhatsAI <a class="anchor" href="#responsabilidade" aria-label="Link para a seção Responsabilidade do WhatsAI">#</a></h2>
           <p>
             Na medida permitida pela lei, o WhatsAI não responde por: bloqueio ou limitação do número pelo WhatsApp;
             decisões tomadas com base em respostas da IA sem conferência da equipe; falhas de serviços de terceiros;
@@ -369,8 +229,8 @@
           </p>
         </section>
 
-        <section class="doc-section" id="encerramento" aria-labelledby="enc-h" data-section data-title="Suspensão e encerramento">
-          <h2 id="enc-h"><span class="legal-num" aria-hidden="true">09</span>Suspensão e encerramento <a class="anchor" href="#encerramento" aria-label="Link para a seção Suspensão e encerramento">#</a></h2>
+        <section class="doc-section" id="encerramento" aria-labelledby="enc-h" data-section>
+          <h2 id="enc-h">Suspensão e encerramento <a class="anchor" href="#encerramento" aria-label="Link para a seção Suspensão e encerramento">#</a></h2>
           <p>
             A empresa pode encerrar o serviço a qualquer momento (seção 5). O WhatsAI pode suspender ou encerrar o acesso
             em caso de uso proibido, risco à segurança ou falta de pagamento, avisando antes sempre que possível. No
@@ -379,8 +239,8 @@
           </p>
         </section>
 
-        <section class="doc-section" id="gerais" aria-labelledby="gerais-h" data-section data-title="Disposições gerais">
-          <h2 id="gerais-h"><span class="legal-num" aria-hidden="true">10</span>Disposições gerais <a class="anchor" href="#gerais" aria-label="Link para a seção Disposições gerais">#</a></h2>
+        <section class="doc-section" id="gerais" aria-labelledby="gerais-h" data-section>
+          <h2 id="gerais-h">Disposições gerais <a class="anchor" href="#gerais" aria-label="Link para a seção Disposições gerais">#</a></h2>
           <ul class="doc-list">
             <li>O WhatsAI usa software livre, entre eles o Evolution API (licença Apache 2.0 com condições adicionais). A marca, o painel e as personalizações do WhatsAI pertencem ao WhatsAI.</li>
             <li>Estes termos podem mudar; mudanças relevantes são avisadas com 30 dias de antecedência, e a data no topo é atualizada.</li>
@@ -400,31 +260,32 @@
             </div>
           </div>
         </section>
-      </main>
+        </article>
 
-      <aside class="toc" aria-label="Nesta página" data-toc>
-        <div class="toc-head">
-          <p class="toc-title">Nesta página</p>
-          <button class="toc-copy" type="button" aria-label="Copiar link desta página" data-copy-link>
-            <svg class="ico copy-ico" aria-hidden="true"><use href="#i-link" /></svg>
-            <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
-            <span class="copy-label">Copiar link</span>
-          </button>
-        </div>
-        <ul>
-          <li><a href="#servico" data-toc-link>O que é o serviço</a></li>
-          <li><a href="#empresa" data-toc-link>Responsabilidades da empresa</a></li>
-          <li><a href="#ia" data-toc-link>Limites da IA</a></li>
-          <li><a href="#proibido" data-toc-link>O que não é permitido</a></li>
-          <li><a href="#planos" data-toc-link>Planos e cancelamento</a></li>
-          <li><a href="#disponibilidade" data-toc-link>Disponibilidade e terceiros</a></li>
-          <li><a href="#dados" data-toc-link>Dados e privacidade</a></li>
-          <li><a href="#responsabilidade" data-toc-link>Responsabilidade do WhatsAI</a></li>
-          <li><a href="#encerramento" data-toc-link>Suspensão e encerramento</a></li>
-          <li><a href="#gerais" data-toc-link>Disposições gerais</a></li>
-        </ul>
-      </aside>
-    </div>
+        <aside class="legal-toc" aria-label="Nesta página">
+          <div class="toc-head">
+            <p class="toc-title">Nesta página</p>
+            <button class="toc-copy" type="button" aria-label="Copiar link desta página" data-copy-link>
+              <svg class="ico copy-ico" aria-hidden="true"><use href="#i-link" /></svg>
+              <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
+              <span class="copy-label">Copiar link</span>
+            </button>
+          </div>
+          <ul class="legal-toc-list">
+            <li><a href="#servico" data-toc-link>O que é o serviço</a></li>
+            <li><a href="#empresa" data-toc-link>Responsabilidades da empresa</a></li>
+            <li><a href="#ia" data-toc-link>Limites da IA</a></li>
+            <li><a href="#proibido" data-toc-link>O que não é permitido</a></li>
+            <li><a href="#planos" data-toc-link>Planos e cancelamento</a></li>
+            <li><a href="#disponibilidade" data-toc-link>Disponibilidade e terceiros</a></li>
+            <li><a href="#dados" data-toc-link>Dados e privacidade</a></li>
+            <li><a href="#responsabilidade" data-toc-link>Responsabilidade do WhatsAI</a></li>
+            <li><a href="#encerramento" data-toc-link>Suspensão e encerramento</a></li>
+            <li><a href="#gerais" data-toc-link>Disposições gerais</a></li>
+          </ul>
+        </aside>
+      </div>
+    </main>
 
     <footer class="doc-footer">
       <div class="foot-in">
