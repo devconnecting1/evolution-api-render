@@ -1,0 +1,522 @@
+/*
+ * WhatsAI: cabeçalho único das páginas públicas (/, /seguranca, /termos e /privacidade).
+ * Escrito à mão, sem dependência externa e sem asset de terceiros. A anatomia segue o topo fixo de um site de
+ * produto (marca, navegação com menus, entrar e demonstração, gaveta no celular), recriada com nomes de classe e
+ * tokens próprios do WhatsAI. Nenhum CSS, fonte, logo, texto ou ícone de outra marca é usado.
+ *
+ * Este arquivo é autossuficiente: define os próprios tokens dentro de .site-head, então o cabeçalho fica idêntico
+ * na landing (que tem os tokens dela), em /docs (que usa os tokens --d-*) e nas páginas legais. Carregado depois
+ * do CSS da página, ele não herda cor, altura ou foco de nenhum deles.
+ *
+ * Tema: claro por padrão e escuro por prefers-color-scheme; também respeita data-theme-mode/data-theme aplicados
+ * pelo docs.js antes da primeira pintura. Sem roxo; verde da marca (#0e7a4d no claro, #5fcf8a no escuro).
+ * Sem animação de rolagem: só o filete que aparece quando a página sai do topo e um fade curto do menu.
+ */
+
+.site-head {
+  --sh-bg: rgba(255, 255, 255, 0.94);
+  --sh-drawer: #ffffff;
+  --sh-text: #0d0d0d;
+  --sh-text-2: #4d4d4d;
+  --sh-muted: #6b6b6b;
+  --sh-line: #e5e5e5;
+  --sh-line-soft: #efefef;
+  --sh-hover: #f3f4f3;
+  --sh-panel: #ffffff;
+  --sh-panel-soft: #f7f9f7;
+  --sh-primary: #0e7a4d;
+  --sh-primary-hover: #0b6b43;
+  --sh-primary-text: #ffffff;
+  --sh-tint: #e9f6ef;
+  --sh-tint-text: #095c39;
+  --sh-focus: #0e7a4d;
+  --sh-shadow: 0 20px 48px rgba(13, 26, 18, 0.12);
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  border-bottom: 1px solid transparent;
+  background: var(--sh-bg);
+  color: var(--sh-text);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
+  transition: border-color 0.15s ease;
+}
+
+.site-head.is-scrolled,
+.site-head.menu-open {
+  border-bottom-color: var(--sh-line);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme-mode="light"]) .site-head {
+    --sh-bg: rgba(13, 13, 13, 0.92);
+    --sh-drawer: #0d0d0d;
+    --sh-text: #f5f5f5;
+    --sh-text-2: #c7c7c7;
+    --sh-muted: #9a9a9a;
+    --sh-line: #2b2b2b;
+    --sh-line-soft: #222222;
+    --sh-hover: #1f1f1f;
+    --sh-panel: #141414;
+    --sh-panel-soft: #191d1a;
+    --sh-primary: #5fcf8a;
+    --sh-primary-hover: #86efac;
+    --sh-primary-text: #0d0d0d;
+    --sh-tint: #12241a;
+    --sh-tint-text: #c9f7d9;
+    --sh-focus: #86efac;
+    --sh-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
+  }
+}
+
+:root[data-theme="dark"] .site-head,
+:root[data-theme-mode="dark"] .site-head {
+  --sh-bg: rgba(13, 13, 13, 0.92);
+  --sh-drawer: #0d0d0d;
+  --sh-text: #f5f5f5;
+  --sh-text-2: #c7c7c7;
+  --sh-muted: #9a9a9a;
+  --sh-line: #2b2b2b;
+  --sh-line-soft: #222222;
+  --sh-hover: #1f1f1f;
+  --sh-panel: #141414;
+  --sh-panel-soft: #191d1a;
+  --sh-primary: #5fcf8a;
+  --sh-primary-hover: #86efac;
+  --sh-primary-text: #0d0d0d;
+  --sh-tint: #12241a;
+  --sh-tint-text: #c9f7d9;
+  --sh-focus: #86efac;
+  --sh-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
+}
+
+.site-head * {
+  box-sizing: border-box;
+}
+
+.sh-in {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 1344px;
+  min-height: 64px;
+  align-items: center;
+  gap: 24px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.sh-brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  color: var(--sh-text);
+  font-family: "Geist", sans-serif;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.sh-brand::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin: 0 0 -12px 3px;
+  border-radius: 9999px;
+  background: var(--sh-primary);
+}
+
+.sh-nav {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+.sh-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sh-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sh-text-2);
+  font-family: "Geist", sans-serif;
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sh-link:hover,
+.sh-trigger[aria-expanded="true"] {
+  background: var(--sh-hover);
+  color: var(--sh-text);
+}
+
+.sh-link .sh-chev {
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+  transition: transform 0.16s ease;
+}
+
+.sh-trigger[aria-expanded="true"] .sh-chev {
+  transform: rotate(180deg);
+}
+
+.sh-ico {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sh-end {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.sh-btn {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: "Geist", sans-serif;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.sh-btn-quiet {
+  border-color: var(--sh-line);
+  background: transparent;
+  color: var(--sh-text);
+}
+
+.sh-btn-quiet:hover {
+  border-color: var(--sh-text-2);
+  background: var(--sh-hover);
+}
+
+.sh-btn-primary {
+  border-color: var(--sh-primary);
+  background: var(--sh-primary);
+  color: var(--sh-primary-text);
+}
+
+.sh-btn-primary:hover {
+  border-color: var(--sh-primary-hover);
+  background: var(--sh-primary-hover);
+}
+
+.sh-drawer-end {
+  display: none;
+}
+
+.sh-menu {
+  display: none;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  border: 1px solid var(--sh-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sh-text);
+  cursor: pointer;
+}
+
+.sh-menu:hover {
+  background: var(--sh-hover);
+}
+
+.sh-menu .sh-ico-close {
+  display: none;
+}
+
+.sh-menu[aria-expanded="true"] .sh-ico-open {
+  display: none;
+}
+
+.sh-menu[aria-expanded="true"] .sh-ico-close {
+  display: block;
+}
+
+/* ------------------------------------------------------------------------------------------- mega menus */
+.sh-mega-item {
+  position: relative;
+}
+
+.sh-mega {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 2;
+  display: grid;
+  width: min(640px, calc(100vw - 64px));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px 24px;
+  padding: 20px;
+  border: 1px solid var(--sh-line);
+  border-radius: 14px;
+  background: var(--sh-panel);
+  box-shadow: var(--sh-shadow);
+}
+
+.sh-mega[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sh-mega {
+    animation: sh-mega-in 0.16s ease-out;
+  }
+}
+
+@keyframes sh-mega-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sh-mega-col {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sh-mega-h {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  color: var(--sh-muted);
+  font-family: "Geist", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.sh-mega a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: var(--sh-text);
+  font-family: "Geist", sans-serif;
+  text-decoration: none;
+}
+
+.sh-mega a:hover {
+  background: var(--sh-panel-soft);
+}
+
+.sh-mega b {
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.sh-mega span {
+  color: var(--sh-muted);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+@media (max-width: 1120px) {
+  .sh-in {
+    gap: 14px;
+    padding: 0 24px;
+  }
+
+  .sh-link {
+    padding: 8px 8px;
+  }
+}
+
+/* ----------------------------------------------------------------------------------------- gaveta mobile */
+@media (max-width: 959px) {
+  .sh-in {
+    min-height: 60px;
+    gap: 10px;
+    padding: 0 20px;
+  }
+
+  .sh-brand {
+    margin-right: auto;
+    font-size: 20px;
+  }
+
+  .sh-menu {
+    display: inline-flex;
+  }
+
+  .sh-end .sh-btn-quiet {
+    display: none;
+  }
+
+  .sh-end .sh-btn-primary {
+    min-height: 38px;
+    padding: 0 13px;
+    font-size: 13px;
+  }
+
+  .sh-nav {
+    position: fixed;
+    top: 60px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 14px 20px calc(28px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    border-top: 1px solid var(--sh-line);
+    background: var(--sh-drawer);
+  }
+
+  .sh-nav.is-open {
+    display: flex;
+  }
+
+  .sh-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .sh-link {
+    justify-content: space-between;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 4px;
+    border-radius: 0;
+    border-bottom: 1px solid var(--sh-line-soft);
+    color: var(--sh-text);
+    font-size: 17px;
+    font-weight: 500;
+  }
+
+  .sh-link:hover,
+  .sh-trigger[aria-expanded="true"] {
+    background: transparent;
+    color: var(--sh-primary);
+  }
+
+  .sh-mega {
+    position: static;
+    width: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    margin: 2px 0 10px;
+    padding: 6px 0 10px 12px;
+    border: 0;
+    border-left: 2px solid var(--sh-tint);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .sh-mega-h {
+    padding: 4px 10px;
+  }
+
+  .sh-mega a {
+    padding: 8px 10px;
+  }
+
+  .sh-mega b {
+    font-size: 14.5px;
+  }
+
+  .sh-drawer-end {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 16px;
+  }
+
+  .sh-drawer-end .sh-btn {
+    min-height: 48px;
+    font-size: 15px;
+  }
+
+  .sh-drawer-end .sh-btn-quiet {
+    border-color: var(--sh-line);
+    color: var(--sh-text);
+  }
+
+  html.menu-open .site-head {
+    background: var(--sh-drawer);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  html.menu-open body {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 379px) {
+  .sh-in {
+    padding: 0 14px;
+  }
+
+  .sh-end {
+    display: none;
+  }
+}
+
+.sh-skip-target:focus {
+  outline: none;
+}
+
+.site-head a:focus-visible,
+.site-head button:focus-visible {
+  outline: 2px solid var(--sh-focus);
+  outline-offset: 2px;
+}
