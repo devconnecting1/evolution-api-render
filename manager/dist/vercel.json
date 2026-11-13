@@ -101,6 +101,14 @@
       "dest": "/landing/termos.html"
     },
     {
+      "src": "^/docs/?$",
+      "dest": "/docs/index.html"
+    },
+    {
+      "src": "^/docs/(.+)$",
+      "dest": "/docs/$1"
+    },
+    {
       "handle": "filesystem"
     },
     {
