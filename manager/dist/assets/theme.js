@@ -47,7 +47,22 @@
     updateMeta(mode);
   }
 
+  function releaseThemeTransition() {
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(function () {
+          root.classList.remove('theme-switching');
+        });
+      });
+    } else {
+      window.setTimeout(function () {
+        root.classList.remove('theme-switching');
+      }, 50);
+    }
+  }
+
   function applyTheme(mode, persist) {
+    root.classList.add('theme-switching');
     if (mode === 'light' || mode === 'dark') {
       root.setAttribute('data-theme-mode', mode);
     } else {
@@ -65,6 +80,7 @@
       }
     }
     updateThemeUi(mode);
+    releaseThemeTransition();
   }
 
   applyTheme(storedTheme(), false);

@@ -1,0 +1,164 @@
+/*
+ * WhatsAI: pagina /novidades. Usa os tokens globais (assets/tokens.css), o cabecalho e o rodape de
+ * assets/site-shell.css e a escala tipografica da documentacao. O bundle da landing nao estiliza mais o
+ * conteudo desta pagina: as classes .nv-* ficam aqui e so valem em body.novidades-page.
+ *
+ * Estrutura: hero com sobrancelha mono, titulo de pagina em peso 300 e lead de corpo; abaixo, uma lista de
+ * mudancas com data mono na primeira coluna e texto na segunda. Sem cartoes com sombra, sem cantos arredondados
+ * e sem animacao, como o restante do site.
+ */
+
+body.novidades-page {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.nv-wrap {
+  width: 100%;
+  max-width: 1050px;
+  margin: 0 auto;
+  padding-inline: 20px;
+}
+
+@media (min-width: 1200px) {
+  .nv-wrap {
+    padding-inline: 70px;
+  }
+}
+
+/* ------------------------------------------------------------------ hero */
+.nv-hero {
+  padding-block: clamp(64px, 8vw, 112px) clamp(32px, 4vw, 56px);
+}
+
+.nv-eyebrow {
+  margin: 0 0 16px;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-ls);
+  line-height: var(--type-label-lh);
+  text-transform: uppercase;
+}
+
+.nv-title {
+  max-width: 16ch;
+  margin: 0;
+  font-size: var(--type-display-size);
+  font-weight: var(--type-display-weight);
+  letter-spacing: var(--type-display-ls);
+  line-height: var(--type-display-lh);
+}
+
+.nv-soft {
+  color: var(--c-text-3);
+}
+
+.nv-lead {
+  max-width: 660px;
+  margin: 24px 0 0;
+  color: var(--c-text-3);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
+}
+
+.nv-meta {
+  margin: 20px 0 0;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ lista de mudancas */
+.nv-list-section {
+  padding-block: clamp(32px, 4vw, 56px) clamp(72px, 9vw, 120px);
+  border-top: 1px solid var(--c-border);
+}
+
+.nv-list-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.nv-list-title {
+  margin: 0;
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-ls);
+  line-height: var(--type-title-lh);
+}
+
+.nv-count {
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.nv-list {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--c-border);
+  list-style: none;
+}
+
+.nv-item {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 24px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.nv-date {
+  padding-top: 3px;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+
+.nv-text {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--c-text);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
+}
+
+@media (max-width: 640px) {
+  .nv-list-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .nv-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .nv-date {
+    padding-top: 0;
+  }
+}
