@@ -52,17 +52,19 @@
     <link rel="stylesheet" href="/assets/tokens.css?v=1" />
     <link rel="stylesheet" href="/docs/docs.css?v=5" />
     <link rel="stylesheet" href="/landing/legal.css?v=3" />
-    <link rel="stylesheet" href="/assets/site-header.css?v=1" />
+    <link rel="stylesheet" href="/assets/site-shell.css?v=1" />
     <!-- Tema salvo é aplicado antes da primeira pintura; o restante do comportamento espera o DOM. -->
     <script src="/docs/docs.js?v=5"></script>
-    <script src="/assets/site-header.js?v=1" defer></script>
+    <script src="/assets/landing.js?v=7" defer></script>
   </head>
-  <body data-wa-origin="seguranca">
+  <body class="legal-page" data-wa-origin="seguranca">
     <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 
     <!-- ícones de linha (traço 1.5, cantos arredondados), desenhados à mão -->
     <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
+        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /><path d="M8 10h8M8 13h5" /></symbol>
         <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
         <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" /></symbol>
         <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z" /></symbol>
@@ -80,74 +82,50 @@
       </defs>
     </svg>
 
-        <header class="site-head" data-head>
-      <div class="sh-in">
-        <a class="sh-brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
-
-        <nav class="sh-nav" id="site-nav" aria-label="Principal" data-sh-nav>
-          <ul class="sh-links">
-            <li class="sh-mega-item">
-              <button class="sh-link sh-trigger" type="button" aria-expanded="false" aria-controls="menu-produto" data-sh-trigger>
-                Produto
-                <svg class="sh-ico sh-chev" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
-              </button>
-              <div class="sh-mega" id="menu-produto" data-sh-mega hidden>
-                <div class="sh-mega-col">
-                  <p class="sh-mega-h">Conheça o WhatsAI</p>
-                  <a href="/#como-funciona"><b>Como funciona</b><span>Conecte, configure e atenda</span></a>
-                  <a href="/#tour"><b>Tour do produto</b><span>As telas e os recursos do painel</span></a>
-                  <a href="/#planos"><b>Planos e preços</b><span>Sem fidelidade, mês a mês</span></a>
-                </div>
-                <div class="sh-mega-col">
-                  <p class="sh-mega-h">Recursos</p>
-                  <a href="/#pausa"><b>Pausa humana</b><span>A IA sai quando a equipe entra</span></a>
-                  <a href="/#midia"><b>Áudio, foto e PDF</b><span>A IA entende o que o cliente manda</span></a>
-                  <a href="/#instrucoes"><b>Instruções e horários</b><span>Com as regras do seu negócio</span></a>
-                  <a href="/seguranca"><b>Segurança e LGPD</b><span>O que está implementado</span></a>
-                </div>
-              </div>
-            </li>
-            <li class="sh-mega-item">
-              <button class="sh-link sh-trigger" type="button" aria-expanded="false" aria-controls="menu-segmentos" data-sh-trigger>
-                Segmentos
-                <svg class="sh-ico sh-chev" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
-              </button>
-              <div class="sh-mega" id="menu-segmentos" data-sh-mega hidden>
-                <div class="sh-mega-col">
-                  <p class="sh-mega-h">Por segmento</p>
-                  <a href="/#seg-advocacia"><b>Escritórios de advocacia</b><span>Triagem e organização dos atendimentos</span></a>
-                  <a href="/#seg-clinica"><b>Clínicas e consultórios</b><span>Informa e pré-agenda</span></a>
-                  <a href="/#seg-loja"><b>Lojas</b><span>Produtos, prazos e pagamento</span></a>
-                </div>
-                <div class="sh-mega-col">
-                  <p class="sh-mega-h">&nbsp;</p>
-                  <a href="/#seg-imobiliaria"><b>Imobiliárias</b><span>Qualifica e passa o contato pronto</span></a>
-                  <a href="/#seg-servicos"><b>Prestadores de serviço</b><span>Coleta os dados do pedido</span></a>
-                  <a href="/#segmentos"><b>Todos os segmentos</b><span>Exemplos de perguntas e respostas</span></a>
-                </div>
-              </div>
-            </li>
-            <li><a class="sh-link" href="/#planos">Planos</a></li>
-            <li><a class="sh-link" href="/#duvidas">Dúvidas</a></li>
-            <li><a class="sh-link" href="/docs">Documentação</a></li>
-          </ul>
-
-          <div class="sh-drawer-end">
-            <a class="sh-btn sh-btn-quiet" href="/manager/login">Entrar no painel</a>
-            <a class="sh-btn sh-btn-primary" href="/#contato" data-sh-wa data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
+        <header class="wa-head" data-head>
+      <div class="wa-wrap wa-head-in">
+        <a class="wa-brand" href="/" aria-label="WhatsAI, página inicial">
+          <span class="wa-brand-mark" aria-hidden="true"><svg class="wa-ico"><use href="#i-chat" /></svg></span>
+          WhatsAI
+        </a>
+        <nav class="wa-nav" id="menu-principal" aria-label="Principal" data-nav>
+          <div class="wa-nav-links">
+            <a href="/#produto">Produto</a>
+            <a href="/#recursos">Recursos</a>
+            <a href="/#planos">Planos</a>
+            <a href="/#duvidas">Dúvidas</a>
+            <a href="/novidades">Novidades</a>
+          </div>
+          <div class="wa-nav-actions">
+            <a class="wa-link" href="/docs">Documentação</a>
+            <a class="wa-btn wa-btn--sm" href="/#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Falar no WhatsApp</a>
           </div>
         </nav>
-
-        <div class="sh-end">
-          <a class="sh-btn sh-btn-quiet" href="/manager/login">Entrar no painel</a>
-          <a class="sh-btn sh-btn-primary" href="/#contato" data-sh-wa data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
+        <div class="wa-head-tools">
+          <div class="wa-theme" data-theme>
+            <button class="wa-theme-btn" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Tema: Sistema" data-theme-toggle>
+              <svg class="wa-ico wa-theme-icon ti-system" aria-hidden="true"><use href="#i-monitor" /></svg>
+              <svg class="wa-ico wa-theme-icon ti-light" aria-hidden="true"><use href="#i-sun" /></svg>
+              <svg class="wa-ico wa-theme-icon ti-dark" aria-hidden="true"><use href="#i-moon" /></svg>
+            </button>
+            <div class="wa-theme-menu" id="theme-menu" role="menu" aria-label="Tema" hidden data-theme-menu>
+              <p class="wa-theme-title">Tema</p>
+              <button type="button" role="menuitemradio" aria-checked="true" data-theme-set="system">
+                <svg class="wa-ico" aria-hidden="true"><use href="#i-monitor" /></svg>Sistema
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="light">
+                <svg class="wa-ico" aria-hidden="true"><use href="#i-sun" /></svg>Claro
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="dark">
+                <svg class="wa-ico" aria-hidden="true"><use href="#i-moon" /></svg>Escuro
+              </button>
+            </div>
+          </div>
+          <button class="wa-menu-btn" type="button" aria-expanded="false" aria-controls="menu-principal" data-menu>
+            <span class="sr">Abrir menu</span>
+            <svg class="wa-ico" aria-hidden="true"><use href="#i-menu" /></svg>
+          </button>
         </div>
-
-        <button class="sh-menu" type="button" aria-expanded="false" aria-controls="site-nav" data-sh-menu>
-          <svg class="sh-ico sh-ico-open" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-          <svg class="sh-ico sh-ico-close" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          <span class="sr">Abrir menu</span>
-        </button>
       </div>
     </header>
 
@@ -719,41 +697,32 @@
       </div>
     </main>
 
-    <footer class="doc-footer">
-      <div class="foot-in">
-        <div class="foot-brand">
-          <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
-          <p>Atendimento com IA no WhatsApp para escritórios de advocacia e empresas.</p>
+    <footer class="wa-docfoot">
+      <div class="wa-wrap wa-docfoot-in">
+        <div class="wa-docfoot-side">
+          <a class="wa-docfoot-brand" href="/" aria-label="WhatsAI, página inicial">
+            <span class="wa-docfoot-mark" aria-hidden="true"><svg class="wa-ico"><use href="#i-chat" /></svg></span>
+            WhatsAI
+          </a>
+          <a class="wa-docfoot-status" href="/#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero tirar algumas dúvidas.">
+            <span class="wa-docfoot-dot" aria-hidden="true"></span>
+            Falar no WhatsApp
+          </a>
         </div>
-        <nav class="foot-col" aria-labelledby="foot-produto">
-          <p class="foot-h" id="foot-produto">Produto</p>
-          <ul>
-            <li><a href="/">Site</a></li>
-            <li><a href="/manager/login">Painel</a></li>
-            <li><a href="/docs">Documentação</a></li>
-            <li><a href="/novidades">Novidades</a></li>
-          </ul>
-        </nav>
-        <nav class="foot-col" aria-labelledby="foot-legal">
-          <p class="foot-h" id="foot-legal">Legal</p>
-          <ul>
-            <li><a href="/seguranca">Segurança</a></li>
-            <li><a href="/termos">Termos de uso</a></li>
-            <li><a href="/privacidade">Privacidade</a></li>
-            <li><a href="/acesso">Área do cliente</a></li>
-          </ul>
-        </nav>
-        <nav class="foot-col" aria-labelledby="foot-ajuda">
-          <p class="foot-h" id="foot-ajuda">Ajuda</p>
-          <ul>
-            <li><a href="/#contato">Contato</a></li>
-            <li><a href="/#planos">Planos</a></li>
-            <li><a href="/.well-known/security.txt">security.txt</a></li>
-          </ul>
-        </nav>
-      </div>
-      <div class="foot-license">
-        <p>© 2026 WhatsAI. Página pública de segurança e confiança, revisada em 12/11/2026.</p>
+        <div class="wa-docfoot-side wa-docfoot-side--end">
+          <nav class="wa-docfoot-links" aria-label="Rodapé">
+            <a href="/docs">Documentação</a>
+            <a href="/seguranca">Segurança</a>
+            <a href="/privacidade">Privacidade</a>
+            <a href="/termos">Termos</a>
+            <a href="/acesso">Área do cliente</a>
+            <a href="/manager/login">Painel</a>
+          </nav>
+          <div class="wa-docfoot-legal">
+            <p class="wa-docfoot-copy">© 2026 WhatsAI. Todos os direitos reservados.</p>
+            <p class="wa-docfoot-note">WhatsApp é marca da Meta; o WhatsAI não é afiliado à Meta nem à OpenAI.</p>
+          </div>
+        </div>
       </div>
     </footer>
 

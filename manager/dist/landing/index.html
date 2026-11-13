@@ -1,8 +1,9 @@
 <!doctype html>
 <!--
   WhatsAI: pagina inicial publica, no padrao editorial do Cursor e com as cores da documentacao (/docs).
-  Pagina estatica: este HTML + /assets/landing.bundle.css (geist.css + tokens.css + landing.css + landing-theme.css +
-  landing-plus.css + security.css + landing-cursor.css) + /assets/landing.js. Sem CDN, sem imagens externas.
+  Pagina estatica: este HTML + /assets/landing.bundle.css (geist.css + tokens.css + site-shell.css + landing.css +
+  landing-theme.css + landing-plus.css + security.css + landing-cursor.css) + /assets/theme.js + /assets/landing.js.
+  Sem CDN, sem imagens externas.
   CONTATO: o numero do WhatsApp fica numa constante so, CONTACT_WHATSAPP, no topo de /assets/landing.js.
   Os botoes com data-wa-cta e o numero em data-wa-phone sao montados a partir dela.
   MOCKUPS: os paineis, telefones e cartoes ilustrativos sao HTML + CSS, marcados como ficticios e com
@@ -14,8 +15,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" data-theme-color />
     <title>WhatsAI · Atendimento com IA no WhatsApp para a sua empresa</title>
     <meta
       name="description"
@@ -50,8 +50,9 @@
     <meta name="twitter:image:alt" content="WhatsAI: atendimento com IA no WhatsApp. Seu WhatsApp responde em segundos; sua equipe assume quando quiser." />
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/landing.bundle.css?v=051fa6e956" />
+    <link rel="stylesheet" href="/assets/landing.bundle.css?v=d3fcac8d9c" />
     <!-- whatsai-patch:theme:landing -->
+    <script src="/assets/theme.js?v=1"></script>
     <script src="/assets/landing.js?v=7" defer></script>
     <script src="/assets/landing-pixels.js?v=2" defer></script>
 
@@ -96,6 +97,9 @@
         <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
         <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
         <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" /></symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z" /></symbol>
+        <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></symbol>
         <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /><path d="M8 10h8M8 13h5" /></symbol>
         <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3" /><path d="M12 4v4M9 13h.01M15 13h.01M9.5 17h5" /></symbol>
         <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M10 9v6M14 9v6" /></symbol>
@@ -142,10 +146,31 @@
             <a class="wa-btn wa-btn--sm" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Falar no WhatsApp</a>
           </div>
         </nav>
-        <button class="wa-menu-btn" type="button" aria-expanded="false" aria-controls="menu-principal" data-menu>
-          <span class="sr">Abrir menu</span>
-          <svg class="wa-ico" aria-hidden="true"><use href="#i-menu" /></svg>
-        </button>
+        <div class="wa-head-tools">
+          <div class="wa-theme" data-theme>
+            <button class="wa-theme-btn" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Tema: Sistema" data-theme-toggle>
+              <svg class="wa-ico wa-theme-icon ti-system" aria-hidden="true"><use href="#i-monitor" /></svg>
+              <svg class="wa-ico wa-theme-icon ti-light" aria-hidden="true"><use href="#i-sun" /></svg>
+              <svg class="wa-ico wa-theme-icon ti-dark" aria-hidden="true"><use href="#i-moon" /></svg>
+            </button>
+            <div class="wa-theme-menu" id="theme-menu" role="menu" aria-label="Tema" hidden data-theme-menu>
+              <p class="wa-theme-title">Tema</p>
+              <button type="button" role="menuitemradio" aria-checked="true" data-theme-set="system">
+                <svg class="wa-ico" aria-hidden="true"><use href="#i-monitor" /></svg>Sistema
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="light">
+                <svg class="wa-ico" aria-hidden="true"><use href="#i-sun" /></svg>Claro
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="dark">
+                <svg class="wa-ico" aria-hidden="true"><use href="#i-moon" /></svg>Escuro
+              </button>
+            </div>
+          </div>
+          <button class="wa-menu-btn" type="button" aria-expanded="false" aria-controls="menu-principal" data-menu>
+            <span class="sr">Abrir menu</span>
+            <svg class="wa-ico" aria-hidden="true"><use href="#i-menu" /></svg>
+          </button>
+        </div>
       </div>
     </header>
 
