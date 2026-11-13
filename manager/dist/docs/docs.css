@@ -44,8 +44,9 @@
   --d-pink-bg: #fce2fe;
   --d-pink-border: #f347ff;
   --d-pink-text: #2c001d;
-  --d-ok: #15803d;
-  --d-ok-bg: #edf7f1;
+  /* o ponto de status e os checks usam o accent do Render Docs, nao o verde escuro */
+  --d-ok: #8a05ff;
+  --d-ok-bg: #f3e8ff;
   --d-topbar: 60px;
   --d-sidebar: 280px;
   --d-toc: 352px;
@@ -92,8 +93,8 @@
     --d-pink-bg: #2c001d;
     --d-pink-border: #5c0056;
     --d-pink-text: #fac7ff;
-    --d-ok: #4ade80;
-    --d-ok-bg: #13251a;
+    --d-ok: #d1b8ff;
+    --d-ok-bg: #1c0037;
   }
 }
 
@@ -133,8 +134,8 @@
   --d-pink-bg: #2c001d;
   --d-pink-border: #5c0056;
   --d-pink-text: #fac7ff;
-  --d-ok: #4ade80;
-  --d-ok-bg: #13251a;
+  --d-ok: #d1b8ff;
+  --d-ok-bg: #1c0037;
 }
 
 *,
