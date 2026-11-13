@@ -28,10 +28,10 @@ os ícones e o código são do WhatsAI.
 | Texto | `#0d0d0d` / `#ffffff` | igual | Texto principal. |
 | Texto secundário | `#4d4d4d` / `#e3e3e3` | igual | Navegação e parágrafos de apoio. |
 | Texto terciário | `#6b6b6b` / `#b3b3b3` | igual | Legendas, placeholder e metadados. |
-| Accent | `#8a05ff` / `#d1b8ff` | igual | Item ativo, links, foco e botão primário no hover. |
-| Accent suave | `#f4f0ff` / `#2a0052` | igual | Fundo do item ativo e ícones de card. |
-| Foco | `#8a05ff` / `#c29eff` | igual | Anel de foco visível por teclado. |
-| Nota | `#f4f0ff`, borda `#9b52fb`, texto `#1c0037` / `#1c0037`, borda `#48008c`, texto `#e7dbff` | igual | Callout informativo. |
+| Accent | `#8a05ff` / `#d1b8ff` | `#0e7a4d` / `#5fcf8a` | Adaptado para o verde escuro da marca; o Render usa roxo. Item ativo, links, foco e hover do botão primário. |
+| Accent suave | `#f4f0ff` / `#2a0052` | `#e9f5ee` / `#12241a` | Fundo do item ativo e ícones de card, no verde da marca. |
+| Foco | `#8a05ff` / `#c29eff` | `#0e7a4d` / `#86efac` | Anel de foco visível por teclado. |
+| Nota | `#f4f0ff`, borda `#9b52fb`, texto `#1c0037` / `#1c0037`, borda `#48008c`, texto `#e7dbff` | `#e9f5ee`, borda `#1a9e5c`, texto `#0b3d26` / `#12241a`, borda `#1f5c3a`, texto `#c9f7d9` | Callout informativo no verde da marca. |
 | Atenção e limite | `#fce2fe`, borda `#f347ff`, texto `#2c001d` / `#2c001d`, borda `#5c0056`, texto `#fac7ff` | igual | Callout de risco. |
 | Código inline | fundo `#fafafa`, texto `#e23642` / fundo `#272727`, texto `#f0989e` | igual | Trecho curto no meio do texto. |
 | Bloco de código | fundo `#fafafa`, cabeçalho `#ffffff`, borda `#e3e3e3` / `#141414`, `#0d0d0d`, `#272727` | igual | Barra com linguagem e botão de copiar. |
@@ -58,6 +58,7 @@ sobrescrita apenas dentro da documentação.
 | Topo | 60 px + 1 px de borda, padding lateral de 32 px | igual |
 | Busca do topo | 480 x 36 px, raio 0, borda de 1 px | igual |
 | Navegação lateral | 280 px, fixa, grupo com 44 px de altura | igual |
+| Navegação no celular | gaveta de largura total, abaixo do topo, com cortina | gaveta de largura total, abaixo do topo, com cortina; o nosso topo mantém a busca visível acima da gaveta |
 | Artigo em 1440 px | caixa de 792 px, padding de 60 px, texto de 672 px | igual |
 | Artigo entre 1024 e 1279 px | caixa de 728 px, padding de 60 px, texto de 608 px | igual |
 | Artigo abaixo de 1024 px | coluna de 672 px centralizada, padding de 32 px | igual |

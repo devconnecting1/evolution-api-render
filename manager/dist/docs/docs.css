@@ -3,8 +3,8 @@
  * Estrutura, escala e estados inspirados no padrão público de documentação do Render, recriados do zero com
  * nomes de classe, HTML, CSS e JS próprios. Nenhum arquivo, fonte, logo, texto ou asset do Render é usado.
  * Tipografia: Geist (assets/geist.css) para interface e texto, pilha monoespaçada do sistema para código.
- * Paleta clara: página #fff, superfície suave #fafafa, bordas #e3e3e3, tinta #0d0d0d, accent #8a05ff.
- * Paleta escura: página #0d0d0d, superfície #141414, bordas #272727, tinta #fff, accent #d1b8ff.
+ * Paleta clara: página #fff, superfície suave #fafafa, bordas #e3e3e3, tinta #0d0d0d, accent #0e7a4d.
+ * Paleta escura: página #0d0d0d, superfície #141414, bordas #272727, tinta #fff, accent #5fcf8a.
  * Tema padrão Sistema; html[data-theme-mode] é aplicado por docs.js antes da primeira pintura.
  */
 
@@ -19,13 +19,13 @@
   --d-text-2: #4d4d4d;
   --d-text-3: #6b6b6b;
   --d-text-4: #8f8f8f;
-  --d-accent: #8a05ff;
-  --d-accent-strong: #48008c;
-  --d-accent-soft: #f4f0ff;
-  --d-accent-soft-2: #e7dbff;
-  --d-accent-border: #c29eff;
-  --d-focus: #8a05ff;
-  --d-selection: #e7dbff;
+  --d-accent: #0e7a4d;
+  --d-accent-strong: #0b5c3a;
+  --d-accent-soft: #e9f5ee;
+  --d-accent-soft-2: #d7ecdf;
+  --d-accent-border: #9fceb5;
+  --d-focus: #0e7a4d;
+  --d-selection: #d7ecdf;
   --d-overlay: rgba(0, 0, 0, 0.42);
   --d-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --d-btn-bg: #0d0d0d;
@@ -38,15 +38,15 @@
   --d-inline-bg: #fafafa;
   --d-inline-text: #e23642;
   --d-table-line: #e2e2e2;
-  --d-note-bg: #f4f0ff;
-  --d-note-border: #9b52fb;
-  --d-note-text: #1c0037;
+  --d-note-bg: #e9f5ee;
+  --d-note-border: #1a9e5c;
+  --d-note-text: #0b3d26;
   --d-pink-bg: #fce2fe;
   --d-pink-border: #f347ff;
   --d-pink-text: #2c001d;
-  /* o ponto de status e os checks usam o accent do Render Docs, nao o verde escuro */
-  --d-ok: #8a05ff;
-  --d-ok-bg: #f3e8ff;
+  /* verde escuro da marca: ponto de status e checks */
+  --d-ok: #0e7a4d;
+  --d-ok-bg: #e9f5ee;
   --d-topbar: 60px;
   --d-sidebar: 280px;
   --d-toc: 352px;
@@ -68,13 +68,13 @@
     --d-text-2: #e3e3e3;
     --d-text-3: #b3b3b3;
     --d-text-4: #8f8f8f;
-    --d-accent: #d1b8ff;
-    --d-accent-strong: #e7dbff;
-    --d-accent-soft: #2a0052;
-    --d-accent-soft-2: #1c0037;
-    --d-accent-border: #48008c;
-    --d-focus: #c29eff;
-    --d-selection: #48008c;
+    --d-accent: #5fcf8a;
+    --d-accent-strong: #86efac;
+    --d-accent-soft: #12241a;
+    --d-accent-soft-2: #0d1f15;
+    --d-accent-border: #1f5c3a;
+    --d-focus: #86efac;
+    --d-selection: #1f5c3a;
     --d-overlay: rgba(0, 0, 0, 0.6);
     --d-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
     --d-btn-bg: #ffffff;
@@ -87,14 +87,14 @@
     --d-inline-bg: #272727;
     --d-inline-text: #f0989e;
     --d-table-line: #4d4d4d;
-    --d-note-bg: #1c0037;
-    --d-note-border: #48008c;
-    --d-note-text: #e7dbff;
+    --d-note-bg: #12241a;
+    --d-note-border: #1f5c3a;
+    --d-note-text: #c9f7d9;
     --d-pink-bg: #2c001d;
     --d-pink-border: #5c0056;
     --d-pink-text: #fac7ff;
-    --d-ok: #d1b8ff;
-    --d-ok-bg: #1c0037;
+    --d-ok: #5fcf8a;
+    --d-ok-bg: #12241a;
   }
 }
 
@@ -109,13 +109,13 @@
   --d-text-2: #e3e3e3;
   --d-text-3: #b3b3b3;
   --d-text-4: #8f8f8f;
-  --d-accent: #d1b8ff;
-  --d-accent-strong: #e7dbff;
-  --d-accent-soft: #2a0052;
-  --d-accent-soft-2: #1c0037;
-  --d-accent-border: #48008c;
-  --d-focus: #c29eff;
-  --d-selection: #48008c;
+  --d-accent: #5fcf8a;
+  --d-accent-strong: #86efac;
+  --d-accent-soft: #12241a;
+  --d-accent-soft-2: #0d1f15;
+  --d-accent-border: #1f5c3a;
+  --d-focus: #86efac;
+  --d-selection: #1f5c3a;
   --d-overlay: rgba(0, 0, 0, 0.6);
   --d-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
   --d-btn-bg: #ffffff;
@@ -128,14 +128,14 @@
   --d-inline-bg: #272727;
   --d-inline-text: #f0989e;
   --d-table-line: #4d4d4d;
-  --d-note-bg: #1c0037;
-  --d-note-border: #48008c;
-  --d-note-text: #e7dbff;
+  --d-note-bg: #12241a;
+  --d-note-border: #1f5c3a;
+  --d-note-text: #c9f7d9;
   --d-pink-bg: #2c001d;
   --d-pink-border: #5c0056;
   --d-pink-text: #fac7ff;
-  --d-ok: #d1b8ff;
-  --d-ok-bg: #1c0037;
+  --d-ok: #5fcf8a;
+  --d-ok-bg: #12241a;
 }
 
 *,
@@ -1703,12 +1703,12 @@ td strong {
     bottom: 0;
     left: 0;
     z-index: 45;
-    width: min(86vw, 320px);
+    width: 100%;
     height: auto;
     max-height: none;
     padding: 0;
     background: var(--d-bg);
-    border-right: 1px solid var(--d-border-strong);
+    border-right: 0;
     transform: translateX(-102%);
     visibility: hidden;
     transition: transform 200ms var(--d-ease-ui), visibility 0s linear 200ms;
