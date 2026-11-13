@@ -1,8 +1,9 @@
 <!doctype html>
 <!--
-  WhatsAI: novidades do produto (servida em "/novidades" pelo manager/dist/vercel.json). Mesmo cabeçalho, ícones e
-  rodapé do site; estilos em /assets/landing.bundle.css. REGRA: uma entrada por mudança que o cliente percebe, com a
-  data real do repositório e uma frase. Sem resultados inventados, sem emojis e sem preços (os preços ficam em /#planos).
+  WhatsAI: novidades do produto (servida em "/novidades" pelo manager/dist/vercel.json). Cabecalho, rodape e tema
+  globais de site-shell.css + theme.js; o conteudo usa os tokens de tokens.css e a escala de /docs em
+  landing/novidades.css. REGRA: uma entrada por mudanca que o cliente percebe, com a data real do repositorio e uma
+  frase. Sem resultados inventados, sem emojis e sem precos (os precos ficam em /#planos).
 -->
 <html lang="pt-BR">
   <head>
@@ -35,11 +36,12 @@
     <meta name="twitter:image:alt" content="WhatsAI: atendimento com IA no WhatsApp. Seu WhatsApp responde em segundos; sua equipe assume quando quiser." />
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/landing.bundle.css?v=4863ac1aa0" />
-    <script src="/assets/theme.js?v=1"></script>
+    <link rel="stylesheet" href="/assets/landing.bundle.css?v=602c7682a0" />
+    <link rel="stylesheet" href="/landing/novidades.css?v=1" />
+    <script src="/assets/theme.js?v=2"></script>
     <script src="/assets/landing.js?v=7" defer></script>
   </head>
-  <body class="sec-page shell-page" data-wa-origin="site">
+  <body class="novidades-page shell-page" data-wa-origin="site">
     <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" /></symbol>
@@ -102,33 +104,36 @@
     </header>
 
     <main id="conteudo">
-      <section class="sec-hero" aria-labelledby="nov-title">
-        <div class="wrap">
-          <p class="eyebrow">Novidades</p>
-          <h1 id="nov-title" class="display sec-display">O que mudou no WhatsAI, <span class="soft">em ordem.</span></h1>
-          <p class="lead">
+      <section class="nv-hero" aria-labelledby="nov-title">
+        <div class="nv-wrap">
+          <p class="nv-eyebrow">Novidades</p>
+          <h1 id="nov-title" class="nv-title">O que mudou no WhatsAI, <span class="nv-soft">em ordem.</span></h1>
+          <p class="nv-lead">
             Uma entrada por mudança que o cliente percebe no painel ou no site, com a data. Sem promessas: só o que já
             está no ar.
           </p>
-          <p class="sec-updated">Atualizado em <time datetime="2026-11-12">12 de novembro de 2026</time></p>
+          <p class="nv-meta">Atualizado em <time datetime="2026-11-12">12 de novembro de 2026</time></p>
         </div>
       </section>
 
-      <section class="section" aria-labelledby="lista-title">
-        <div class="wrap">
-          <h2 id="lista-title" class="h2 h2-sm">Mudanças</h2>
-          <ul class="sec-changes">
-            <li><time datetime="2026-11-12">12/11/2026</time><span>Primeiro uso guiado: boas-vindas com três passos para quem entra pela primeira vez.</span></li>
-            <li><time datetime="2026-11-12">12/11/2026</time><span>Erros e carregamento honestos: quando a API não responde, a tela diz o que aconteceu e oferece tentar de novo, em vez de parecer vazia.</span></li>
-            <li><time datetime="2026-11-12">12/11/2026</time><span>Privacidade e termos completos para o operador pessoa física, com encarregado, onde ficam os dados e prazos.</span></li>
-            <li><time datetime="2026-11-12">12/11/2026</time><span>Site mais curto, com o produto em destaque e menos seções até os planos.</span></li>
-            <li><time datetime="2026-11-11">11/11/2026</time><span>Um layout só no painel: a lateral aparece em todas as páginas e só o conteúdo rola.</span></li>
-            <li><time datetime="2026-11-11">11/11/2026</time><span>Contatos da IA: uma página para ver quem está com a IA pausada e pausar ou retomar em massa.</span></li>
-            <li><time datetime="2026-11-11">11/11/2026</time><span>Confirmação antes das ações que apagam ou mudam algo importante, num diálogo próprio do painel.</span></li>
-            <li><time datetime="2026-11-11">11/11/2026</time><span>Google Agenda: os agendamentos vão para a agenda do Google e os compromissos de lá bloqueiam horários.</span></li>
-            <li><time datetime="2026-11-10">10/11/2026</time><span>Planilha de leads formatada, com visualizador no painel.</span></li>
-            <li><time datetime="2026-11-10">10/11/2026</time><span>Retenção automática das mensagens antigas (LGPD), desligada por padrão.</span></li>
-            <li><time datetime="2026-11-10">10/11/2026</time><span>Área do cliente: código próprio, com os módulos que o administrador escolher.</span></li>
+      <section class="nv-list-section" aria-labelledby="lista-title">
+        <div class="nv-wrap">
+          <div class="nv-list-head">
+            <h2 id="lista-title" class="nv-list-title">Mudanças</h2>
+            <span class="nv-count">11 entradas</span>
+          </div>
+          <ul class="nv-list">
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-12">12/11/2026</time><p class="nv-text">Primeiro uso guiado: boas-vindas com três passos para quem entra pela primeira vez.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-12">12/11/2026</time><p class="nv-text">Erros e carregamento honestos: quando a API não responde, a tela diz o que aconteceu e oferece tentar de novo, em vez de parecer vazia.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-12">12/11/2026</time><p class="nv-text">Privacidade e termos completos para o operador pessoa física, com encarregado, onde ficam os dados e prazos.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-12">12/11/2026</time><p class="nv-text">Site mais curto, com o produto em destaque e menos seções até os planos.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-11">11/11/2026</time><p class="nv-text">Um layout só no painel: a lateral aparece em todas as páginas e só o conteúdo rola.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-11">11/11/2026</time><p class="nv-text">Contatos da IA: uma página para ver quem está com a IA pausada e pausar ou retomar em massa.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-11">11/11/2026</time><p class="nv-text">Confirmação antes das ações que apagam ou mudam algo importante, num diálogo próprio do painel.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-11">11/11/2026</time><p class="nv-text">Google Agenda: os agendamentos vão para a agenda do Google e os compromissos de lá bloqueiam horários.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-10">10/11/2026</time><p class="nv-text">Planilha de leads formatada, com visualizador no painel.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-10">10/11/2026</time><p class="nv-text">Retenção automática das mensagens antigas (LGPD), desligada por padrão.</p></li>
+            <li class="nv-item"><time class="nv-date" datetime="2026-11-10">10/11/2026</time><p class="nv-text">Área do cliente: código próprio, com os módulos que o administrador escolher.</p></li>
           </ul>
         </div>
       </section>

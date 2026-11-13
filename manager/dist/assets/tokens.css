@@ -15,6 +15,17 @@
  * mockups) podem manter tamanhos menores, documentados no README do PR.
  */
 
+/* Troca de tema sem animar cores. O theme.js e o docs.js colocam esta classe no <html> antes de trocar
+   data-theme-mode e tiram no frame seguinte. Sem ela, os componentes com transition de hover animavam a cor
+   por 150 ms e pareciam piscar enquanto o resto da pagina mudava na hora. */
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
 :root {
   color-scheme: light;
 
