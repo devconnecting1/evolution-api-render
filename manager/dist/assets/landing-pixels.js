@@ -1,6 +1,6 @@
 /*
  * WhatsAI: fundo de pixels do plano Premium (canvas.px-bg). Escrito à mão, sem dependências.
- * Uma grade de pixels creme que cintila e é varrida por uma onda diagonal, como o "pensando" dos assistentes de IA.
+ * Uma grade de pixels verde que cintila e é varrida por uma onda diagonal, como o "pensando" dos assistentes de IA.
  * Brilho máximo 0,22 (o texto do cartão mantém contraste AA). Roda a ~30 fps só enquanto o cartão está na tela e a aba
  * visível; com prefers-reduced-motion: reduce, desenha um quadro parado.
  */
@@ -43,7 +43,7 @@
           var wave = Math.exp(-(d * d) / 0.006);
           var a = (0.04 + 0.55 * tw * (s > 0.55 ? 1 : 0.25) + 0.6 * wave * (0.4 + s * 0.6)) * MAX;
           if (a < 0.012) continue;
-          ctx.fillStyle = 'rgba(255,255,227,' + (a > MAX ? MAX : a).toFixed(3) + ')';
+          ctx.fillStyle = 'rgba(95,207,138,' + (a > MAX ? MAX : a).toFixed(3) + ')';
           ctx.fillRect(x * STEP, y * STEP, SIZE, SIZE);
         }
       }

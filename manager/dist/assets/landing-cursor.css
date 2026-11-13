@@ -1,41 +1,46 @@
 /*
- * WhatsAI: proposta de landing no padrao editorial do Cursor (manager/dist/landing/index.html).
+ * WhatsAI: landing publica no padrao editorial do Cursor, com as cores da documentacao (/docs)
+ * (manager/dist/landing/index.html).
  *
  * Escopo: TODAS as regras deste arquivo comecam por .wa- ou ficam sob body.wa-page. O bundle tambem serve
  * /novidades, entao nada aqui pode alcancar as paginas legais (que usam site-header.css) nem a pagina de novidades.
  *
- * Base: creme #f7f7f4, tinta #26251e, bordas finas, raio 0 em blocos e 999 px so em botoes/selos.
- * Um unico accent: verde escuro no claro (#1d5c40) e verde claro no escuro (#9fdcb6).
+ * Base: as mesmas cores da documentacao publica (/docs): pagina #ffffff no claro e #0d0d0d no escuro,
+ * superficie suave #fafafa / #141414, borda #e3e3e3 / #272727, tinta #0d0d0d / #ffffff.
+ * Um unico accent: verde escuro no claro (#0e7a4d) e verde claro no escuro (#5fcf8a). Ambar e vermelho so com
+ * significado (atencao e erro), como na documentacao.
  * Tipografia: Geist (geist.css), titulos grandes com tracking negativo; textos de apoio em tinta secundaria.
  * Sem imagens externas, sem logos de terceiros: a paisagem abstrata e os mockups sao CSS + HTML.
  */
 
 body.wa-page {
-  --wa-bg: #f7f7f4;
-  --wa-card: #f2f1ed;
-  --wa-card-2: #ebeae5;
-  --wa-card-3: #e4e3dd;
-  --wa-fg: #26251e;
-  --wa-fg-2: #5f5e56;
-  --wa-fg-3: #77766c;
-  --wa-line: rgba(38, 37, 30, 0.13);
-  --wa-line-strong: rgba(38, 37, 30, 0.28);
-  --wa-accent: #1d5c40;
-  --wa-accent-soft: rgba(29, 92, 64, 0.08);
-  --wa-accent-line: rgba(29, 92, 64, 0.32);
-  --wa-btn: #26251e;
-  --wa-btn-fg: #f7f7f4;
-  --wa-btn-hover: #3b3a32;
-  --wa-warn: #8a5a1f;
-  --wa-art-sky: #eee8d9;
-  --wa-art-sky-2: #dcd8c8;
-  --wa-art-hill: #c3c9b2;
-  --wa-art-hill-2: #98a68a;
-  --wa-art-hill-3: #6d7d63;
-  --wa-art-deep: #465642;
-  --wa-art-glow: rgba(255, 247, 219, 0.95);
-  --wa-art-glow-2: rgba(255, 250, 230, 0.85);
-  --wa-shadow: 0 26px 60px rgba(38, 37, 30, 0.2);
+  --wa-bg: #ffffff;
+  --wa-card: #fafafa;
+  --wa-card-2: #f0f0f0;
+  --wa-card-3: #e3e3e3;
+  --wa-fg: #0d0d0d;
+  --wa-fg-2: #4d4d4d;
+  --wa-fg-3: #6b6b6b;
+  --wa-line: #e3e3e3;
+  --wa-line-strong: #c7c7c7;
+  --wa-accent: #0e7a4d;
+  --wa-accent-soft: #e9f5ee;
+  --wa-accent-line: #9fceb5;
+  --wa-btn: #0d0d0d;
+  --wa-btn-fg: #ffffff;
+  --wa-btn-hover: #0e7a4d;
+  --wa-warn: #5a3a00;
+  --wa-warn-bg: #fdf0d5;
+  --wa-warn-line: #d97706;
+  --wa-art-sky: #fafafa;
+  --wa-art-sky-2: #f0f0f0;
+  --wa-art-hill: #e3e3e3;
+  --wa-art-hill-2: #c7c7c7;
+  --wa-art-hill-3: #e9f5ee;
+  --wa-art-deep: #9fceb5;
+  --wa-art-glow: rgba(14, 122, 77, 0.1);
+  --wa-art-glow-2: rgba(14, 122, 77, 0.16);
+  --wa-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --wa-pad: 20px;
   --wa-max: 1440px;
 
@@ -62,31 +67,33 @@ body.wa-page {
     color-scheme: dark;
   }
   body.wa-page {
-    --wa-bg: #14120b;
-    --wa-card: #1c1a13;
-    --wa-card-2: #232119;
-    --wa-card-3: #2b2820;
-    --wa-fg: #edecec;
-    --wa-fg-2: #b8b6ac;
-    --wa-fg-3: #918f85;
-    --wa-line: rgba(237, 236, 236, 0.16);
-    --wa-line-strong: rgba(237, 236, 236, 0.34);
-    --wa-accent: #9fdcb6;
-    --wa-accent-soft: rgba(159, 220, 182, 0.12);
-    --wa-accent-line: rgba(159, 220, 182, 0.38);
-    --wa-btn: #edecec;
-    --wa-btn-fg: #14120b;
-    --wa-btn-hover: #d6d5ce;
-    --wa-warn: #d8b073;
-    --wa-art-sky: #2a2820;
-    --wa-art-sky-2: #353228;
-    --wa-art-hill: #3e4638;
-    --wa-art-hill-2: #2f3a2d;
-    --wa-art-hill-3: #263026;
-    --wa-art-deep: #1c261d;
-    --wa-art-glow: rgba(159, 220, 182, 0.22);
-    --wa-art-glow-2: rgba(255, 244, 210, 0.2);
-    --wa-shadow: 0 26px 60px rgba(0, 0, 0, 0.55);
+    --wa-bg: #0d0d0d;
+    --wa-card: #141414;
+    --wa-card-2: #1f1f1f;
+    --wa-card-3: #272727;
+    --wa-fg: #ffffff;
+    --wa-fg-2: #e3e3e3;
+    --wa-fg-3: #b3b3b3;
+    --wa-line: #272727;
+    --wa-line-strong: #4d4d4d;
+    --wa-accent: #5fcf8a;
+    --wa-accent-soft: #12241a;
+    --wa-accent-line: #1f5c3a;
+    --wa-btn: #ffffff;
+    --wa-btn-fg: #0d0d0d;
+    --wa-btn-hover: #86efac;
+    --wa-warn: #fcd38d;
+    --wa-warn-bg: #2a1f0c;
+    --wa-warn-line: #8a5a12;
+    --wa-art-sky: #141414;
+    --wa-art-sky-2: #1f1f1f;
+    --wa-art-hill: #272727;
+    --wa-art-hill-2: #1f1f1f;
+    --wa-art-hill-3: #12241a;
+    --wa-art-deep: #1f5c3a;
+    --wa-art-glow: rgba(95, 207, 138, 0.14);
+    --wa-art-glow-2: rgba(95, 207, 138, 0.18);
+    --wa-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -793,8 +800,8 @@ body.wa-page #duvidas {
 }
 
 .wa-badge--warn {
-  border-color: rgba(138, 90, 31, 0.35);
-  background: rgba(138, 90, 31, 0.07);
+  border-color: var(--wa-warn-line);
+  background: var(--wa-warn-bg);
   color: var(--wa-warn);
 }
 
@@ -998,7 +1005,7 @@ body.wa-page #duvidas {
   border: 1px solid var(--wa-line-strong);
   border-radius: 6px;
   background: var(--wa-bg);
-  box-shadow: 0 16px 38px rgba(38, 37, 30, 0.18);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.18);
 }
 
 .wa-float-ico {
@@ -1186,7 +1193,7 @@ body.wa-page #duvidas {
 }
 
 .wa-mock .wa-window {
-  box-shadow: 0 18px 40px rgba(38, 37, 30, 0.14);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
 }
 
 .wa-mock-body {
@@ -1392,7 +1399,7 @@ body.wa-page #duvidas {
   border: 1px solid var(--wa-line-strong);
   border-radius: 26px;
   background: var(--wa-bg);
-  box-shadow: 0 22px 48px rgba(38, 37, 30, 0.22);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.22);
 }
 
 .wa-phone-screen {
@@ -1445,7 +1452,7 @@ body.wa-page #duvidas {
   border: 1px solid var(--wa-line-strong);
   border-radius: 6px;
   background: var(--wa-bg);
-  box-shadow: 0 18px 40px rgba(38, 37, 30, 0.2);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
 }
 
 .wa-agenda-top {
@@ -1652,7 +1659,7 @@ body.wa-page #duvidas {
   border: 1px solid var(--wa-line);
   border-radius: 4px;
   background: var(--wa-bg);
-  box-shadow: 0 10px 26px rgba(38, 37, 30, 0.12);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
 }
 
 .wa-mini--menu {
@@ -1757,7 +1764,7 @@ body.wa-page #duvidas {
   border: 1px solid var(--wa-line-strong);
   border-radius: 20px 20px 0 0;
   background: var(--wa-bg);
-  box-shadow: 0 12px 30px rgba(38, 37, 30, 0.16);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
 }
 
 .wa-mini-phone-screen {
@@ -1892,18 +1899,18 @@ body.wa-page #duvidas {
 
 /* Premium: cartao grafite com os pixels animados da landing atual (landing-pixels.js) */
 .wa-plan--px {
-  --wa-fg: #ffffe3;
-  --wa-fg-2: #d6d6c8;
-  --wa-fg-3: #b3b3a3;
-  --wa-line: rgba(255, 255, 255, 0.14);
-  --wa-line-strong: rgba(255, 255, 255, 0.22);
-  --wa-accent: #9fdcb6;
-  --wa-accent-line: rgba(159, 220, 182, 0.38);
+  --wa-fg: #ffffff;
+  --wa-fg-2: #e3e3e3;
+  --wa-fg-3: #b3b3b3;
+  --wa-line: #272727;
+  --wa-line-strong: #4d4d4d;
+  --wa-accent: #5fcf8a;
+  --wa-accent-line: #1f5c3a;
   position: relative;
   isolation: isolate;
   overflow: hidden;
   border-color: transparent;
-  background: #1a1a1a;
+  background: #0d0d0d;
   color: var(--wa-fg);
 }
 
@@ -1915,15 +1922,16 @@ body.wa-page #duvidas {
 .wa-plan--px .wa-btn {
   border-color: transparent;
   background: var(--wa-accent);
-  color: #14120b;
+  color: #0d0d0d;
 }
 
 .wa-plan--px .wa-btn:hover {
-  background: #b9f0ce;
+  background: #86efac;
 }
 
 .wa-plan--px .wa-badge {
-  background: rgba(255, 255, 227, 0.1);
+  border-color: var(--wa-accent-line);
+  background: rgba(95, 207, 138, 0.12);
   color: var(--wa-accent);
 }
 
@@ -1941,11 +1949,11 @@ body.wa-page #duvidas {
 
 @media (prefers-color-scheme: dark) {
   .wa-plan--px {
-    border-color: rgba(255, 255, 227, 0.26);
+    border-color: #272727;
     background:
-      radial-gradient(130% 70% at 50% 0%, rgba(255, 255, 227, 0.07), transparent 62%),
-      linear-gradient(180deg, #22221c 0%, #191915 55%, #151512 100%);
-    box-shadow: 0 0 0 1px rgba(255, 255, 227, 0.06), 0 24px 60px -32px rgba(255, 255, 227, 0.18);
+      radial-gradient(130% 70% at 50% 0%, rgba(95, 207, 138, 0.06), transparent 62%),
+      linear-gradient(180deg, #1a1a1a 0%, #141414 55%, #101010 100%);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 60px -32px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -2342,7 +2350,7 @@ body.wa-page #duvidas {
   border: 1px solid var(--wa-line-strong);
   border-radius: 6px;
   background: var(--wa-bg);
-  box-shadow: 0 18px 40px rgba(38, 37, 30, 0.2);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
 }
 
 .wa-timeline b {
