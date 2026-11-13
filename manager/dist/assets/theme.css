@@ -400,6 +400,11 @@ button[role="checkbox"] {
   box-shadow: var(--m-shadow-menu);
   list-style: none;
 }
+/* On phones the top bar clips its content (panel-polish). The open menu has to escape the bar; otherwise focusing
+   an item scrolls the header itself and the whole bar disappears while the menu is visible. */
+[data-wa-header]:has(.wa-theme-menu) {
+  overflow: visible;
+}
 .wa-theme-label {
   padding: 6px 8px 4px;
   color: var(--m-text-2);
