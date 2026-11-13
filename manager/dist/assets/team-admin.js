@@ -397,9 +397,12 @@
     }
     for (var i = 0; i < nodes.length; i++) {
       var el = nodes[i];
-      if (el.getAttribute('data-wa-filled') === '1') continue;
-      el.setAttribute('data-wa-filled', '1');
       var page = el.getAttribute('data-wa-team-page');
+      // React reuses the same div when going from Equipe to Registro and back (only the attribute changes), so
+      // the marker stores the page: a boolean left the previous page's content in place.
+      if (!page || el.getAttribute('data-wa-filled') === page) continue;
+      if (el.getAttribute('data-wa-filled')) el.textContent = '';
+      el.setAttribute('data-wa-filled', page);
       if (team && role() !== 'dono') renderDenied(el, page);
       else if (page === 'equipe') renderEquipe(el);
       else if (page === 'registro') renderRegistro(el);
@@ -422,7 +425,12 @@
   function start() {
     markRole();
     fillPages();
-    new MutationObserver(fillPages).observe(document.body, { childList: true, subtree: true });
+    new MutationObserver(fillPages).observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-wa-team-page'],
+    });
   }
   if (document.body) start();
   else document.addEventListener('DOMContentLoaded', start);
