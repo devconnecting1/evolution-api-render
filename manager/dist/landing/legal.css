@@ -1,0 +1,836 @@
+/*
+ * WhatsAI: páginas públicas de segurança, termos e privacidade (/seguranca, /termos e /privacidade).
+ * O topo, a navegação lateral, a busca, o índice, a gaveta, o tema e os componentes de leitura vêm de
+ * /docs/docs.css e /docs/docs.js. Este arquivo cobre só o que é próprio destas três páginas:
+ * o herói com grade de referência, a faixa de atalhos, os cartões de controle, o resumo do documento,
+ * as tabelas de provedores e o ajuste de leitura dos textos legais.
+ * Referência de layout: páginas públicas de segurança e de documentos legais do Render, recriadas do zero
+ * com marca, textos, paleta, classes, ícones e código do WhatsAI. Nenhum asset ou CSS do Render é usado.
+ * Paleta: verde escuro no tema claro (#0e7a4d) e verde claro no escuro (#5fcf8a), definidos em docs.css.
+ * Âmbar é atenção e vermelho é erro; nada de roxo. Tema padrão Sistema.
+ */
+
+/* Grade do herói: linhas finas que somem no rodapé do bloco, como uma folha de referência. */
+.legal-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 44px 44px 0;
+  background: var(--d-bg);
+  border: 1px solid var(--d-border);
+  border-radius: 0;
+}
+
+.legal-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(to right, var(--d-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--d-border) 1px, transparent 1px);
+  background-size: 72px 72px;
+  opacity: 0.5;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 100%);
+}
+
+.legal-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.legal-hero .eyebrow {
+  margin-bottom: 20px;
+}
+
+.legal-hero h1 {
+  max-width: 16ch;
+  font-size: clamp(40px, 4.6vw, 56px);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+
+.legal-hero .hero-lead {
+  max-width: 56ch;
+  margin-top: 22px;
+  font-size: clamp(19px, 1.8vw, 22px);
+  line-height: 1.35;
+  letter-spacing: -0.012em;
+}
+
+.legal-meta {
+  margin: 22px 0 0;
+  color: var(--d-text-3);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.legal-meta time {
+  color: var(--d-text-2);
+  font-weight: 500;
+}
+
+.legal-meta a {
+  color: var(--d-accent);
+  text-decoration-color: var(--d-accent-border);
+  text-underline-offset: 2px;
+}
+
+.legal-meta .status-dot {
+  display: inline-block;
+  margin: 0 8px 0 0;
+  vertical-align: 1px;
+}
+
+/* Faixa de atalhos: três colunas separadas por fio, como o resumo de confiança da referência. */
+.legal-quick {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 34px -44px 0;
+  border-top: 1px solid var(--d-border);
+  background: color-mix(in srgb, var(--d-bg) 88%, transparent);
+}
+
+.legal-quick-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 22px 22px;
+  border-right: 1px solid var(--d-border);
+  color: var(--d-text);
+  text-decoration: none;
+  transition: background-color 0.15s var(--d-ease-ui);
+}
+
+.legal-quick-item:last-child {
+  border-right: 0;
+}
+
+.legal-quick-item:hover {
+  background: var(--d-bg-soft);
+}
+
+.legal-quick-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legal-quick-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: var(--d-accent-soft);
+  border-radius: 2px;
+  color: var(--d-accent);
+  flex: none;
+}
+
+.legal-quick-ico .ico {
+  width: 17px;
+  height: 17px;
+}
+
+/* Âmbar só para o que pede atenção: hoje, o aviso de que não exibimos selos que não temos. */
+.legal-quick-ico.is-warn {
+  background: var(--d-warn-bg);
+  color: var(--d-warn-text);
+}
+
+.legal-quick-title {
+  color: var(--d-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.legal-quick-text {
+  color: var(--d-text-3);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.legal-quick-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 4px;
+  color: var(--d-accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.legal-quick-go .ico {
+  width: 13px;
+  height: 13px;
+  transition: transform 0.15s var(--d-ease-ui);
+}
+
+.legal-quick-item:hover .legal-quick-go .ico {
+  transform: translateX(2px);
+}
+
+/* Documento legal */
+.legal-doc .doc-section {
+  padding-top: 52px;
+}
+
+.legal-doc .doc-section > h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 18px;
+  font-size: clamp(28px, 2.6vw, 34px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.legal-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  padding: 3px 7px;
+  background: var(--d-accent-soft);
+  border: 1px solid var(--d-accent-border);
+  border-radius: 2px;
+  color: var(--d-accent);
+  font-family: var(--d-mono) !important;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  transform: translateY(-2px);
+  flex: none;
+}
+
+.legal-doc .doc-section p {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.legal-doc .doc-section > p.section-lead {
+  max-width: 62ch;
+  margin-bottom: 24px;
+  color: var(--d-text-3);
+}
+
+.legal-doc .doc-list li {
+  margin: 10px 0;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.legal-doc .checklist {
+  margin-top: 6px;
+}
+
+.legal-doc .checklist li {
+  margin: 11px 0;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.legal-doc .doc-section h3 {
+  margin-top: 34px;
+}
+
+.legal-doc .doc-section h3:first-child {
+  margin-top: 0;
+}
+
+/* Resumo do documento: bloco de leitura rápida antes das seções numeradas. */
+.legal-summary {
+  margin: 28px 0 4px;
+  padding: 24px;
+  background: var(--d-bg-soft);
+  border: 1px solid var(--d-border);
+  border-radius: 0;
+}
+
+.legal-summary-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.legal-summary-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--d-accent-soft);
+  border-radius: 2px;
+  color: var(--d-accent);
+  flex: none;
+}
+
+.legal-summary-ico .ico {
+  width: 16px;
+  height: 16px;
+}
+
+.legal-summary-title {
+  margin: 0;
+  color: var(--d-text);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.legal-summary .checklist {
+  margin: 0;
+}
+
+.legal-summary .checklist li {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.legal-summary .checklist li:first-child {
+  margin-top: 0;
+}
+
+.legal-summary .checklist li:last-child {
+  margin-bottom: 0;
+}
+
+/* Cartões de controle da página de segurança. */
+.legal-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0 8px;
+}
+
+.legal-card {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: var(--d-bg);
+  border: 1px solid var(--d-border);
+  border-radius: 0;
+}
+
+.legal-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.legal-card-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: var(--d-accent-soft);
+  border-radius: 2px;
+  color: var(--d-accent);
+  flex: none;
+}
+
+.legal-card-ico .ico {
+  width: 18px;
+  height: 18px;
+}
+
+.legal-card-n {
+  color: var(--d-text-4);
+  font-family: var(--d-mono) !important;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.legal-card h3 {
+  margin: 14px 0 6px;
+  color: var(--d-text);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.35;
+}
+
+.legal-card p {
+  margin: 0;
+  color: var(--d-text-3);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Blocos de escopo e de contato. */
+.legal-scope {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.legal-scope > div {
+  padding: 18px;
+  background: var(--d-bg-soft);
+  border: 1px solid var(--d-border);
+  border-radius: 0;
+}
+
+.legal-scope h3 {
+  margin: 0 0 8px;
+  color: var(--d-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.legal-scope ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.legal-scope li {
+  margin: 6px 0;
+  color: var(--d-text-3);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.legal-scope li::marker {
+  color: var(--d-text-4);
+}
+
+.legal-duo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.legal-duo > div {
+  padding: 20px;
+  background: var(--d-bg);
+  border: 1px solid var(--d-border);
+  border-radius: 0;
+}
+
+.legal-duo h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.legal-duo .steps {
+  margin: 0;
+}
+
+.legal-duo .steps li:last-child {
+  padding-bottom: 0;
+}
+
+.legal-duo p {
+  margin: 0 0 12px;
+  color: var(--d-text-3);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.legal-duo p:last-child {
+  margin-bottom: 0;
+}
+
+/* Tabelas de provedores e de selos. */
+.legal-table {
+  min-width: 620px;
+  table-layout: fixed;
+}
+
+/* Cabeçalho de tabela longa pode quebrar em duas linhas; as larguras abaixo mandam no resto. */
+.legal-table th {
+  white-space: normal;
+}
+
+.legal-table th,
+.legal-table td {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.legal-table th:first-child,
+.legal-table td:first-child {
+  width: 22%;
+}
+
+/* Larguras por tabela: nome curto à esquerda, texto longo com espaço para respirar. */
+.legal-table-selos th:first-child {
+  width: 22%;
+}
+.legal-table-selos th:nth-child(2) {
+  width: 28%;
+}
+.legal-table-onde th:first-child {
+  width: 13%;
+}
+.legal-table-onde th:nth-child(2) {
+  width: 28%;
+}
+.legal-table-onde th:nth-child(4) {
+  width: 19%;
+}
+.legal-table-dados th:first-child {
+  width: 28%;
+}
+
+.legal-table td strong {
+  font-weight: 600;
+}
+
+.legal-table .legal-yes,
+.legal-table .legal-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.legal-table .legal-yes {
+  color: var(--d-ok);
+}
+
+.legal-table .legal-no {
+  color: var(--d-warn-border);
+}
+
+.legal-table .legal-yes .ico,
+.legal-table .legal-no .ico {
+  width: 14px;
+  height: 14px;
+}
+
+.legal-caption {
+  margin: 10px 0 0;
+  color: var(--d-text-3);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Contato no fim de cada assunto. */
+.legal-contact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px 24px;
+  margin: 32px 0 0;
+  padding: 22px 24px;
+  background: var(--d-accent-soft);
+  border: 1px solid var(--d-accent-border);
+  border-radius: 0;
+}
+
+.legal-contact h3 {
+  margin: 0 0 4px;
+  color: var(--d-text);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.legal-contact p {
+  margin: 0;
+  color: var(--d-text-2);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.legal-contact .btn {
+  flex: none;
+}
+
+.legal-contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Histórico de mudanças. */
+.legal-changes {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--d-border);
+}
+
+.legal-changes li {
+  display: flex;
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--d-border);
+}
+
+.legal-changes time {
+  color: var(--d-text-3);
+  font-family: var(--d-mono) !important;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: nowrap;
+  flex: none;
+}
+
+.legal-changes span {
+  color: var(--d-text-2);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+/* Páginas legais no rodapé da navegação lateral. */
+.side-pages {
+  border-top: 1px solid var(--d-border);
+  padding: 14px 0 10px;
+}
+
+.side-pages-title {
+  margin: 0 0 6px;
+  padding: 0 16px;
+  color: var(--d-text-3);
+  font-family: var(--d-mono) !important;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.side-pages ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.side-pages a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-left: 2px solid transparent;
+  color: var(--d-text-2);
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: none;
+  transition: color 0.15s var(--d-ease-ui), background-color 0.15s var(--d-ease-ui);
+}
+
+.side-pages a:hover {
+  color: var(--d-accent);
+}
+
+.side-pages a[aria-current="page"] {
+  border-left-color: var(--d-accent);
+  background: var(--d-accent-soft);
+  color: var(--d-accent);
+  font-weight: 600;
+}
+
+.side-pages .ico {
+  width: 15px;
+  height: 15px;
+  color: var(--d-text-3);
+  flex: none;
+}
+
+.side-pages a[aria-current="page"] .ico {
+  color: var(--d-accent);
+}
+
+.side-doc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: var(--d-bg-soft);
+  border: 1px solid var(--d-border);
+  border-radius: 2px;
+  color: var(--d-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: border-color 0.15s var(--d-ease-ui), color 0.15s var(--d-ease-ui);
+}
+
+.side-doc:hover {
+  border-color: var(--d-accent);
+  color: var(--d-accent);
+}
+
+.side-doc .ico {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+/* Ajustes de leitura em telas menores. */
+@media (max-width: 1279px) {
+  .legal-hero {
+    padding: 38px 36px 0;
+  }
+  .legal-quick {
+    margin-right: -36px;
+    margin-left: -36px;
+  }
+  /* O topo perde o link da documentação antes de o campo de busca encostar nele; o mesmo link está na lateral. */
+  .top-links .top-doc {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .legal-quick-item {
+    padding: 18px 18px 20px;
+  }
+}
+
+@media (max-width: 860px) {
+  .legal-quick {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .legal-quick-item {
+    border-right: 0;
+    border-bottom: 1px solid var(--d-border);
+  }
+  .legal-quick-item:last-child {
+    border-bottom: 0;
+  }
+  .legal-card-grid,
+  .legal-duo,
+  .legal-scope {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 719px) {
+  .legal-hero {
+    padding: 30px 20px 0;
+  }
+  .legal-hero h1 {
+    font-size: clamp(34px, 9.6vw, 44px);
+  }
+  .legal-hero .hero-lead {
+    font-size: 18px;
+  }
+  .legal-quick {
+    margin: 28px -20px 0;
+  }
+  .legal-quick-item {
+    padding: 16px 20px 18px;
+  }
+  .legal-doc .doc-section {
+    padding-top: 44px;
+  }
+  .legal-doc .doc-section > h2 {
+    gap: 10px;
+    font-size: clamp(27px, 7.4vw, 32px);
+  }
+  .legal-doc .doc-section p,
+  .legal-doc .doc-list li,
+  .legal-doc .checklist li {
+    font-size: 17px;
+  }
+  .legal-summary {
+    padding: 20px;
+  }
+  .legal-summary .checklist li {
+    font-size: 15.5px;
+  }
+  .legal-duo > div,
+  .legal-scope > div,
+  .legal-card {
+    padding: 16px;
+  }
+  .legal-contact {
+    padding: 18px;
+  }
+  .legal-contact .btn {
+    width: 100%;
+  }
+  .legal-contact-actions {
+    width: 100%;
+  }
+  .legal-changes li {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 559px) {
+  .legal-hero {
+    padding: 26px 16px 0;
+  }
+  .legal-quick {
+    margin: 24px -16px 0;
+  }
+  .legal-quick-item {
+    padding: 15px 16px 17px;
+  }
+  .legal-summary {
+    padding: 18px 16px;
+  }
+  .legal-card-top {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 389px) {
+  .legal-hero h1 {
+    font-size: 32px;
+  }
+  .legal-num {
+    min-width: 27px;
+    padding: 3px 5px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .legal-quick-item,
+  .legal-quick-go .ico,
+  .side-pages a,
+  .side-doc {
+    transition: none;
+  }
+}
+
+@media print {
+  .legal-hero {
+    padding: 0 0 12px;
+    border: 0;
+  }
+  .legal-hero::before,
+  .legal-quick,
+  .legal-contact,
+  .legal-summary-head .legal-summary-ico {
+    display: none !important;
+  }
+  .legal-num {
+    border: 0;
+    background: transparent;
+    color: #111111;
+  }
+  .legal-doc .doc-section {
+    padding-top: 24px;
+  }
+  .legal-doc .doc-section p,
+  .legal-doc .doc-list li,
+  .legal-doc .checklist li {
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+}

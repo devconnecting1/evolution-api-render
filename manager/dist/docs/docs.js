@@ -359,6 +359,7 @@
   function sectionEntries() {
     var entries = [];
     var sections = document.querySelectorAll('[data-section]');
+    var parent = document.body.getAttribute('data-search-parent') || 'Documentação';
     for (var i = 0; i < sections.length; i++) {
       var section = sections[i];
       var h2 = section.querySelector('h2');
@@ -370,7 +371,7 @@
       entries.push({
         id: section.id,
         title: title,
-        parent: 'Documentação',
+        parent: parent,
         text: fold(rawText),
         raw: rawText,
         isSection: true,

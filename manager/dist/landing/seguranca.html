@@ -1,19 +1,23 @@
 <!doctype html>
 <!--
-  WhatsAI: página pública de segurança e privacidade (servida em "/seguranca" pelo manager/dist/vercel.json).
-  Mesmo cabeçalho, ícones e rodapé da página inicial; estilos próprios em /assets/security.css.
+  WhatsAI: página pública de segurança e confiança (servida em "/seguranca" pelo manager/dist/vercel.json).
+  Mesmo topo, navegação lateral, busca, índice, gaveta e rodapé da documentação pública (/docs); o que é próprio
+  desta página fica em /landing/legal.css.
   REGRA: só entra aqui o que está implementado e pode ser conferido. Nada de selos (SOC 2, ISO 27001...) que o
   WhatsAI não tem: as certificações citadas são dos provedores de infraestrutura e estão escritas assim.
+  Sem script ou estilo inline, sem emoji, sem dados reais de cliente.
 -->
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#10100e" media="(prefers-color-scheme: dark)" />
-    <title>Segurança e privacidade · WhatsAI</title>
-    <meta name="description" content="Como o WhatsAI protege as conversas dos clientes: HTTPS obrigatório, acesso conferido no servidor, códigos guardados só como hash, credenciais cifradas, LGPD com prazo de guarda e infraestrutura auditada." />
+    <meta name="theme-color" content="#ffffff" data-theme-color />
+    <title>Segurança e confiança · WhatsAI</title>
+    <meta
+      name="description"
+      content="Como o WhatsAI protege as conversas dos clientes: HTTPS e TLS, isolamento por instância, acessos conferidos no servidor, criptografia, auditoria, retenção e resposta a incidentes. Sem selos que não temos."
+    />
     <link rel="canonical" href="https://whatsaibr.vercel.app/seguranca" />
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg?v=3" />
     <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png?v=3" />
@@ -22,470 +26,766 @@
     <meta property="og:locale" content="pt_BR" />
     <meta property="og:site_name" content="WhatsAI" />
     <meta property="og:url" content="https://whatsaibr.vercel.app/seguranca" />
-    <meta property="og:title" content="Segurança e privacidade · WhatsAI" />
+    <meta property="og:title" content="Segurança e confiança · WhatsAI" />
     <meta
       property="og:description"
-      content="Como o WhatsAI protege as conversas dos clientes, sem selos que não tem."
+      content="Os controles que o WhatsAI realmente tem, os dados que circulam e quem os recebe, e o que fazemos num incidente. Sem selos que não temos."
     />
     <meta property="og:image" content="https://whatsaibr.vercel.app/assets/images/og-whatsai-2026.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:secure_url" content="https://whatsaibr.vercel.app/assets/images/og-whatsai-2026.png" />
-    <meta property="og:image:alt" content="WhatsAI: atendimento com IA no WhatsApp. Seu WhatsApp responde em segundos, a qualquer hora; sua equipe assume quando quiser." />
+    <meta property="og:image:alt" content="WhatsAI: atendimento com IA no WhatsApp." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Segurança e privacidade · WhatsAI" />
+    <meta name="twitter:title" content="Segurança e confiança · WhatsAI" />
     <meta
       name="twitter:description"
-      content="Como o WhatsAI protege as conversas dos clientes, sem selos que não tem."
+      content="Os controles que o WhatsAI realmente tem, os dados que circulam e quem os recebe, e o que fazemos num incidente."
     />
     <meta name="twitter:image" content="https://whatsaibr.vercel.app/assets/images/og-whatsai-2026.png" />
-    <meta name="twitter:image:alt" content="WhatsAI: atendimento com IA no WhatsApp. Seu WhatsApp responde em segundos; sua equipe assume quando quiser." />
+    <meta name="twitter:image:alt" content="WhatsAI: atendimento com IA no WhatsApp." />
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/landing.bundle.css?v=cb64117d81" />
-    <!-- whatsai-patch:theme:landing -->
-    <script src="/assets/landing.js?v=7" defer></script>
-      </head>
-  <body data-wa-origin="site" class="sec-page">
+    <link rel="stylesheet" href="/assets/geist.css?v=1" />
+    <link rel="stylesheet" href="/docs/docs.css?v=4" />
+    <link rel="stylesheet" href="/landing/legal.css?v=1" />
+    <!-- Tema salvo é aplicado antes da primeira pintura; o restante do comportamento espera o DOM. -->
+    <script src="/docs/docs.js?v=5"></script>
+  </head>
+  <body data-search-parent="Segurança">
+    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
     <!-- ícones de linha (traço 1.5, cantos arredondados), desenhados à mão -->
-    <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
-        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
-        <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6" /></symbol>
-        <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></symbol>
-        <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></symbol>
-        <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></symbol>
-        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
-        <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3" /><path d="M12 4v4M9 13h.01M15 13h.01M9.5 17h5" /></symbol>
-        <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M10 9v6M14 9v6" /></symbol>
-        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></symbol>
-        <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0014 0M12 18v3" /></symbol>
-        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 16l-5-5-9 9" /></symbol>
-        <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></symbol>
-        <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4" /></symbol>
-        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" /><path d="M8.5 12l2.5 2.5 4.5-4.5" /></symbol>
-        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></symbol>
-        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0116 0" /></symbol>
-        <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></symbol>
-        <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0z" /></symbol>
-        <symbol id="i-health" viewBox="0 0 24 24"><path d="M12 21s-8-4.8-8-11a4.5 4.5 0 018-2.8A4.5 4.5 0 0120 10c0 6.2-8 11-8 11z" /><path d="M9 12h2v-2h2v2h2v2h-2v2h-2v-2H9z" /></symbol>
-        <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6z" /><path d="M9 8V6a3 3 0 016 0v2" /></symbol>
-        <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10M10 20v-6h4v6" /></symbol>
-        <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 005 5L13 17l-3 3-6-6 3-3 6.5-6.5a4 4 0 001 1z" /></symbol>
-        <symbol id="i-gym" viewBox="0 0 24 24"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12" /></symbol>
-        <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v15H6a2 2 0 00-2 2z" /><path d="M4 20a2 2 0 002 2h13v-4" /></symbol>
-        <symbol id="i-food" viewBox="0 0 24 24"><path d="M5 3v8a2 2 0 002 2h0a2 2 0 002-2V3M7 3v18M16 21V3c2.5 1 4 4 4 7.5V13h-4" /></symbol>
-        <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M8.2 7.8L20 19M8.2 16.2L20 5" /></symbol>
-        <symbol id="i-pet" viewBox="0 0 24 24"><circle cx="5.5" cy="10" r="1.8" /><circle cx="9.5" cy="5.5" r="1.8" /><circle cx="14.5" cy="5.5" r="1.8" /><circle cx="18.5" cy="10" r="1.8" /><path d="M12 11c-3 0-6 4.5-6 7a2.5 2.5 0 003.5 2.3c1.6-.7 3.4-.7 5 0A2.5 2.5 0 0018 18c0-2.5-3-7-6-7z" /></symbol>
-        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /></symbol>
-        <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2" /></symbol>
-        <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5" /><path d="M11 18.5h2" /></symbol>
-        <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5" /><rect x="3" y="13" width="18" height="7" rx="1.5" /><path d="M7 7.5h.01M7 16.5h.01" /></symbol>
-        <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="8" ry="2.5" /><path d="M4 5.5v13c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-13M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5" /></symbol>
-        <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2z" /><path d="M12 10v5M12 18h.01" /></symbol>
-        <symbol id="i-redo" viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7" /><path d="M20 4v7h-7" /></symbol>
-        <symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M9 9l6 6M15 9l-6 6" /></symbol>
         <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
         <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
-        <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16" /></symbol>
-        <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h8" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></symbol>
-        <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 103-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></symbol>
-        <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z" /></symbol>
-        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></symbol>
-        <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 5 8 6 8 9s-8 4-8 9M16 3c0 5-8 6-8 9s8 4 8 9" /></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></symbol>
+        <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></symbol>
+        <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></symbol>
+        <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" /></symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z" /></symbol>
+        <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 012-2h9" /></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></symbol>
         <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.8 2.8L16.5 9.5" /></symbol>
-        <!-- ícones do painel atual (mockups) -->
-        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></symbol>
-        <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M3.3 18a9 9 0 1117.4 0" /><path d="M12 14l4-4" /></symbol>
-        <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8" /></symbol>
-        <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4" /></symbol>
-        <symbol id="i-sort" viewBox="0 0 24 24"><path d="M7 20V4M4 7l3-3 3 3M11 8h9M11 12h7M11 16h4" /></symbol>
-        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" /></symbol>
-        <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9" /><path d="M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4" /></symbol>
-        <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M10 8.8v6.4l5-3.2z" /></symbol>
-        <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z" /></symbol>
-        <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M8 3v4M16 3v4M3.5 10h17" /></symbol>
-        <symbol id="i-msgs" viewBox="0 0 24 24"><path d="M14 9a2 2 0 01-2 2H6l-4 4V4a2 2 0 012-2h8a2 2 0 012 2z" /><path d="M18 9h2a2 2 0 012 2v11l-4-4h-6a2 2 0 01-2-2v-1" /></symbol>
-        <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M15 4v16" /></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l9 16H3z" /><path d="M12 9v5M12 17h.01" /></symbol>
+        <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7h.01" /></symbol>
+        <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v18H6a2 2 0 01-2-2z" /><path d="M4 17h15" /></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z" /><path d="M9 12l2 2 4-4" /></symbol>
+        <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10" /><path d="M4 7h16M6 7l-3 6h6zM18 7l-3 6h6z" /></symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /><path d="M12 15v2" /></symbol>
+        <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4" /><path d="M11 12l8-8M16 4l3 3M14 6l2 2" /></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0116 0" /></symbol>
+        <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3" /><path d="M5 5v14c0 1.7 3.1 3 7 3s7-1.3 7-3V5" /><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" /></symbol>
         <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" /></symbol>
-        <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 004 0" /></symbol>
+        <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5" /><rect x="3" y="13" width="18" height="7" rx="1.5" /><path d="M7 7.5h.01M7 16.5h.01" /></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /><path d="M9 10.5l2 2 4-4" /></symbol>
+        <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></symbol>
+        <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.5.5l2-2a5 5 0 00-7-7L11 6" /><path d="M14 11a5 5 0 00-7.5-.5l-2 2a5 5 0 007 7L13 18" /></symbol>
       </defs>
     </svg>
 
-    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+    <header class="topbar">
+      <div class="topbar-in">
+        <div class="topbar-brand">
+          <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+          <span class="brand-sep" aria-hidden="true">/</span>
+          <span class="brand-doc">Segurança</span>
+        </div>
 
-    <header class="site-head" data-head>
-      <div class="wrap head-in">
-        <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
-        <nav class="nav" id="menu" aria-label="Principal" data-nav>
-          <ul class="nav-links">
-            <li><a href="/#como-funciona">Como funciona</a></li>
-            <li class="nav-opt"><a href="/#recursos">Recursos</a></li>
-            <li><a href="/#segmentos">Segmentos</a></li>
-            <li><a href="/#planos">Planos</a></li>
-            <li><a href="/#duvidas">Dúvidas</a></li>
-            <li><a href="/seguranca" aria-current="page">Segurança</a></li>
-          </ul>
-          <div class="nav-end">
-            <a class="btn btn-quiet btn-sm" href="/manager/login">Entrar no painel</a>
-            <a class="btn btn-primary btn-sm" href="/#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero agendar uma demonstração.">Agendar demonstração</a>
+        <div class="search" data-search-root>
+          <form class="search-form" role="search" action="#conteudo" data-search-form>
+            <label class="sr" for="legal-search">Buscar nesta página</label>
+            <svg class="search-ico" aria-hidden="true"><use href="#i-search" /></svg>
+            <input
+              id="legal-search"
+              type="search"
+              placeholder="Buscar nesta página"
+              autocomplete="off"
+              spellcheck="false"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="search-results"
+              data-search-input
+            />
+            <button class="search-clear" type="button" aria-label="Limpar busca" hidden data-search-clear>
+              <svg class="ico" aria-hidden="true"><use href="#i-close" /></svg>
+            </button>
+          </form>
+          <div class="search-panel" id="search-results" data-search-panel hidden>
+            <p class="search-count" aria-live="polite" data-search-count></p>
+            <ul class="search-list" role="listbox" aria-label="Resultados da busca" data-search-list></ul>
+            <p class="search-empty" data-search-empty hidden>Nenhuma seção encontrada. Tente outra palavra.</p>
           </div>
-        </nav>
-        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" data-menu>
+        </div>
+
+        <div class="top-actions">
+          <nav class="top-links" aria-label="Links do projeto">
+            <a href="/">Site</a>
+            <a class="top-doc" href="/docs">Documentação</a>
+          </nav>
+          <a class="top-cta" href="/manager/login">Painel</a>
+          <div class="theme" data-theme>
+            <button class="icon-btn theme-btn" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Tema: Sistema" data-theme-toggle>
+              <svg class="ico theme-icon ti-system" aria-hidden="true"><use href="#i-monitor" /></svg>
+              <svg class="ico theme-icon ti-light" aria-hidden="true"><use href="#i-sun" /></svg>
+              <svg class="ico theme-icon ti-dark" aria-hidden="true"><use href="#i-moon" /></svg>
+            </button>
+            <div class="theme-menu" id="theme-menu" role="menu" aria-label="Tema" hidden data-theme-menu>
+              <p class="theme-title">Tema</p>
+              <button type="button" role="menuitemradio" aria-checked="true" data-theme-set="system">
+                <svg class="ico" aria-hidden="true"><use href="#i-monitor" /></svg>Sistema
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="light">
+                <svg class="ico" aria-hidden="true"><use href="#i-sun" /></svg>Claro
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="dark">
+                <svg class="ico" aria-hidden="true"><use href="#i-moon" /></svg>Escuro
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button class="icon-btn drawer-btn" type="button" aria-expanded="false" aria-controls="legal-nav" aria-label="Abrir navegação" data-drawer-toggle>
           <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
-          <span class="sr">Abrir menu</span>
         </button>
       </div>
     </header>
 
-    <main id="conteudo">
-      <!-- === topo -->
-      <section class="sec-hero" aria-labelledby="sec-title">
-        <div class="wrap sec-hero-in">
-          <div class="sec-hero-copy">
-            <p class="eyebrow">Segurança e privacidade</p>
-            <h1 id="sec-title" class="display sec-display">
-              As conversas dos seus clientes, <span class="soft">bem guardadas.</span>
-            </h1>
-            <p class="lead">
-              O que o WhatsAI faz para proteger os dados de quem fala com a sua empresa, explicado sem rodeios. Aqui só
-              entra o que está implementado e pode ser conferido.
-            </p>
-            <p class="sec-updated">Atualizado em <time datetime="2026-11-12">12 de novembro de 2026</time> · <a href="#mudancas">O que mudou</a></p>
-            <div class="actions">
-              <a class="btn btn-primary btn-lg" href="#medidas">Ver as medidas</a>
-              <a class="btn btn-quiet btn-lg" href="#reportar">Reportar uma falha</a>
+    <div class="scrim" data-scrim hidden></div>
+
+    <div class="layout">
+      <aside class="sidebar" id="legal-nav" aria-label="Navegação da página" data-sidebar>
+        <div class="drawer-head">
+          <span>Navegação</span>
+          <button class="icon-btn" type="button" aria-label="Fechar navegação" data-drawer-close>
+            <svg class="ico" aria-hidden="true"><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <nav class="side-nav" aria-label="Seções desta página" data-side-nav>
+          <div class="side-group" data-side-group>
+            <button class="side-label" type="button" aria-expanded="true" aria-controls="side-nesta" data-group-toggle>
+              <svg class="ico side-gico" aria-hidden="true"><use href="#i-shield" /></svg>
+              <span>Nesta página</span>
+              <svg class="ico side-chev" aria-hidden="true"><use href="#i-chev-down" /></svg>
+            </button>
+            <ul id="side-nesta">
+              <li><a href="#medidas" data-nav-link>Controles implementados</a></li>
+              <li><a href="#selos" data-nav-link>Sem selos que não temos</a></li>
+              <li><a href="#fluxo" data-nav-link>Como os dados circulam</a></li>
+              <li><a href="#onde" data-nav-link>Onde ficam os dados</a></li>
+              <li><a href="#lgpd" data-nav-link>LGPD e os seus direitos</a></li>
+              <li><a href="#incidentes" data-nav-link>Se algo der errado</a></li>
+              <li><a href="#reportar" data-nav-link>Reportar uma falha</a></li>
+              <li><a href="#perguntas" data-nav-link>Perguntas</a></li>
+              <li><a href="#mudancas" data-nav-link>O que mudou</a></li>
+            </ul>
+          </div>
+        </nav>
+        <nav class="side-pages" aria-label="Páginas legais">
+          <p class="side-pages-title">Páginas legais</p>
+          <ul>
+            <li>
+              <a href="/seguranca" aria-current="page">
+                <svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg>Segurança
+              </a>
+            </li>
+            <li>
+              <a href="/termos">
+                <svg class="ico" aria-hidden="true"><use href="#i-scale" /></svg>Termos de uso
+              </a>
+            </li>
+            <li>
+              <a href="/privacidade">
+                <svg class="ico" aria-hidden="true"><use href="#i-lock" /></svg>Privacidade
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="side-foot">
+          <a class="side-doc" href="/docs">
+            <svg class="ico" aria-hidden="true"><use href="#i-book" /></svg>Abrir a documentação
+          </a>
+          <p>Conteúdo público do WhatsAI. Última revisão em 12/11/2026.</p>
+        </div>
+      </aside>
+
+      <main class="content legal-doc" id="conteudo" tabindex="-1">
+        <div class="legal-hero">
+          <p class="eyebrow">Segurança e confiança</p>
+          <h1 id="sec-title">As conversas dos seus clientes, bem guardadas.</h1>
+          <p class="hero-lead">
+            O que o WhatsAI faz para proteger os dados de quem fala com a sua empresa, explicado sem rodeios. Aqui só
+            entra o que está implementado e pode ser conferido.
+          </p>
+          <p class="legal-meta">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>Atualizado em <time datetime="2026-11-12">12 de novembro de 2026</time> · <a href="#mudancas">O que mudou</a></span>
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#medidas">Ver os controles</a>
+            <a class="btn btn-quiet" href="#reportar">Reportar uma falha</a>
+          </div>
+
+          <div class="legal-quick">
+            <a class="legal-quick-item" href="#medidas">
+              <span class="legal-quick-top">
+                <span class="legal-quick-ico" aria-hidden="true"><svg class="ico"><use href="#i-shield" /></svg></span>
+                <span class="legal-quick-title">Controles implementados</span>
+              </span>
+              <span class="legal-quick-text">Oito medidas técnicas que já estão no ar, do navegador ao banco de dados.</span>
+              <span class="legal-quick-go">Ver os controles <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+            </a>
+            <a class="legal-quick-item" href="#selos">
+              <span class="legal-quick-top">
+                <span class="legal-quick-ico is-warn" aria-hidden="true"><svg class="ico"><use href="#i-alert" /></svg></span>
+                <span class="legal-quick-title">Sem selos que não temos</span>
+              </span>
+              <span class="legal-quick-text">O WhatsAI não exibe SOC 2, ISO 27001 nem qualquer certificação que não possua.</span>
+              <span class="legal-quick-go">Entender os selos <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+            </a>
+            <a class="legal-quick-item" href="#reportar">
+              <span class="legal-quick-top">
+                <span class="legal-quick-ico" aria-hidden="true"><svg class="ico"><use href="#i-chat" /></svg></span>
+                <span class="legal-quick-title">Reportar uma falha</span>
+              </span>
+              <span class="legal-quick-text">Fale com a equipe antes de divulgar. Respondemos em até 2 dias úteis.</span>
+              <span class="legal-quick-go">Como reportar <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
+            </a>
+          </div>
+        </div>
+
+        <section class="doc-section" id="medidas" aria-labelledby="medidas-h" data-section data-title="Controles implementados">
+          <h2 id="medidas-h"><span class="legal-num" aria-hidden="true">01</span>Controles implementados <a class="anchor" href="#medidas" aria-label="Link para a seção Controles implementados">#</a></h2>
+          <p class="section-lead">
+            Oito medidas técnicas que já estão no ar. Cada uma resolve um risco concreto e não depende de alguém
+            lembrar de fazer.
+          </p>
+          <div class="chips" aria-label="Tecnologias citadas">
+            <span class="chip">HTTPS</span>
+            <span class="chip">HSTS</span>
+            <span class="chip">TLS</span>
+            <span class="chip">SHA-256</span>
+            <span class="chip">AES-256-GCM</span>
+            <span class="chip">CSP</span>
+          </div>
+
+          <div class="legal-card-grid">
+            <article class="legal-card">
+              <div class="legal-card-top">
+                <span class="legal-card-ico" aria-hidden="true"><svg class="ico"><use href="#i-lock" /></svg></span>
+                <span class="legal-card-n">01</span>
+              </div>
+              <h3>Tudo trafega criptografado</h3>
+              <p>
+                Site, painel e API só funcionam em <code>HTTPS</code>. O navegador é instruído a nunca abrir a versão sem
+                criptografia (<code>HSTS</code> com pré-carregamento), e o banco de dados só aceita conexões com
+                <code>TLS</code>.
+              </p>
+            </article>
+            <article class="legal-card">
+              <div class="legal-card-top">
+                <span class="legal-card-ico" aria-hidden="true"><svg class="ico"><use href="#i-user" /></svg></span>
+                <span class="legal-card-n">02</span>
+              </div>
+              <h3>Cada pessoa vê só o que pode</h3>
+              <p>
+                O administrador entra com uma chave própria. O seu cliente recebe um código de acesso só dele, com os
+                módulos que você escolher, e a permissão é conferida no servidor a cada pedido, não só escondida na tela.
+              </p>
+            </article>
+            <article class="legal-card">
+              <div class="legal-card-top">
+                <span class="legal-card-ico" aria-hidden="true"><svg class="ico"><use href="#i-key" /></svg></span>
+                <span class="legal-card-n">03</span>
+              </div>
+              <h3>Senhas e códigos nunca em texto</h3>
+              <p>
+                O código de acesso do cliente é guardado só como resumo criptográfico (<code>SHA-256</code>) e aparece
+                uma única vez. As credenciais do banco de cada instância ficam cifradas com <code>AES-256-GCM</code>. As
+                chaves da IA nunca chegam ao navegador do cliente.
+              </p>
+            </article>
+            <article class="legal-card">
+              <div class="legal-card-top">
+                <span class="legal-card-ico" aria-hidden="true"><svg class="ico"><use href="#i-alert" /></svg></span>
+                <span class="legal-card-n">04</span>
+              </div>
+              <h3>Tentativas erradas são barradas</h3>
+              <p>
+                Depois de várias chaves erradas seguidas, o endereço que tentou fica bloqueado por um tempo. A
+                comparação das chaves leva sempre o mesmo tempo, para não dar pistas a quem tenta adivinhar.
+              </p>
+            </article>
+            <article class="legal-card">
+              <div class="legal-card-top">
+                <span class="legal-card-ico" aria-hidden="true"><svg class="ico"><use href="#i-db" /></svg></span>
+                <span class="legal-card-n">05</span>
+              </div>
+              <h3>Clientes isolados entre si</h3>
+              <p>
+                Cada número de WhatsApp é uma instância separada, com o próprio bot, as próprias regras e as próprias
+                credenciais. Quando faz sentido, a instância ganha um banco de dados só dela.
+              </p>
+            </article>
+            <article class="legal-card">
+              <div class="legal-card-top">
+                <span class="legal-card-ico" aria-hidden="true"><svg class="ico"><use href="#i-globe" /></svg></span>
+                <span class="legal-card-n">06</span>
+              </div>
+              <h3>O navegador também protege</h3>
+              <p>
+                As páginas enviam regras que bloqueiam scripts de fora (<em>Content Security Policy</em>), impedem que o
+                painel seja aberto escondido dentro de outro site e desligam câmera, microfone e localização, que o
+                painel não usa.
+              </p>
+            </article>
+            <article class="legal-card">
+              <div class="legal-card-top">
+                <span class="legal-card-ico" aria-hidden="true"><svg class="ico"><use href="#i-check-circle" /></svg></span>
+                <span class="legal-card-n">07</span>
+              </div>
+              <h3>Cada mudança passa por verificação</h3>
+              <p>
+                Antes de ir ao ar, toda alteração passa por uma varredura de senhas esquecidas no código, uma auditoria
+                das bibliotecas usadas e centenas de testes automáticos. Sem tudo verde, nada é publicado.
+              </p>
+            </article>
+            <article class="legal-card">
+              <div class="legal-card-top">
+                <span class="legal-card-ico" aria-hidden="true"><svg class="ico"><use href="#i-server" /></svg></span>
+                <span class="legal-card-n">08</span>
+              </div>
+              <h3>Infraestrutura auditada</h3>
+              <p>
+                O WhatsAI roda na Vercel, no Render e no Neon. Esses provedores mantêm auditorias SOC 2 e, Vercel e
+                Render, certificação ISO 27001. As certificações são deles, da infraestrutura; o WhatsAI não tem selo
+                próprio.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="doc-section" id="selos" aria-labelledby="selos-h" data-section data-title="Sem selos que não temos">
+          <h2 id="selos-h"><span class="legal-num" aria-hidden="true">02</span>Sem selos que não temos <a class="anchor" href="#selos" aria-label="Link para a seção Sem selos que não temos">#</a></h2>
+          <p class="section-lead">
+            Uma página de segurança honesta começa dizendo o que existe e o que não existe. O WhatsAI não exibe SOC 2,
+            ISO 27001 nem qualquer outro selo que não possua.
+          </p>
+
+          <div class="callout callout-warn">
+            <svg class="callout-ico" aria-hidden="true"><use href="#i-alert" /></svg>
+            <div>
+              <p>
+                <strong>Nenhum selo próprio.</strong> Se você viu SOC 2, ISO 27001 ou outro certificado atribuído ao
+                WhatsAI em qualquer lugar, ele não é nosso. As certificações citadas nesta página pertencem aos
+                provedores de infraestrutura, não ao WhatsAI.
+              </p>
             </div>
-            <nav class="sec-toc" aria-label="Nesta página">
-              <ol>
-                <li><a href="#medidas"><span class="sec-toc-n">[1]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Oito camadas de proteção</span></a></li>
-                <li><a href="#fluxo"><span class="sec-toc-n">[2]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Como os dados circulam</span></a></li>
-                <li><a href="#onde"><span class="sec-toc-n">[3]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Onde ficam os dados</span></a></li>
-                <li><a href="#lgpd"><span class="sec-toc-n">[4]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>LGPD e os seus direitos</span></a></li>
-                <li><a href="#incidentes"><span class="sec-toc-n">[5]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Se algo der errado</span></a></li>
-                <li><a href="#reportar"><span class="sec-toc-n">[6]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Reportar uma falha</span></a></li>
-                <li><a href="#perguntas"><span class="sec-toc-n">[7]</span><span class="sec-toc-dots" aria-hidden="true"></span><span>Perguntas</span></a></li>
-              </ol>
-            </nav>
           </div>
-          <div class="t3-stage" aria-hidden="true">
-            <div class="t3 t3--deep t3-a"><div class="t3-face"><div class="t3-disc"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" /><path d="M8.5 12l2.5 2.5 4.5-4.5" /></svg></div></div></div>
-            <div class="t3 t3--cream t3-b"><div class="t3-face"><div class="t3-disc"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /><path d="M12 15v2" /></svg></div></div></div>
-            <div class="t3 t3--warm t3-c"><div class="t3-face"><div class="t3-disc"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /><path d="M9 10.5l2 2 4-4" /></svg></div></div></div>
-          </div>
-        </div>
-      </section>
 
-      <!-- === medidas -->
-      <section class="section" id="medidas" aria-labelledby="med-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="med-title" class="h2">Oito camadas de proteção, <span class="soft">do navegador ao banco.</span></h2>
-            <p class="section-lead">Cada uma resolve um risco concreto. Nenhuma depende de alguém lembrar de fazer.</p>
-          </div>
-          <ol class="sec-grid">
-            <li class="sec-card">
-              <span class="sec-ico"><svg class="ico" aria-hidden="true"><use href="#i-lock" /></svg></span>
-              <h3 class="h4">Tudo trafega criptografado</h3>
-              <p>Site, painel e API só funcionam em HTTPS. O navegador é instruído a nunca abrir a versão sem criptografia (HSTS com pré-carregamento), e o banco de dados só aceita conexões com TLS.</p>
-            </li>
-            <li class="sec-card">
-              <span class="sec-ico"><svg class="ico" aria-hidden="true"><use href="#i-user" /></svg></span>
-              <h3 class="h4">Cada pessoa vê só o que pode</h3>
-              <p>O administrador entra com uma chave própria. O seu cliente recebe um código de acesso só dele, com os módulos que você escolher, e a permissão é conferida no servidor a cada pedido, não só escondida na tela.</p>
-            </li>
-            <li class="sec-card">
-              <span class="sec-ico"><svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg></span>
-              <h3 class="h4">Senhas e códigos nunca em texto</h3>
-              <p>O código de acesso do cliente é guardado só como resumo criptográfico (SHA-256) e aparece uma única vez. As credenciais do banco de cada instância ficam cifradas com AES-256-GCM. As chaves da IA nunca chegam ao navegador do cliente.</p>
-            </li>
-            <li class="sec-card">
-              <span class="sec-ico"><svg class="ico" aria-hidden="true"><use href="#i-alert" /></svg></span>
-              <h3 class="h4">Tentativas erradas são barradas</h3>
-              <p>Depois de várias chaves erradas seguidas, o endereço que tentou fica bloqueado por um tempo. A comparação das chaves leva sempre o mesmo tempo, para não dar pistas a quem tenta adivinhar.</p>
-            </li>
-            <li class="sec-card">
-              <span class="sec-ico"><svg class="ico" aria-hidden="true"><use href="#i-db" /></svg></span>
-              <h3 class="h4">Clientes isolados entre si</h3>
-              <p>Cada número de WhatsApp é uma instância separada, com o próprio bot, as próprias regras e as próprias credenciais. Quando faz sentido, a instância ganha um banco de dados só dela.</p>
-            </li>
-            <li class="sec-card">
-              <span class="sec-ico"><svg class="ico" aria-hidden="true"><use href="#i-globe" /></svg></span>
-              <h3 class="h4">O navegador também protege</h3>
-              <p>As páginas enviam regras que bloqueiam scripts de fora (Content Security Policy), impedem que o painel seja aberto escondido dentro de outro site e desligam câmera, microfone e localização, que o painel não usa.</p>
-            </li>
-            <li class="sec-card">
-              <span class="sec-ico"><svg class="ico" aria-hidden="true"><use href="#i-check-circle" /></svg></span>
-              <h3 class="h4">Cada mudança passa por verificação</h3>
-              <p>Antes de ir ao ar, toda alteração passa por uma varredura de senhas esquecidas no código, uma auditoria das bibliotecas usadas e centenas de testes automáticos. Sem tudo verde, nada é publicado.</p>
-            </li>
-            <li class="sec-card">
-              <span class="sec-ico"><svg class="ico" aria-hidden="true"><use href="#i-server" /></svg></span>
-              <h3 class="h4">Infraestrutura auditada</h3>
-              <p>O WhatsAI roda na Vercel, no Render e no Neon. Esses provedores mantêm auditorias SOC 2 e, Vercel e Render, certificação ISO 27001. As certificações são deles, da infraestrutura; o WhatsAI não tem selo próprio e não exibe selos que não tem.</p>
-            </li>
-          </ol>
-        </div>
-      </section>
-
-      <!-- === fluxo: diagrama feito com as regras do diagram-design (MIT): conexões retas, rótulos com máscara,
-           um destaque só (a API), sem sombra, SVG acessível. Cores vêm de security.css (claro e escuro). -->
-      <section class="section" id="fluxo" aria-labelledby="fluxo-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="fluxo-title" class="h2">Como os dados circulam, <span class="soft">de ponta a ponta.</span></h2>
-            <p class="section-lead">Todo caminho é criptografado. As chaves ficam no servidor, e cada pedido do painel é conferido antes de chegar aos dados.</p>
-          </div>
-          <figure class="sec-flow">
-            <div class="sec-flow-scroll">
-              <svg class="sec-flow-svg" viewBox="0 28 960 316" role="img" aria-labelledby="fluxo-svg-title fluxo-svg-desc">
-                <title id="fluxo-svg-title">Como os dados circulam no WhatsAI</title>
-                <desc id="fluxo-svg-desc">A mensagem do contato chega pelo WhatsApp à API do WhatsAI, que confere a chave de cada pedido, consulta a IA por HTTPS e guarda os dados no banco por TLS; a equipe acompanha pelo painel, que fala com a API por HTTPS com a chave de acesso.</desc>
-                <defs>
-                  <marker id="fx-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1L9 5L0 9z" class="fx-head" /></marker>
-                </defs>
-                <!-- arrows first, so lines sit behind the boxes -->
-                <g class="fx-lines">
-                  <line x1="152" y1="128" x2="230" y2="128" marker-end="url(#fx-arrow)" />
-                  <line x1="386" y1="128" x2="446" y2="128" marker-start="url(#fx-arrow)" marker-end="url(#fx-arrow)" />
-                  <line x1="632" y1="68" x2="718" y2="68" marker-end="url(#fx-arrow)" />
-                  <line x1="632" y1="188" x2="718" y2="188" marker-end="url(#fx-arrow)" />
-                  <line x1="540" y1="280" x2="540" y2="218" marker-end="url(#fx-arrow)" />
-                  <line x1="384" y1="308" x2="446" y2="308" marker-end="url(#fx-arrow)" />
-                </g>
-                <g class="fx-labels">
-                  <rect x="162" y="104" width="58" height="14" /><text x="191" y="114.5">MENSAGEM</text>
-                  <rect x="388" y="104" width="56" height="14" /><text x="416" y="114.5">CONEXÃO</text>
-                  <rect x="652" y="44" width="46" height="14" /><text x="675" y="54.5">HTTPS</text>
-                  <rect x="660" y="164" width="30" height="14" /><text x="675" y="174.5">TLS</text>
-                  <rect x="550" y="242" width="92" height="14" /><text x="596" y="252.5">HTTPS + CHAVE</text>
-                </g>
-                <g class="fx-node fx-user"><rect x="16" y="100" width="136" height="56" rx="6" /><text class="fx-name" x="32" y="124">Contato</text><text class="fx-sub" x="32" y="142">seu cliente</text></g>
-                <g class="fx-node fx-ext"><rect x="232" y="100" width="152" height="56" rx="6" /><text class="fx-name" x="248" y="124">WhatsApp</text><text class="fx-sub" x="248" y="142">Web ou API oficial</text></g>
-                <g class="fx-node fx-focal"><rect x="448" y="40" width="184" height="176" rx="6" />
-                  <rect class="fx-tag" x="464" y="56" width="44" height="16" rx="2" /><text class="fx-tagt" x="486" y="67.5">API</text>
-                  <text class="fx-name" x="464" y="98">WhatsAI</text>
-                  <text class="fx-sub" x="464" y="122">chave conferida</text>
-                  <text class="fx-sub" x="464" y="138">a cada pedido</text>
-                  <text class="fx-sub" x="464" y="162">limite de tentativas</text>
-                  <text class="fx-sub" x="464" y="186">segredos cifrados</text>
-                  <text class="fx-sub" x="464" y="202">AES-256-GCM</text></g>
-                <g class="fx-node fx-ext"><rect x="720" y="40" width="224" height="56" rx="6" /><text class="fx-name" x="736" y="64">IA (OpenAI API)</text><text class="fx-sub" x="736" y="82">não treina com os dados</text></g>
-                <g class="fx-node fx-store"><rect x="720" y="160" width="224" height="56" rx="6" /><text class="fx-name" x="736" y="184">Banco de dados</text><text class="fx-sub" x="736" y="202">prazo de guarda (LGPD)</text></g>
-                <g class="fx-node fx-user"><rect x="232" y="280" width="152" height="56" rx="6" /><text class="fx-name" x="248" y="304">Sua equipe</text><text class="fx-sub" x="248" y="322">navegador ou app</text></g>
-                <g class="fx-node"><rect x="448" y="280" width="184" height="56" rx="6" /><text class="fx-name" x="464" y="304">Painel</text><text class="fx-sub" x="464" y="322">CSP · HTTPS</text></g>
-              </svg>
-            </div>
-            <ol class="sec-flow-list" aria-label="Caminho dos dados, passo a passo">
-              <li><strong>Contato</strong><span>manda a mensagem pelo WhatsApp</span></li>
-              <li><strong>WhatsApp</strong><span>Web ou API oficial, conexão criptografada</span></li>
-              <li class="is-focal"><strong>API WhatsAI</strong><span>confere a chave de cada pedido, limita tentativas erradas e guarda os segredos cifrados (AES-256-GCM)</span></li>
-              <li><strong>IA (OpenAI API)</strong><span>recebe por HTTPS só o necessário para responder; não treina com os dados</span></li>
-              <li><strong>Banco de dados</strong><span>conexão TLS e prazo de guarda das mensagens (LGPD)</span></li>
-              <li><strong>Painel</strong><span>sua equipe acompanha pelo navegador ou app, por HTTPS e com a chave de acesso</span></li>
-            </ol>
-            <figcaption class="sec-caption">Ilustrativo. A API e o banco ficam no Render e no Neon; o painel e este site, na Vercel. A IA recebe só o necessário para responder cada mensagem.</figcaption>
-          </figure>
-        </div>
-      </section>
-
-      <!-- === onde ficam os dados -->
-      <section class="section" id="onde" aria-labelledby="onde-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="onde-title" class="h2">Onde ficam os dados, <span class="soft">e quem mais os recebe.</span></h2>
-            <p class="section-lead">Os serviços que o WhatsAI usa para funcionar (os suboperadores), para que serve cada um e em que país ficam. Hoje os dados ficam nos Estados Unidos: é uma transferência internacional, feita com provedores que mantêm auditorias de segurança próprias.</p>
-          </div>
-          <div class="sec-table-wrap" role="region" aria-label="Tabela dos serviços que recebem dados" tabindex="0">
-            <table class="sec-table">
-              <thead><tr><th scope="col">Serviço</th><th scope="col">Para quê</th><th scope="col">O que recebe</th><th scope="col">Onde</th></tr></thead>
+          <div class="table-wrap" role="region" aria-label="Selo, se o WhatsAI exibe e o que existe de verdade" tabindex="0">
+            <table class="legal-table legal-table-selos">
+              <thead>
+                <tr>
+                  <th scope="col">Selo ou reconhecimento</th>
+                  <th scope="col">O WhatsAI exibe?</th>
+                  <th scope="col">O que existe de verdade</th>
+                </tr>
+              </thead>
               <tbody>
-                <tr><th scope="row">Render</th><td data-label="Para quê">Servidor da API</td><td data-label="O que recebe">As mensagens enquanto são processadas</td><td data-label="Onde">EUA (Ohio)</td></tr>
-                <tr><th scope="row">Neon</th><td data-label="Para quê">Banco de dados</td><td data-label="O que recebe">Conversas, contatos, fichas de triagem e agenda</td><td data-label="Onde">EUA (Ohio)</td></tr>
-                <tr><th scope="row">OpenAI</th><td data-label="Para quê">Respostas da IA e transcrição de áudio</td><td data-label="O que recebe">O trecho da conversa necessário para responder</td><td data-label="Onde">EUA</td></tr>
-                <tr><th scope="row">Vercel</th><td data-label="Para quê">Site e painel</td><td data-label="O que recebe">Só os arquivos das páginas; nenhuma conversa fica guardada lá</td><td data-label="Onde">Rede global</td></tr>
-                <tr><th scope="row">Meta</th><td data-label="Para quê">API oficial do WhatsApp, quando a empresa escolhe</td><td data-label="O que recebe">As mensagens desse canal</td><td data-label="Onde">Meta</td></tr>
-                <tr><th scope="row">Google</th><td data-label="Para quê">Google Agenda, só se a empresa conectar</td><td data-label="O que recebe">Os horários marcados</td><td data-label="Onde">Google</td></tr>
+                <tr>
+                  <th scope="row">SOC 2</th>
+                  <td><span class="legal-no"><svg class="ico" aria-hidden="true"><use href="#i-close" /></svg>Não</span></td>
+                  <td>Os provedores Render, Neon e Vercel mantêm auditorias SOC 2 próprias. A certificação é da infraestrutura, não do WhatsAI.</td>
+                </tr>
+                <tr>
+                  <th scope="row">ISO 27001</th>
+                  <td><span class="legal-no"><svg class="ico" aria-hidden="true"><use href="#i-close" /></svg>Não</span></td>
+                  <td>Certificação de Vercel e Render. O WhatsAI usa a infraestrutura deles, mas não é certificado.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Controles técnicos</th>
+                  <td><span class="legal-yes"><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>Sim, nossos</span></td>
+                  <td>As oito medidas descritas nesta página, implementadas e verificáveis no dia a dia.</td>
+                </tr>
+                <tr>
+                  <th scope="row">LGPD</th>
+                  <td><span class="legal-yes"><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>Sim, como operador</span></td>
+                  <td>A empresa contratante é a controladora; o WhatsAI trata os dados conforme a LGPD e o termo de tratamento assinado com cada cliente.</td>
+                </tr>
               </tbody>
             </table>
           </div>
-        </div>
-      </section>
+          <p class="legal-caption">
+            Selos de terceiros descrevem a infraestrutura que hospeda o WhatsAI. Eles não substituem a análise dos
+            controles do próprio produto, que estão listados acima.
+          </p>
+        </section>
 
-      <!-- === LGPD -->
-      <section class="section" id="lgpd" aria-labelledby="lgpd-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="lgpd-title" class="h2">LGPD e os seus direitos, <span class="soft">não só no contrato.</span></h2>
-            <p class="section-lead">A sua empresa é a controladora dos dados; o WhatsAI é o operador. É assim que isso aparece no dia a dia.</p>
-          </div>
-          <div class="sec-split">
-            <ul class="sec-list">
-              <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Termo de tratamento de dados</strong> assinado com cada cliente e aviso ao contato de que o atendimento usa IA.</span></li>
-              <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Prazo de guarda escolhido por você.</strong> As mensagens mais antigas que o prazo (90 dias recomendados) saem sozinhas do banco do WhatsAI, todos os dias.</span></li>
-              <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Nada é apagado do WhatsApp.</strong> A limpeza vale só para o nosso banco: o celular da empresa e o do contato continuam com a conversa inteira.</span></li>
-              <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Dados mínimos.</strong> A ficha de triagem guarda só o necessário, e números de documento informados na conversa são descartados.</span></li>
-              <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Logs sem conteúdo sensível.</strong> Transcrições de áudio e textos de PDF não vão para os registros do sistema.</span></li>
-              <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>Cópia, correção e exclusão.</strong> Quem conversou com a sua empresa pede a ela; a sua empresa pede ao WhatsAI pelo WhatsApp, e respondemos em até 15 dias. Ao encerrar o contrato, apagamos a instância e os dados dela do banco do WhatsAI.</span></li>
-              <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><strong>A IA não treina com as suas conversas.</strong> Pela política da OpenAI para a API, os dados enviados não são usados para treinar modelos.</span></li>
-            </ul>
-            <aside class="sec-note" aria-labelledby="sec-note-h">
-              <h3 id="sec-note-h" class="h4">Transparência sobre o canal</h3>
-              <p>O WhatsApp Web (conexão por QR code) não é oficial e o número pode ser bloqueado pelo WhatsApp. Para mais garantia, use a API oficial da Meta, que o WhatsAI também suporta.</p>
-              <a class="sec-link" href="/#canais">Comparar as duas conexões<svg class="ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
-            </aside>
-          </div>
-        </div>
-      </section>
+        <section class="doc-section" id="fluxo" aria-labelledby="fluxo-h" data-section data-title="Como os dados circulam">
+          <h2 id="fluxo-h"><span class="legal-num" aria-hidden="true">03</span>Como os dados circulam <a class="anchor" href="#fluxo" aria-label="Link para a seção Como os dados circulam">#</a></h2>
+          <p class="section-lead">
+            Todo caminho é criptografado. As chaves ficam no servidor, e cada pedido do painel é conferido antes de
+            chegar aos dados.
+          </p>
 
-      <!-- === incidentes e cópias -->
-      <section class="section" id="incidentes" aria-labelledby="inc-title">
-        <div class="wrap">
-          <div class="section-head">
-            <h2 id="inc-title" class="h2">Se algo der errado, <span class="soft">o que acontece.</span></h2>
-            <p class="section-lead">Nenhum sistema é imune a falhas. O compromisso é agir rápido e contar o que houve.</p>
+          <ol class="steps">
+            <li>
+              <span class="step-n">1</span>
+              <div>
+                <h4>Contato</h4>
+                <p>Manda a mensagem pelo WhatsApp, como faria com qualquer empresa.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">2</span>
+              <div>
+                <h4>WhatsApp</h4>
+                <p>WhatsApp Web (Baileys) ou API oficial da Meta entrega a mensagem por uma conexão criptografada.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">3</span>
+              <div>
+                <h4>API WhatsAI</h4>
+                <p>Confere a chave de cada pedido, limita tentativas erradas e mantém os segredos cifrados com <code>AES-256-GCM</code>.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">4</span>
+              <div>
+                <h4>IA (OpenAI API)</h4>
+                <p>Recebe por <code>HTTPS</code> só o necessário para responder; pela política da API, não treina com os dados.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">5</span>
+              <div>
+                <h4>Banco de dados</h4>
+                <p>Guarda a conversa por <code>TLS</code>, com o prazo de guarda escolhido pela empresa (LGPD).</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">6</span>
+              <div>
+                <h4>Painel</h4>
+                <p>A equipe acompanha pelo navegador ou app, por <code>HTTPS</code> e com a chave de acesso.</p>
+              </div>
+            </li>
+          </ol>
+
+          <p class="legal-caption">
+            Ilustrativo. A API e o banco ficam no Render e no Neon; o painel e este site, na Vercel. A IA recebe só o
+            necessário para responder cada mensagem.
+          </p>
+        </section>
+
+        <section class="doc-section" id="onde" aria-labelledby="onde-h" data-section data-title="Onde ficam os dados">
+          <h2 id="onde-h"><span class="legal-num" aria-hidden="true">04</span>Onde ficam os dados <a class="anchor" href="#onde" aria-label="Link para a seção Onde ficam os dados">#</a></h2>
+          <p class="section-lead">
+            Os serviços que o WhatsAI usa para funcionar (os suboperadores), para que serve cada um e em que país
+            ficam. Hoje os dados ficam nos Estados Unidos: é uma transferência internacional, feita com provedores que
+            mantêm auditorias de segurança próprias.
+          </p>
+          <div class="table-wrap" role="region" aria-label="Tabela dos serviços que recebem dados" tabindex="0">
+            <table class="legal-table legal-table-onde">
+              <thead>
+                <tr>
+                  <th scope="col">Serviço</th>
+                  <th scope="col">Para quê</th>
+                  <th scope="col">O que recebe</th>
+                  <th scope="col">Onde</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Render</th>
+                  <td>Servidor da API</td>
+                  <td>As mensagens enquanto são processadas</td>
+                  <td>EUA (Ohio)</td>
+                </tr>
+                <tr>
+                  <th scope="row">Neon</th>
+                  <td>Banco de dados</td>
+                  <td>Conversas, contatos, fichas de triagem e agenda</td>
+                  <td>EUA (Ohio)</td>
+                </tr>
+                <tr>
+                  <th scope="row">OpenAI</th>
+                  <td>Respostas da IA e transcrição de áudio</td>
+                  <td>O trecho da conversa necessário para responder</td>
+                  <td>EUA</td>
+                </tr>
+                <tr>
+                  <th scope="row">Vercel</th>
+                  <td>Site e painel</td>
+                  <td>Só os arquivos das páginas; nenhuma conversa fica guardada lá</td>
+                  <td>Rede global</td>
+                </tr>
+                <tr>
+                  <th scope="row">Meta</th>
+                  <td>API oficial do WhatsApp, quando a empresa escolhe</td>
+                  <td>As mensagens desse canal</td>
+                  <td>Meta</td>
+                </tr>
+                <tr>
+                  <th scope="row">Google</th>
+                  <td>Google Agenda, só se a empresa conectar</td>
+                  <td>Os horários marcados</td>
+                  <td>Google</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="sec-duo">
-            <div class="sec-box">
-              <h3 class="h4">Incidente com dados</h3>
-              <ol class="sec-steps">
-                <li>Contemos o problema e preservamos os registros do que aconteceu.</li>
-                <li>Avisamos a sua empresa sem demora, com o que já se sabe, quem foi afetado e o que foi feito.</li>
-                <li>Ajudamos a sua empresa, que é a controladora, a decidir sobre a comunicação à ANPD e às pessoas afetadas.</li>
+          <p class="legal-caption">
+            A lista completa, com o que cada serviço recebe e os direitos da LGPD, está na
+            <a href="/privacidade">Política de privacidade</a>.
+          </p>
+        </section>
+
+        <section class="doc-section" id="lgpd" aria-labelledby="lgpd-h" data-section data-title="LGPD e os seus direitos">
+          <h2 id="lgpd-h"><span class="legal-num" aria-hidden="true">05</span>LGPD e os seus direitos <a class="anchor" href="#lgpd" aria-label="Link para a seção LGPD e os seus direitos">#</a></h2>
+          <p class="section-lead">
+            A sua empresa é a controladora dos dados; o WhatsAI é o operador. É assim que isso aparece no dia a dia.
+          </p>
+          <ul class="checklist">
+            <li><strong>Termo de tratamento de dados</strong> assinado com cada cliente e aviso ao contato de que o atendimento usa IA.</li>
+            <li><strong>Prazo de guarda escolhido por você.</strong> As mensagens mais antigas que o prazo (90 dias recomendados) saem sozinhas do banco do WhatsAI, todos os dias.</li>
+            <li><strong>Nada é apagado do WhatsApp.</strong> A limpeza vale só para o nosso banco: o celular da empresa e o do contato continuam com a conversa inteira.</li>
+            <li><strong>Dados mínimos.</strong> A ficha de triagem guarda só o necessário, e números de documento informados na conversa são descartados.</li>
+            <li><strong>Logs sem conteúdo sensível.</strong> Transcrições de áudio e textos de PDF não vão para os registros do sistema.</li>
+            <li><strong>Cópia, correção e exclusão.</strong> Quem conversou com a sua empresa pede a ela; a sua empresa pede ao WhatsAI pelo WhatsApp, e respondemos em até 15 dias. Ao encerrar o contrato, apagamos a instância e os dados dela do banco do WhatsAI.</li>
+            <li><strong>A IA não treina com as suas conversas.</strong> Pela política da OpenAI para a API, os dados enviados não são usados para treinar modelos.</li>
+          </ul>
+
+          <div class="callout callout-warn">
+            <svg class="callout-ico" aria-hidden="true"><use href="#i-alert" /></svg>
+            <div>
+              <p>
+                <strong>Transparência sobre o canal.</strong> O WhatsApp Web (conexão por QR code) não é oficial e o
+                número pode ser bloqueado pelo WhatsApp. Para mais garantia, use a API oficial da Meta, que o WhatsAI
+                também suporta. <a href="/#canais">Comparar as duas conexões</a>.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="incidentes" aria-labelledby="inc-h" data-section data-title="Se algo der errado">
+          <h2 id="inc-h"><span class="legal-num" aria-hidden="true">06</span>Se algo der errado <a class="anchor" href="#incidentes" aria-label="Link para a seção Se algo der errado">#</a></h2>
+          <p class="section-lead">
+            Nenhum sistema é imune a falhas. O compromisso é agir rápido e contar o que houve.
+          </p>
+          <div class="legal-duo">
+            <div>
+              <h3>Incidente com dados</h3>
+              <ol class="steps steps-compact">
+                <li>
+                  <span class="step-n">1</span>
+                  <div><p>Contemos o problema e preservamos os registros do que aconteceu.</p></div>
+                </li>
+                <li>
+                  <span class="step-n">2</span>
+                  <div><p>Avisamos a sua empresa sem demora, com o que já se sabe, quem foi afetado e o que foi feito.</p></div>
+                </li>
+                <li>
+                  <span class="step-n">3</span>
+                  <div><p>Ajudamos a sua empresa, que é a controladora, a decidir sobre a comunicação à ANPD e às pessoas afetadas.</p></div>
+                </li>
               </ol>
             </div>
-            <div class="sec-box" id="copias">
-              <h3 class="h4">Cópias e recuperação</h3>
-              <p>O banco de dados guarda o histórico das alterações das últimas 6 horas: dá para voltá-lo a um momento anterior se uma falha corromper os dados.</p>
+            <div>
+              <h3>Cópias e recuperação</h3>
+              <p>O banco de dados mantém cópias de segurança das últimas 6 horas: dá para restaurá-lo a um momento anterior se uma falha corromper os dados.</p>
               <p>As mensagens continuam também no WhatsApp da empresa e no do contato; a limpeza por prazo de guarda vale só para o banco do WhatsAI.</p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- === reportar -->
-      <section class="section" id="reportar" aria-labelledby="rep-title">
-        <div class="wrap">
-          <div class="sec-report">
-            <div class="t3 t3--deep t3-mini" aria-hidden="true"><div class="t3-face"><div class="t3-disc"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg></div></div></div>
+        <section class="doc-section" id="reportar" aria-labelledby="rep-h" data-section data-title="Reportar uma falha">
+          <h2 id="rep-h"><span class="legal-num" aria-hidden="true">07</span>Reportar uma falha <a class="anchor" href="#reportar" aria-label="Link para a seção Reportar uma falha">#</a></h2>
+          <p class="section-lead">
+            Conte para a gente antes de divulgar. Respondemos em até 2 dias úteis, corrigimos e avisamos você quando
+            estiver resolvido. Quem reporta de boa-fé, sem acessar dados de terceiros nem tirar o serviço do ar, não
+            será processado por isso.
+          </p>
+          <div class="legal-scope">
             <div>
-              <h2 id="rep-title" class="h2 h2-sm">Encontrou uma falha?</h2>
-              <p>Conte para a gente antes de divulgar. Respondemos em até 2 dias úteis, corrigimos e avisamos você quando estiver resolvido. Quem reporta de boa-fé, sem acessar dados de terceiros nem tirar o serviço do ar, não será processado por isso.</p>
-              <div class="sec-scope">
-                <div><h3 class="h4">Dentro do escopo</h3><ul><li>O site e o painel em whatsaibr.vercel.app</li><li>A API do WhatsAI</li><li>A área do cliente (/acesso)</li></ul></div>
-                <div><h3 class="h4">Fora do escopo</h3><ul><li>Excesso de acessos para derrubar o serviço</li><li>Golpes por telefone ou e-mail contra a equipe</li><li>O próprio WhatsApp e os provedores listados acima</li></ul></div>
-                <div><h3 class="h4">O que enviar</h3><ul><li>O endereço e os passos para repetir o problema</li><li>O que dá para fazer com ele</li><li>Como falar com você</li></ul></div>
-              </div>
-              <div class="actions">
-                <a class="btn btn-primary" href="#reportar" data-wa-cta data-wa-msg="Olá! Encontrei um possível problema de segurança no WhatsAI e quero reportar.">Reportar pelo WhatsApp</a>
-                <a class="btn btn-quiet" href="/.well-known/security.txt">security.txt</a>
-              </div>
+              <h3>Dentro do escopo</h3>
+              <ul>
+                <li>O site e o painel em whatsaibr.vercel.app</li>
+                <li>A API do WhatsAI</li>
+                <li>A área do cliente (/acesso)</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Fora do escopo</h3>
+              <ul>
+                <li>Excesso de acessos para derrubar o serviço</li>
+                <li>Golpes por telefone ou e-mail contra a equipe</li>
+                <li>O próprio WhatsApp e os provedores listados acima</li>
+              </ul>
+            </div>
+            <div>
+              <h3>O que enviar</h3>
+              <ul>
+                <li>O endereço e os passos para repetir o problema</li>
+                <li>O que dá para fazer com ele</li>
+                <li>Como falar com você</li>
+              </ul>
             </div>
           </div>
-        </div>
-      </section>
-      <!-- === perguntas -->
-      <section class="section" id="perguntas" aria-labelledby="per-title">
-        <div class="wrap faq-in">
-          <div class="section-head">
-            <h2 id="per-title" class="h2">Perguntas sobre segurança</h2>
+          <div class="legal-contact">
+            <div>
+              <h3>Fale com a equipe</h3>
+              <p>Use o contato do site ou o <code>security.txt</code>; os dois chegam à mesma equipe.</p>
+            </div>
+            <div class="legal-contact-actions">
+              <a class="btn btn-primary" href="/#contato">Reportar pelo WhatsApp</a>
+              <a class="btn btn-quiet" href="/.well-known/security.txt">Abrir security.txt</a>
+            </div>
           </div>
-          <div class="faq">
-            <details>
-              <summary>Quem da equipe WhatsAI vê as conversas?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>O acesso ao painel de administração é restrito a quem opera o WhatsAI, e as conversas só são abertas para dar suporte ou corrigir um problema a pedido da sua empresa.</p>
-            </details>
-            <details>
-              <summary>A IA pode inventar uma resposta?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>Pode errar, como qualquer pessoa. Ela responde com as informações que a sua empresa cadastrou, não dá parecer nem promete resultado, e a equipe pode assumir a conversa a qualquer momento: a IA pausa sozinha quando alguém responde pelo WhatsApp.</p>
-            </details>
-            <details>
-              <summary>E se o WhatsApp bloquear o número?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>O risco existe na conexão por QR code, que não é oficial. Para eliminá-lo, use a API oficial da Meta, que o WhatsAI também suporta. Em qualquer caso, as conversas já guardadas não se perdem.</p>
-            </details>
-            <details>
-              <summary>Dá para apagar tudo de uma vez?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>Sim. Peça pelo WhatsApp: apagamos a instância e os dados dela do banco do WhatsAI. O prazo de guarda também pode ser reduzido para que as mensagens antigas saiam sozinhas todos os dias.</p>
-            </details>
-            <details>
-              <summary>Os dados saem do Brasil?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>Sim. Os servidores e o banco ficam nos Estados Unidos, e a IA é da OpenAI. A lista completa, com o que cada serviço recebe, está em <a href="#onde">Onde ficam os dados</a>.</p>
-            </details>
-            <details>
-              <summary>Onde está o termo de tratamento de dados?<svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg></summary>
-              <p>O termo é assinado com cada cliente, junto com a contratação. Se precisar de uma cópia, peça pelo WhatsApp.</p>
-            </details>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- === o que mudou -->
-      <section class="section" id="mudancas" aria-labelledby="mud-title">
-        <div class="wrap">
-          <h2 id="mud-title" class="h2 h2-sm">O que mudou</h2>
-          <ul class="sec-changes">
-            <li><time datetime="2026-11-12">12/11/2026</time><span>Entraram onde ficam os dados, os seus direitos, o que fazemos num incidente, cópias e recuperação, o escopo para reportar falhas e as perguntas.</span></li>
-            <li><time datetime="2026-11-11">11/11/2026</time><span>Primeira versão desta página.</span></li>
+        <section class="doc-section" id="perguntas" aria-labelledby="per-h" data-section data-title="Perguntas sobre segurança">
+          <h2 id="per-h"><span class="legal-num" aria-hidden="true">08</span>Perguntas sobre segurança <a class="anchor" href="#perguntas" aria-label="Link para a seção Perguntas sobre segurança">#</a></h2>
+          <div class="faq-list">
+            <details class="faq">
+              <summary>Quem da equipe WhatsAI vê as conversas?</summary>
+              <div class="faq-body">
+                <p>O acesso ao painel de administração é restrito a quem opera o WhatsAI, e as conversas só são abertas para dar suporte ou corrigir um problema a pedido da sua empresa.</p>
+              </div>
+            </details>
+            <details class="faq">
+              <summary>A IA pode inventar uma resposta?</summary>
+              <div class="faq-body">
+                <p>Pode errar, como qualquer pessoa. Ela responde com as informações que a sua empresa cadastrou, não dá parecer nem promete resultado, e a equipe pode assumir a conversa a qualquer momento: a IA pausa sozinha quando alguém responde pelo WhatsApp.</p>
+              </div>
+            </details>
+            <details class="faq">
+              <summary>E se o WhatsApp bloquear o número?</summary>
+              <div class="faq-body">
+                <p>O risco existe na conexão por QR code, que não é oficial. Para eliminá-lo, use a API oficial da Meta, que o WhatsAI também suporta. Em qualquer caso, as conversas já guardadas não se perdem.</p>
+              </div>
+            </details>
+            <details class="faq">
+              <summary>Dá para apagar tudo de uma vez?</summary>
+              <div class="faq-body">
+                <p>Sim. Peça pelo WhatsApp: apagamos a instância e os dados dela do banco do WhatsAI. O prazo de guarda também pode ser reduzido para que as mensagens antigas saiam sozinhas todos os dias.</p>
+              </div>
+            </details>
+            <details class="faq">
+              <summary>Os dados saem do Brasil?</summary>
+              <div class="faq-body">
+                <p>Sim. Os servidores e o banco ficam nos Estados Unidos, e a IA é da OpenAI. A lista completa, com o que cada serviço recebe, está em <a href="#onde">Onde ficam os dados</a>.</p>
+              </div>
+            </details>
+            <details class="faq">
+              <summary>Onde está o termo de tratamento de dados?</summary>
+              <div class="faq-body">
+                <p>O termo é assinado com cada cliente, junto com a contratação. Se precisar de uma cópia, peça pelo WhatsApp.</p>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section class="doc-section" id="mudancas" aria-labelledby="mud-h" data-section data-title="O que mudou">
+          <h2 id="mud-h"><span class="legal-num" aria-hidden="true">09</span>O que mudou <a class="anchor" href="#mudancas" aria-label="Link para a seção O que mudou">#</a></h2>
+          <ul class="legal-changes">
+            <li>
+              <time datetime="2026-11-12">12/11/2026</time>
+              <span>Entraram onde ficam os dados, os seus direitos, o que fazemos num incidente, cópias e recuperação, o escopo para reportar falhas, as perguntas e a seção sobre selos que o WhatsAI não possui.</span>
+            </li>
+            <li>
+              <time datetime="2026-11-11">11/11/2026</time>
+              <span>Primeira versão desta página.</span>
+            </li>
           </ul>
-        </div>
-      </section>
-    </main>
 
-    <footer class="foot">
-      <div class="wrap">
-        <div class="foot-grid">
-          <div class="foot-brand">
-            <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
-            <p>Atendimento com IA no WhatsApp para pequenas e médias empresas.</p>
+          <div class="legal-contact">
+            <div>
+              <h3>Dúvidas sobre segurança ou privacidade?</h3>
+              <p>Fale com a equipe pelo site. Respondemos em até 2 dias úteis para assuntos de segurança.</p>
+            </div>
+            <div class="legal-contact-actions">
+              <a class="btn btn-primary" href="/#contato">Falar com a equipe</a>
+              <a class="btn btn-quiet" href="/privacidade">Ler a política de privacidade</a>
+            </div>
           </div>
-          <nav class="foot-col" aria-labelledby="fc1">
-            <h2 id="fc1" class="foot-h">Produto</h2>
-            <ul>
-              <li><a href="/#como-funciona">Como funciona</a></li>
-              <li><a href="/#tour">Tour do produto</a></li>
-              <li><a href="/#recursos">Recursos</a></li>
-              <li><a href="/#canais">WhatsApp Web ou API oficial</a></li>
-              <li><a href="/#planos">Planos</a></li>
-              <li><a href="/#duvidas">Dúvidas</a></li>
-              <li><a href="/novidades">Novidades</a></li>
-            </ul>
-          </nav>
-          <nav class="foot-col" aria-labelledby="fc2">
-            <h2 id="fc2" class="foot-h">Recursos</h2>
-            <ul>
-              <li><a href="/#recursos">IA 24 horas</a></li>
-              <li><a href="/#pausa">Pausa humana automática</a></li>
-              <li><a href="/#midia">Áudio, foto e PDF</a></li>
-              <li><a href="/seguranca">Segurança e LGPD</a></li>
-              <li><a href="/privacidade">Política de privacidade</a></li>
-              <li><a href="/termos">Termos de uso</a></li>
-            </ul>
-          </nav>
-          <nav class="foot-col" aria-labelledby="fc3">
-            <h2 id="fc3" class="foot-h">Segmentos</h2>
-            <ul>
-              <li><a href="/#segmentos">Advocacia</a></li>
-              <li><a href="/#segmentos">Clínicas</a></li>
-              <li><a href="/#segmentos">Lojas</a></li>
-              <li><a href="/#segmentos">Imobiliárias</a></li>
-              <li><a href="/#segmentos">Serviços</a></li>
-            </ul>
-          </nav>
-          <nav class="foot-col" aria-labelledby="fc4">
-            <h2 id="fc4" class="foot-h">Acesso</h2>
-            <ul>
-              <li><a href="/manager/login">Painel</a></li>
-              <li><a href="/acesso">Área do cliente</a></li>
-              <li><a href="/#contato" data-wa-phone data-wa-msg="Olá! Vi o site do WhatsAI e quero tirar algumas dúvidas.">Contato</a></li>
-            </ul>
-          </nav>
+        </section>
+      </main>
+
+      <aside class="toc" aria-label="Nesta página" data-toc>
+        <div class="toc-head">
+          <p class="toc-title">Nesta página</p>
+          <button class="toc-copy" type="button" aria-label="Copiar link desta página" data-copy-link>
+            <svg class="ico copy-ico" aria-hidden="true"><use href="#i-link" /></svg>
+            <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
+            <span class="copy-label">Copiar link</span>
+          </button>
         </div>
-        <div class="foot-bottom">
-          <p>© 2026 WhatsAI · Atendimento com IA no WhatsApp</p>
-          <p>WhatsApp é marca da Meta; o WhatsAI não é afiliado à Meta nem à OpenAI.</p>
+        <ul>
+          <li><a href="#medidas" data-toc-link>Controles implementados</a></li>
+          <li><a href="#selos" data-toc-link>Sem selos que não temos</a></li>
+          <li><a href="#fluxo" data-toc-link>Como os dados circulam</a></li>
+          <li><a href="#onde" data-toc-link>Onde ficam os dados</a></li>
+          <li><a href="#lgpd" data-toc-link>LGPD e os seus direitos</a></li>
+          <li><a href="#incidentes" data-toc-link>Se algo der errado</a></li>
+          <li><a href="#reportar" data-toc-link>Reportar uma falha</a></li>
+          <li><a href="#perguntas" data-toc-link>Perguntas</a></li>
+          <li><a href="#mudancas" data-toc-link>O que mudou</a></li>
+        </ul>
+      </aside>
+    </div>
+
+    <footer class="doc-footer">
+      <div class="foot-in">
+        <div class="foot-brand">
+          <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+          <p>Atendimento com IA no WhatsApp para escritórios de advocacia e empresas.</p>
         </div>
+        <nav class="foot-col" aria-labelledby="foot-produto">
+          <p class="foot-h" id="foot-produto">Produto</p>
+          <ul>
+            <li><a href="/">Site</a></li>
+            <li><a href="/manager/login">Painel</a></li>
+            <li><a href="/docs">Documentação</a></li>
+            <li><a href="/novidades">Novidades</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-labelledby="foot-legal">
+          <p class="foot-h" id="foot-legal">Legal</p>
+          <ul>
+            <li><a href="/seguranca">Segurança</a></li>
+            <li><a href="/termos">Termos de uso</a></li>
+            <li><a href="/privacidade">Privacidade</a></li>
+            <li><a href="/acesso">Área do cliente</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-labelledby="foot-ajuda">
+          <p class="foot-h" id="foot-ajuda">Ajuda</p>
+          <ul>
+            <li><a href="/#contato">Contato</a></li>
+            <li><a href="/#planos">Planos</a></li>
+            <li><a href="/.well-known/security.txt">security.txt</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-license">
+        <p>
+          <strong>Uso do Evolution API.</strong> Este produto utiliza o Evolution API, aviso exigido pela condição 1b
+          da licença. O Evolution API, o Evolution Foundation e as suas marcas pertencem à Evolution Foundation; o
+          WhatsAI não é afiliado à Evolution Foundation. A base é licenciada sob Apache 2.0 com condições adicionais.
+        </p>
+        <p>© 2026 WhatsAI. Página pública de segurança e confiança, revisada em 12/11/2026.</p>
       </div>
     </footer>
+
+    <p class="sr" role="status" aria-live="polite" data-copy-status></p>
   </body>
 </html>
