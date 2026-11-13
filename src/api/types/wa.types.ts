@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { JsonValue } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 import { AuthenticationState, WAConnectionState } from 'baileys';
 
 export enum Events {
@@ -93,12 +93,12 @@ export declare namespace wa {
 
   export type LocalEvent = {
     enabled?: boolean;
-    events?: JsonValue;
+    events?: Prisma.JsonValue;
   };
 
   export type LocalWebHook = LocalEvent & {
     url?: string;
-    headers?: JsonValue;
+    headers?: Prisma.JsonValue;
     webhookByEvents?: boolean;
     webhookBase64?: boolean;
   };
