@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
-const SOURCES = ['geist.css', 'landing.css', 'landing-theme.css', 'landing-plus.css', 'security.css'];
+const SOURCES = ['geist.css', 'landing.css', 'landing-theme.css', 'landing-plus.css', 'security.css', 'landing-cursor.css'];
 const PAGES = ['landing/index.html'];
 const BUNDLE = 'assets/landing.bundle.css';
 const LINK_RE = /<link rel="stylesheet" href="\/assets\/landing\.bundle\.css\?v=[0-9a-f]+" \/>/;
