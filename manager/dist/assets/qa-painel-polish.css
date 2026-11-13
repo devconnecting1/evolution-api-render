@@ -78,8 +78,9 @@
 /* =========================================================================================
    D - desktop: "Hoje" (agenda + alerts) beside the chart, like the drawing
    The overview body is the only direct div child of .wa-ov besides the head.
+   1240px: below this the chart card would be narrower than the chart's 520px and clip the day labels.
    ========================================================================================= */
-@media (min-width: 1100px) {
+@media (min-width: 1240px) {
   .wa-ov > div:not(.wa-ov-head) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
