@@ -62,7 +62,7 @@
     }
     var meta = document.querySelector('[data-theme-color]');
     if (meta) {
-      meta.setAttribute('content', effectiveTheme(mode) === 'dark' ? '#10100e' : '#f5f5f5');
+      meta.setAttribute('content', effectiveTheme(mode) === 'dark' ? '#0d0d0d' : '#ffffff');
     }
   }
 
@@ -226,6 +226,28 @@
     }
   }
 
+  /* ---------------------------------------------------------------------------------------- grupos do menu */
+  function setGroupExpanded(group, expanded) {
+    var button = group.querySelector('[data-group-toggle]');
+    group.classList.toggle('is-collapsed', !expanded);
+    if (button) button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  }
+
+  function initSideGroups() {
+    var groups = document.querySelectorAll('[data-side-group]');
+    for (var i = 0; i < groups.length; i++) {
+      (function (group) {
+        var button = group.querySelector('[data-group-toggle]');
+        if (!button) return;
+        button.addEventListener('click', function () {
+          var expanded = button.getAttribute('aria-expanded') !== 'false';
+          setGroupExpanded(group, !expanded);
+          group.setAttribute('data-user-collapsed', expanded ? 'true' : 'false');
+        });
+      })(groups[i]);
+    }
+  }
+
   /* ----------------------------------------------------------------------------------------------- busca */
   function fold(text) {
     var normalized = text.normalize('NFD');
@@ -298,6 +320,31 @@
     if (cursor < text.length) container.appendChild(document.createTextNode(text.slice(cursor)));
   }
 
+  function excerpt(raw, tokens) {
+    if (!raw) return '';
+    var folded = foldWithMap(raw);
+    var at = -1;
+    for (var i = 0; i < tokens.length; i++) {
+      var index = folded.text.indexOf(tokens[i]);
+      if (index !== -1 && (at === -1 || index < at)) at = index;
+    }
+    if (at === -1) {
+      return raw.length > 150 ? raw.slice(0, 150).trim() + '...' : raw;
+    }
+    var matchAt = folded.map[at];
+    var start = Math.max(0, matchAt - 50);
+    var end = Math.min(raw.length, matchAt + 130);
+    if (start > 0) {
+      var space = raw.indexOf(' ', start);
+      if (space !== -1 && space < matchAt) start = space + 1;
+    }
+    if (end < raw.length) {
+      var lastSpace = raw.lastIndexOf(' ', end);
+      if (lastSpace > matchAt) end = lastSpace;
+    }
+    return (start > 0 ? '...' : '') + raw.slice(start, end).trim() + (end < raw.length ? '...' : '');
+  }
+
   function sectionEntries() {
     var entries = [];
     var sections = document.querySelectorAll('[data-section]');
@@ -305,12 +352,16 @@
       var section = sections[i];
       var h2 = section.querySelector('h2');
       var title = section.getAttribute('data-title') || (h2 ? h2.textContent.trim() : section.id);
-      var fullText = fold(section.textContent || '');
+      var rawText = (section.textContent || '')
+        .replace(h2 ? h2.textContent : '', '')
+        .replace(/\s+/g, ' ')
+        .trim();
       entries.push({
         id: section.id,
         title: title,
         parent: 'Documentação',
-        text: fullText,
+        text: fold(rawText),
+        raw: rawText,
         isSection: true,
         sectionId: section.id
       });
@@ -323,11 +374,13 @@
           buffer.push(node.textContent || '');
           node = node.nextElementSibling;
         }
+        var subRaw = buffer.join(' ').replace(/\s+/g, ' ').trim();
         entries.push({
           id: sub.id,
           title: sub.textContent.trim(),
           parent: title,
-          text: fold(buffer.join(' ')),
+          text: fold(subRaw),
+          raw: subRaw,
           isSection: false,
           sectionId: section.id
         });
@@ -392,6 +445,11 @@
         var group = sideGroups[g];
         var groupVisible = false;
         var links = group.querySelectorAll('[data-nav-link]');
+        if (tokens.length) {
+          setGroupExpanded(group, true);
+        } else {
+          setGroupExpanded(group, group.getAttribute('data-user-collapsed') !== 'true');
+        }
         for (var i = 0; i < links.length; i++) {
           var id = (links[i].getAttribute('href') || '').replace('#', '');
           var titles = (titlesBySection[id] || []).join(' ');
@@ -462,8 +520,12 @@
         var parent = document.createElement('span');
         parent.className = 'sr-parent';
         parent.textContent = result.entry.parent;
+        var desc = document.createElement('span');
+        desc.className = 'sr-desc';
+        highlight(desc, excerpt(result.entry.raw, tokens), tokens);
         link.appendChild(title);
         link.appendChild(parent);
+        link.appendChild(desc);
         link.addEventListener('click', function () {
           closePanel();
         });
@@ -570,7 +632,7 @@
 
     function topOffset() {
       var bar = document.querySelector('.topbar');
-      return (bar ? bar.getBoundingClientRect().height : 60) + 36;
+      return (bar ? bar.getBoundingClientRect().height : 60) + 24;
     }
 
     function update() {
@@ -604,7 +666,7 @@
 
   /* ---------------------------------------------------------------------------------------------- cópia */
   function initCopy() {
-    var buttons = document.querySelectorAll('[data-copy]');
+    var buttons = document.querySelectorAll('[data-copy], [data-copy-link]');
     var status = document.querySelector('[data-copy-status]');
     var timers = new WeakMap();
 
@@ -632,46 +694,75 @@
     }
 
     buttons.forEach(function (button) {
+      var isLink = button.hasAttribute('data-copy-link');
+      var label = button.querySelector('.copy-label');
+      var defaultLabel = label ? label.textContent : '';
       button.addEventListener('click', function () {
-        var block = button.closest('.code-block');
-        var code = block ? block.querySelector('pre code') : null;
-        if (!code) return;
-        var text = code.textContent.replace(/\s+$/, '');
+        var text = '';
+        if (isLink) {
+          text = window.location.href.split('#')[0];
+        } else {
+          var block = button.closest('.code-block');
+          var code = block ? block.querySelector('pre code') : null;
+          if (!code) return;
+          text = code.textContent.replace(/\s+$/, '');
+        }
         var done = function () {
           button.classList.add('is-done');
-          var label = button.querySelector('.copy-label');
           if (label) label.textContent = 'Copiado';
-          announce('Código copiado para a área de transferência.');
+          announce(isLink ? 'Link copiado para a área de transferência.' : 'Código copiado para a área de transferência.');
           var previous = timers.get(button);
           if (previous) window.clearTimeout(previous);
           timers.set(
             button,
             window.setTimeout(function () {
               button.classList.remove('is-done');
-              if (label) label.textContent = 'Copiar';
+              if (label) label.textContent = defaultLabel;
             }, 1800)
           );
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(text).then(done, function () {
             if (fallback(text)) done();
-            else announce('Não foi possível copiar. Selecione o código e copie manualmente.');
+            else announce('Não foi possível copiar. Selecione o conteúdo e copie manualmente.');
           });
         } else if (fallback(text)) {
           done();
         } else {
-          announce('Não foi possível copiar. Selecione o código e copie manualmente.');
+          announce('Não foi possível copiar. Selecione o conteúdo e copie manualmente.');
         }
       });
     });
   }
 
+  /* Reaplica a âncora depois que a fonte carrega: a troca de fonte muda a altura do texto e o salto inicial
+     pode parar alguns parágrafos antes da seção. Só age quando a página abre já com hash. */
+  function initHashAnchor() {
+    if (!window.location.hash) return;
+    var id = window.location.hash.slice(1);
+    var target = document.getElementById(id);
+    if (!target) return;
+    function align() {
+      target.scrollIntoView({ block: 'start' });
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        window.setTimeout(align, 60);
+      });
+    }
+    window.addEventListener('load', function () {
+      window.setTimeout(align, 60);
+    }, { once: true });
+  }
+
   function init() {
     initTheme();
     initDrawer();
+    initSideGroups();
     initSearch();
     initScrollSpy();
     initCopy();
+    initHashAnchor();
   }
 
   if (document.readyState === 'loading') {

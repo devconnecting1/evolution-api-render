@@ -43,9 +43,9 @@
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=1" />
-    <link rel="stylesheet" href="/docs/docs.css?v=1" />
+    <link rel="stylesheet" href="/docs/docs.css?v=4" />
     <!-- Tema salvo é aplicado antes da primeira pintura; o restante do comportamento espera o DOM. -->
-    <script src="/docs/docs.js?v=1"></script>
+    <script src="/docs/docs.js?v=4"></script>
   </head>
   <body>
     <a class="skip" href="#conteudo">Pular para o conteúdo</a>
@@ -86,11 +86,11 @@
 
     <header class="topbar">
       <div class="topbar-in">
-        <button class="icon-btn drawer-btn" type="button" aria-expanded="false" aria-controls="doc-nav" aria-label="Abrir navegação" data-drawer-toggle>
-          <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
-        </button>
-        <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
-        <span class="brand-doc" aria-hidden="true">Documentação</span>
+        <div class="topbar-brand">
+          <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+          <span class="brand-sep" aria-hidden="true">/</span>
+          <span class="brand-doc">Documentação</span>
+        </div>
 
         <div class="search" data-search-root>
           <form class="search-form" role="search" action="#conteudo" data-search-form>
@@ -109,7 +109,6 @@
               aria-controls="search-results"
               data-search-input
             />
-            <kbd class="search-kbd" aria-hidden="true">/</kbd>
             <button class="search-clear" type="button" aria-label="Limpar busca" hidden data-search-clear>
               <svg class="ico" aria-hidden="true"><use href="#i-close" /></svg>
             </button>
@@ -121,33 +120,35 @@
           </div>
         </div>
 
-        <nav class="top-links" aria-label="Links do projeto">
-          <a href="/">Site</a>
-          <a href="/manager/login">Painel</a>
-          <a class="top-gh" href="https://github.com/devconnecting1/evolution-api-render/blob/main/README-WHATSAI.md" target="_blank" rel="noopener">
-            <svg class="ico" aria-hidden="true"><use href="#i-external" /></svg><span>Manual no GitHub</span>
-          </a>
-        </nav>
-
-        <div class="theme" data-theme>
-          <button class="icon-btn theme-btn" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Tema: Sistema" data-theme-toggle>
-            <svg class="ico theme-icon ti-system" aria-hidden="true"><use href="#i-monitor" /></svg>
-            <svg class="ico theme-icon ti-light" aria-hidden="true"><use href="#i-sun" /></svg>
-            <svg class="ico theme-icon ti-dark" aria-hidden="true"><use href="#i-moon" /></svg>
-          </button>
-          <div class="theme-menu" id="theme-menu" role="menu" aria-label="Tema" hidden data-theme-menu>
-            <p class="theme-title">Tema</p>
-            <button type="button" role="menuitemradio" aria-checked="true" data-theme-set="system">
-              <svg class="ico" aria-hidden="true"><use href="#i-monitor" /></svg>Sistema
+        <div class="top-actions">
+          <nav class="top-links" aria-label="Links do projeto">
+            <a href="/">Site</a>
+          </nav>
+          <a class="top-cta" href="/manager/login">Painel</a>
+          <div class="theme" data-theme>
+            <button class="icon-btn theme-btn" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Tema: Sistema" data-theme-toggle>
+              <svg class="ico theme-icon ti-system" aria-hidden="true"><use href="#i-monitor" /></svg>
+              <svg class="ico theme-icon ti-light" aria-hidden="true"><use href="#i-sun" /></svg>
+              <svg class="ico theme-icon ti-dark" aria-hidden="true"><use href="#i-moon" /></svg>
             </button>
-            <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="light">
-              <svg class="ico" aria-hidden="true"><use href="#i-sun" /></svg>Claro
-            </button>
-            <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="dark">
-              <svg class="ico" aria-hidden="true"><use href="#i-moon" /></svg>Escuro
-            </button>
+            <div class="theme-menu" id="theme-menu" role="menu" aria-label="Tema" hidden data-theme-menu>
+              <p class="theme-title">Tema</p>
+              <button type="button" role="menuitemradio" aria-checked="true" data-theme-set="system">
+                <svg class="ico" aria-hidden="true"><use href="#i-monitor" /></svg>Sistema
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="light">
+                <svg class="ico" aria-hidden="true"><use href="#i-sun" /></svg>Claro
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="dark">
+                <svg class="ico" aria-hidden="true"><use href="#i-moon" /></svg>Escuro
+              </button>
+            </div>
           </div>
         </div>
+
+        <button class="icon-btn drawer-btn" type="button" aria-expanded="false" aria-controls="doc-nav" aria-label="Abrir navegação" data-drawer-toggle>
+          <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
+        </button>
       </div>
     </header>
 
@@ -163,16 +164,24 @@
         </div>
         <nav class="side-nav" aria-label="Seções da documentação" data-side-nav>
           <div class="side-group" data-side-group>
-            <p class="side-label">Começar</p>
-            <ul>
+            <button class="side-label" type="button" aria-expanded="true" aria-controls="side-comecar" data-group-toggle>
+              <svg class="ico side-gico" aria-hidden="true"><use href="#i-book" /></svg>
+              <span>Começar</span>
+              <svg class="ico side-chev" aria-hidden="true"><use href="#i-chev-down" /></svg>
+            </button>
+            <ul id="side-comecar">
               <li><a href="#visao-geral" data-nav-link>Visão geral</a></li>
               <li><a href="#primeiros-passos" data-nav-link>Primeiros passos</a></li>
               <li><a href="#conexao" data-nav-link>Conexão da instância</a></li>
             </ul>
           </div>
           <div class="side-group" data-side-group>
-            <p class="side-label">Atendimento</p>
-            <ul>
+            <button class="side-label" type="button" aria-expanded="true" aria-controls="side-atendimento" data-group-toggle>
+              <svg class="ico side-gico" aria-hidden="true"><use href="#i-bot" /></svg>
+              <span>Atendimento</span>
+              <svg class="ico side-chev" aria-hidden="true"><use href="#i-chev-down" /></svg>
+            </button>
+            <ul id="side-atendimento">
               <li><a href="#atendente-ia" data-nav-link>Atendente de IA</a></li>
               <li><a href="#leads" data-nav-link>Leads</a></li>
               <li><a href="#agenda" data-nav-link>Agenda</a></li>
@@ -180,8 +189,12 @@
             </ul>
           </div>
           <div class="side-group" data-side-group>
-            <p class="side-label">Operação</p>
-            <ul>
+            <button class="side-label" type="button" aria-expanded="true" aria-controls="side-operacao" data-group-toggle>
+              <svg class="ico side-gico" aria-hidden="true"><use href="#i-terminal" /></svg>
+              <span>Operação</span>
+              <svg class="ico side-chev" aria-hidden="true"><use href="#i-chev-down" /></svg>
+            </button>
+            <ul id="side-operacao">
               <li><a href="#equipe-seguranca" data-nav-link>Equipe e segurança</a></li>
               <li><a href="#planos-limites" data-nav-link>Planos e limites</a></li>
               <li><a href="#operacao" data-nav-link>Operação e deploy</a></li>
@@ -200,17 +213,9 @@
       </aside>
 
       <main class="content" id="conteudo" tabindex="-1">
-        <nav class="crumb" aria-label="Trilha de navegação">
-          <a href="/">WhatsAI</a><span aria-hidden="true">/</span><span>Documentação</span>
-        </nav>
-
         <div class="hero">
-          <p class="eyebrow">Documentação</p>
           <h1 id="doc-title">Tudo para operar o WhatsAI</h1>
-          <p class="hero-lead">
-            Guia público para conectar o WhatsApp, configurar o atendente de IA e organizar Leads, Agenda e Processos
-            com segurança. Cada número é uma instância com o próprio agente, banco e limites.
-          </p>
+          <p class="hero-lead">Atendimento com IA no WhatsApp, do primeiro contato à operação.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="#primeiros-passos">Começar pelos primeiros passos</a>
             <a class="btn btn-quiet" href="https://github.com/devconnecting1/evolution-api-render/blob/main/README-WHATSAI.md" target="_blank" rel="noopener">
@@ -493,10 +498,10 @@
           <div class="code-block">
             <div class="code-head">
               <span>bash</span>
-              <button class="copy-btn" type="button" data-copy>
+              <button class="copy-btn" type="button" aria-label="Copiar código" data-copy>
                 <svg class="ico copy-ico" aria-hidden="true"><use href="#i-copy" /></svg>
                 <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
-                <span class="copy-label">Copiar</span>
+                <span class="copy-label sr">Copiar</span>
               </button>
             </div>
             <pre><code># No seu shell: AUTH_HEADER="apikey: $WHATSAPP_API_KEY"
@@ -595,10 +600,10 @@ curl -X POST "$SERVER_URL/instance/create" \
           <div class="code-block">
             <div class="code-head">
               <span>bash</span>
-              <button class="copy-btn" type="button" data-copy>
+              <button class="copy-btn" type="button" aria-label="Copiar código" data-copy>
                 <svg class="ico copy-ico" aria-hidden="true"><use href="#i-copy" /></svg>
                 <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
-                <span class="copy-label">Copiar</span>
+                <span class="copy-label sr">Copiar</span>
               </button>
             </div>
             <pre><code># No seu shell: AUTH_HEADER="apikey: $WHATSAPP_API_KEY"
@@ -718,10 +723,10 @@ curl -X POST "$SERVER_URL/openai/settings/escritorio-silva" \
           <div class="code-block code-block-plain">
             <div class="code-head">
               <span>mensagem</span>
-              <button class="copy-btn" type="button" data-copy>
+              <button class="copy-btn" type="button" aria-label="Copiar código" data-copy>
                 <svg class="ico copy-ico" aria-hidden="true"><use href="#i-copy" /></svg>
                 <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
-                <span class="copy-label">Copiar</span>
+                <span class="copy-label sr">Copiar</span>
               </button>
             </div>
             <pre><code>Novo lead qualificado — Nome · Área · Cidade · prioridade alta (audiência em 12/11)
@@ -1056,10 +1061,10 @@ Conversa: https://wa.me/55DDDNUMERO</code></pre>
           <div class="code-block">
             <div class="code-head">
               <span>bash</span>
-              <button class="copy-btn" type="button" data-copy>
+              <button class="copy-btn" type="button" aria-label="Copiar código" data-copy>
                 <svg class="ico copy-ico" aria-hidden="true"><use href="#i-copy" /></svg>
                 <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
-                <span class="copy-label">Copiar</span>
+                <span class="copy-label sr">Copiar</span>
               </button>
             </div>
             <pre><code># No seu shell: AUTH_HEADER="apikey: $WHATSAPP_API_KEY"
@@ -1071,10 +1076,10 @@ claude mcp add --transport http whatsai https://&lt;url-da-api&gt;/mcp \
           <div class="code-block">
             <div class="code-head">
               <span>bash</span>
-              <button class="copy-btn" type="button" data-copy>
+              <button class="copy-btn" type="button" aria-label="Copiar código" data-copy>
                 <svg class="ico copy-ico" aria-hidden="true"><use href="#i-copy" /></svg>
                 <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
-                <span class="copy-label">Copiar</span>
+                <span class="copy-label sr">Copiar</span>
               </button>
             </div>
             <pre><code>npm install
@@ -1205,7 +1210,14 @@ npm run dev:server</code></pre>
       </main>
 
       <aside class="toc" aria-label="Nesta página" data-toc>
-        <p class="toc-title">Nesta página</p>
+        <div class="toc-head">
+          <p class="toc-title">Nesta página</p>
+          <button class="toc-copy" type="button" aria-label="Copiar link desta página" data-copy-link>
+            <svg class="ico copy-ico" aria-hidden="true"><use href="#i-link" /></svg>
+            <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
+            <span class="copy-label">Copiar link</span>
+          </button>
+        </div>
         <ul>
           <li><a href="#visao-geral" data-toc-link>Visão geral</a></li>
           <li><a href="#primeiros-passos" data-toc-link>Primeiros passos</a></li>
