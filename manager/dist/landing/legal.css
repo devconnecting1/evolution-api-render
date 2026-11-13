@@ -12,60 +12,9 @@
  * Âmbar é atenção e vermelho é erro; nada de roxo. Tema padrão Sistema.
  */
 
-/* O topo destas páginas tem uma linha só; o docs.css reserva 116 px abaixo de 1024 para a busca, que não existe aqui. */
+/* O cabeçalho vem de /assets/site-header.css (o mesmo da home) e tem 64 px na altura do topo. */
 :root {
-  --d-topbar: 61px;
-}
-
-/* ------------------------------------------------------------------------------------------------ topo */
-.legal-top {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: var(--d-bg);
-  border-bottom: 1px solid var(--d-border);
-}
-
-.legal-top-in {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 1920px;
-  min-height: 60px;
-  margin: 0 auto;
-  padding: 0 32px;
-}
-
-.legal-top-nav {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: auto;
-}
-
-.legal-top-nav a {
-  padding: 8px 10px;
-  color: var(--d-text-2);
-  font-size: 14px;
-  line-height: 1.2;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color 0.15s var(--d-ease-ui);
-}
-
-.legal-top-nav a:hover {
-  color: var(--d-accent);
-}
-
-.legal-top-nav .top-cta {
-  height: 36px;
-  padding: 0 16px;
-  color: var(--d-btn-text);
-}
-
-.legal-top-nav .top-cta:hover {
-  color: #ffffff;
+  --d-topbar: 64px;
 }
 
 /* ---------------------------------------------------------------------------------- coluna e herói */
@@ -1051,9 +1000,6 @@
 }
 
 @media (max-width: 899px) {
-  .legal-top-in {
-    padding: 0 16px;
-  }
   .legal-hero-in {
     padding-top: 56px;
     padding-bottom: 48px;
@@ -1137,22 +1083,6 @@
 }
 
 @media (max-width: 559px) {
-  .legal-top-in {
-    gap: 4px;
-    min-height: 60px;
-    padding: 0 12px;
-  }
-  .legal-top-nav {
-    gap: 0;
-  }
-  .legal-top-nav a {
-    padding: 6px 7px;
-    font-size: 13px;
-  }
-  .legal-top-nav .top-cta {
-    height: 32px;
-    padding: 0 10px;
-  }
   .legal-hero-in {
     padding-top: 44px;
     padding-bottom: 40px;
@@ -1177,21 +1107,6 @@
 }
 
 @media (max-width: 389px) {
-  .legal-top-in {
-    gap: 2px;
-    padding: 0 10px;
-  }
-  .legal-top-in .brand {
-    font-size: 18px;
-  }
-  .legal-top-nav a {
-    padding: 6px 4px;
-    font-size: 12px;
-  }
-  .legal-top-nav .top-cta {
-    height: 30px;
-    padding: 0 8px;
-  }
   .legal-hero h1,
   .trust-hero h1 {
     font-size: 32px;
@@ -1201,14 +1116,12 @@
 @media (prefers-reduced-motion: reduce) {
   .legal-toc-list a,
   .legal-article .doc-section > h2 .anchor,
-  .trust-section > h2 .anchor,
-  .legal-top-nav a {
+  .trust-section > h2 .anchor {
     transition: none;
   }
 }
 
 @media print {
-  .legal-top,
   .legal-hero::before,
   .legal-toc,
   .legal-contact,

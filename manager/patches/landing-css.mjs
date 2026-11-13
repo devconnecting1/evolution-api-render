@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 /**
- * Public site home (/): the five stylesheets in one minified file, so the browser waits for one request
- * instead of five before the first paint (Lighthouse "render-blocking requests" on mobile).
+ * Public site home (/): the stylesheets in one minified file, so the browser waits for one request instead of
+ * several before the first paint (Lighthouse "render-blocking requests" on mobile).
  *
- * Sources stay the files people edit: assets/geist.css, landing.css, landing-theme.css, landing-plus.css and
- * security.css. This script writes assets/landing.bundle.css (minified with esbuild) and points the <link> of the
- * home at it with ?v=<content hash>, so a changed source can never be served from an old cache.
+ * Sources stay the files people edit: assets/geist.css, assets/site-header.css, landing.css and landing-theme.css.
+ * site-header.css carries the shared header (also loaded directly by /seguranca, /termos and /privacidade); it is
+ * bundled here so the home loads the same header CSS in the same request as the rest of the page.
  *
- * /seguranca, /termos and /privacidade moved to the documentation shell (docs.css + landing/legal.css), so they
- * are no longer part of this bundle.
+ * This script writes assets/landing.bundle.css (minified with esbuild) and points the <link> of the home at it with
+ * ?v=<content hash>, so a changed source can never be served from an old cache.
+ *
+ * /seguranca, /termos and /privacidade moved to the documentation shell (docs.css + landing/legal.css + the shared
+ * site-header.css), so they are no longer part of this bundle.
  *
  * Usage (from the repository root):
  *   node manager/patches/landing-css.mjs           # rebuild the bundle and update the page
@@ -23,11 +26,11 @@ import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
-const SOURCES = ['geist.css', 'landing.css', 'landing-theme.css', 'landing-plus.css', 'security.css'];
+const SOURCES = ['geist.css', 'site-header.css', 'landing.css', 'landing-theme.css'];
 const PAGES = ['landing/index.html'];
 const BUNDLE = 'assets/landing.bundle.css';
 const LINK_RE = /<link rel="stylesheet" href="\/assets\/landing\.bundle\.css\?v=[0-9a-f]+" \/>/;
-const SOURCE_LINK_RE = /^[ \t]*<link rel="stylesheet" href="\/assets\/(?:geist|landing|landing-theme|landing-plus|security)\.css\?v=\d+" \/>\n/gm;
+const SOURCE_LINK_RE = /^[ \t]*<link rel="stylesheet" href="\/assets\/(?:geist|site-header|landing|landing-theme|landing-plus|security)\.css\?v=\d+" \/>\n/gm;
 
 export function build() {
   const joined = SOURCES.map((name) => `/* ${name} */\n` + readFileSync(join(ROOT, 'assets', name), 'utf8')).join('\n');
