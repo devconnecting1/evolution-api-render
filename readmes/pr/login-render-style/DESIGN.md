@@ -51,7 +51,7 @@ em 1440x900 (tema claro).
 | Rodapé | Links legais 13 px, `#8f8f8f` | Privacidade, Termos e administrador, 13 px | Adaptado: mesmos links de antes, mais discretos |
 | Fundo | Branco `#fff` com grade fina de 40 px nos cantos | Creme `#faf9f4` com grade fina de 40 px nos cantos, esmaecida | Adaptado ao papel creme da marca |
 | Tema escuro | Não tem | Suportado por `prefers-color-scheme` | Adaptado: o sistema continua valendo |
-| Instalar app | Não tem | Botão mantido, oculto até `beforeinstallprompt` | Preservado do fluxo atual |
+| Instalar app | Não tem | Botão e nota removidos | Removido do fluxo |
 | Código de acesso | E-mail e senha | Um campo `password` com o código `wac_` | Adaptado ao produto |
 
 ## Antes x Depois
@@ -66,7 +66,7 @@ em 1440x900 (tema claro).
 | Marca | Texto solto no topo esquerdo | Wordmark dentro da coluna, centralizado |
 | Fundo decorativo | Nenhum | Grade fina de 40 px nos dois cantos, esmaecida |
 | Link do desenvolvedor | Só "Entrar como administrador" no rodapé | "Sou o desenvolvedor" no cartão e administrador no rodapé |
-| Nota de instalação | Abaixo do cartão, fora dele | Dentro da coluna, em texto discreto |
+| Nota de instalação | Abaixo do cartão, fora dele | Removida |
 | Tema escuro | Botão creme sobre fundo quase preto | Botão verde da marca, textos e bordas próprios |
 | Rolagem horizontal | 0 | 0 em 320, 360, 390, 414, 768, 1024, 1280 e 1440 px |
 
@@ -115,8 +115,8 @@ O estado de foco não depende dela: o anel verde de 2 px tem contraste alto e é
 - Campo: 40 px de altura, raio 4 px, padding lateral de 12 px.
 - Botão principal: 48 px de altura, 16 px de distância do campo, raio 4 px.
 - Ajuda: 13 px, 16 px abaixo do botão.
-- Nota de instalação: 12,5 px, 20 px abaixo da ajuda.
-- Link do desenvolvedor: 14 px, 24 px abaixo da nota.
+- Sem nota de instalação: o fluxo termina no link do desenvolvedor.
+- Link do desenvolvedor: 14 px, 24 px abaixo da ajuda.
 - Rodapé: 13 px, preso ao fim da tela, com `env(safe-area-inset-bottom)`.
 - Desktop: coluna centralizada na vertical. Celular: topo em 40 px, porque a referência também encosta no topo.
 - Grade: células de 40 px, linhas de 1 px, dois quadrantes com máscara radial; escondida abaixo de 760 px.
@@ -137,7 +137,7 @@ O estado de foco não depende dela: o anel verde de 2 px tem contraste alto e é
 - O fundo é creme e o verde da marca aparece no ponto, no foco, no link e no botão do tema escuro.
 - O campo único recebe o código `wac_`; o texto de apoio explica o que fazer.
 - "Sou o desenvolvedor" substitui o link de cadastro e leva a `/manager/login`.
-- O botão de instalar o app, o manifest e a nota de instalação continuam no fluxo.
+- O botão e a nota de instalação foram removidos; o manifest continua o mesmo, sem instrução de instalação na página.
 - O rodapé mantém Privacidade, Termos e "Entrar como administrador".
 - O raio pequeno de 4 px foi adotado nos campos e botões (a referência usa canto reto).
 
@@ -152,8 +152,8 @@ O estado de foco não depende dela: o anel verde de 2 px tem contraste alto e é
 
 ## Segurança e privacidade
 
-- O script inline é byte a byte o mesmo de antes: SHA-256
-  `QKF0/aQ62VwBc3Ejx4ThT2d9XYfPxvcNcl23m2joxSE=`, um dos três hashes já permitidos em `manager/dist/vercel.json`.
+- O script inline perdeu só o trecho de instalação; o novo SHA-256 é
+  `iGrup/2m1U3uk2eIbfgzL1L/XwIFmkFASjS1yq/yg+I=`, já atualizado em `manager/dist/vercel.json`.
 - Nenhum script ou estilo inline novo. O CSS é externo (`/assets/acesso.css?v=1`) e a CSP já permite `'self'`.
 - Verificação equivalente ao teste de CSP: 10 arquivos HTML, 3 scripts inline, 3 hashes permitidos, nenhum handler
   inline. O `test/unit/security.test.ts` completo não rodou localmente porque falta `@prisma/adapter-mariadb` no
@@ -167,8 +167,8 @@ O estado de foco não depende dela: o anel verde de 2 px tem contraste alto e é
 
 - Um `<main>`, uma `<section aria-labelledby>` e um `h1`; rodapé em `<footer>` (contentinfo).
 - Rótulo explícito `for="code"`, campo `type="password"`, `aria-describedby="err"` e erro `role="alert"`.
-- Ordem de tabulação: marca, campo, Entrar, Sou o desenvolvedor, Privacidade, Termos, administrador. O botão de
-  instalar fica oculto e fora da ordem até existir o prompt.
+- Ordem de tabulação: marca, campo, Entrar, Sou o desenvolvedor, Privacidade, Termos, administrador. Não há botão
+  de instalação.
 - Foco visível de 2 px em todos os elementos interativos, com `outline-offset` de 2 px (1 px no campo).
 - `prefers-reduced-motion` remove as transições de cor.
 - Snapshot de acessibilidade do Playwright: main, region "Área do cliente", heading nível 1, textbox "Código de
