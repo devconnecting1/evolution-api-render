@@ -1,9 +1,9 @@
-# Tokens globais de cor e tipografia
+# Tokens globais, tipografia e componentes
 
 Esta proposta cria `manager/dist/assets/tokens.css` como fonte única de cor e tipografia das páginas públicas e faz a
-landing usar os mesmos papéis de texto do `/docs`. A fonte é a Geist local em woff2, já usada pela documentação; o que
-muda é a escala, o peso e o ritmo de cada tipo de texto na landing. As páginas de documentação, segurança, termos e
-privacidade continuam visualmente idênticas.
+landing usar os mesmos papéis de texto e a mesma geometria de componentes do `/docs`. A fonte é a Geist local em woff2,
+já usada pela documentação; o que muda é a escala, o peso, o ritmo de cada tipo de texto e o formato dos controles e
+cartões. As páginas de documentação, segurança, termos e privacidade continuam visualmente idênticas.
 
 ## Método
 
@@ -14,6 +14,9 @@ privacidade continuam visualmente idênticas.
 - `docs.css` e `landing-cursor.css` passam a apontar os tokens que já existiam (`--d-*` e `--wa-*`) para os tokens
   globais. Nenhum seletor de layout foi alterado na documentação.
 - A landing usa os mesmos papéis do `/docs` para título, subtítulo, corpo, apoio, rótulo, cartão e botão.
+- A geometria segue os mesmos valores do `/docs`: botões, selos e ícones com raio de 2 px; cartões e painéis com raio 0;
+  altura padrão de botão de 40 px. As molduras de celular e os balões de conversa dos mockups continuam arredondados,
+  porque representam o aparelho e o WhatsApp, não os componentes da página.
 - O bundle da landing inclui `tokens.css`; `/docs`, `/seguranca`, `/termos` e `/privacidade` carregam
   `/assets/tokens.css?v=1` antes do `docs.css`.
 - A fonte Geist continua local: `assets/fonts/geist-latin-wght-normal.woff2` e as variantes latin-ext e itálico, com
@@ -51,8 +54,26 @@ privacidade continuam visualmente idênticas.
   usam a mesma escala móvel do `/docs` (`clamp(30px, 8vw, 36px)`).
 - **Componentes densos:** tabela, linhas de implantação e selos mantêm tamanhos menores para caber nos cartões. Os
   mockups continuam com a tipografia miúda de interface; eles simulam o painel, não o texto editorial.
-- **Geometria:** raios, pílulas e sombras continuam os do desenho aprovado no padrão do Cursor. Este PR é de cor,
-  tipografia e fonte; igualar cantos e botões ao `/docs` é um passo separado.
+- **Molduras de celular e balões:** continuam arredondados porque representam o aparelho e a conversa do WhatsApp. Os
+  cartões, janelas, resumos, agendas e a linha do tempo dentro dos mockups passam a ter raio 0, como os cartões da
+  documentação.
+
+## Geometria dos componentes
+
+| Componente | Antes na landing | Depois | `/docs` |
+| --- | --- | --- | --- |
+| Botão padrão | Pílula de 999 px, 44 px de altura | Raio 2 px, 40 px de altura, padding de 18 px | `.btn` com raio 2 px e 40 px |
+| Botão pequeno (topo) | Pílula de 999 px, 32 px | Raio 2 px, 34 px | Topo com 34 px |
+| Botão grande (herói e CTA) | Pílula de 999 px, 48 px | Raio 2 px, 44 px, padding de 22 px | Sem variante grande; mesmo formato |
+| Links do topo e hover | Pílula de 999 px | Raio 2 px | Sem pílula |
+| Botão do menu no celular | Círculo de 999 px | Quadrado de 44 px com raio 2 px | `.icon-btn` de 36 px com raio 2 px |
+| Cartões, planos, canais e painéis | Raio 0 a 6 px | Raio 0 | `.entry-card` e `.fact` com raio 0 |
+| Selos e chips | Pílula de 999 px | Raio 2 px | `.chip` com raio 2 px |
+| Ícones e tiles | Raio 0 a 50% | Raio 2 px | `.entry-ico` e `.fact-ico` com raio 2 px |
+| Molduras de celular | 26 px e 18 px | Mantidas | Sem equivalente |
+| Balões de conversa | 6 px | Mantidos | Sem equivalente |
+
+O foco visível continua com 2 px e o anel de foco no verde da marca; a sombra e as cores não mudaram nesta etapa.
 
 ## Fonte global
 
@@ -70,19 +91,19 @@ privacidade continuam visualmente idênticas.
 
 ### 1440 px, tema claro
 
-![Comparação de tipografia em 1440 px no tema claro](comparacao/comparacao-tipografia-1440-light.png)
+![Comparação de tipografia e componentes em 1440 px no tema claro](comparacao/comparacao-tipografia-1440-light.png)
 
 ### 1440 px, tema escuro
 
-![Comparação de tipografia em 1440 px no tema escuro](comparacao/comparacao-tipografia-1440-dark.png)
+![Comparação de tipografia e componentes em 1440 px no tema escuro](comparacao/comparacao-tipografia-1440-dark.png)
 
 ### 390 px, tema claro
 
-![Comparação de tipografia em 390 px no tema claro](comparacao/comparacao-tipografia-390-light.png)
+![Comparação de tipografia e componentes em 390 px no tema claro](comparacao/comparacao-tipografia-390-light.png)
 
 ### 390 px, tema escuro
 
-![Comparação de tipografia em 390 px no tema escuro](comparacao/comparacao-tipografia-390-dark.png)
+![Comparação de tipografia e componentes em 390 px no tema escuro](comparacao/comparacao-tipografia-390-dark.png)
 
 ### Antes e depois no herói
 
@@ -110,7 +131,8 @@ A página de segurança também ficou idêntica:
 ## Arquivos alterados
 
 - `manager/dist/assets/tokens.css`: novo arquivo global de cor, fonte e escala tipográfica.
-- `manager/dist/assets/landing-cursor.css`: tokens `--wa-*` apontando para os globais e papéis de texto do `/docs`.
+- `manager/dist/assets/landing-cursor.css`: tokens `--wa-*` apontando para os globais, papéis de texto e geometria de
+  botões, cartões, selos e controles do `/docs`.
 - `manager/dist/assets/landing.bundle.css`: bundle minificado reconstruído com `tokens.css`.
 - `manager/patches/landing-css.mjs`: `tokens.css` incluído nas fontes do bundle.
 - `manager/dist/docs/docs.css`: tokens `--d-*` apontando para os globais; blocos de cor escura removidos.

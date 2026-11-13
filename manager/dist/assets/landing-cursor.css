@@ -135,7 +135,7 @@ body.wa-page {
   left: 16px;
   z-index: 200;
   padding: 10px 16px;
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--wa-btn);
   color: var(--wa-btn-fg);
   font-size: 14px;
@@ -246,18 +246,18 @@ body.wa-page #duvidas {
 /* ------------------------------------------------------------------ botoes e links */
 .wa-btn {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0 20px;
+  padding: 0 18px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--wa-btn);
   color: var(--wa-btn-fg);
   font-size: var(--type-button-size);
   font-weight: var(--type-button-weight);
-  line-height: 1;
+  line-height: 1.2;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -279,15 +279,15 @@ body.wa-page #duvidas {
 }
 
 .wa-btn--sm {
-  min-height: 32px;
+  min-height: 34px;
   padding: 0 14px;
   font-size: 13px;
 }
 
 .wa-btn--lg {
-  min-height: 48px;
-  padding: 0 24px;
-  font-size: 15px;
+  min-height: 44px;
+  padding: 0 22px;
+  font-size: 14px;
 }
 
 .wa-btn--block {
@@ -352,7 +352,7 @@ body.wa-page #duvidas {
   width: 22px;
   height: 22px;
   place-items: center;
-  border-radius: 6px;
+  border-radius: 2px;
   background: var(--wa-fg);
   color: var(--wa-bg);
 }
@@ -380,7 +380,7 @@ body.wa-page #duvidas {
   align-items: center;
   min-height: 34px;
   padding: 0 13px;
-  border-radius: 999px;
+  border-radius: 2px;
   color: var(--wa-fg);
   font-size: 14px;
   text-decoration: none;
@@ -407,7 +407,7 @@ body.wa-page #duvidas {
 .wa-nav-actions .wa-link:hover {
   text-decoration: none;
   background: var(--wa-card);
-  border-radius: 999px;
+  border-radius: 2px;
 }
 
 .wa-menu-btn {
@@ -420,7 +420,7 @@ body.wa-page #duvidas {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 999px;
+  border-radius: 2px;
   background: transparent;
   color: var(--wa-fg);
   cursor: pointer;
@@ -493,7 +493,7 @@ body.wa-page #duvidas {
     justify-content: center;
     min-height: 44px;
     border: 1px solid var(--wa-line-strong);
-    border-radius: 999px;
+    border-radius: 2px;
   }
   .wa-menu-btn {
     display: inline-flex;
@@ -630,7 +630,7 @@ body.wa-page #duvidas {
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--wa-line-strong);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--wa-bg);
   box-shadow: var(--wa-shadow);
 }
@@ -776,7 +776,7 @@ body.wa-page #duvidas {
   gap: 4px;
   padding: 2px 6px;
   border: 1px solid var(--wa-line);
-  border-radius: 999px;
+  border-radius: 2px;
   color: var(--wa-fg-2);
   font-size: 8.5px;
   font-weight: 500;
@@ -903,7 +903,7 @@ body.wa-page #duvidas {
   margin: 6px 10px 10px;
   padding: 7px 9px;
   border: 1px solid var(--wa-line);
-  border-radius: 6px;
+  border-radius: 0;
   color: var(--wa-fg-3);
   font-size: 9px;
 }
@@ -967,7 +967,7 @@ body.wa-page #duvidas {
   margin-top: 9px;
   padding: 9px;
   border: 1px solid var(--wa-line);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--wa-bg);
 }
 
@@ -1001,7 +1001,7 @@ body.wa-page #duvidas {
   gap: 10px;
   padding: 11px 13px;
   border: 1px solid var(--wa-line-strong);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--wa-bg);
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.18);
 }
@@ -1012,7 +1012,7 @@ body.wa-page #duvidas {
   height: 30px;
   flex: none;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 2px;
   background: var(--wa-accent-soft);
   color: var(--wa-accent);
 }
@@ -1120,6 +1120,7 @@ body.wa-page #duvidas {
   min-height: 62px;
   place-items: center;
   border: 1px solid var(--wa-line);
+  border-radius: 2px;
   background: var(--wa-card);
   color: var(--wa-fg-2);
   font-size: 14px;
@@ -1249,7 +1250,7 @@ body.wa-page #duvidas {
 .wa-summary {
   padding: 10px;
   border: 1px solid var(--wa-line);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--wa-bg);
 }
 
@@ -1454,7 +1455,7 @@ body.wa-page #duvidas {
   width: min(280px, 58%);
   padding: 14px;
   border: 1px solid var(--wa-line-strong);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--wa-bg);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
 }
@@ -1554,6 +1555,7 @@ body.wa-page #duvidas {
   height: 34px;
   place-items: center;
   border: 1px solid var(--wa-line);
+  border-radius: 2px;
   background: var(--wa-card);
   color: var(--wa-accent);
 }
@@ -1670,7 +1672,7 @@ body.wa-page #duvidas {
   gap: 6px;
   padding: 12px;
   border: 1px solid var(--wa-line);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--wa-bg);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
 }
@@ -2114,7 +2116,10 @@ body.wa-page #duvidas {
 
 .wa-channel h3 {
   margin: 0 0 6px;
-  font-size: 17px;
+  font-size: var(--type-card-title-size);
+  font-weight: var(--type-card-title-weight);
+  line-height: var(--type-card-title-lh);
+  letter-spacing: var(--type-card-title-ls);
 }
 
 .wa-channel p {
@@ -2142,7 +2147,10 @@ body.wa-page #duvidas {
 
 .wa-addon h3 {
   margin: 0 0 8px;
-  font-size: 20px;
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  line-height: var(--type-heading-lh);
+  letter-spacing: var(--type-heading-ls);
 }
 
 .wa-addon p {
@@ -2376,7 +2384,7 @@ body.wa-page #duvidas {
   transform: translateY(-50%);
   padding: clamp(14px, 2vw, 22px);
   border: 1px solid var(--wa-line-strong);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--wa-bg);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
 }
