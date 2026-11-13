@@ -5,33 +5,36 @@
  * Escopo: TODAS as regras deste arquivo comecam por .wa- ou ficam sob body.wa-page. O bundle tambem serve
  * /novidades, entao nada aqui pode alcancar as paginas legais (que usam site-header.css) nem a pagina de novidades.
  *
- * Base: as mesmas cores da documentacao publica (/docs): pagina #ffffff no claro e #0d0d0d no escuro,
- * superficie suave #fafafa / #141414, borda #e3e3e3 / #272727, tinta #0d0d0d / #ffffff.
- * Um unico accent: verde escuro no claro (#0e7a4d) e verde claro no escuro (#5fcf8a). Ambar e vermelho so com
- * significado (atencao e erro), como na documentacao.
- * Tipografia: Geist (geist.css), titulos grandes com tracking negativo; textos de apoio em tinta secundaria.
+ * Base: as mesmas cores da documentacao publica (/docs), definidas uma vez em assets/tokens.css e consumidas
+ * pelos tokens --wa-* abaixo. Pagina #ffffff no claro e #0d0d0d no escuro, superficie suave #fafafa / #141414,
+ * borda #e3e3e3 / #272727, tinta #0d0d0d / #ffffff. Um unico accent: verde escuro no claro (#0e7a4d) e verde
+ * claro no escuro (#5fcf8a). Ambar e vermelho so com significado (atencao e erro), como na documentacao.
+ * Tipografia: Geist local (geist.css) e a mesma escala do /docs, em tokens --type-* do arquivo global. Titulos de
+ * pagina e secao em peso 300; subtitulos, corpo, apoio e rotulos seguem os papeis da documentacao. Os mockups
+ * mantem tamanhos proprios porque representam a interface do painel, nao o texto da pagina.
  * Sem imagens externas, sem logos de terceiros: a paisagem abstrata e os mockups sao CSS + HTML.
  */
 
 body.wa-page {
-  --wa-bg: #ffffff;
-  --wa-card: #fafafa;
-  --wa-card-2: #f0f0f0;
-  --wa-card-3: #e3e3e3;
-  --wa-fg: #0d0d0d;
-  --wa-fg-2: #4d4d4d;
-  --wa-fg-3: #6b6b6b;
-  --wa-line: #e3e3e3;
-  --wa-line-strong: #c7c7c7;
-  --wa-accent: #0e7a4d;
-  --wa-accent-soft: #e9f5ee;
-  --wa-accent-line: #9fceb5;
-  --wa-btn: #0d0d0d;
-  --wa-btn-fg: #ffffff;
-  --wa-btn-hover: #0e7a4d;
-  --wa-warn: #5a3a00;
-  --wa-warn-bg: #fdf0d5;
-  --wa-warn-line: #d97706;
+  --wa-bg: var(--c-bg);
+  --wa-card: var(--c-bg-soft);
+  --wa-card-2: var(--c-bg-muted);
+  --wa-card-3: var(--c-border);
+  --wa-fg: var(--c-text);
+  --wa-fg-2: var(--c-text-2);
+  --wa-fg-3: var(--c-text-3);
+  --wa-line: var(--c-border);
+  --wa-line-strong: var(--c-border-strong);
+  --wa-accent: var(--c-accent);
+  --wa-accent-soft: var(--c-accent-soft);
+  --wa-accent-line: var(--c-accent-border);
+  --wa-btn: var(--c-btn-bg);
+  --wa-btn-fg: var(--c-btn-text);
+  --wa-btn-hover: var(--c-btn-hover);
+  --wa-warn: var(--c-warn-text);
+  --wa-warn-bg: var(--c-warn-bg);
+  --wa-warn-line: var(--c-warn-border);
+  /* Paisagem decorativa: valores proprios da landing, nao sao cores de interface. */
   --wa-art-sky: #fafafa;
   --wa-art-sky-2: #f0f0f0;
   --wa-art-hill: #e3e3e3;
@@ -40,7 +43,7 @@ body.wa-page {
   --wa-art-deep: #9fceb5;
   --wa-art-glow: rgba(14, 122, 77, 0.1);
   --wa-art-glow-2: rgba(14, 122, 77, 0.16);
-  --wa-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --wa-shadow: var(--c-shadow);
   --wa-pad: 20px;
   --wa-max: 1440px;
 
@@ -48,9 +51,11 @@ body.wa-page {
   padding: 52px 0 0;
   background: var(--wa-bg);
   color: var(--wa-fg);
-  font-family: "Geist", sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
   color-scheme: light dark;
@@ -63,28 +68,7 @@ body.wa-page {
 }
 
 @media (prefers-color-scheme: dark) {
-  html:has(body.wa-page) {
-    color-scheme: dark;
-  }
   body.wa-page {
-    --wa-bg: #0d0d0d;
-    --wa-card: #141414;
-    --wa-card-2: #1f1f1f;
-    --wa-card-3: #272727;
-    --wa-fg: #ffffff;
-    --wa-fg-2: #e3e3e3;
-    --wa-fg-3: #b3b3b3;
-    --wa-line: #272727;
-    --wa-line-strong: #4d4d4d;
-    --wa-accent: #5fcf8a;
-    --wa-accent-soft: #12241a;
-    --wa-accent-line: #1f5c3a;
-    --wa-btn: #ffffff;
-    --wa-btn-fg: #0d0d0d;
-    --wa-btn-hover: #86efac;
-    --wa-warn: #fcd38d;
-    --wa-warn-bg: #2a1f0c;
-    --wa-warn-line: #8a5a12;
     --wa-art-sky: #141414;
     --wa-art-sky-2: #1f1f1f;
     --wa-art-hill: #272727;
@@ -93,7 +77,6 @@ body.wa-page {
     --wa-art-deep: #1f5c3a;
     --wa-art-glow: rgba(95, 207, 138, 0.14);
     --wa-art-glow-2: rgba(95, 207, 138, 0.18);
-    --wa-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -108,8 +91,6 @@ body.wa-page {
 .wa-page h2,
 .wa-page h3,
 .wa-page h4 {
-  font-weight: 500;
-  letter-spacing: -0.025em;
   text-wrap: balance;
 }
 
@@ -213,11 +194,13 @@ body.wa-page #duvidas {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   color: var(--wa-fg-3);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-ls);
+  line-height: var(--type-label-lh);
   text-transform: uppercase;
 }
 
@@ -241,17 +224,19 @@ body.wa-page #duvidas {
 
 .wa-section-title {
   margin: 0;
-  font-size: clamp(30px, 3.4vw, 48px);
-  line-height: 1.08;
-  letter-spacing: -0.035em;
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: var(--type-title-lh);
+  letter-spacing: var(--type-title-ls);
 }
 
 .wa-section-lead {
   max-width: 620px;
   margin-top: 16px;
-  color: var(--wa-fg-2);
-  font-size: clamp(16px, 1.4vw, 19px);
-  line-height: 1.55;
+  color: var(--wa-fg-3);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
 }
 
 .wa-section-head--center .wa-section-lead {
@@ -270,8 +255,8 @@ body.wa-page #duvidas {
   border-radius: 999px;
   background: var(--wa-btn);
   color: var(--wa-btn-fg);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--type-button-size);
+  font-weight: var(--type-button-weight);
   line-height: 1;
   text-align: center;
   text-decoration: none;
@@ -314,8 +299,8 @@ body.wa-page #duvidas {
   align-items: center;
   gap: 6px;
   color: var(--wa-accent);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--type-button-size);
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -528,18 +513,20 @@ body.wa-page #duvidas {
 
 .wa-hero-title {
   margin: 0;
-  font-size: clamp(28px, 3vw, 44px);
-  font-weight: 500;
-  line-height: 1.08;
-  letter-spacing: -0.035em;
+  font-size: var(--type-display-size);
+  font-weight: var(--type-display-weight);
+  line-height: var(--type-display-lh);
+  letter-spacing: var(--type-display-ls);
 }
 
 .wa-hero-lead {
-  max-width: 600px;
-  margin-top: 18px;
-  color: var(--wa-fg-2);
-  font-size: clamp(15px, 1.2vw, 17px);
-  line-height: 1.55;
+  max-width: 660px;
+  margin-top: 24px;
+  color: var(--wa-fg-3);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
 }
 
 .wa-hero-actions {
@@ -554,9 +541,10 @@ body.wa-page #duvidas {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
-  margin-top: 18px;
+  margin-top: 20px;
   color: var(--wa-fg-3);
-  font-size: 13px;
+  font-size: var(--type-meta-size);
+  line-height: var(--type-meta-lh);
 }
 
 .wa-hero-meta a {
@@ -626,6 +614,16 @@ body.wa-page #duvidas {
 }
 
 /* janela de app */
+.wa-window,
+.wa-phone,
+.wa-mini,
+.wa-timeline,
+.wa-art-panel {
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
 .wa-window {
   display: flex;
   flex-direction: column;
@@ -1101,9 +1099,14 @@ body.wa-page #duvidas {
 
 .wa-proof-title {
   margin-bottom: 20px;
-  color: var(--wa-fg-2);
-  font-size: 13px;
+  color: var(--wa-fg-3);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-ls);
+  line-height: var(--type-label-lh);
   text-align: center;
+  text-transform: uppercase;
 }
 
 .wa-proof-grid {
@@ -1165,17 +1168,18 @@ body.wa-page #duvidas {
 
 .wa-alt-copy h2 {
   margin: 0;
-  font-size: clamp(26px, 2.3vw, 33px);
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: -0.03em;
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  line-height: var(--type-heading-lh);
+  letter-spacing: var(--type-heading-ls);
 }
 
 .wa-alt-copy .wa-alt-lead {
   margin-top: 10px;
-  color: var(--wa-fg-2);
-  font-size: clamp(17px, 1.55vw, 21px);
-  line-height: 1.5;
+  color: var(--wa-fg-3);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
 }
 
 .wa-alt-copy .wa-link {
@@ -1556,23 +1560,27 @@ body.wa-page #duvidas {
 
 .wa-feature-label {
   color: var(--wa-fg-3);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-ls);
+  line-height: var(--type-label-lh);
   text-transform: uppercase;
 }
 
 .wa-feature h3 {
   margin: 0 0 8px;
-  font-size: clamp(18px, 1.5vw, 21px);
-  line-height: 1.25;
+  font-size: var(--type-card-title-size);
+  font-weight: var(--type-card-title-weight);
+  line-height: var(--type-card-title-lh);
+  letter-spacing: var(--type-card-title-ls);
 }
 
 .wa-feature p {
   max-width: 340px;
-  color: var(--wa-fg-2);
-  font-size: 14px;
-  line-height: 1.55;
+  color: var(--wa-fg-3);
+  font-size: var(--type-card-text-size);
+  line-height: var(--type-card-text-lh);
 }
 
 .wa-feature .wa-link {
@@ -1606,8 +1614,10 @@ body.wa-page #duvidas {
 
 .wa-frontier-head h2 {
   margin: 0;
-  font-size: clamp(26px, 2.6vw, 36px);
-  line-height: 1.1;
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  line-height: var(--type-heading-lh);
+  letter-spacing: var(--type-heading-ls);
 }
 
 .wa-frontier-grid {
@@ -1626,13 +1636,16 @@ body.wa-page #duvidas {
 
 .wa-frontier-card h3 {
   margin: 0 0 6px;
-  font-size: clamp(18px, 1.5vw, 21px);
+  font-size: var(--type-card-title-size);
+  font-weight: var(--type-card-title-weight);
+  line-height: var(--type-card-title-lh);
+  letter-spacing: var(--type-card-title-ls);
 }
 
 .wa-frontier-card > p {
-  color: var(--wa-fg-2);
-  font-size: 14px;
-  line-height: 1.5;
+  color: var(--wa-fg-3);
+  font-size: var(--type-card-text-size);
+  line-height: var(--type-card-text-lh);
 }
 
 .wa-frontier-card .wa-link {
@@ -1836,14 +1849,17 @@ body.wa-page #duvidas {
 
 .wa-plan h3 {
   margin: 0;
-  font-size: 21px;
+  font-size: var(--type-card-title-size);
+  font-weight: var(--type-card-title-weight);
+  line-height: var(--type-card-title-lh);
+  letter-spacing: var(--type-card-title-ls);
 }
 
 .wa-plan-for {
   margin-top: 4px;
-  color: var(--wa-fg-2);
-  font-size: 13px;
-  line-height: 1.5;
+  color: var(--wa-fg-3);
+  font-size: var(--type-card-text-size);
+  line-height: var(--type-card-text-lh);
 }
 
 .wa-plan-price {
@@ -1854,20 +1870,21 @@ body.wa-page #duvidas {
 }
 
 .wa-plan-price strong {
-  font-size: clamp(32px, 3vw, 40px);
-  font-weight: 550;
-  letter-spacing: -0.04em;
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-ls);
+  line-height: 1;
 }
 
 .wa-plan-price span {
   color: var(--wa-fg-3);
-  font-size: 13px;
+  font-size: var(--type-meta-size);
 }
 
 .wa-plan-meta {
   margin-top: 4px;
   color: var(--wa-fg-3);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .wa-plan-impl {
@@ -1884,7 +1901,7 @@ body.wa-page #duvidas {
   padding: 6px 0;
   border-bottom: 1px solid var(--wa-line);
   color: var(--wa-fg-2);
-  font-size: 11.5px;
+  font-size: 13px;
 }
 
 .wa-plan-impl dd {
@@ -1899,18 +1916,18 @@ body.wa-page #duvidas {
 
 /* Premium: cartao grafite com os pixels animados da landing atual (landing-pixels.js) */
 .wa-plan--px {
-  --wa-fg: #ffffff;
-  --wa-fg-2: #e3e3e3;
-  --wa-fg-3: #b3b3b3;
-  --wa-line: #272727;
-  --wa-line-strong: #4d4d4d;
-  --wa-accent: #5fcf8a;
-  --wa-accent-line: #1f5c3a;
+  --wa-fg: var(--c-dark-text);
+  --wa-fg-2: var(--c-dark-text-2);
+  --wa-fg-3: var(--c-dark-text-3);
+  --wa-line: var(--c-dark-border);
+  --wa-line-strong: var(--c-dark-border-strong);
+  --wa-accent: var(--c-dark-accent);
+  --wa-accent-line: var(--c-dark-accent-line);
   position: relative;
   isolation: isolate;
   overflow: hidden;
   border-color: transparent;
-  background: #0d0d0d;
+  background: var(--c-dark-surface);
   color: var(--wa-fg);
 }
 
@@ -1922,11 +1939,11 @@ body.wa-page #duvidas {
 .wa-plan--px .wa-btn {
   border-color: transparent;
   background: var(--wa-accent);
-  color: #0d0d0d;
+  color: var(--c-dark-surface);
 }
 
 .wa-plan--px .wa-btn:hover {
-  background: #86efac;
+  background: var(--c-dark-accent-hover);
 }
 
 .wa-plan--px .wa-badge {
@@ -1949,10 +1966,10 @@ body.wa-page #duvidas {
 
 @media (prefers-color-scheme: dark) {
   .wa-plan--px {
-    border-color: #272727;
+    border-color: var(--c-dark-border);
     background:
       radial-gradient(130% 70% at 50% 0%, rgba(95, 207, 138, 0.06), transparent 62%),
-      linear-gradient(180deg, #1a1a1a 0%, #141414 55%, #101010 100%);
+      linear-gradient(180deg, #1a1a1a 0%, var(--c-dark-surface-2) 55%, #101010 100%);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 60px -32px rgba(0, 0, 0, 0.6);
   }
 }
@@ -1968,7 +1985,7 @@ body.wa-page #duvidas {
   display: flex;
   gap: 7px;
   color: var(--wa-fg-2);
-  font-size: 12px;
+  font-size: var(--type-meta-size);
   line-height: 1.45;
 }
 
@@ -1986,9 +2003,9 @@ body.wa-page #duvidas {
   margin-top: 20px;
   padding-top: 18px;
   border-top: 1px solid var(--wa-line);
-  color: var(--wa-fg-2);
-  font-size: 12px;
-  line-height: 1.5;
+  color: var(--wa-fg-3);
+  font-size: var(--type-meta-size);
+  line-height: var(--type-meta-lh);
 }
 
 .wa-plan-notes li {
@@ -2046,7 +2063,8 @@ body.wa-page #duvidas {
   width: 100%;
   min-width: 720px;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--type-meta-size);
+  line-height: 1.5;
 }
 
 .wa-table th,
@@ -2059,9 +2077,11 @@ body.wa-page #duvidas {
 
 .wa-table thead th {
   color: var(--wa-fg-3);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-ls);
+  line-height: var(--type-label-lh);
   text-transform: uppercase;
 }
 
@@ -2098,9 +2118,9 @@ body.wa-page #duvidas {
 }
 
 .wa-channel p {
-  color: var(--wa-fg-2);
-  font-size: 13px;
-  line-height: 1.55;
+  color: var(--wa-fg-3);
+  font-size: var(--type-card-text-size);
+  line-height: var(--type-card-text-lh);
 }
 
 .wa-channel .wa-note {
@@ -2110,7 +2130,7 @@ body.wa-page #duvidas {
   padding-top: 10px;
   border-top: 1px solid var(--wa-line);
   color: var(--wa-fg-3);
-  font-size: 11.5px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -2127,9 +2147,9 @@ body.wa-page #duvidas {
 
 .wa-addon p {
   max-width: 760px;
-  color: var(--wa-fg-2);
-  font-size: 13px;
-  line-height: 1.55;
+  color: var(--wa-fg-3);
+  font-size: var(--type-card-text-size);
+  line-height: var(--type-card-text-lh);
 }
 
 .wa-addon .wa-table-wrap {
@@ -2171,8 +2191,10 @@ body.wa-page #duvidas {
   justify-content: space-between;
   gap: 16px;
   padding: 16px 0;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: var(--type-card-title-size);
+  font-weight: var(--type-card-title-weight);
+  line-height: var(--type-card-title-lh);
+  letter-spacing: var(--type-card-title-ls);
   cursor: pointer;
   list-style: none;
 }
@@ -2193,9 +2215,10 @@ body.wa-page #duvidas {
 
 .wa-faq details p {
   padding: 0 0 16px;
-  color: var(--wa-fg-2);
-  font-size: 13.5px;
-  line-height: 1.6;
+  color: var(--wa-fg);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
 }
 
 .wa-faq-more {
@@ -2219,8 +2242,10 @@ body.wa-page #duvidas {
 
 .wa-cards-head h2 {
   margin: 0;
-  font-size: clamp(24px, 2.4vw, 32px);
-  line-height: 1.1;
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  line-height: var(--type-heading-lh);
+  letter-spacing: var(--type-heading-ls);
 }
 
 .wa-card-grid {
@@ -2244,14 +2269,15 @@ body.wa-page #duvidas {
 
 .wa-card-date {
   color: var(--wa-fg-3);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 
 .wa-card-title {
   margin-top: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
+  font-size: var(--type-card-title-size);
+  font-weight: var(--type-card-title-weight);
+  line-height: var(--type-card-title-lh);
+  letter-spacing: var(--type-card-title-ls);
 }
 
 .wa-card-meta {
@@ -2261,7 +2287,7 @@ body.wa-page #duvidas {
   margin-top: auto;
   padding-top: 14px;
   color: var(--wa-fg-3);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .wa-card-avatar {
@@ -2324,8 +2350,10 @@ body.wa-page #duvidas {
 
 .wa-research-copy h2 {
   margin: 0;
-  font-size: clamp(24px, 2.4vw, 34px);
-  line-height: 1.18;
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  line-height: var(--type-heading-lh);
+  letter-spacing: var(--type-heading-ls);
 }
 
 .wa-research-copy .wa-link {
@@ -2416,16 +2444,19 @@ body.wa-page #duvidas {
 .wa-cta h2 {
   max-width: 900px;
   margin: 0 auto;
-  font-size: clamp(40px, 5.2vw, 72px);
-  line-height: 1.05;
-  letter-spacing: -0.045em;
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: var(--type-title-lh);
+  letter-spacing: var(--type-title-ls);
 }
 
 .wa-cta p {
   max-width: 560px;
   margin: 18px auto 0;
-  color: var(--wa-fg-2);
-  font-size: clamp(15px, 1.4vw, 18px);
+  color: var(--wa-fg-3);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
 }
 
 .wa-cta-actions {
@@ -2439,11 +2470,49 @@ body.wa-page #duvidas {
 .wa-cta-meta {
   margin-top: 18px;
   color: var(--wa-fg-3);
-  font-size: 12px;
+  font-size: var(--type-meta-size);
+  line-height: var(--type-meta-lh);
 }
 
 .wa-cta-meta a {
   color: var(--wa-accent);
+}
+
+/* ------------------------------------------------------------------ tipografia no celular */
+@media (max-width: 719px) {
+  .wa-hero-title {
+    font-size: clamp(38px, 10.5vw, 48px);
+  }
+  .wa-hero-lead {
+    font-size: 17px;
+  }
+  .wa-hero-meta {
+    gap: 6px 12px;
+  }
+  .wa-hero-meta span[aria-hidden="true"] {
+    display: none;
+  }
+  .wa-section-title {
+    font-size: clamp(30px, 8vw, 36px);
+  }
+  .wa-alt-copy h2,
+  .wa-frontier-head h2,
+  .wa-cards-head h2,
+  .wa-research-copy h2 {
+    font-size: 24px;
+  }
+  .wa-cta h2 {
+    font-size: clamp(30px, 8vw, 36px);
+  }
+  .wa-faq summary {
+    font-size: 17px;
+  }
+  .wa-faq details p {
+    font-size: 17px;
+  }
+  .wa-plan-price strong {
+    font-size: 32px;
+  }
 }
 
 /* ------------------------------------------------------------------ rodape */

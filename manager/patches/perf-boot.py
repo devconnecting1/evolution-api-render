@@ -39,16 +39,17 @@ CACHE_VERSION = '61'
 BOOT_VERSION = '1'
 FONT_VERSION = '1'
 GEIST_VERSION = '3'
-GEIST_PAGES = ('404.html', 'acesso/index.html', 'observability/index.html')
-# index.html is handled by patch_index; these are the other pages that preload the font.
-FONT_PAGES = (
+# index.html is handled by patch_index; these pages link geist.css and/or preload the font.
+GEIST_PAGES = (
     '404.html',
     'acesso/index.html',
     'observability/index.html',
     'landing/index.html',
+    'landing/novidades.html',
     'landing/seguranca.html',
     'landing/privacidade.html',
     'landing/termos.html',
+    'docs/index.html',
 )
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 BOOT_TAG = '<link rel="stylesheet" href="/assets/boot.css?v=' + BOOT_VERSION + '" />'
@@ -136,6 +137,7 @@ def patch_index(html):
 
 
 def patch_page(html, name):
+    html = patch_font_preload(html, name)
     if '/assets/geist.css' not in html:
         return html
     return bump_ref(html, '/assets/geist.css', GEIST_VERSION, name + ' geist.css')

@@ -1,0 +1,220 @@
+/*
+ * WhatsAI: tokens globais das paginas publicas (landing, /docs, /seguranca, /termos e /privacidade).
+ *
+ * Fonte unica de cor e tipografia. Os componentes continuam com os nomes --d-* (documentacao), --wa-* (landing) e
+ * --sh-* (cabecalho), mas passam a apontar para os tokens --c-* e --type-* daqui. Alterar um valor aqui muda as
+ * paginas que consomem o token, sem repetir hex em cada arquivo.
+ *
+ * Tema: claro por padrao; escuro por prefers-color-scheme e por html[data-theme-mode="dark"] (docs.js). O verde e o
+ * unico accent cromatico; ambar e atencao, vermelho e erro. O painel administrativo continua com os tokens --m-*
+ * proprios; migrar o painel e uma mudanca separada.
+ *
+ * Tipografia: Geist local em woff2 (/assets/fonts, carregada por /assets/geist.css), pesos 100 a 900. A escala abaixo
+ * e a mesma do /docs: titulo de pagina 48-64 px peso 300, titulo de secao 32-42 px peso 300, subtitulo 28 px peso 500,
+ * corpo 18 px, apoio 15 px e rotulo 12 px. A landing usa os mesmos papeis; componentes densos (tabelas, planos e
+ * mockups) podem manter tamanhos menores, documentados no README do PR.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Cores da pagina */
+  --c-bg: #ffffff;
+  --c-bg-soft: #fafafa;
+  --c-bg-muted: #f0f0f0;
+  --c-border: #e3e3e3;
+  --c-border-strong: #c7c7c7;
+  --c-text: #0d0d0d;
+  --c-text-2: #4d4d4d;
+  --c-text-3: #6b6b6b;
+  --c-text-4: #8f8f8f;
+  --c-accent: #0e7a4d;
+  --c-accent-strong: #0b5c3a;
+  --c-accent-soft: #e9f5ee;
+  --c-accent-soft-2: #d7ecdf;
+  --c-accent-border: #9fceb5;
+  --c-accent-glow: rgba(14, 122, 77, 0.1);
+  --c-accent-glow-2: rgba(14, 122, 77, 0.16);
+  --c-focus: #0e7a4d;
+  --c-selection: #d7ecdf;
+  --c-overlay: rgba(0, 0, 0, 0.42);
+  --c-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --c-btn-bg: #0d0d0d;
+  --c-btn-text: #ffffff;
+  --c-btn-hover: #0e7a4d;
+
+  /* Codigo e tabelas */
+  --c-code-bg: #fafafa;
+  --c-code-head: #ffffff;
+  --c-code-border: #e3e3e3;
+  --c-code-text: #272727;
+  --c-code-muted: #6b6b6b;
+  --c-inline-bg: #fafafa;
+  --c-inline-text: #0d0d0d;
+  --c-table-line: #e2e2e2;
+
+  /* Avisos com significado */
+  --c-note-bg: #e9f5ee;
+  --c-note-border: #1a9e5c;
+  --c-note-text: #0b3d26;
+  --c-warn-bg: #fdf0d5;
+  --c-warn-border: #d97706;
+  --c-warn-text: #5a3a00;
+  --c-bad-bg: #fde2e1;
+  --c-bad-border: #b42318;
+  --c-bad-text: #5a1210;
+  --c-ok: #0e7a4d;
+  --c-ok-bg: #e9f5ee;
+
+  /* Superficie escura fixa (cartao Premium, em qualquer tema) */
+  --c-dark-surface: #0d0d0d;
+  --c-dark-surface-2: #141414;
+  --c-dark-text: #ffffff;
+  --c-dark-text-2: #e3e3e3;
+  --c-dark-text-3: #b3b3b3;
+  --c-dark-border: #272727;
+  --c-dark-border-strong: #4d4d4d;
+  --c-dark-accent: #5fcf8a;
+  --c-dark-accent-line: #1f5c3a;
+  --c-dark-accent-hover: #86efac;
+
+  /* Tipografia: papeis iguais aos do /docs */
+  --font-sans: "Geist", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --type-display-size: clamp(48px, 5vw, 64px);
+  --type-display-weight: 300;
+  --type-display-lh: 1.05;
+  --type-display-ls: -0.025em;
+  --type-title-size: clamp(32px, 3.3vw, 42px);
+  --type-title-weight: 300;
+  --type-title-lh: 1.05;
+  --type-title-ls: -0.02em;
+  --type-heading-size: 28px;
+  --type-heading-weight: 500;
+  --type-heading-lh: 1.375;
+  --type-heading-ls: 0.006em;
+  --type-lead-size: clamp(22px, 2.2vw, 28px);
+  --type-lead-weight: 400;
+  --type-lead-lh: 1.08;
+  --type-lead-ls: -0.02em;
+  --type-body-size: 18px;
+  --type-body-weight: 400;
+  --type-body-lh: 1.5;
+  --type-body-ls: 0.01em;
+  --type-small-size: 15px;
+  --type-small-lh: 1.5;
+  --type-label-size: 12px;
+  --type-label-weight: 500;
+  --type-label-lh: 1.4;
+  --type-label-ls: 0.08em;
+  --type-meta-size: 14px;
+  --type-meta-lh: 1.5;
+  --type-card-title-size: 18px;
+  --type-card-title-weight: 500;
+  --type-card-title-lh: 1.3;
+  --type-card-title-ls: -0.01em;
+  --type-card-text-size: 15px;
+  --type-card-text-lh: 1.5;
+  --type-button-size: 14px;
+  --type-button-weight: 500;
+  --type-fact-title-size: 16px;
+  --type-fact-title-weight: 600;
+  --type-fact-title-lh: 1.35;
+  --type-table-size: 16px;
+  --type-table-head-size: 14px;
+  --type-code-size: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme-mode="light"]) {
+    color-scheme: dark;
+    --c-bg: #0d0d0d;
+    --c-bg-soft: #141414;
+    --c-bg-muted: #1f1f1f;
+    --c-border: #272727;
+    --c-border-strong: #4d4d4d;
+    --c-text: #ffffff;
+    --c-text-2: #e3e3e3;
+    --c-text-3: #b3b3b3;
+    --c-text-4: #8f8f8f;
+    --c-accent: #5fcf8a;
+    --c-accent-strong: #86efac;
+    --c-accent-soft: #12241a;
+    --c-accent-soft-2: #0d1f15;
+    --c-accent-border: #1f5c3a;
+    --c-accent-glow: rgba(95, 207, 138, 0.14);
+    --c-accent-glow-2: rgba(95, 207, 138, 0.18);
+    --c-focus: #86efac;
+    --c-selection: #1f5c3a;
+    --c-overlay: rgba(0, 0, 0, 0.6);
+    --c-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --c-btn-bg: #ffffff;
+    --c-btn-text: #0d0d0d;
+    --c-btn-hover: #86efac;
+    --c-code-bg: #141414;
+    --c-code-head: #0d0d0d;
+    --c-code-border: #272727;
+    --c-code-text: #eeeeee;
+    --c-code-muted: #b3b3b3;
+    --c-inline-bg: #272727;
+    --c-inline-text: #ffffff;
+    --c-table-line: #4d4d4d;
+    --c-note-bg: #12241a;
+    --c-note-border: #1f5c3a;
+    --c-note-text: #c9f7d9;
+    --c-warn-bg: #2a1f0c;
+    --c-warn-border: #8a5a12;
+    --c-warn-text: #fcd38d;
+    --c-bad-bg: #2d1414;
+    --c-bad-border: #7f2a2a;
+    --c-bad-text: #fca5a5;
+    --c-ok: #5fcf8a;
+    --c-ok-bg: #12241a;
+  }
+}
+
+:root[data-theme-mode="dark"] {
+  color-scheme: dark;
+  --c-bg: #0d0d0d;
+  --c-bg-soft: #141414;
+  --c-bg-muted: #1f1f1f;
+  --c-border: #272727;
+  --c-border-strong: #4d4d4d;
+  --c-text: #ffffff;
+  --c-text-2: #e3e3e3;
+  --c-text-3: #b3b3b3;
+  --c-text-4: #8f8f8f;
+  --c-accent: #5fcf8a;
+  --c-accent-strong: #86efac;
+  --c-accent-soft: #12241a;
+  --c-accent-soft-2: #0d1f15;
+  --c-accent-border: #1f5c3a;
+  --c-accent-glow: rgba(95, 207, 138, 0.14);
+  --c-accent-glow-2: rgba(95, 207, 138, 0.18);
+  --c-focus: #86efac;
+  --c-selection: #1f5c3a;
+  --c-overlay: rgba(0, 0, 0, 0.6);
+  --c-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --c-btn-bg: #ffffff;
+  --c-btn-text: #0d0d0d;
+  --c-btn-hover: #86efac;
+  --c-code-bg: #141414;
+  --c-code-head: #0d0d0d;
+  --c-code-border: #272727;
+  --c-code-text: #eeeeee;
+  --c-code-muted: #b3b3b3;
+  --c-inline-bg: #272727;
+  --c-inline-text: #ffffff;
+  --c-table-line: #4d4d4d;
+  --c-note-bg: #12241a;
+  --c-note-border: #1f5c3a;
+  --c-note-text: #c9f7d9;
+  --c-warn-bg: #2a1f0c;
+  --c-warn-border: #8a5a12;
+  --c-warn-text: #fcd38d;
+  --c-bad-bg: #2d1414;
+  --c-bad-border: #7f2a2a;
+  --c-bad-text: #fca5a5;
+  --c-ok: #5fcf8a;
+  --c-ok-bg: #12241a;
+}
