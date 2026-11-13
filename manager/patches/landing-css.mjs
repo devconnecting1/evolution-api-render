@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 /**
- * Public site (/, /seguranca, /privacidade and /termos): the five stylesheets in one minified file, so the browser waits for one request
+ * Public site home (/): the five stylesheets in one minified file, so the browser waits for one request
  * instead of five before the first paint (Lighthouse "render-blocking requests" on mobile).
  *
  * Sources stay the files people edit: assets/geist.css, landing.css, landing-theme.css, landing-plus.css and
- * security.css. This script writes assets/landing.bundle.css (minified with esbuild) and points the <link> of each
- * page at it with ?v=<content hash>, so a changed source can never be served from an old cache.
+ * security.css. This script writes assets/landing.bundle.css (minified with esbuild) and points the <link> of the
+ * home at it with ?v=<content hash>, so a changed source can never be served from an old cache.
+ *
+ * /seguranca, /termos and /privacidade moved to the documentation shell (docs.css + landing/legal.css), so they
+ * are no longer part of this bundle.
  *
  * Usage (from the repository root):
- *   node manager/patches/landing-css.mjs           # rebuild the bundle and update the pages
- *   node manager/patches/landing-css.mjs --check   # exit 1 if the bundle or a page is out of date (CI, unit test)
+ *   node manager/patches/landing-css.mjs           # rebuild the bundle and update the page
+ *   node manager/patches/landing-css.mjs --check   # exit 1 if the bundle or the page is out of date (CI, unit test)
  * After editing any of the sources, run it without --check and commit the result.
  */
 import { createHash } from 'node:crypto';
@@ -21,7 +24,7 @@ import { transformSync } from 'esbuild';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 const SOURCES = ['geist.css', 'landing.css', 'landing-theme.css', 'landing-plus.css', 'security.css'];
-const PAGES = ['landing/index.html', 'landing/seguranca.html', 'landing/privacidade.html', 'landing/termos.html'];
+const PAGES = ['landing/index.html'];
 const BUNDLE = 'assets/landing.bundle.css';
 const LINK_RE = /<link rel="stylesheet" href="\/assets\/landing\.bundle\.css\?v=[0-9a-f]+" \/>/;
 const SOURCE_LINK_RE = /^[ \t]*<link rel="stylesheet" href="\/assets\/(?:geist|landing|landing-theme|landing-plus|security)\.css\?v=\d+" \/>\n/gm;
