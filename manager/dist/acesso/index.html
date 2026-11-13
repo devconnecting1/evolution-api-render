@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#faf9f4" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#10100e" media="(prefers-color-scheme: dark)" />
     <meta name="robots" content="noindex" />
     <!-- Entrada do cliente ("Acesso do cliente"): só o código de acesso, que o administrador cria no painel. -->
@@ -17,178 +17,33 @@
     <meta name="apple-mobile-web-app-title" content="WhatsAI" />
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=3" />
-    <style>
-      :root {
-        --bg: #f5f5f5;
-        --surface: #ffffff;
-        --text: #1a1a1a;
-        --text-2: #5e5e5e;
-        --line: #e0e0e0;
-        --line-strong: #cccccc;
-        --primary: #1a1a1a;
-        --on-primary: #ffffff;
-        --bad: #c0392b;
-        color-scheme: light;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #10100e;
-          --surface: #171714;
-          --text: #ffffe3;
-          --text-2: #b8b8a6;
-          --line: #2e2e29;
-          --line-strong: #606055;
-          --primary: #ffffe3;
-          --on-primary: #10100e;
-          --bad: #f87171;
-          color-scheme: dark;
-        }
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        min-height: 100dvh;
-        display: flex;
-        flex-direction: column;
-        background: var(--bg);
-        color: var(--text);
-        font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
-        font-size: 15px;
-        line-height: 1.5;
-      }
-      header {
-        padding: 20px 16px;
-        padding-top: max(20px, env(safe-area-inset-top));
-      }
-      .brand {
-        color: var(--text);
-        font-size: 18px;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-        text-decoration: none;
-      }
-      main {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-      }
-      .card {
-        width: 100%;
-        max-width: 400px;
-        padding: 28px 24px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: var(--surface);
-      }
-      h1 {
-        margin: 0 0 6px;
-        font-size: 22px;
-        font-weight: 500;
-        letter-spacing: -0.02em;
-      }
-      .lead {
-        margin: 0 0 20px;
-        color: var(--text-2);
-        font-size: 14px;
-      }
-      label {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 14px;
-        font-weight: 500;
-      }
-      input {
-        width: 100%;
-        min-height: 44px;
-        padding: 0 12px;
-        border: 1px solid var(--line-strong);
-        border-radius: 6px;
-        background: transparent;
-        color: var(--text);
-        font: inherit;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 14px;
-      }
-      button {
-        width: 100%;
-        min-height: 44px;
-        margin-top: 16px;
-        border: 0;
-        border-radius: 6px;
-        background: var(--primary);
-        color: var(--on-primary);
-        font: inherit;
-        font-weight: 500;
-        cursor: pointer;
-      }
-      button:disabled {
-        opacity: 0.6;
-        cursor: progress;
-      }
-      input:focus-visible,
-      button:focus-visible,
-      a:focus-visible {
-        outline: 2px solid var(--text);
-        outline-offset: 2px;
-      }
-      .error {
-        margin: 10px 0 0;
-        color: var(--bad);
-        font-size: 14px;
-      }
-      .error:empty {
-        display: none;
-      }
-      .help {
-        margin: 14px 0 0;
-        color: var(--text-2);
-        font-size: 13px;
-        text-align: center;
-      }
-      .stack {
-        width: 100%;
-        max-width: 400px;
-      }
-      footer {
-        padding: 16px;
-        padding-bottom: max(16px, env(safe-area-inset-bottom));
-        text-align: center;
-      }
-      footer {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 6px 18px;
-      }
-      footer a {
-        color: var(--text-2);
-        font-size: 13px;
-      }
-    </style>
+    <link rel="stylesheet" href="/assets/acesso.css?v=1" />
   </head>
   <body>
-    <header><a class="brand" href="/">WhatsAI</a></header>
-    <main>
-      <div class="stack">
+    <div class="bg" aria-hidden="true">
+      <span class="bg-grid bg-grid-tl"></span>
+      <span class="bg-grid bg-grid-br"></span>
+    </div>
+    <main class="entry">
       <section class="card" aria-labelledby="t">
+        <a class="brand" href="/">WhatsAI</a>
         <h1 id="t">Área do cliente</h1>
         <p class="lead" id="lead">Entre com o código de acesso que você recebeu.</p>
         <form id="f" novalidate>
           <label for="code">Código de acesso</label>
-          <input id="code" name="code" type="password" autocomplete="current-password" spellcheck="false" autocapitalize="off" required aria-describedby="err" />
+          <input id="code" name="code" type="password" autocomplete="current-password" spellcheck="false" autocapitalize="off" placeholder="Cole o seu código" required aria-describedby="err" />
           <p class="error" id="err" role="alert"></p>
-          <button id="go" type="submit">Entrar</button>
+          <button id="go" class="primary" type="submit">Entrar</button>
         </form>
         <p class="help">Não tem o código? Peça a quem configurou o seu atendimento.</p>
+        <a class="dev" href="/manager/login">Sou o desenvolvedor</a>
       </section>
-      </div>
     </main>
-    <footer><a href="/privacidade">Privacidade</a><a href="/termos">Termos</a><a href="/manager/login" id="admin">Entrar como administrador</a></footer>
+    <footer class="foot">
+      <a href="/privacidade">Privacidade</a>
+      <a href="/termos">Termos</a>
+      <a href="/manager/login" id="admin">Entrar como administrador</a>
+    </footer>
     <script>
       (function () {
         'use strict';
