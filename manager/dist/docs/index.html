@@ -499,8 +499,9 @@
                 <span class="copy-label">Copiar</span>
               </button>
             </div>
-            <pre><code>curl -X POST "$SERVER_URL/instance/create" \
-  -H "apikey: SUA_CHAVE" \
+            <pre><code># No seu shell: AUTH_HEADER="apikey: $WHATSAPP_API_KEY"
+curl -X POST "$SERVER_URL/instance/create" \
+  -H "$AUTH_HEADER" \
   -H "Content-Type: application/json" \
   -d '{
     "instanceName": "escritorio-silva",
@@ -600,8 +601,9 @@
                 <span class="copy-label">Copiar</span>
               </button>
             </div>
-            <pre><code>curl -X POST "$SERVER_URL/openai/settings/escritorio-silva" \
-  -H "apikey: SUA_CHAVE" -H "Content-Type: application/json" \
+            <pre><code># No seu shell: AUTH_HEADER="apikey: $WHATSAPP_API_KEY"
+curl -X POST "$SERVER_URL/openai/settings/escritorio-silva" \
+  -H "$AUTH_HEADER" -H "Content-Type: application/json" \
   -d '{
     "openaiCredsId": "&lt;OPENAI_CREDS_ID&gt;",
     "expire": 0,
@@ -1060,8 +1062,9 @@ Conversa: https://wa.me/55DDDNUMERO</code></pre>
                 <span class="copy-label">Copiar</span>
               </button>
             </div>
-            <pre><code>claude mcp add --transport http whatsai https://&lt;url-da-api&gt;/mcp \
-  --header "apikey: SUA_CHAVE"</code></pre>
+            <pre><code># No seu shell: AUTH_HEADER="apikey: $WHATSAPP_API_KEY"
+claude mcp add --transport http whatsai https://&lt;url-da-api&gt;/mcp \
+  --header "$AUTH_HEADER"</code></pre>
           </div>
 
           <h3 id="operacao-local">Rodando localmente</h3>
