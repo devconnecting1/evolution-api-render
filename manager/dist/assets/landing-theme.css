@@ -1,106 +1,215 @@
 /*
- * WhatsAI: tema da página inicial (/). Carregado por ÚLTIMO (depois de landing.css) pelo bundle montado em
- * manager/patches/landing-css.mjs; o manager/patches/theme.py também mantém este arquivo junto do theme.css do painel.
+ * WhatsAI: cores da página pública (/). Carregado por ÚLTIMO (depois de landing.css e
+ * segment.css) por manager/patches/theme.py. Escrito à mão: só redefine os tokens de landing.css e pinta as faixas.
  *
- * Este arquivo só redefine os tokens de landing.css para o modo escuro e faz os poucos ajustes de contraste que não
- * cabem em tokens. O modo claro usa os tokens verdes definidos em landing.css. A marca é sempre a mesma: verde
- * #0e7a4d no claro e #5fcf8a no escuro, sem roxo.
- *
- * Escuro: página #0c0f0c, faixas suaves #121612, cards #141914, tinta #eef3ec, texto secundário #c3ccc2, bordas
- * #293229 / #1f261f. Contraste AA conferido para texto pequeno nos fundos usados. As faixas escuras (integrações e
- * CTA) continuam em verde profundo nos dois modos; o chat do herói continua claro, como uma captura de tela do
- * produto.
+ * Paleta "Meu Tema Global" (a mesma do painel, theme.css): monocromática, Geist, raio 0,25rem, sem sombras.
+ * Claro: página #f5f5f5, seções alternadas #e9e9e9, cards #ffffff, tinta #1a1a1a, texto secundário #5e5e5e,
+ * bordas #e0e0e0 / #cccccc; o hero, o CTA final e as faixas do meio ("O painel por dentro", "O produto em números",
+ * "Sigilo") ficam em grafite #1a1a1a com destaque creme #ffffe3.
+ * Escuro (prefers-color-scheme: dark): página e cards #10100e, texto creme #ffffe3 / #999989, bordas #2e2e29 /
+ * #606055, primário creme com texto #10100e; faixas em #1a1a1a.
+ * Contraste AA verificado: texto pequeno >= 4.5:1 em todos os fundos, nos dois modos.
+ * Sem animação nova; os mockups do painel seguem os mesmos tokens e ficam no tema da página.
  */
 
+:root {
+  --canvas: #f5f5f5;
+  --mint: #e9e9e9;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --hover: #f5f5f5;
+  --selected: #e5e5e5;
+  --line: #e0e0e0;
+  --line-strong: #cccccc;
+  --text: #1a1a1a;
+  --text-2: #5e5e5e;
+  --text-3: #666666;
+  --ok: #2e8b57;
+  --primary: #1a1a1a;
+  --primary-hover: #333333;
+  --tint: #e9e9e9;
+  --tint-hover: #e0e0e0;
+  --tint-line: #cccccc;
+  --tint-text: #1a1a1a;
+  --deep: #1a1a1a;
+  --deep-2: #262626;
+  --on-deep: #ffffff;
+  --on-deep-2: #cccccc;
+  --lime: #ffffe3;
+  --lime-hover: #f0f0cc;
+  --warn: #c25e17;
+  --bad: #dc2626;
+  --shadow: none;
+  --r-ctl: 4px;
+  --r-inner: 4px;
+  --r-card: 8px;
+  letter-spacing: 0;
+}
+body {
+  background: var(--canvas);
+}
+.site-head {
+  background: rgba(245, 245, 245, 0.94);
+}
+html.menu-open .site-head {
+  background: var(--canvas);
+}
+.card,
+.plan,
+.bento-card,
+.mini-plan {
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------------------- seções alternadas */
+#como-funciona,
+#segmentos,
+#duvidas,
+#ia-equipe,
+#planos,
+#beneficios,
+#mensagem {
+  background: var(--mint);
+  --line: #d6d6d6;
+  --line-strong: #c4c4c4;
+}
+#segmentos .chip,
+.spot-in .chip {
+  background: var(--bg);
+}
+.spot-in {
+  background: var(--mint);
+}
+
+/* -------------------------------------------------------------------- faixas grafite no meio da página */
+#tour,
+#sigilo {
+  --text: #ffffff;
+  --text-2: var(--on-deep-2);
+  --text-3: #b3b3b3;
+  --line: rgba(255, 255, 255, 0.14);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --primary: var(--lime);
+  --tint-text: var(--lime);
+  position: relative;
+  isolation: isolate;
+  background: var(--deep);
+  color: var(--text);
+}
+:is(#tour, #sigilo) .h2 .soft {
+  color: var(--lime);
+}
+:is(#tour, #sigilo) :focus-visible {
+  outline-color: var(--lime);
+}
+/* cards and mockups inside the bands keep the light (page) tokens */
+:is(#tour .tour, #sigilo .card, #sigilo .card-white) {
+  --text: #1a1a1a;
+  --text-2: #5e5e5e;
+  --text-3: #666666;
+  --line: #e0e0e0;
+  --line-strong: #cccccc;
+  --primary: #1a1a1a;
+  --tint-text: #1a1a1a;
+  color: var(--text);
+}
+/* ------------------------------------------------------------------------------------------ modo escuro */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme-mode="light"]) {
+  :root {
     color-scheme: dark;
-    --bg: #0c0f0c;
-    --bg-soft: #121612;
-    --panel: #141914;
-    --panel-2: #181e18;
-    --text: #eef3ec;
-    --text-2: #c3ccc2;
-    --muted: #96a296;
-    --line: #293229;
-    --line-soft: #1f261f;
-    --hover: #1d241d;
-    --primary: #5fcf8a;
-    --primary-hover: #86efac;
-    --primary-text: #08130c;
-    --tint: #12261a;
-    --tint-text: #c9f7d9;
-    --lime: #c6f27c;
-    --band-bg: #071f15;
-    --band-bg-2: #0a2b1d;
-    --band-text: #e8f5ec;
-    --band-muted: #a9c7b6;
-    --band-line: rgba(255, 255, 255, 0.12);
-    --warn-bg: #2f2413;
-    --warn-text: #ffd9a3;
-    --warn-line: #4a3a1c;
-    --focus: #86efac;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 18px 40px rgba(0, 0, 0, 0.45);
+    --canvas: #10100e;
+    --mint: #171714;
+    --bg: #10100e;
+    --surface: #10100e;
+    --hover: #22221e;
+    --selected: #2c2c27;
+    --line: #2e2e29;
+    --line-strong: #606055;
+    --text: #ffffe3;
+    --text-2: #999989;
+    --text-3: #8c8c7d;
+    --primary: #ffffe3;
+    --primary-hover: #f0f0cc;
+    --tint: #22221e;
+    --tint-hover: #2c2c27;
+    --tint-line: #3a3a34;
+    --tint-text: #ffffe3;
+    --deep: #1a1a1a;
+    --deep-2: #262626;
+    --on-deep: #ffffe3;
+    --on-deep-2: #b8b8a6;
+    --ok: #4fbf7f;
+    --warn: #e8853a;
+    --bad: #f87171;
+    --shadow: none;
   }
-}
-
-:root[data-theme="dark"],
-:root[data-theme-mode="dark"] {
-  color-scheme: dark;
-  --bg: #0c0f0c;
-  --bg-soft: #121612;
-  --panel: #141914;
-  --panel-2: #181e18;
-  --text: #eef3ec;
-  --text-2: #c3ccc2;
-  --muted: #96a296;
-  --line: #293229;
-  --line-soft: #1f261f;
-  --hover: #1d241d;
-  --primary: #5fcf8a;
-  --primary-hover: #86efac;
-  --primary-text: #08130c;
-  --tint: #12261a;
-  --tint-text: #c9f7d9;
-  --lime: #c6f27c;
-  --band-bg: #071f15;
-  --band-bg-2: #0a2b1d;
-  --band-text: #e8f5ec;
-  --band-muted: #a9c7b6;
-  --band-line: rgba(255, 255, 255, 0.12);
-  --warn-bg: #2f2413;
-  --warn-text: #ffd9a3;
-  --warn-line: #4a3a1c;
-  --focus: #86efac;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 18px 40px rgba(0, 0, 0, 0.45);
-}
-
-/* No escuro, o brilho verde do herói e do CTA fica mais contido para não estourar o fundo. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme-mode="light"]) .hero {
-    background:
-      radial-gradient(58% 46% at 50% 0%, rgba(95, 207, 138, 0.09), transparent 72%),
-      var(--bg);
+  .site-head {
+    background: rgba(16, 16, 14, 0.92);
   }
-}
-
-:root[data-theme="dark"] .hero,
-:root[data-theme-mode="dark"] .hero {
-  background:
-    radial-gradient(58% 46% at 50% 0%, rgba(95, 207, 138, 0.09), transparent 72%),
-    var(--bg);
-}
-
-/* O selo "Recomendado" no plano em destaque usa o verde do modo, com tinta escura. */
-:root[data-theme="dark"] .plan-featured,
-:root[data-theme-mode="dark"] .plan-featured {
-  box-shadow: inset 0 0 0 1px var(--primary);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme-mode="light"]) .plan-featured {
-    box-shadow: inset 0 0 0 1px var(--primary);
+  #como-funciona,
+  #segmentos,
+  #duvidas,
+  #ia-equipe,
+  #planos,
+  #beneficios,
+  #mensagem {
+    --line: #2e2e29;
+    --line-strong: #3a3a34;
+  }
+  #tour,
+  #sigilo {
+    --text: #ffffe3;
+    --text-3: #a3a394;
+    border-block: 1px solid #2e2e29;
+  }
+  :is(#tour .tour, #sigilo .card, #sigilo .card-white) {
+    --text: #ffffe3;
+    --text-2: #999989;
+    --text-3: #8c8c7d;
+    --line: #2e2e29;
+    --line-strong: #606055;
+    --primary: #ffffe3;
+    --tint-text: #ffffe3;
+  }
+  /* cream fills carry dark ink (#10100e on #ffffe3 is 18:1) */
+  .btn-primary,
+  .ui-btn-primary,
+  .ui-unread,
+  .send,
+  .step-n,
+  .saved .mini-pill,
+  .flow-end .ico {
+    color: #10100e;
+  }
+  .card,
+  .plan,
+  .bento-card,
+  .mini-plan {
+    box-shadow: none;
+    border-color: var(--line);
+  }
+  .plan-featured,
+  .mini-plan.is-featured {
+    border-color: var(--primary);
+  }
+  .focus-ico,
+  .ob-alert {
+    background: #2e1d10;
+    border-color: #4a2f19;
+    color: #f3b98a;
+  }
+  .ob-alert .ico,
+  .focus-ico {
+    color: #f3b98a;
+  }
+  .mess-lines {
+    stroke: #606055;
+  }
+  .mess-boxes li {
+    border-color: #606055;
+  }
+  .hero.band .app,
+  .phone-in {
+    border-color: #2e2e29;
   }
 }
