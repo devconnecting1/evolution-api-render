@@ -154,21 +154,6 @@
         width: 100%;
         max-width: 400px;
       }
-      .note {
-        margin: 16px 4px 0;
-        color: var(--text-2);
-        font-size: 13px;
-        text-align: center;
-      }
-      .install[hidden] {
-        display: none;
-      }
-      .install {
-        margin-top: 10px;
-        background: transparent;
-        border: 1px solid var(--line-strong);
-        color: var(--text);
-      }
       footer {
         padding: 16px;
         padding-bottom: max(16px, env(safe-area-inset-bottom));
@@ -198,11 +183,9 @@
           <input id="code" name="code" type="password" autocomplete="current-password" spellcheck="false" autocapitalize="off" required aria-describedby="err" />
           <p class="error" id="err" role="alert"></p>
           <button id="go" type="submit">Entrar</button>
-          <button id="install" class="install" type="button" hidden>Instalar o app</button>
         </form>
         <p class="help">Não tem o código? Peça a quem configurou o seu atendimento.</p>
       </section>
-      <p class="note">Dá para instalar como app: no Chrome ou no Edge, "Instalar app"; no iPhone, Compartilhar e depois "Adicionar à Tela de Início".</p>
       </div>
     </main>
     <footer><a href="/privacidade">Privacidade</a><a href="/termos">Termos</a><a href="/manager/login" id="admin">Entrar como administrador</a></footer>
@@ -268,11 +251,6 @@
         });
 
         document.getElementById('admin').addEventListener('click', function () { del('wa-portal'); });
-
-        var deferred = null;
-        var install = document.getElementById('install');
-        window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; install.hidden = false; });
-        install.addEventListener('click', function () { if (deferred) { deferred.prompt(); deferred = null; install.hidden = true; } });
       })();
     </script>
   </body>

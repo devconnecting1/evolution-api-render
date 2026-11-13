@@ -3,7 +3,7 @@
     {
       "src": "^/(.*)$",
       "headers": {
-        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'sha256-+xWZOh0szMj2JMWPdd7EFBDQXUuR64ttRHh9UuA0JbM=' 'sha256-QKF0/aQ62VwBc3Ejx4ThT2d9XYfPxvcNcl23m2joxSE=' 'sha256-XfpHiX5VO9sICpvg53dgHqZtl+wnlMZEoPhgONLvM70='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'sha256-+xWZOh0szMj2JMWPdd7EFBDQXUuR64ttRHh9UuA0JbM=' 'sha256-iGrup/2m1U3uk2eIbfgzL1L/XwIFmkFASjS1yq/yg+I=' 'sha256-XfpHiX5VO9sICpvg53dgHqZtl+wnlMZEoPhgONLvM70='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests",
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
         "Referrer-Policy": "strict-origin-when-cross-origin",

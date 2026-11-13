@@ -351,7 +351,7 @@
         ? [
           'Deixe o celular deste número ligado e com internet de vez em quando; ele não precisa ficar aberto no WhatsApp.',
           'Abra o WhatsApp no celular pelo menos uma vez a cada 14 dias: depois disso o próprio WhatsApp desconecta os aparelhos conectados.',
-          'Não desconecte o aparelho "Evolution API" (navegador Chrome) em WhatsApp > Aparelhos conectados: é por ele que a IA responde.',
+          'Não desconecte o aparelho do WhatsAI (navegador Chrome) em WhatsApp > Aparelhos conectados: é por ele que a IA responde.',
         ]
         : [
           'Clique em "Mostrar QR code" e, no celular deste número, abra WhatsApp > Aparelhos conectados > Conectar um aparelho.',
@@ -526,14 +526,13 @@
     if (freshKey) {
       var message = 'Olá! Este é o seu acesso ao painel do WhatsAI.\n\n' +
         '1. Abra: ' + link + '\n' +
-        '2. Entre com o código: ' + freshKey + '\n' +
-        '3. Para usar como app: no computador ou no Android, toque em "Instalar app"; no iPhone, Compartilhar > "Adicionar à Tela de Início".\n\n' +
+        '2. Entre com o código: ' + freshKey + '\n\n' +
         'Guarde o código como uma senha e não compartilhe.';
       card.appendChild(h('div', { class: 'wa-portal-fresh', role: 'alert' }, [
         h('strong', { text: 'Código do cliente (aparece só agora):' }),
         h('code', { class: 'wa-portal-code', text: freshKey }),
         h('div', { class: 'wa-portal-fresh-actions' }, [copyButton('Copiar mensagem para o cliente', message), copyButton('Copiar só o código', freshKey)]),
-        h('p', { class: 'wa-portal-hint', text: 'A mensagem já traz o link, o código e como instalar o app: cole no WhatsApp ou no e-mail do cliente. O código anterior deixou de funcionar.' }),
+        h('p', { class: 'wa-portal-hint', text: 'A mensagem já traz o link e o código: cole no WhatsApp ou no e-mail do cliente. O código anterior deixou de funcionar.' }),
       ]));
     }
 
