@@ -207,11 +207,7 @@
           <p class="side-empty" data-side-empty hidden>Nenhuma seção corresponde à busca.</p>
         </nav>
         <div class="side-foot">
-          <a class="side-gh" href="https://github.com/devconnecting1/evolution-api-render/blob/main/README-WHATSAI.md" target="_blank" rel="noopener">
-            <svg class="ico" aria-hidden="true"><use href="#i-external" /></svg>
-            Manual completo no GitHub
-          </a>
-          <p>O manual operacional é a fonte de verdade. Esta página resume o conteúdo público do produto.</p>
+          <p>Esta página resume o conteúdo público do produto. Use a busca ou a navegação para encontrar uma seção.</p>
         </div>
       </aside>
 
@@ -221,10 +217,7 @@
           <p class="hero-lead">Atendimento com IA no WhatsApp, do primeiro contato à operação.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="#primeiros-passos">Começar pelos primeiros passos</a>
-            <a class="btn btn-quiet" href="https://github.com/devconnecting1/evolution-api-render/blob/main/README-WHATSAI.md" target="_blank" rel="noopener">
-              Manual completo no GitHub
-              <svg class="ico" aria-hidden="true"><use href="#i-external" /></svg>
-            </a>
+            <a class="btn btn-quiet" href="#perguntas-frequentes">Tirar uma dúvida</a>
           </div>
           <p class="hero-meta">
             <span class="status-dot" aria-hidden="true"></span>
@@ -365,8 +358,7 @@
           <div class="callout callout-note">
             <svg class="callout-ico" aria-hidden="true"><use href="#i-info" /></svg>
             <div>
-              <p><strong>Fonte de verdade.</strong> Esta página resume o manual operacional. Em caso de diferença, vale o
-              <a href="https://github.com/devconnecting1/evolution-api-render/blob/main/README-WHATSAI.md" target="_blank" rel="noopener">README-WHATSAI.md no GitHub</a>.</p>
+              <p><strong>Fonte de verdade.</strong> Esta página resume o manual operacional e é a referência pública do produto.</p>
             </div>
           </div>
         </section>
@@ -1039,15 +1031,15 @@ Conversa: https://wa.me/55DDDNUMERO</code></pre>
 
           <h3 id="operacao-deploy">Fluxo de deploy</h3>
           <ol class="steps steps-compact">
-            <li><span class="step-n" aria-hidden="true">1</span><div><h4>Branch e PR</h4><p>Cada tarefa em uma branch própria, com PR e as checagens do GitHub verdes antes do squash no <code>main</code>.</p></div></li>
+            <li><span class="step-n" aria-hidden="true">1</span><div><h4>Branch e PR</h4><p>Cada tarefa em uma branch própria, com PR e as checagens automáticas verdes antes do squash no <code>main</code>.</p></div></li>
             <li><span class="step-n" aria-hidden="true">2</span><div><h4>API no Render</h4><p>Mudanças em <code>src/</code>, <code>prisma/</code>, <code>Dockerfile</code> ou <code>render.yaml</code> disparam o deploy automático. A API fica cerca de 4 minutos fora e reconecta as instâncias: faça fora do horário comercial.</p></div></li>
             <li><span class="step-n" aria-hidden="true">3</span><div><h4>Site e painel na Vercel</h4><p>O workflow <strong>Deploy Manager</strong> publica <code>manager/dist</code> a cada push no <code>main</code> que muda esses arquivos. Mudança só estática leva <code>[skip render]</code> no título do squash para não reiniciar a API.</p></div></li>
-            <li><span class="step-n" aria-hidden="true">4</span><div><h4>Confira depois do deploy</h4><p>Veja o deploy <code>live</code> no Render e o estado da instância; o esperado é <code>open</code>. As checagens do GitHub cobrem lint, formatação, build, tipos, unitários, integração, patches do painel, Docker e segurança.</p></div></li>
+            <li><span class="step-n" aria-hidden="true">4</span><div><h4>Confira depois do deploy</h4><p>Veja o deploy <code>live</code> no Render e o estado da instância; o esperado é <code>open</code>. As checagens automáticas cobrem lint, formatação, build, tipos, unitários, integração, patches do painel, Docker e segurança.</p></div></li>
           </ol>
 
           <h3 id="operacao-monitoramento">Monitoramento e backups</h3>
           <ul class="doc-list">
-            <li>A <strong>Observabilidade</strong> reúne Neon, Render, Vercel, GitHub Actions, OpenAI, WhatsApp, Plano e uso e bancos próprios, com cache de 60 s e botão de atualizar.</li>
+            <li>A <strong>Observabilidade</strong> reúne Neon, Render, Vercel, OpenAI, WhatsApp, Plano e uso e bancos próprios, com cache de 60 s e botão de atualizar.</li>
             <li>Avisos ao administrador pelo WhatsApp: chave OpenAI inválida, sem crédito ou sem o modelo, e instância desconectada por mais de 10 minutos. O mesmo aviso não se repete por 6 horas; não há aviso por e-mail.</li>
             <li>Backup: snapshots do Neon mais <code>pg_dump</code> mensal do projeto principal e de cada projeto de instância.</li>
             <li>Monitore diariamente as chaves OpenAI, a franquia, instâncias <code>close</code>, sessões travadas e os erros no log do Render.</li>
@@ -1093,8 +1085,7 @@ npm run db:deploy
 npm run dev:server</code></pre>
           </div>
           <p>
-            Preencha o <code>.env</code> com banco, chave global e OpenAI, e nunca o commite. A suíte completa roda no
-            GitHub Actions; localmente, use os testes só para depurar um check vermelho.
+            Preencha o <code>.env</code> com banco, chave global e OpenAI, e nunca o commite. A suíte completa roda nas checagens automáticas; localmente, use os testes só para depurar uma checagem vermelha.
           </p>
 
           <h3 id="operacao-problemas">Problemas comuns</h3>
@@ -1206,7 +1197,7 @@ npm run dev:server</code></pre>
           <div class="callout callout-note">
             <svg class="callout-ico" aria-hidden="true"><use href="#i-info" /></svg>
             <div>
-              <p><strong>Não encontrou?</strong> O <a href="https://github.com/devconnecting1/evolution-api-render/blob/main/README-WHATSAI.md" target="_blank" rel="noopener">manual completo no GitHub</a> tem todas as seções, endpoints e decisões do projeto. Para falar com a equipe, use o contato no <a href="/">site</a>.</p>
+              <p><strong>Não encontrou?</strong> Use a busca no topo ou a navegação ao lado. Para falar com a equipe, use o contato no <a href="/">site</a>.</p>
             </div>
           </div>
         </section>
@@ -1262,11 +1253,10 @@ npm run dev:server</code></pre>
           </ul>
         </nav>
         <nav class="foot-col" aria-labelledby="foot-projeto">
-          <p class="foot-h" id="foot-projeto">Projeto</p>
+          <p class="foot-h" id="foot-projeto">Atalhos</p>
           <ul>
+            <li><a href="/">Site</a></li>
             <li><a href="/manager/login">Painel</a></li>
-            <li><a href="https://github.com/devconnecting1/evolution-api-render/blob/main/README-WHATSAI.md" target="_blank" rel="noopener">Manual no GitHub</a></li>
-            <li><a href="https://github.com/devconnecting1/evolution-api-render/blob/main/readmes/GUIA-DO-PROJETO.md" target="_blank" rel="noopener">Guia do projeto</a></li>
             <li><a href="/.well-known/security.txt">security.txt</a></li>
           </ul>
         </nav>

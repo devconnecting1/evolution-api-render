@@ -36,14 +36,17 @@
   --d-code-text: #272727;
   --d-code-muted: #6b6b6b;
   --d-inline-bg: #fafafa;
-  --d-inline-text: #e23642;
+  --d-inline-text: #0d0d0d;
   --d-table-line: #e2e2e2;
   --d-note-bg: #e9f5ee;
   --d-note-border: #1a9e5c;
   --d-note-text: #0b3d26;
-  --d-pink-bg: #fce2fe;
-  --d-pink-border: #f347ff;
-  --d-pink-text: #2c001d;
+  --d-warn-bg: #fdf0d5;
+  --d-warn-border: #d97706;
+  --d-warn-text: #5a3a00;
+  --d-bad-bg: #fde2e1;
+  --d-bad-border: #b42318;
+  --d-bad-text: #5a1210;
   /* verde escuro da marca: ponto de status e checks */
   --d-ok: #0e7a4d;
   --d-ok-bg: #e9f5ee;
@@ -85,14 +88,17 @@
     --d-code-text: #eeeeee;
     --d-code-muted: #b3b3b3;
     --d-inline-bg: #272727;
-    --d-inline-text: #f0989e;
+    --d-inline-text: #ffffff;
     --d-table-line: #4d4d4d;
     --d-note-bg: #12241a;
     --d-note-border: #1f5c3a;
     --d-note-text: #c9f7d9;
-    --d-pink-bg: #2c001d;
-    --d-pink-border: #5c0056;
-    --d-pink-text: #fac7ff;
+    --d-warn-bg: #2a1f0c;
+    --d-warn-border: #8a5a12;
+    --d-warn-text: #fcd38d;
+    --d-bad-bg: #2d1414;
+    --d-bad-border: #7f2a2a;
+    --d-bad-text: #fca5a5;
     --d-ok: #5fcf8a;
     --d-ok-bg: #12241a;
   }
@@ -126,14 +132,17 @@
   --d-code-text: #eeeeee;
   --d-code-muted: #b3b3b3;
   --d-inline-bg: #272727;
-  --d-inline-text: #f0989e;
+  --d-inline-text: #ffffff;
   --d-table-line: #4d4d4d;
   --d-note-bg: #12241a;
   --d-note-border: #1f5c3a;
   --d-note-text: #c9f7d9;
-  --d-pink-bg: #2c001d;
-  --d-pink-border: #5c0056;
-  --d-pink-text: #fac7ff;
+  --d-warn-bg: #2a1f0c;
+  --d-warn-border: #8a5a12;
+  --d-warn-text: #fcd38d;
+  --d-bad-bg: #2d1414;
+  --d-bad-border: #7f2a2a;
+  --d-bad-text: #fca5a5;
   --d-ok: #5fcf8a;
   --d-ok-bg: #12241a;
 }
@@ -1204,16 +1213,30 @@ td strong {
 :root[data-theme-mode="dark"] .callout code {
   background: rgba(255, 255, 255, 0.1);
 }
-.callout-warn,
+.callout-warn {
+  border-color: var(--d-warn-border);
+  background: var(--d-warn-bg);
+  color: var(--d-warn-text);
+}
 .callout-bad {
-  border-color: var(--d-pink-border);
-  background: var(--d-pink-bg);
-  color: var(--d-pink-text);
+  border-color: var(--d-bad-border);
+  background: var(--d-bad-bg);
+  color: var(--d-bad-text);
 }
 .callout-ok {
   border-color: var(--d-note-border);
   background: var(--d-note-bg);
   color: var(--d-note-text);
+}
+.callout-warn .callout-ico {
+  background: var(--d-warn-border);
+}
+.callout-bad .callout-ico {
+  background: var(--d-bad-border);
+}
+.callout-note .callout-ico,
+.callout-ok .callout-ico {
+  background: var(--d-accent);
 }
 
 /* passos */
@@ -1313,9 +1336,9 @@ td strong {
   white-space: nowrap;
 }
 .chip-high {
-  background: var(--d-pink-bg);
-  border-color: var(--d-pink-border);
-  color: var(--d-pink-text);
+  background: var(--d-warn-bg);
+  border-color: var(--d-warn-border);
+  color: var(--d-warn-text);
 }
 .chip-low {
   background: var(--d-bg-muted);
@@ -1715,7 +1738,8 @@ td strong {
   }
   html.drawer-open,
   html.drawer-open body {
-    overflow: hidden;
+    /* clip, nao hidden: hidden cria um container de rolagem e quebra o topbar sticky */
+    overflow: clip;
   }
   html.drawer-open .sidebar {
     transform: none;
