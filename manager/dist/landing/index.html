@@ -50,7 +50,7 @@
     <meta name="twitter:image:alt" content="WhatsAI: atendimento com IA no WhatsApp. Seu WhatsApp responde em segundos; sua equipe assume quando quiser." />
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/landing.bundle.css?v=ab7f4efab0" />
+    <link rel="stylesheet" href="/assets/landing.bundle.css?v=051fa6e956" />
     <!-- whatsai-patch:theme:landing -->
     <script src="/assets/landing.js?v=7" defer></script>
     <script src="/assets/landing-pixels.js?v=2" defer></script>
@@ -1038,78 +1038,33 @@
       </section>
     </main>
 
-    <!-- === rodape multi-coluna -->
-    <footer class="wa-foot">
-      <div class="wa-wrap">
-        <div class="wa-foot-grid">
-          <div class="wa-foot-brand">
-            <a class="wa-brand" href="/" aria-label="WhatsAI, página inicial">
-              <span class="wa-brand-mark" aria-hidden="true"><svg class="wa-ico"><use href="#i-chat" /></svg></span>
-              WhatsAI
-            </a>
-            <p>Atendimento com IA no WhatsApp para pequenas e médias empresas.</p>
-          </div>
-          <nav class="wa-foot-col" aria-labelledby="fc-produto">
-            <h2 id="fc-produto">Produto</h2>
-            <ul>
-              <li><a href="#produto">Como funciona</a></li>
-              <li><a href="#recursos">Recursos</a></li>
-              <li><a href="#planos">Planos</a></li>
-              <li><a href="#duvidas">Dúvidas</a></li>
-              <li><a href="/novidades">Novidades</a></li>
-              <li><a href="/docs">Documentação</a></li>
-            </ul>
-          </nav>
-          <nav class="wa-foot-col" aria-labelledby="fc-segmentos">
-            <h2 id="fc-segmentos">Segmentos</h2>
-            <ul>
-              <li><a href="#segmentos">Advocacia</a></li>
-              <li><a href="#segmentos">Clínicas</a></li>
-              <li><a href="#segmentos">Lojas</a></li>
-              <li><a href="#segmentos">Imobiliárias</a></li>
-              <li><a href="#segmentos">Serviços</a></li>
-              <li><a href="#segmentos">Educação</a></li>
-            </ul>
-          </nav>
-          <nav class="wa-foot-col" aria-labelledby="fc-recursos">
-            <h2 id="fc-recursos">Recursos</h2>
-            <ul>
-              <li><a href="#produto">IA 24 horas</a></li>
-              <li><a href="#duvidas">Pausa humana automática</a></li>
-              <li><a href="#recursos">Áudio, foto e PDF</a></li>
-              <li><a href="#recursos">Leads</a></li>
-              <li><a href="#planos">Agenda e processos</a></li>
-              <li><a href="/seguranca">Segurança e LGPD</a></li>
-            </ul>
-          </nav>
-          <nav class="wa-foot-col" aria-labelledby="fc-empresa">
-            <h2 id="fc-empresa">Empresa</h2>
-            <ul>
-              <li><a href="#contato">Contato</a></li>
-              <li><a href="#planos">Piloto de 14 dias</a></li>
-              <li><a href="/acesso">Área do cliente</a></li>
-              <li><a href="/manager/login">Painel</a></li>
-              <li><a href="/docs">Documentação</a></li>
-            </ul>
-          </nav>
-          <nav class="wa-foot-col" aria-labelledby="fc-legal">
-            <h2 id="fc-legal">Legal</h2>
-            <ul>
-              <li><a href="/seguranca">Segurança</a></li>
-              <li><a href="/privacidade">Privacidade</a></li>
-              <li><a href="/termos">Termos de uso</a></li>
-            </ul>
-          </nav>
+    <!-- === rodape compacto no padrao do Render Docs: marca e contato a esquerda; links e copyright a direita -->
+    <footer class="wa-docfoot">
+      <div class="wa-wrap wa-docfoot-in">
+        <div class="wa-docfoot-side">
+          <a class="wa-docfoot-brand" href="/" aria-label="WhatsAI, página inicial">
+            <span class="wa-docfoot-mark" aria-hidden="true"><svg class="wa-ico"><use href="#i-chat" /></svg></span>
+            WhatsAI
+          </a>
+          <a class="wa-docfoot-status" href="#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero tirar algumas dúvidas.">
+            <span class="wa-docfoot-dot" aria-hidden="true"></span>
+            Falar no WhatsApp
+          </a>
         </div>
-        <div class="wa-foot-bottom">
-          <p>© 2026 WhatsAI · Atendimento com IA no WhatsApp</p>
-          <div class="wa-foot-legal">
+        <div class="wa-docfoot-side wa-docfoot-side--end">
+          <nav class="wa-docfoot-links" aria-label="Rodapé">
+            <a href="/docs">Documentação</a>
+            <a href="/seguranca">Segurança</a>
             <a href="/privacidade">Privacidade</a>
             <a href="/termos">Termos</a>
-            <a href="/seguranca">Segurança</a>
+            <a href="/acesso">Área do cliente</a>
+            <a href="/manager/login">Painel</a>
+          </nav>
+          <div class="wa-docfoot-legal">
+            <p class="wa-docfoot-copy">© 2026 WhatsAI. Todos os direitos reservados.</p>
+            <p class="wa-docfoot-note">WhatsApp é marca da Meta; o WhatsAI não é afiliado à Meta nem à OpenAI.</p>
           </div>
         </div>
-        <p class="wa-foot-license">WhatsApp é marca da Meta; o WhatsAI não é afiliado à Meta nem à OpenAI.</p>
       </div>
     </footer>
   </body>
