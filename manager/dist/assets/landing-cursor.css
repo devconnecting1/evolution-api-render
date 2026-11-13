@@ -1890,6 +1890,65 @@ body.wa-page #duvidas {
   width: 100%;
 }
 
+/* Premium: cartao grafite com os pixels animados da landing atual (landing-pixels.js) */
+.wa-plan--px {
+  --wa-fg: #ffffe3;
+  --wa-fg-2: #d6d6c8;
+  --wa-fg-3: #b3b3a3;
+  --wa-line: rgba(255, 255, 255, 0.14);
+  --wa-line-strong: rgba(255, 255, 255, 0.22);
+  --wa-accent: #9fdcb6;
+  --wa-accent-line: rgba(159, 220, 182, 0.38);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: transparent;
+  background: #1a1a1a;
+  color: var(--wa-fg);
+}
+
+.wa-plan--px > :not(.px-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+.wa-plan--px .wa-btn {
+  border-color: transparent;
+  background: var(--wa-accent);
+  color: #14120b;
+}
+
+.wa-plan--px .wa-btn:hover {
+  background: #b9f0ce;
+}
+
+.wa-plan--px .wa-badge {
+  background: rgba(255, 255, 227, 0.1);
+  color: var(--wa-accent);
+}
+
+.wa-plan--px .px-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.18) 55%, transparent 80%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.18) 55%, transparent 80%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .wa-plan--px {
+    border-color: rgba(255, 255, 227, 0.26);
+    background:
+      radial-gradient(130% 70% at 50% 0%, rgba(255, 255, 227, 0.07), transparent 62%),
+      linear-gradient(180deg, #22221c 0%, #191915 55%, #151512 100%);
+    box-shadow: 0 0 0 1px rgba(255, 255, 227, 0.06), 0 24px 60px -32px rgba(255, 255, 227, 0.18);
+  }
+}
+
 .wa-checks {
   display: flex;
   flex-direction: column;

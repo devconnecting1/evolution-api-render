@@ -20,6 +20,8 @@ Esta branch é uma proposta visual. Não deve ser mesclada sem decisão do dono 
 - Um único accent verde: `#1d5c40` no claro e `#9fdcb6` no escuro. O laranja e o azul da referência não foram usados.
 - Geist, a fonte que o site e o painel já carregam. As fontes proprietárias do Cursor não foram usadas.
 - Mockups de produto feitos em HTML e CSS, com uma paisagem abstrata em gradiente. Nenhuma imagem externa.
+- O plano Premium retoma o cartão grafite com os pixels animados da landing atual: canvas `px-bg`, onda diagonal e
+  máscara que apaga os pixels antes da lista. A animação é desligada em `prefers-reduced-motion`.
 - Conteúdo do WhatsAI, com dados fictícios nos exemplos. Sem telefone, nome ou conversa de cliente real.
 
 ## Comparação por seção
@@ -50,7 +52,7 @@ Esta branch é uma proposta visual. Não deve ser mesclada sem decisão do dono 
 | Botões | Pílula, 44 px de altura | Pílula, 44 px; 48 px na versão grande |
 | Seções | Ritmo largo, muito espaço em branco | `clamp(72px, 9vw, 128px)` entre seções |
 | Grade de recursos | Três colunas no desktop | Três, duas e uma coluna conforme a largura |
-| Planos | Cartões lado a lado | Três cartões com o Profissional em destaque |
+| Planos | Cartões lado a lado | Três cartões com o Profissional em destaque e o Premium grafite com pixels animados |
 | Movimento | Discreto | Transições curtas de 0,15 s; desligadas em `prefers-reduced-motion` |
 
 ## Comparações visuais
@@ -74,6 +76,14 @@ Esta branch é uma proposta visual. Não deve ser mesclada sem decisão do dono 
 ### Celular, 390 px, escuro
 
 ![Cursor e WhatsAI em 390 px, tema escuro](comparacao/comparacao-390-dark.png)
+
+## Planos e o Premium com pixels
+
+![Planos em 1440 px, tema claro](depois/depois-planos-1440-light.png)
+
+![Planos em 1440 px, tema escuro](depois/depois-planos-1440-dark.png)
+
+![Planos em 390 px, tema claro](depois/depois-planos-390-light.png)
 
 ## Página inteira
 
@@ -120,8 +130,10 @@ Esta branch é uma proposta visual. Não deve ser mesclada sem decisão do dono 
    visual para baixo da dobra.
 3. Levar para o site atual apenas os blocos de maior retorno: herói compacto, janela de produto e grade de recursos.
    A página inteira é longa para uma primeira versão.
-4. Não trazer a faixa de logos de terceiros. No WhatsAI ela pode virar uma faixa de segmentos, como nesta proposta.
-5. Se a direção for aprovada, rodar Lighthouse em 1440 e 390, claro e escuro, antes de qualquer merge. A meta do site
+4. Manter o Premium com o fundo grafite e os pixels animados: ele já existe na landing atual, dá destaque ao plano
+   mais completo e não introduz cor nova. A animação continua desligada para quem prefere movimento reduzido.
+5. Não trazer a faixa de logos de terceiros. No WhatsAI ela pode virar uma faixa de segmentos, como nesta proposta.
+6. Se a direção for aprovada, rodar Lighthouse em 1440 e 390, claro e escuro, antes de qualquer merge. A meta do site
    atual é 100 nas quatro categorias.
-6. Revisar o texto jurídico e comercial com o dono antes de publicar: planos, prazos, limites e promessas precisam
+7. Revisar o texto jurídico e comercial com o dono antes de publicar: planos, prazos, limites e promessas precisam
    continuar iguais aos documentos oficiais.

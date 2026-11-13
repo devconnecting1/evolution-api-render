@@ -58,7 +58,9 @@ linha não são idênticas às da referência.
 - **Blocos alternados:** texto de um lado, mockup do outro; no celular, empilham.
 - **Grade de recursos:** nove cartões com ícone de linha, título e uma frase.
 - **Cartões de destaque:** três cartões com arte abstrata em CSS.
-- **Planos:** preço, implantação, recursos e CTA; tabela comparativa e FAQ abaixo.
+- **Planos:** preço, implantação, recursos e CTA; tabela comparativa e FAQ abaixo. O Premium mantém o cartão grafite
+  com o canvas de pixels animados da landing atual (`landing-pixels.js`), com máscara antes da lista e pausa em
+  `prefers-reduced-motion`.
 - **Novidades e destaques:** cartões editoriais com categoria, título e descrição.
 - **Movimento:** transições de 0,15 s; menu de 200 ms; tudo desligado em `prefers-reduced-motion: reduce`.
 
@@ -67,6 +69,7 @@ linha não são idênticas às da referência.
 - Marca, textos, preços, planos, exemplos e mockups do WhatsAI.
 - Ícones de linha do sprite SVG da própria página.
 - Paisagem abstrata em gradiente CSS.
+- Canvas de pixels do Premium, escrito no projeto e já usado na landing atual.
 - Conteúdo em português, com "triagem" e "organizar os atendimentos", sem promessa de resultado.
 - Dados fictícios nas conversas, leads e agenda.
 
