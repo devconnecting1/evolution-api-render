@@ -1,8 +1,9 @@
 <!doctype html>
 <!--
   WhatsAI: página pública de segurança e confiança (servida em "/seguranca" pelo manager/dist/vercel.json).
-  Mesmo topo, navegação lateral, busca, índice, gaveta e rodapé da documentação pública (/docs); o que é próprio
-  desta página fica em /landing/legal.css.
+  Layout de trust sem sidebar e sem índice lateral, com topo simples, herói com grade e arte abstrata própria,
+  três canais de contato, práticas, conformidade, suboperadores e os controles implementados.
+  A estrutura segue a página Security and Trust do Render; marca, textos, ícones e CSS são do WhatsAI.
   REGRA: só entra aqui o que está implementado e pode ser conferido. Nada de selos (SOC 2, ISO 27001...) que o
   WhatsAI não tem: as certificações citadas são dos provedores de infraestrutura e estão escritas assim.
   Sem script ou estilo inline, sem emoji, sem dados reais de cliente.
@@ -49,219 +50,149 @@
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=1" />
     <link rel="stylesheet" href="/docs/docs.css?v=4" />
-    <link rel="stylesheet" href="/landing/legal.css?v=1" />
+    <link rel="stylesheet" href="/landing/legal.css?v=2" />
     <!-- Tema salvo é aplicado antes da primeira pintura; o restante do comportamento espera o DOM. -->
     <script src="/docs/docs.js?v=5"></script>
   </head>
-  <body data-search-parent="Segurança">
+  <body>
     <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 
     <!-- ícones de linha (traço 1.5, cantos arredondados), desenhados à mão -->
     <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
-        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
         <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
-        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></symbol>
-        <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></symbol>
-        <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></symbol>
-        <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
         <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" /></symbol>
         <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z" /></symbol>
         <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></symbol>
-        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 012-2h9" /></symbol>
         <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></symbol>
         <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.8 2.8L16.5 9.5" /></symbol>
         <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l9 16H3z" /><path d="M12 9v5M12 17h.01" /></symbol>
-        <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7h.01" /></symbol>
-        <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v18H6a2 2 0 01-2-2z" /><path d="M4 17h15" /></symbol>
         <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z" /><path d="M9 12l2 2 4-4" /></symbol>
-        <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10" /><path d="M4 7h16M6 7l-3 6h6zM18 7l-3 6h6z" /></symbol>
         <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /><path d="M12 15v2" /></symbol>
         <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4" /><path d="M11 12l8-8M16 4l3 3M14 6l2 2" /></symbol>
         <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0116 0" /></symbol>
         <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3" /><path d="M5 5v14c0 1.7 3.1 3 7 3s7-1.3 7-3V5" /><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" /></symbol>
         <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" /></symbol>
         <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5" /><rect x="3" y="13" width="18" height="7" rx="1.5" /><path d="M7 7.5h.01M7 16.5h.01" /></symbol>
-        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /><path d="M9 10.5l2 2 4-4" /></symbol>
-        <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></symbol>
-        <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.5.5l2-2a5 5 0 00-7-7L11 6" /><path d="M14 11a5 5 0 00-7.5-.5l-2 2a5 5 0 007 7L13 18" /></symbol>
       </defs>
     </svg>
 
-    <header class="topbar">
-      <div class="topbar-in">
-        <div class="topbar-brand">
-          <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
-          <span class="brand-sep" aria-hidden="true">/</span>
-          <span class="brand-doc">Segurança</span>
-        </div>
-
-        <div class="search" data-search-root>
-          <form class="search-form" role="search" action="#conteudo" data-search-form>
-            <label class="sr" for="legal-search">Buscar nesta página</label>
-            <svg class="search-ico" aria-hidden="true"><use href="#i-search" /></svg>
-            <input
-              id="legal-search"
-              type="search"
-              placeholder="Buscar nesta página"
-              autocomplete="off"
-              spellcheck="false"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-haspopup="listbox"
-              aria-expanded="false"
-              aria-controls="search-results"
-              data-search-input
-            />
-            <button class="search-clear" type="button" aria-label="Limpar busca" hidden data-search-clear>
-              <svg class="ico" aria-hidden="true"><use href="#i-close" /></svg>
-            </button>
-          </form>
-          <div class="search-panel" id="search-results" data-search-panel hidden>
-            <p class="search-count" aria-live="polite" data-search-count></p>
-            <ul class="search-list" role="listbox" aria-label="Resultados da busca" data-search-list></ul>
-            <p class="search-empty" data-search-empty hidden>Nenhuma seção encontrada. Tente outra palavra.</p>
-          </div>
-        </div>
-
-        <div class="top-actions">
-          <nav class="top-links" aria-label="Links do projeto">
-            <a href="/">Site</a>
-            <a class="top-doc" href="/docs">Documentação</a>
-          </nav>
+    <header class="legal-top">
+      <div class="legal-top-in">
+        <a class="brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+        <nav class="legal-top-nav" aria-label="Links do projeto">
+          <a href="/">Site</a>
+          <a href="/docs">Documentação</a>
           <a class="top-cta" href="/manager/login">Painel</a>
-          <div class="theme" data-theme>
-            <button class="icon-btn theme-btn" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Tema: Sistema" data-theme-toggle>
-              <svg class="ico theme-icon ti-system" aria-hidden="true"><use href="#i-monitor" /></svg>
-              <svg class="ico theme-icon ti-light" aria-hidden="true"><use href="#i-sun" /></svg>
-              <svg class="ico theme-icon ti-dark" aria-hidden="true"><use href="#i-moon" /></svg>
+        </nav>
+        <div class="theme" data-theme>
+          <button class="icon-btn theme-btn" type="button" aria-expanded="false" aria-controls="theme-menu" aria-label="Tema: Sistema" data-theme-toggle>
+            <svg class="ico theme-icon ti-system" aria-hidden="true"><use href="#i-monitor" /></svg>
+            <svg class="ico theme-icon ti-light" aria-hidden="true"><use href="#i-sun" /></svg>
+            <svg class="ico theme-icon ti-dark" aria-hidden="true"><use href="#i-moon" /></svg>
+          </button>
+          <div class="theme-menu" id="theme-menu" role="menu" aria-label="Tema" hidden data-theme-menu>
+            <p class="theme-title">Tema</p>
+            <button type="button" role="menuitemradio" aria-checked="true" data-theme-set="system">
+              <svg class="ico" aria-hidden="true"><use href="#i-monitor" /></svg>Sistema
             </button>
-            <div class="theme-menu" id="theme-menu" role="menu" aria-label="Tema" hidden data-theme-menu>
-              <p class="theme-title">Tema</p>
-              <button type="button" role="menuitemradio" aria-checked="true" data-theme-set="system">
-                <svg class="ico" aria-hidden="true"><use href="#i-monitor" /></svg>Sistema
-              </button>
-              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="light">
-                <svg class="ico" aria-hidden="true"><use href="#i-sun" /></svg>Claro
-              </button>
-              <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="dark">
-                <svg class="ico" aria-hidden="true"><use href="#i-moon" /></svg>Escuro
-              </button>
-            </div>
+            <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="light">
+              <svg class="ico" aria-hidden="true"><use href="#i-sun" /></svg>Claro
+            </button>
+            <button type="button" role="menuitemradio" aria-checked="false" data-theme-set="dark">
+              <svg class="ico" aria-hidden="true"><use href="#i-moon" /></svg>Escuro
+            </button>
           </div>
         </div>
-
-        <button class="icon-btn drawer-btn" type="button" aria-expanded="false" aria-controls="legal-nav" aria-label="Abrir navegação" data-drawer-toggle>
-          <svg class="ico" aria-hidden="true"><use href="#i-menu" /></svg>
-        </button>
       </div>
     </header>
 
-    <div class="scrim" data-scrim hidden></div>
 
-    <div class="layout">
-      <aside class="sidebar" id="legal-nav" aria-label="Navegação da página" data-sidebar>
-        <div class="drawer-head">
-          <span>Navegação</span>
-          <button class="icon-btn" type="button" aria-label="Fechar navegação" data-drawer-close>
-            <svg class="ico" aria-hidden="true"><use href="#i-close" /></svg>
-          </button>
-        </div>
-        <nav class="side-nav" aria-label="Seções desta página" data-side-nav>
-          <div class="side-group" data-side-group>
-            <button class="side-label" type="button" aria-expanded="true" aria-controls="side-nesta" data-group-toggle>
-              <svg class="ico side-gico" aria-hidden="true"><use href="#i-shield" /></svg>
-              <span>Nesta página</span>
-              <svg class="ico side-chev" aria-hidden="true"><use href="#i-chev-down" /></svg>
-            </button>
-            <ul id="side-nesta">
-              <li><a href="#medidas" data-nav-link>Controles implementados</a></li>
-              <li><a href="#selos" data-nav-link>Sem selos que não temos</a></li>
-              <li><a href="#fluxo" data-nav-link>Como os dados circulam</a></li>
-              <li><a href="#onde" data-nav-link>Onde ficam os dados</a></li>
-              <li><a href="#lgpd" data-nav-link>LGPD e os seus direitos</a></li>
-              <li><a href="#incidentes" data-nav-link>Se algo der errado</a></li>
-              <li><a href="#reportar" data-nav-link>Reportar uma falha</a></li>
-              <li><a href="#perguntas" data-nav-link>Perguntas</a></li>
-              <li><a href="#mudancas" data-nav-link>O que mudou</a></li>
-            </ul>
+    <main class="legal-page trust-page" id="conteudo" tabindex="-1">
+      <header class="legal-hero trust-hero">
+        <div class="trust-shell trust-hero-in">
+          <div class="trust-hero-copy">
+            <p class="eyebrow">Segurança e confiança</p>
+            <h1 id="sec-title">As conversas dos seus clientes, bem guardadas.</h1>
+            <p class="legal-hero-lead">
+              O que o WhatsAI faz para proteger os dados de quem fala com a sua empresa, explicado sem rodeios. Aqui só
+              entra o que está implementado e pode ser conferido.
+            </p>
+            <p class="legal-meta">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span>Atualizado em <time datetime="2026-11-12">12 de novembro de 2026</time> · <a href="#mudancas">O que mudou</a></span>
+            </p>
           </div>
-        </nav>
-        <nav class="side-pages" aria-label="Páginas legais">
-          <p class="side-pages-title">Páginas legais</p>
-          <ul>
-            <li>
-              <a href="/seguranca" aria-current="page">
-                <svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg>Segurança
-              </a>
-            </li>
-            <li>
-              <a href="/termos">
-                <svg class="ico" aria-hidden="true"><use href="#i-scale" /></svg>Termos de uso
-              </a>
-            </li>
-            <li>
-              <a href="/privacidade">
-                <svg class="ico" aria-hidden="true"><use href="#i-lock" /></svg>Privacidade
-              </a>
-            </li>
-          </ul>
-        </nav>
-        <div class="side-foot">
-          <a class="side-doc" href="/docs">
-            <svg class="ico" aria-hidden="true"><use href="#i-book" /></svg>Abrir a documentação
-          </a>
-          <p>Conteúdo público do WhatsAI. Última revisão em 12/11/2026.</p>
-        </div>
-      </aside>
-
-      <main class="content legal-doc" id="conteudo" tabindex="-1">
-        <div class="legal-hero">
-          <p class="eyebrow">Segurança e confiança</p>
-          <h1 id="sec-title">As conversas dos seus clientes, bem guardadas.</h1>
-          <p class="hero-lead">
-            O que o WhatsAI faz para proteger os dados de quem fala com a sua empresa, explicado sem rodeios. Aqui só
-            entra o que está implementado e pode ser conferido.
-          </p>
-          <p class="legal-meta">
-            <span class="status-dot" aria-hidden="true"></span>
-            <span>Atualizado em <time datetime="2026-11-12">12 de novembro de 2026</time> · <a href="#mudancas">O que mudou</a></span>
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#medidas">Ver os controles</a>
-            <a class="btn btn-quiet" href="#reportar">Reportar uma falha</a>
-          </div>
-
-          <div class="legal-quick">
-            <a class="legal-quick-item" href="#medidas">
-              <span class="legal-quick-top">
-                <span class="legal-quick-ico" aria-hidden="true"><svg class="ico"><use href="#i-shield" /></svg></span>
-                <span class="legal-quick-title">Controles implementados</span>
-              </span>
-              <span class="legal-quick-text">Oito medidas técnicas que já estão no ar, do navegador ao banco de dados.</span>
-              <span class="legal-quick-go">Ver os controles <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
-            </a>
-            <a class="legal-quick-item" href="#selos">
-              <span class="legal-quick-top">
-                <span class="legal-quick-ico is-warn" aria-hidden="true"><svg class="ico"><use href="#i-alert" /></svg></span>
-                <span class="legal-quick-title">Sem selos que não temos</span>
-              </span>
-              <span class="legal-quick-text">O WhatsAI não exibe SOC 2, ISO 27001 nem qualquer certificação que não possua.</span>
-              <span class="legal-quick-go">Entender os selos <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
-            </a>
-            <a class="legal-quick-item" href="#reportar">
-              <span class="legal-quick-top">
-                <span class="legal-quick-ico" aria-hidden="true"><svg class="ico"><use href="#i-chat" /></svg></span>
-                <span class="legal-quick-title">Reportar uma falha</span>
-              </span>
-              <span class="legal-quick-text">Fale com a equipe antes de divulgar. Respondemos em até 2 dias úteis.</span>
-              <span class="legal-quick-go">Como reportar <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg></span>
-            </a>
+          <div class="trust-art" aria-hidden="true">
+            <span class="ta ta-a1"></span>
+            <span class="ta ta-a2"></span>
+            <span class="ta ta-a3"></span>
+            <span class="ta ta-b1"></span>
+            <span class="ta ta-b2"></span>
+            <span class="ta ta-b3"></span>
+            <span class="ta ta-c1"></span>
+            <span class="ta ta-c2"></span>
+            <span class="ta ta-c3"></span>
           </div>
         </div>
+      </header>
 
-        <section class="doc-section" id="medidas" aria-labelledby="medidas-h" data-section data-title="Controles implementados">
-          <h2 id="medidas-h"><span class="legal-num" aria-hidden="true">01</span>Controles implementados <a class="anchor" href="#medidas" aria-label="Link para a seção Controles implementados">#</a></h2>
+      <div class="trust-shell">
+        <section class="trust-contacts" aria-label="Canais de segurança">
+          <div class="trust-contact">
+            <span class="trust-contact-ico" aria-hidden="true"><svg class="ico"><use href="#i-alert" /></svg></span>
+            <h2>Uso indevido</h2>
+            <p>Spam, golpes ou mensagens em massa que prejudicam terceiros: avise a equipe com o número e um exemplo. O WhatsAI apura e pode suspender a instância.</p>
+            <a href="/#contato">Falar com a equipe</a>
+          </div>
+          <div class="trust-contact">
+            <span class="trust-contact-ico" aria-hidden="true"><svg class="ico"><use href="#i-shield" /></svg></span>
+            <h2>Vulnerabilidades</h2>
+            <p>Encontrou uma falha? Conte antes de divulgar. Respondemos em até 2 dias úteis, corrigimos e avisamos quando estiver resolvido.</p>
+            <a href="#reportar">Como reportar</a>
+          </div>
+          <div class="trust-contact">
+            <span class="trust-contact-ico" aria-hidden="true"><svg class="ico"><use href="#i-lock" /></svg></span>
+            <h2>Contato de segurança</h2>
+            <p>Assuntos de segurança e privacidade chegam à mesma equipe pelo contato do site ou pelo <code>security.txt</code>.</p>
+            <a href="/.well-known/security.txt">Abrir security.txt</a>
+          </div>
+        </section>
+
+        <section class="trust-section" aria-labelledby="praticas-h">
+          <div class="trust-split">
+            <div class="trust-split-head">
+              <h2 id="praticas-h">Nossas práticas de segurança</h2>
+              <p class="section-lead">
+                O modelo é de responsabilidade compartilhada: a infraestrutura responde pelo que é dela, e o WhatsAI
+                responde pelo código, pelos acessos e pelas chaves. Cada prática abaixo existe no dia a dia.
+              </p>
+            </div>
+            <div class="trust-practice-grid">
+              <article class="trust-practice">
+                <span class="trust-practice-ico" aria-hidden="true"><svg class="ico"><use href="#i-server" /></svg></span>
+                <h3>Responsabilidade compartilhada</h3>
+                <p>Render, Neon e Vercel cuidam do hardware, da rede e das certificações da infraestrutura. O WhatsAI cuida da aplicação, dos acessos, das chaves e da configuração de cada instância.</p>
+                <a href="#onde">Ver onde ficam os dados</a>
+              </article>
+              <article class="trust-practice">
+                <span class="trust-practice-ico" aria-hidden="true"><svg class="ico"><use href="#i-check-circle" /></svg></span>
+                <h3>Verificação a cada mudança</h3>
+                <p>Antes de publicar, toda alteração passa por Gitleaks, npm audit e centenas de testes automáticos. Sem tudo verde, nada vai ao ar; HTTPS, HSTS e CSP protegem o navegador.</p>
+                <a href="#medidas">Ver os controles</a>
+              </article>
+              <article class="trust-practice">
+                <span class="trust-practice-ico" aria-hidden="true"><svg class="ico"><use href="#i-key" /></svg></span>
+                <h3>Segredos protegidos</h3>
+                <p>Códigos de acesso ficam só como hash SHA-256, credenciais de banco são cifradas com AES-256-GCM e as chaves da IA nunca chegam ao navegador do cliente.</p>
+                <a href="#medidas">Como protegemos as chaves</a>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="trust-section" id="medidas" aria-labelledby="medidas-h" data-section>
+          <h2 id="medidas-h">Controles implementados <a class="anchor" href="#medidas" aria-label="Link para a seção Controles implementados">#</a></h2>
           <p class="section-lead">
             Oito medidas técnicas que já estão no ar. Cada uma resolve um risco concreto e não depende de alguém
             lembrar de fazer.
@@ -371,12 +302,35 @@
           </div>
         </section>
 
-        <section class="doc-section" id="selos" aria-labelledby="selos-h" data-section data-title="Sem selos que não temos">
-          <h2 id="selos-h"><span class="legal-num" aria-hidden="true">02</span>Sem selos que não temos <a class="anchor" href="#selos" aria-label="Link para a seção Sem selos que não temos">#</a></h2>
+        <section class="trust-section" id="selos" aria-labelledby="selos-h" data-section>
+          <h2 id="selos-h">Sem selos que não temos <a class="anchor" href="#selos" aria-label="Link para a seção Sem selos que não temos">#</a></h2>
           <p class="section-lead">
             Uma página de segurança honesta começa dizendo o que existe e o que não existe. O WhatsAI não exibe SOC 2,
             ISO 27001 nem qualquer outro selo que não possua.
           </p>
+
+          <div class="trust-cert-grid">
+            <article class="trust-cert">
+              <span class="trust-cert-flag">Infraestrutura</span>
+              <h3>SOC 2</h3>
+              <p>Render, Neon e Vercel mantêm auditorias SOC 2 próprias. A certificação é da infraestrutura, não do WhatsAI.</p>
+            </article>
+            <article class="trust-cert">
+              <span class="trust-cert-flag">Infraestrutura</span>
+              <h3>ISO 27001</h3>
+              <p>Certificação de Vercel e Render. O WhatsAI usa a infraestrutura deles, mas não é certificado.</p>
+            </article>
+            <article class="trust-cert">
+              <span class="trust-cert-flag is-own">Sim, como operador</span>
+              <h3>LGPD</h3>
+              <p>A empresa contratante é a controladora; o WhatsAI trata os dados conforme a LGPD e o termo assinado com cada cliente.</p>
+            </article>
+            <article class="trust-cert">
+              <span class="trust-cert-flag is-none">Nenhum selo próprio</span>
+              <h3>Selos do WhatsAI</h3>
+              <p>O WhatsAI não exibe SOC 2, ISO 27001 nem qualquer outra certificação que não possua.</p>
+            </article>
+          </div>
 
           <div class="callout callout-warn">
             <svg class="callout-ico" aria-hidden="true"><use href="#i-alert" /></svg>
@@ -428,66 +382,8 @@
           </p>
         </section>
 
-        <section class="doc-section" id="fluxo" aria-labelledby="fluxo-h" data-section data-title="Como os dados circulam">
-          <h2 id="fluxo-h"><span class="legal-num" aria-hidden="true">03</span>Como os dados circulam <a class="anchor" href="#fluxo" aria-label="Link para a seção Como os dados circulam">#</a></h2>
-          <p class="section-lead">
-            Todo caminho é criptografado. As chaves ficam no servidor, e cada pedido do painel é conferido antes de
-            chegar aos dados.
-          </p>
-
-          <ol class="steps">
-            <li>
-              <span class="step-n">1</span>
-              <div>
-                <h4>Contato</h4>
-                <p>Manda a mensagem pelo WhatsApp, como faria com qualquer empresa.</p>
-              </div>
-            </li>
-            <li>
-              <span class="step-n">2</span>
-              <div>
-                <h4>WhatsApp</h4>
-                <p>WhatsApp Web (Baileys) ou API oficial da Meta entrega a mensagem por uma conexão criptografada.</p>
-              </div>
-            </li>
-            <li>
-              <span class="step-n">3</span>
-              <div>
-                <h4>API WhatsAI</h4>
-                <p>Confere a chave de cada pedido, limita tentativas erradas e mantém os segredos cifrados com <code>AES-256-GCM</code>.</p>
-              </div>
-            </li>
-            <li>
-              <span class="step-n">4</span>
-              <div>
-                <h4>IA (OpenAI API)</h4>
-                <p>Recebe por <code>HTTPS</code> só o necessário para responder; pela política da API, não treina com os dados.</p>
-              </div>
-            </li>
-            <li>
-              <span class="step-n">5</span>
-              <div>
-                <h4>Banco de dados</h4>
-                <p>Guarda a conversa por <code>TLS</code>, com o prazo de guarda escolhido pela empresa (LGPD).</p>
-              </div>
-            </li>
-            <li>
-              <span class="step-n">6</span>
-              <div>
-                <h4>Painel</h4>
-                <p>A equipe acompanha pelo navegador ou app, por <code>HTTPS</code> e com a chave de acesso.</p>
-              </div>
-            </li>
-          </ol>
-
-          <p class="legal-caption">
-            Ilustrativo. A API e o banco ficam no Render e no Neon; o painel e este site, na Vercel. A IA recebe só o
-            necessário para responder cada mensagem.
-          </p>
-        </section>
-
-        <section class="doc-section" id="onde" aria-labelledby="onde-h" data-section data-title="Onde ficam os dados">
-          <h2 id="onde-h"><span class="legal-num" aria-hidden="true">04</span>Onde ficam os dados <a class="anchor" href="#onde" aria-label="Link para a seção Onde ficam os dados">#</a></h2>
+        <section class="trust-section" id="onde" aria-labelledby="onde-h" data-section>
+          <h2 id="onde-h">Suboperadores e onde ficam os dados <a class="anchor" href="#onde" aria-label="Link para a seção Suboperadores e onde ficam os dados">#</a></h2>
           <p class="section-lead">
             Os serviços que o WhatsAI usa para funcionar (os suboperadores), para que serve cada um e em que país
             ficam. Hoje os dados ficam nos Estados Unidos: é uma transferência internacional, feita com provedores que
@@ -549,8 +445,66 @@
           </p>
         </section>
 
-        <section class="doc-section" id="lgpd" aria-labelledby="lgpd-h" data-section data-title="LGPD e os seus direitos">
-          <h2 id="lgpd-h"><span class="legal-num" aria-hidden="true">05</span>LGPD e os seus direitos <a class="anchor" href="#lgpd" aria-label="Link para a seção LGPD e os seus direitos">#</a></h2>
+        <section class="trust-section" id="fluxo" aria-labelledby="fluxo-h" data-section>
+          <h2 id="fluxo-h">Como os dados circulam <a class="anchor" href="#fluxo" aria-label="Link para a seção Como os dados circulam">#</a></h2>
+          <p class="section-lead">
+            Todo caminho é criptografado. As chaves ficam no servidor, e cada pedido do painel é conferido antes de
+            chegar aos dados.
+          </p>
+
+          <ol class="steps">
+            <li>
+              <span class="step-n">1</span>
+              <div>
+                <h4>Contato</h4>
+                <p>Manda a mensagem pelo WhatsApp, como faria com qualquer empresa.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">2</span>
+              <div>
+                <h4>WhatsApp</h4>
+                <p>WhatsApp Web (Baileys) ou API oficial da Meta entrega a mensagem por uma conexão criptografada.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">3</span>
+              <div>
+                <h4>API WhatsAI</h4>
+                <p>Confere a chave de cada pedido, limita tentativas erradas e mantém os segredos cifrados com <code>AES-256-GCM</code>.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">4</span>
+              <div>
+                <h4>IA (OpenAI API)</h4>
+                <p>Recebe por <code>HTTPS</code> só o necessário para responder; pela política da API, não treina com os dados.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">5</span>
+              <div>
+                <h4>Banco de dados</h4>
+                <p>Guarda a conversa por <code>TLS</code>, com o prazo de guarda escolhido pela empresa (LGPD).</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-n">6</span>
+              <div>
+                <h4>Painel</h4>
+                <p>A equipe acompanha pelo navegador ou app, por <code>HTTPS</code> e com a chave de acesso.</p>
+              </div>
+            </li>
+          </ol>
+
+          <p class="legal-caption">
+            Ilustrativo. A API e o banco ficam no Render e no Neon; o painel e este site, na Vercel. A IA recebe só o
+            necessário para responder cada mensagem.
+          </p>
+        </section>
+
+        <section class="trust-section" id="lgpd" aria-labelledby="lgpd-h" data-section>
+          <h2 id="lgpd-h">LGPD e os seus direitos <a class="anchor" href="#lgpd" aria-label="Link para a seção LGPD e os seus direitos">#</a></h2>
           <p class="section-lead">
             A sua empresa é a controladora dos dados; o WhatsAI é o operador. É assim que isso aparece no dia a dia.
           </p>
@@ -576,8 +530,8 @@
           </div>
         </section>
 
-        <section class="doc-section" id="incidentes" aria-labelledby="inc-h" data-section data-title="Se algo der errado">
-          <h2 id="inc-h"><span class="legal-num" aria-hidden="true">06</span>Se algo der errado <a class="anchor" href="#incidentes" aria-label="Link para a seção Se algo der errado">#</a></h2>
+        <section class="trust-section" id="incidentes" aria-labelledby="inc-h" data-section>
+          <h2 id="inc-h">Se algo der errado <a class="anchor" href="#incidentes" aria-label="Link para a seção Se algo der errado">#</a></h2>
           <p class="section-lead">
             Nenhum sistema é imune a falhas. O compromisso é agir rápido e contar o que houve.
           </p>
@@ -607,8 +561,8 @@
           </div>
         </section>
 
-        <section class="doc-section" id="reportar" aria-labelledby="rep-h" data-section data-title="Reportar uma falha">
-          <h2 id="rep-h"><span class="legal-num" aria-hidden="true">07</span>Reportar uma falha <a class="anchor" href="#reportar" aria-label="Link para a seção Reportar uma falha">#</a></h2>
+        <section class="trust-section" id="reportar" aria-labelledby="rep-h" data-section>
+          <h2 id="rep-h">Reportar uma falha <a class="anchor" href="#reportar" aria-label="Link para a seção Reportar uma falha">#</a></h2>
           <p class="section-lead">
             Conte para a gente antes de divulgar. Respondemos em até 2 dias úteis, corrigimos e avisamos você quando
             estiver resolvido. Quem reporta de boa-fé, sem acessar dados de terceiros nem tirar o serviço do ar, não
@@ -652,8 +606,8 @@
           </div>
         </section>
 
-        <section class="doc-section" id="perguntas" aria-labelledby="per-h" data-section data-title="Perguntas sobre segurança">
-          <h2 id="per-h"><span class="legal-num" aria-hidden="true">08</span>Perguntas sobre segurança <a class="anchor" href="#perguntas" aria-label="Link para a seção Perguntas sobre segurança">#</a></h2>
+        <section class="trust-section" id="perguntas" aria-labelledby="per-h" data-section>
+          <h2 id="per-h">Perguntas sobre segurança <a class="anchor" href="#perguntas" aria-label="Link para a seção Perguntas sobre segurança">#</a></h2>
           <div class="faq-list">
             <details class="faq">
               <summary>Quem da equipe WhatsAI vê as conversas?</summary>
@@ -694,8 +648,8 @@
           </div>
         </section>
 
-        <section class="doc-section" id="mudancas" aria-labelledby="mud-h" data-section data-title="O que mudou">
-          <h2 id="mud-h"><span class="legal-num" aria-hidden="true">09</span>O que mudou <a class="anchor" href="#mudancas" aria-label="Link para a seção O que mudou">#</a></h2>
+        <section class="trust-section" id="mudancas" aria-labelledby="mud-h" data-section>
+          <h2 id="mud-h">O que mudou <a class="anchor" href="#mudancas" aria-label="Link para a seção O que mudou">#</a></h2>
           <ul class="legal-changes">
             <li>
               <time datetime="2026-11-12">12/11/2026</time>
@@ -718,30 +672,8 @@
             </div>
           </div>
         </section>
-      </main>
-
-      <aside class="toc" aria-label="Nesta página" data-toc>
-        <div class="toc-head">
-          <p class="toc-title">Nesta página</p>
-          <button class="toc-copy" type="button" aria-label="Copiar link desta página" data-copy-link>
-            <svg class="ico copy-ico" aria-hidden="true"><use href="#i-link" /></svg>
-            <svg class="ico check-ico" aria-hidden="true"><use href="#i-check" /></svg>
-            <span class="copy-label">Copiar link</span>
-          </button>
-        </div>
-        <ul>
-          <li><a href="#medidas" data-toc-link>Controles implementados</a></li>
-          <li><a href="#selos" data-toc-link>Sem selos que não temos</a></li>
-          <li><a href="#fluxo" data-toc-link>Como os dados circulam</a></li>
-          <li><a href="#onde" data-toc-link>Onde ficam os dados</a></li>
-          <li><a href="#lgpd" data-toc-link>LGPD e os seus direitos</a></li>
-          <li><a href="#incidentes" data-toc-link>Se algo der errado</a></li>
-          <li><a href="#reportar" data-toc-link>Reportar uma falha</a></li>
-          <li><a href="#perguntas" data-toc-link>Perguntas</a></li>
-          <li><a href="#mudancas" data-toc-link>O que mudou</a></li>
-        </ul>
-      </aside>
-    </div>
+      </div>
+    </main>
 
     <footer class="doc-footer">
       <div class="foot-in">

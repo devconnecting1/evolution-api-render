@@ -1,0 +1,1508 @@
+{
+  "seguranca": {
+    "390": {
+      "light": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyHeight": 14846,
+        "h1": {
+          "x": 16,
+          "y": 152,
+          "w": 358,
+          "size": "40.56px",
+          "text": "As conversas dos seus clientes, bem guardadas."
+        },
+        "h2s": [
+          {
+            "text": "Uso indevido",
+            "x": 16,
+            "y": 635,
+            "w": 358
+          },
+          {
+            "text": "Vulnerabilidades",
+            "x": 16,
+            "y": 890,
+            "w": 358
+          },
+          {
+            "text": "Contato de segurança",
+            "x": 16,
+            "y": 1120,
+            "w": 358
+          },
+          {
+            "text": "Nossas práticas de segurança",
+            "x": 16,
+            "y": 1372,
+            "w": 358
+          },
+          {
+            "text": "Controles implementados #",
+            "x": 16,
+            "y": 2630,
+            "w": 358
+          },
+          {
+            "text": "Sem selos que não temos #",
+            "x": 16,
+            "y": 5008,
+            "w": 358
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": null,
+        "article": null,
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 390,
+          "h": 13923
+        },
+        "trustContacts": {
+          "x": 16,
+          "y": 531,
+          "w": 358,
+          "h": 785
+        },
+        "trustSection": {
+          "x": 16,
+          "y": 1316,
+          "w": 358,
+          "h": 1258
+        },
+        "table": {
+          "x": 16,
+          "y": 6320,
+          "w": 620,
+          "h": 481
+        }
+      },
+      "dark": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyHeight": 14846,
+        "h1": {
+          "x": 16,
+          "y": 152,
+          "w": 358,
+          "size": "40.56px",
+          "text": "As conversas dos seus clientes, bem guardadas."
+        },
+        "h2s": [
+          {
+            "text": "Uso indevido",
+            "x": 16,
+            "y": 635,
+            "w": 358
+          },
+          {
+            "text": "Vulnerabilidades",
+            "x": 16,
+            "y": 890,
+            "w": 358
+          },
+          {
+            "text": "Contato de segurança",
+            "x": 16,
+            "y": 1120,
+            "w": 358
+          },
+          {
+            "text": "Nossas práticas de segurança",
+            "x": 16,
+            "y": 1372,
+            "w": 358
+          },
+          {
+            "text": "Controles implementados #",
+            "x": 16,
+            "y": 2630,
+            "w": 358
+          },
+          {
+            "text": "Sem selos que não temos #",
+            "x": 16,
+            "y": 5008,
+            "w": 358
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": null,
+        "article": null,
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 390,
+          "h": 13923
+        },
+        "trustContacts": {
+          "x": 16,
+          "y": 531,
+          "w": 358,
+          "h": 785
+        },
+        "trustSection": {
+          "x": 16,
+          "y": 1316,
+          "w": 358,
+          "h": 1258
+        },
+        "table": {
+          "x": 16,
+          "y": 6320,
+          "w": 620,
+          "h": 481
+        }
+      }
+    },
+    "1024": {
+      "light": {
+        "scrollWidth": 1024,
+        "clientWidth": 1024,
+        "bodyHeight": 9025,
+        "h1": {
+          "x": 32,
+          "y": 180,
+          "w": 520,
+          "size": "59.392px",
+          "text": "As conversas dos seus clientes, bem guardadas."
+        },
+        "h2s": [
+          {
+            "text": "Uso indevido",
+            "x": 32,
+            "y": 714,
+            "w": 293
+          },
+          {
+            "text": "Vulnerabilidades",
+            "x": 365,
+            "y": 714,
+            "w": 293
+          },
+          {
+            "text": "Contato de segurança",
+            "x": 699,
+            "y": 714,
+            "w": 293
+          },
+          {
+            "text": "Nossas práticas de segurança",
+            "x": 32,
+            "y": 1047,
+            "w": 365
+          },
+          {
+            "text": "Controles implementados #",
+            "x": 32,
+            "y": 1851,
+            "w": 960
+          },
+          {
+            "text": "Sem selos que não temos #",
+            "x": 32,
+            "y": 3051,
+            "w": 960
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": null,
+        "article": null,
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1024,
+          "h": 8577
+        },
+        "trustContacts": {
+          "x": 32,
+          "y": 598,
+          "w": 960,
+          "h": 377
+        },
+        "trustSection": {
+          "x": 32,
+          "y": 975,
+          "w": 960,
+          "h": 804
+        },
+        "table": {
+          "x": 32,
+          "y": 3600,
+          "w": 960,
+          "h": 385
+        }
+      },
+      "dark": {
+        "scrollWidth": 1024,
+        "clientWidth": 1024,
+        "bodyHeight": 9025,
+        "h1": {
+          "x": 32,
+          "y": 180,
+          "w": 520,
+          "size": "59.392px",
+          "text": "As conversas dos seus clientes, bem guardadas."
+        },
+        "h2s": [
+          {
+            "text": "Uso indevido",
+            "x": 32,
+            "y": 714,
+            "w": 293
+          },
+          {
+            "text": "Vulnerabilidades",
+            "x": 365,
+            "y": 714,
+            "w": 293
+          },
+          {
+            "text": "Contato de segurança",
+            "x": 699,
+            "y": 714,
+            "w": 293
+          },
+          {
+            "text": "Nossas práticas de segurança",
+            "x": 32,
+            "y": 1047,
+            "w": 365
+          },
+          {
+            "text": "Controles implementados #",
+            "x": 32,
+            "y": 1851,
+            "w": 960
+          },
+          {
+            "text": "Sem selos que não temos #",
+            "x": 32,
+            "y": 3051,
+            "w": 960
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": null,
+        "article": null,
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1024,
+          "h": 8577
+        },
+        "trustContacts": {
+          "x": 32,
+          "y": 598,
+          "w": 960,
+          "h": 377
+        },
+        "trustSection": {
+          "x": 32,
+          "y": 975,
+          "w": 960,
+          "h": 804
+        },
+        "table": {
+          "x": 32,
+          "y": 3600,
+          "w": 960,
+          "h": 385
+        }
+      }
+    },
+    "1440": {
+      "light": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "bodyHeight": 9040,
+        "h1": {
+          "x": 186,
+          "y": 168,
+          "w": 582,
+          "size": "83.52px",
+          "text": "As conversas dos seus clientes, bem guardadas."
+        },
+        "h2s": [
+          {
+            "text": "Uso indevido",
+            "x": 210,
+            "y": 862,
+            "w": 314
+          },
+          {
+            "text": "Vulnerabilidades",
+            "x": 563,
+            "y": 862,
+            "w": 314
+          },
+          {
+            "text": "Contato de segurança",
+            "x": 917,
+            "y": 862,
+            "w": 314
+          },
+          {
+            "text": "Nossas práticas de segurança",
+            "x": 210,
+            "y": 1171,
+            "w": 389
+          },
+          {
+            "text": "Controles implementados #",
+            "x": 210,
+            "y": 1904,
+            "w": 1021
+          },
+          {
+            "text": "Sem selos que não temos #",
+            "x": 210,
+            "y": 3117,
+            "w": 1021
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": null,
+        "article": null,
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1440,
+          "h": 8592
+        },
+        "trustContacts": {
+          "x": 210,
+          "y": 746,
+          "w": 1021,
+          "h": 353
+        },
+        "trustSection": {
+          "x": 210,
+          "y": 1099,
+          "w": 1021,
+          "h": 734
+        },
+        "table": {
+          "x": 210,
+          "y": 3678,
+          "w": 1021,
+          "h": 343
+        }
+      },
+      "dark": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "bodyHeight": 9040,
+        "h1": {
+          "x": 186,
+          "y": 168,
+          "w": 582,
+          "size": "83.52px",
+          "text": "As conversas dos seus clientes, bem guardadas."
+        },
+        "h2s": [
+          {
+            "text": "Uso indevido",
+            "x": 210,
+            "y": 862,
+            "w": 314
+          },
+          {
+            "text": "Vulnerabilidades",
+            "x": 563,
+            "y": 862,
+            "w": 314
+          },
+          {
+            "text": "Contato de segurança",
+            "x": 917,
+            "y": 862,
+            "w": 314
+          },
+          {
+            "text": "Nossas práticas de segurança",
+            "x": 210,
+            "y": 1171,
+            "w": 389
+          },
+          {
+            "text": "Controles implementados #",
+            "x": 210,
+            "y": 1904,
+            "w": 1021
+          },
+          {
+            "text": "Sem selos que não temos #",
+            "x": 210,
+            "y": 3117,
+            "w": 1021
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": null,
+        "article": null,
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1440,
+          "h": 8592
+        },
+        "trustContacts": {
+          "x": 210,
+          "y": 746,
+          "w": 1021,
+          "h": 353
+        },
+        "trustSection": {
+          "x": 210,
+          "y": 1099,
+          "w": 1021,
+          "h": 734
+        },
+        "table": {
+          "x": 210,
+          "y": 3678,
+          "w": 1021,
+          "h": 343
+        }
+      }
+    }
+  },
+  "termos": {
+    "390": {
+      "light": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyHeight": 8144,
+        "h1": {
+          "x": 16,
+          "y": 140,
+          "w": 358,
+          "size": "40.56px",
+          "text": "Regras de uso do WhatsAI"
+        },
+        "h2s": [
+          {
+            "text": "O que é o serviço #",
+            "x": 16,
+            "y": 1349,
+            "w": 358
+          },
+          {
+            "text": "Responsabilidades da empresa #",
+            "x": 16,
+            "y": 1968,
+            "w": 358
+          },
+          {
+            "text": "Limites da IA #",
+            "x": 16,
+            "y": 2732,
+            "w": 358
+          },
+          {
+            "text": "O que não é permitido #",
+            "x": 16,
+            "y": 3431,
+            "w": 358
+          },
+          {
+            "text": "Planos, pagamento e cancelamento #",
+            "x": 16,
+            "y": 4016,
+            "w": 358
+          },
+          {
+            "text": "Disponibilidade e serviços de terceiros #",
+            "x": 16,
+            "y": 4675,
+            "w": 358
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "article": {
+          "x": 16,
+          "y": 426,
+          "w": 358,
+          "h": 6785
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 390,
+          "h": 7221
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": null
+      },
+      "dark": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyHeight": 8144,
+        "h1": {
+          "x": 16,
+          "y": 140,
+          "w": 358,
+          "size": "40.56px",
+          "text": "Regras de uso do WhatsAI"
+        },
+        "h2s": [
+          {
+            "text": "O que é o serviço #",
+            "x": 16,
+            "y": 1349,
+            "w": 358
+          },
+          {
+            "text": "Responsabilidades da empresa #",
+            "x": 16,
+            "y": 1968,
+            "w": 358
+          },
+          {
+            "text": "Limites da IA #",
+            "x": 16,
+            "y": 2732,
+            "w": 358
+          },
+          {
+            "text": "O que não é permitido #",
+            "x": 16,
+            "y": 3431,
+            "w": 358
+          },
+          {
+            "text": "Planos, pagamento e cancelamento #",
+            "x": 16,
+            "y": 4016,
+            "w": 358
+          },
+          {
+            "text": "Disponibilidade e serviços de terceiros #",
+            "x": 16,
+            "y": 4675,
+            "w": 358
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "article": {
+          "x": 16,
+          "y": 426,
+          "w": 358,
+          "h": 6785
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 390,
+          "h": 7221
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": null
+      }
+    },
+    "1024": {
+      "light": {
+        "scrollWidth": 1024,
+        "clientWidth": 1024,
+        "bodyHeight": 5292,
+        "h1": {
+          "x": 143,
+          "y": 172,
+          "w": 558,
+          "size": "47.104px",
+          "text": "Regras de uso do WhatsAI"
+        },
+        "h2s": [
+          {
+            "text": "O que é o serviço #",
+            "x": 143,
+            "y": 953,
+            "w": 797
+          },
+          {
+            "text": "Responsabilidades da empresa #",
+            "x": 143,
+            "y": 1360,
+            "w": 797
+          },
+          {
+            "text": "Limites da IA #",
+            "x": 143,
+            "y": 1802,
+            "w": 797
+          },
+          {
+            "text": "O que não é permitido #",
+            "x": 143,
+            "y": 2265,
+            "w": 797
+          },
+          {
+            "text": "Planos, pagamento e cancelamento #",
+            "x": 143,
+            "y": 2690,
+            "w": 797
+          },
+          {
+            "text": "Disponibilidade e serviços de terceiros #",
+            "x": 143,
+            "y": 3132,
+            "w": 797
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "article": {
+          "x": 143,
+          "y": 406,
+          "w": 797,
+          "h": 4399
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1024,
+          "h": 4844
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": null
+      },
+      "dark": {
+        "scrollWidth": 1024,
+        "clientWidth": 1024,
+        "bodyHeight": 5292,
+        "h1": {
+          "x": 143,
+          "y": 172,
+          "w": 558,
+          "size": "47.104px",
+          "text": "Regras de uso do WhatsAI"
+        },
+        "h2s": [
+          {
+            "text": "O que é o serviço #",
+            "x": 143,
+            "y": 953,
+            "w": 797
+          },
+          {
+            "text": "Responsabilidades da empresa #",
+            "x": 143,
+            "y": 1360,
+            "w": 797
+          },
+          {
+            "text": "Limites da IA #",
+            "x": 143,
+            "y": 1802,
+            "w": 797
+          },
+          {
+            "text": "O que não é permitido #",
+            "x": 143,
+            "y": 2265,
+            "w": 797
+          },
+          {
+            "text": "Planos, pagamento e cancelamento #",
+            "x": 143,
+            "y": 2690,
+            "w": 797
+          },
+          {
+            "text": "Disponibilidade e serviços de terceiros #",
+            "x": 143,
+            "y": 3132,
+            "w": 797
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "article": {
+          "x": 143,
+          "y": 406,
+          "w": 797,
+          "h": 4399
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1024,
+          "h": 4844
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": null
+      }
+    },
+    "1440": {
+      "light": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "bodyHeight": 5386,
+        "h1": {
+          "x": 202,
+          "y": 172,
+          "w": 756,
+          "size": "64px",
+          "text": "Regras de uso do WhatsAI"
+        },
+        "h2s": [
+          {
+            "text": "O que é o serviço #",
+            "x": 202,
+            "y": 979,
+            "w": 797
+          },
+          {
+            "text": "Responsabilidades da empresa #",
+            "x": 202,
+            "y": 1393,
+            "w": 797
+          },
+          {
+            "text": "Limites da IA #",
+            "x": 202,
+            "y": 1842,
+            "w": 797
+          },
+          {
+            "text": "O que não é permitido #",
+            "x": 202,
+            "y": 2311,
+            "w": 797
+          },
+          {
+            "text": "Planos, pagamento e cancelamento #",
+            "x": 202,
+            "y": 2743,
+            "w": 797
+          },
+          {
+            "text": "Disponibilidade e serviços de terceiros #",
+            "x": 202,
+            "y": 3192,
+            "w": 797
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 1063,
+          "y": 432,
+          "w": 328,
+          "h": 338
+        },
+        "article": {
+          "x": 202,
+          "y": 432,
+          "w": 797,
+          "h": 4466
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1440,
+          "h": 4937
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": null
+      },
+      "dark": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "bodyHeight": 5386,
+        "h1": {
+          "x": 202,
+          "y": 172,
+          "w": 756,
+          "size": "64px",
+          "text": "Regras de uso do WhatsAI"
+        },
+        "h2s": [
+          {
+            "text": "O que é o serviço #",
+            "x": 202,
+            "y": 979,
+            "w": 797
+          },
+          {
+            "text": "Responsabilidades da empresa #",
+            "x": 202,
+            "y": 1393,
+            "w": 797
+          },
+          {
+            "text": "Limites da IA #",
+            "x": 202,
+            "y": 1842,
+            "w": 797
+          },
+          {
+            "text": "O que não é permitido #",
+            "x": 202,
+            "y": 2311,
+            "w": 797
+          },
+          {
+            "text": "Planos, pagamento e cancelamento #",
+            "x": 202,
+            "y": 2743,
+            "w": 797
+          },
+          {
+            "text": "Disponibilidade e serviços de terceiros #",
+            "x": 202,
+            "y": 3192,
+            "w": 797
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 1063,
+          "y": 432,
+          "w": 328,
+          "h": 338
+        },
+        "article": {
+          "x": 202,
+          "y": 432,
+          "w": 797,
+          "h": 4466
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1440,
+          "h": 4937
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": null
+      }
+    }
+  },
+  "privacidade": {
+    "390": {
+      "light": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyHeight": 7654,
+        "h1": {
+          "x": 16,
+          "y": 140,
+          "w": 358,
+          "size": "40.56px",
+          "text": "Como o WhatsAI trata os dados"
+        },
+        "h2s": [
+          {
+            "text": "Quem decide e quem opera #",
+            "x": 16,
+            "y": 1397,
+            "w": 358
+          },
+          {
+            "text": "Quais dados e para quê #",
+            "x": 16,
+            "y": 1987,
+            "w": 358
+          },
+          {
+            "text": "Com quem compartilhamos #",
+            "x": 16,
+            "y": 2670,
+            "w": 358
+          },
+          {
+            "text": "Google Agenda #",
+            "x": 16,
+            "y": 3695,
+            "w": 358
+          },
+          {
+            "text": "Por quanto tempo guardamos #",
+            "x": 16,
+            "y": 5084,
+            "w": 358
+          },
+          {
+            "text": "Seus direitos e contato #",
+            "x": 16,
+            "y": 5645,
+            "w": 358
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "article": {
+          "x": 16,
+          "y": 426,
+          "w": 358,
+          "h": 6275
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 390,
+          "h": 6732
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": {
+          "x": 16,
+          "y": 2043,
+          "w": 620,
+          "h": 460
+        }
+      },
+      "dark": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyHeight": 7654,
+        "h1": {
+          "x": 16,
+          "y": 140,
+          "w": 358,
+          "size": "40.56px",
+          "text": "Como o WhatsAI trata os dados"
+        },
+        "h2s": [
+          {
+            "text": "Quem decide e quem opera #",
+            "x": 16,
+            "y": 1397,
+            "w": 358
+          },
+          {
+            "text": "Quais dados e para quê #",
+            "x": 16,
+            "y": 1987,
+            "w": 358
+          },
+          {
+            "text": "Com quem compartilhamos #",
+            "x": 16,
+            "y": 2670,
+            "w": 358
+          },
+          {
+            "text": "Google Agenda #",
+            "x": 16,
+            "y": 3695,
+            "w": 358
+          },
+          {
+            "text": "Por quanto tempo guardamos #",
+            "x": 16,
+            "y": 5084,
+            "w": 358
+          },
+          {
+            "text": "Seus direitos e contato #",
+            "x": 16,
+            "y": 5645,
+            "w": 358
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 390,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "article": {
+          "x": 16,
+          "y": 426,
+          "w": 358,
+          "h": 6275
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 390,
+          "h": 6732
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": {
+          "x": 16,
+          "y": 2043,
+          "w": 620,
+          "h": 460
+        }
+      }
+    },
+    "1024": {
+      "light": {
+        "scrollWidth": 1024,
+        "clientWidth": 1024,
+        "bodyHeight": 5206,
+        "h1": {
+          "x": 143,
+          "y": 172,
+          "w": 558,
+          "size": "47.104px",
+          "text": "Como o WhatsAI trata os dados"
+        },
+        "h2s": [
+          {
+            "text": "Quem decide e quem opera #",
+            "x": 143,
+            "y": 1076,
+            "w": 797
+          },
+          {
+            "text": "Quais dados e para quê #",
+            "x": 143,
+            "y": 1474,
+            "w": 797
+          },
+          {
+            "text": "Com quem compartilhamos #",
+            "x": 143,
+            "y": 2121,
+            "w": 797
+          },
+          {
+            "text": "Google Agenda #",
+            "x": 143,
+            "y": 2779,
+            "w": 797
+          },
+          {
+            "text": "Por quanto tempo guardamos #",
+            "x": 143,
+            "y": 3634,
+            "w": 797
+          },
+          {
+            "text": "Seus direitos e contato #",
+            "x": 143,
+            "y": 3974,
+            "w": 797
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "article": {
+          "x": 143,
+          "y": 455,
+          "w": 797,
+          "h": 4244
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1024,
+          "h": 4758
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": {
+          "x": 143,
+          "y": 1530,
+          "w": 797,
+          "h": 435
+        }
+      },
+      "dark": {
+        "scrollWidth": 1024,
+        "clientWidth": 1024,
+        "bodyHeight": 5206,
+        "h1": {
+          "x": 143,
+          "y": 172,
+          "w": 558,
+          "size": "47.104px",
+          "text": "Como o WhatsAI trata os dados"
+        },
+        "h2s": [
+          {
+            "text": "Quem decide e quem opera #",
+            "x": 143,
+            "y": 1076,
+            "w": 797
+          },
+          {
+            "text": "Quais dados e para quê #",
+            "x": 143,
+            "y": 1474,
+            "w": 797
+          },
+          {
+            "text": "Com quem compartilhamos #",
+            "x": 143,
+            "y": 2121,
+            "w": 797
+          },
+          {
+            "text": "Google Agenda #",
+            "x": 143,
+            "y": 2779,
+            "w": 797
+          },
+          {
+            "text": "Por quanto tempo guardamos #",
+            "x": 143,
+            "y": 3634,
+            "w": 797
+          },
+          {
+            "text": "Seus direitos e contato #",
+            "x": 143,
+            "y": 3974,
+            "w": 797
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1024,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "article": {
+          "x": 143,
+          "y": 455,
+          "w": 797,
+          "h": 4244
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1024,
+          "h": 4758
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": {
+          "x": 143,
+          "y": 1530,
+          "w": 797,
+          "h": 435
+        }
+      }
+    },
+    "1440": {
+      "light": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "bodyHeight": 5297,
+        "h1": {
+          "x": 202,
+          "y": 172,
+          "w": 756,
+          "size": "64px",
+          "text": "Como o WhatsAI trata os dados"
+        },
+        "h2s": [
+          {
+            "text": "Quem decide e quem opera #",
+            "x": 202,
+            "y": 1120,
+            "w": 797
+          },
+          {
+            "text": "Quais dados e para quê #",
+            "x": 202,
+            "y": 1525,
+            "w": 797
+          },
+          {
+            "text": "Com quem compartilhamos #",
+            "x": 202,
+            "y": 2178,
+            "w": 797
+          },
+          {
+            "text": "Google Agenda #",
+            "x": 202,
+            "y": 2843,
+            "w": 797
+          },
+          {
+            "text": "Por quanto tempo guardamos #",
+            "x": 202,
+            "y": 3704,
+            "w": 797
+          },
+          {
+            "text": "Seus direitos e contato #",
+            "x": 202,
+            "y": 4052,
+            "w": 797
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 1063,
+          "y": 499,
+          "w": 328,
+          "h": 248
+        },
+        "article": {
+          "x": 202,
+          "y": 499,
+          "w": 797,
+          "h": 4311
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1440,
+          "h": 4849
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": {
+          "x": 202,
+          "y": 1587,
+          "w": 797,
+          "h": 435
+        }
+      },
+      "dark": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "bodyHeight": 5297,
+        "h1": {
+          "x": 202,
+          "y": 172,
+          "w": 756,
+          "size": "64px",
+          "text": "Como o WhatsAI trata os dados"
+        },
+        "h2s": [
+          {
+            "text": "Quem decide e quem opera #",
+            "x": 202,
+            "y": 1120,
+            "w": 797
+          },
+          {
+            "text": "Quais dados e para quê #",
+            "x": 202,
+            "y": 1525,
+            "w": 797
+          },
+          {
+            "text": "Com quem compartilhamos #",
+            "x": 202,
+            "y": 2178,
+            "w": 797
+          },
+          {
+            "text": "Google Agenda #",
+            "x": 202,
+            "y": 2843,
+            "w": 797
+          },
+          {
+            "text": "Por quanto tempo guardamos #",
+            "x": 202,
+            "y": 3704,
+            "w": 797
+          },
+          {
+            "text": "Seus direitos e contato #",
+            "x": 202,
+            "y": 4052,
+            "w": 797
+          }
+        ],
+        "topbar": {
+          "x": 0,
+          "y": 0,
+          "w": 1440,
+          "h": 61
+        },
+        "sidebar": null,
+        "search": null,
+        "toc": {
+          "x": 1063,
+          "y": 499,
+          "w": 328,
+          "h": 248
+        },
+        "article": {
+          "x": 202,
+          "y": 499,
+          "w": 797,
+          "h": 4311
+        },
+        "main": {
+          "x": 0,
+          "y": 61,
+          "w": 1440,
+          "h": 4849
+        },
+        "trustContacts": null,
+        "trustSection": null,
+        "table": {
+          "x": 202,
+          "y": 1587,
+          "w": 797,
+          "h": 435
+        }
+      }
+    }
+  }
+}

@@ -1,25 +1,88 @@
 /*
  * WhatsAI: páginas públicas de segurança, termos e privacidade (/seguranca, /termos e /privacidade).
- * O topo, a navegação lateral, a busca, o índice, a gaveta, o tema e os componentes de leitura vêm de
- * /docs/docs.css e /docs/docs.js. Este arquivo cobre só o que é próprio destas três páginas:
- * o herói com grade de referência, a faixa de atalhos, os cartões de controle, o resumo do documento,
- * as tabelas de provedores e o ajuste de leitura dos textos legais.
- * Referência de layout: páginas públicas de segurança e de documentos legais do Render, recriadas do zero
- * com marca, textos, paleta, classes, ícones e código do WhatsAI. Nenhum asset ou CSS do Render é usado.
+ * Tokens, tipografia, botões, avisos, tabelas e o tema vêm de /docs/docs.css e /docs/docs.js.
+ * Este arquivo cuida só do que é próprio destas três páginas, com duas anatomias distintas:
+ * - documentos legais (termos e privacidade): topo simples sem busca, herói com grade, artigo de leitura
+ *   de 797 px e índice "Nesta página" à direita a partir de 1280;
+ * - página de confiança (segurança): topo simples, herói com grade e arte abstrata, três canais de contato,
+ *   práticas, conformidade, suboperadores e os controles implementados, sem sidebar e sem índice lateral.
+ * Referência de estrutura: as páginas públicas de termos, privacidade e segurança do Render, recriadas do zero
+ * com marca, textos, classes, ícones e paleta do WhatsAI. Nenhum asset, fonte, texto ou CSS do Render é usado.
  * Paleta: verde escuro no tema claro (#0e7a4d) e verde claro no escuro (#5fcf8a), definidos em docs.css.
  * Âmbar é atenção e vermelho é erro; nada de roxo. Tema padrão Sistema.
  */
 
-/* Grade do herói: linhas finas que somem no rodapé do bloco, como uma folha de referência. */
+/* O topo destas páginas tem uma linha só; o docs.css reserva 116 px abaixo de 1024 para a busca, que não existe aqui. */
+:root {
+  --d-topbar: 61px;
+}
+
+/* ------------------------------------------------------------------------------------------------ topo */
+.legal-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--d-bg);
+  border-bottom: 1px solid var(--d-border);
+}
+
+.legal-top-in {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 1920px;
+  min-height: 60px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.legal-top-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.legal-top-nav a {
+  padding: 8px 10px;
+  color: var(--d-text-2);
+  font-size: 14px;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s var(--d-ease-ui);
+}
+
+.legal-top-nav a:hover {
+  color: var(--d-accent);
+}
+
+.legal-top-nav .top-cta {
+  height: 36px;
+  padding: 0 16px;
+  color: var(--d-btn-text);
+}
+
+.legal-top-nav .top-cta:hover {
+  color: #ffffff;
+}
+
+/* ---------------------------------------------------------------------------------- coluna e herói */
+.legal-shell,
+.legal-body {
+  padding-right: 16px;
+  padding-left: 16px;
+}
+
 .legal-hero {
   position: relative;
   overflow: hidden;
-  padding: 44px 44px 0;
   background: var(--d-bg);
-  border: 1px solid var(--d-border);
-  border-radius: 0;
+  border-bottom: 1px solid var(--d-border);
 }
 
+/* Grade de referência: linhas finas que somem no fim do herói. */
 .legal-hero::before {
   content: "";
   position: absolute;
@@ -28,39 +91,215 @@
   pointer-events: none;
   background-image: linear-gradient(to right, var(--d-border) 1px, transparent 1px),
     linear-gradient(to bottom, var(--d-border) 1px, transparent 1px);
-  background-size: 72px 72px;
-  opacity: 0.5;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 100%);
+  background-size: 88px 88px;
+  opacity: 0.55;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
 }
 
-.legal-hero > * {
+.legal-hero-in {
   position: relative;
   z-index: 1;
+  padding-top: 76px;
+  padding-bottom: 64px;
 }
 
 .legal-hero .eyebrow {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .legal-hero h1 {
-  max-width: 16ch;
-  font-size: clamp(40px, 4.6vw, 56px);
+  max-width: 18ch;
+  margin: 0;
+  font-size: clamp(42px, 4.6vw, 64px);
   font-weight: 300;
   letter-spacing: -0.025em;
   line-height: 1.04;
 }
 
-.legal-hero .hero-lead {
-  max-width: 56ch;
-  margin-top: 22px;
-  font-size: clamp(19px, 1.8vw, 22px);
-  line-height: 1.35;
-  letter-spacing: -0.012em;
+.legal-hero-lead {
+  max-width: 58ch;
+  margin: 20px 0 0;
+  color: var(--d-text-3);
+  font-size: clamp(18px, 1.6vw, 21px);
+  line-height: 1.45;
+  letter-spacing: -0.008em;
+}
+
+/* ------------------------------------------------------------------------------- documento legal */
+.legal-body {
+  padding-top: 48px;
+  padding-bottom: 100px;
+}
+
+.legal-article {
+  width: 100%;
+  max-width: 797px;
+  min-width: 0;
+  outline: none;
+}
+
+.legal-updated {
+  margin: 0 0 32px;
+  color: var(--d-text-3);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.legal-updated time {
+  color: var(--d-text-2);
+}
+
+.legal-article > p {
+  margin: 0 0 20px;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.legal-article > p:first-of-type {
+  color: var(--d-text-2);
+  font-size: 20px;
+  line-height: 1.55;
+}
+
+.legal-article .doc-section {
+  padding-top: 56px;
+}
+
+.legal-article .doc-section > h2 {
+  display: block;
+  margin: 0 0 20px;
+  font-size: clamp(28px, 2.6vw, 34px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+.legal-article .doc-section p {
+  margin: 0 0 20px;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.legal-article .doc-section > p.section-lead {
+  max-width: 62ch;
+  margin-bottom: 24px;
+  color: var(--d-text-3);
+}
+
+.legal-article .doc-list {
+  margin-bottom: 20px;
+}
+
+.legal-article .doc-list li,
+.legal-article .checklist li {
+  margin: 9px 0;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.legal-article .checklist {
+  margin-top: 6px;
+}
+
+.legal-article .doc-section h3 {
+  margin-top: 34px;
+}
+
+.legal-article .doc-section h3:first-child {
+  margin-top: 0;
+}
+
+.legal-article .doc-section > h2 .anchor {
+  margin-left: 8px;
+  color: var(--d-accent);
+  font-weight: 300;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s var(--d-ease-ui);
+}
+
+.legal-article .doc-section > h2:hover .anchor,
+.legal-article .doc-section > h2 .anchor:focus-visible {
+  opacity: 1;
+}
+
+/* Índice do documento: só a partir de 1280, à direita do artigo. */
+.legal-toc {
+  display: none;
+}
+
+.legal-toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-left: 1px solid var(--d-border);
+}
+
+.legal-toc-list a {
+  display: block;
+  margin-left: -1px;
+  padding: 5px 0 5px 14px;
+  border-left: 1px solid transparent;
+  color: var(--d-text-3);
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: none;
+  transition: color 0.15s var(--d-ease-ui), border-color 0.15s var(--d-ease-ui);
+}
+
+.legal-toc-list a:hover {
+  color: var(--d-text);
+}
+
+.legal-toc-list a[aria-current="true"] {
+  border-left-color: var(--d-accent);
+  color: var(--d-accent);
+  font-weight: 500;
+}
+
+/* ------------------------------------------------------------------------------------- segurança */
+.trust-page {
+  padding-bottom: 0;
+}
+
+.trust-shell {
+  width: 100%;
+  max-width: 1085px;
+  margin: 0 auto;
+  padding-right: 16px;
+  padding-left: 16px;
+}
+
+.trust-hero-in {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  align-items: center;
+  gap: 56px;
+  max-width: 1133px;
+  padding-top: 72px;
+  padding-bottom: 80px;
+}
+
+.trust-hero h1 {
+  max-width: 14ch;
+  font-size: clamp(44px, 5.8vw, 84px);
+  line-height: 1.02;
+}
+
+.trust-hero-copy {
+  min-width: 0;
+}
+
+.trust-hero .legal-hero-lead {
+  max-width: 52ch;
 }
 
 .legal-meta {
-  margin: 22px 0 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 24px 0 0;
   color: var(--d-text-3);
   font-size: 14px;
   line-height: 1.5;
@@ -78,173 +317,325 @@
 }
 
 .legal-meta .status-dot {
-  display: inline-block;
-  margin: 0 8px 0 0;
-  vertical-align: 1px;
+  margin-top: 7px;
 }
 
-/* Faixa de atalhos: três colunas separadas por fio, como o resumo de confiança da referência. */
-.legal-quick {
+/* Arte abstrata própria: mosaico verde da marca, sem reproduzir o desenho da referência. */
+.trust-art {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 34px -44px 0;
-  border-top: 1px solid var(--d-border);
-  background: color-mix(in srgb, var(--d-bg) 88%, transparent);
-}
-
-.legal-quick-item {
-  display: flex;
-  flex-direction: column;
   gap: 10px;
-  padding: 20px 22px 22px;
-  border-right: 1px solid var(--d-border);
-  color: var(--d-text);
-  text-decoration: none;
-  transition: background-color 0.15s var(--d-ease-ui);
+  aspect-ratio: 1 / 1;
+  min-width: 0;
 }
 
-.legal-quick-item:last-child {
-  border-right: 0;
-}
-
-.legal-quick-item:hover {
-  background: var(--d-bg-soft);
-}
-
-.legal-quick-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.legal-quick-ico {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: var(--d-accent-soft);
+.trust-art .ta {
+  display: block;
+  border: 1px solid var(--d-accent-border);
   border-radius: 2px;
-  color: var(--d-accent);
-  flex: none;
+  background: var(--d-accent-soft);
 }
 
-.legal-quick-ico .ico {
-  width: 17px;
-  height: 17px;
+.trust-art .ta-a1 {
+  background: var(--d-accent);
+  border-color: var(--d-accent);
 }
 
-/* Âmbar só para o que pede atenção: hoje, o aviso de que não exibimos selos que não temos. */
-.legal-quick-ico.is-warn {
-  background: var(--d-warn-bg);
-  color: var(--d-warn-text);
+.trust-art .ta-a2 {
+  background: color-mix(in srgb, var(--d-accent) 55%, var(--d-bg));
 }
 
-.legal-quick-title {
-  color: var(--d-text);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.3;
+.trust-art .ta-a3 {
+  background: var(--d-accent-soft-2);
 }
 
-.legal-quick-text {
-  color: var(--d-text-3);
-  font-size: 13.5px;
-  line-height: 1.5;
+.trust-art .ta-b1 {
+  background: color-mix(in srgb, var(--d-accent) 18%, var(--d-bg));
 }
 
-.legal-quick-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: 4px;
-  color: var(--d-accent);
-  font-size: 13px;
-  font-weight: 600;
+.trust-art .ta-b2 {
+  background: radial-gradient(circle at 50% 50%, var(--d-accent) 0 18%, transparent 19%),
+    radial-gradient(circle at 50% 50%, transparent 0 34%, var(--d-accent-border) 35% 36%, transparent 37%);
 }
 
-.legal-quick-go .ico {
-  width: 13px;
-  height: 13px;
-  transition: transform 0.15s var(--d-ease-ui);
+.trust-art .ta-b3 {
+  background: linear-gradient(135deg, var(--d-accent-soft-2) 0 50%, var(--d-accent-soft) 50% 100%);
 }
 
-.legal-quick-item:hover .legal-quick-go .ico {
-  transform: translateX(2px);
+.trust-art .ta-c1 {
+  background: color-mix(in srgb, var(--d-accent) 38%, var(--d-bg));
 }
 
-/* Documento legal */
-.legal-doc .doc-section {
-  padding-top: 52px;
+.trust-art .ta-c2 {
+  background: repeating-linear-gradient(90deg, var(--d-accent-border) 0 1px, transparent 1px 12px);
 }
 
-.legal-doc .doc-section > h2 {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 18px;
-  font-size: clamp(28px, 2.6vw, 34px);
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+.trust-art .ta-c3 {
+  background: var(--d-accent-soft);
 }
 
-.legal-num {
+/* Três canais de segurança, logo abaixo do herói. */
+.trust-contacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px;
+  padding: 60px 0 68px;
+  border-bottom: 1px solid var(--d-border);
+}
+
+.trust-contact {
+  min-width: 0;
+}
+
+.trust-contact-ico,
+.trust-practice-ico {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 30px;
-  padding: 3px 7px;
+  width: 40px;
+  height: 40px;
   background: var(--d-accent-soft);
   border: 1px solid var(--d-accent-border);
   border-radius: 2px;
   color: var(--d-accent);
-  font-family: var(--d-mono) !important;
-  font-size: 12px;
+}
+
+.trust-contact-ico .ico,
+.trust-practice-ico .ico {
+  width: 20px;
+  height: 20px;
+}
+
+.trust-contact h2 {
+  margin: 16px 0 8px;
+  font-size: 19px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  line-height: 1.1;
-  transform: translateY(-2px);
-  flex: none;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 
-.legal-doc .doc-section p {
+.trust-contact p {
+  margin: 0 0 12px;
+  color: var(--d-text-3);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.trust-contact a {
+  color: var(--d-accent);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--d-accent-border);
+}
+
+.trust-contact a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Seções da página de confiança. */
+.trust-section {
+  padding-top: 72px;
+}
+
+.trust-section > h2 {
+  margin: 0 0 20px;
+  font-size: clamp(30px, 3.2vw, 44px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.06;
+}
+
+.trust-section > h2 .anchor {
+  margin-left: 8px;
+  color: var(--d-accent);
+  font-weight: 300;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s var(--d-ease-ui);
+}
+
+.trust-section > h2:hover .anchor,
+.trust-section > h2 .anchor:focus-visible {
+  opacity: 1;
+}
+
+.trust-section p {
+  margin: 0 0 20px;
   font-size: 18px;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
-.legal-doc .doc-section > p.section-lead {
-  max-width: 62ch;
-  margin-bottom: 24px;
+.trust-section > p.section-lead,
+.trust-split-head p.section-lead {
+  max-width: 68ch;
+  margin-bottom: 28px;
   color: var(--d-text-3);
 }
 
-.legal-doc .doc-list li {
-  margin: 10px 0;
-  font-size: 18px;
-  line-height: 1.6;
+.trust-section h3 {
+  margin: 30px 0 10px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
-.legal-doc .checklist {
+.trust-section a:not(.anchor):not(.btn) {
+  color: var(--d-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--d-accent-border);
+}
+
+.trust-section a:not(.anchor):not(.btn):hover {
+  color: var(--d-accent-strong);
+  text-decoration-color: currentColor;
+}
+
+.trust-section .doc-list {
+  margin: 0 0 20px;
+  padding-left: 24px;
+}
+
+.trust-section .doc-list li,
+.trust-section .checklist li {
+  margin: 8px 0;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.trust-section .checklist {
   margin-top: 6px;
 }
 
-.legal-doc .checklist li {
-  margin: 11px 0;
+/* Práticas: título e apoio à esquerda, cartões à direita, como na referência. */
+.trust-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 48px;
+}
+
+.trust-split-head {
+  max-width: 34ch;
+}
+
+.trust-split-head h2 {
+  margin: 0 0 18px;
+  font-size: clamp(30px, 3.2vw, 44px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.06;
+}
+
+.trust-practice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.trust-practice:nth-child(3) {
+  grid-column: 2;
+}
+
+.trust-practice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px;
+  background: var(--d-bg);
+  border: 1px solid var(--d-border);
+  border-radius: 2px;
+}
+
+.trust-practice h3 {
+  margin: 16px 0 8px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.35;
+}
+
+.trust-practice p {
+  margin: 0 0 14px;
+  color: var(--d-text-3);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.trust-practice a {
+  margin-top: auto;
+  color: var(--d-accent);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.trust-practice a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Conformidade: o que é da infraestrutura e o que é do WhatsAI, sem selo inventado. */
+.trust-cert-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 24px;
+}
+
+.trust-cert {
+  padding: 20px;
+  background: var(--d-bg-soft);
+  border: 1px solid var(--d-border);
+  border-radius: 2px;
+}
+
+.trust-cert-flag {
+  display: inline-block;
+  padding: 3px 7px;
+  background: var(--d-bg);
+  border: 1px solid var(--d-border-strong);
+  border-radius: 2px;
+  color: var(--d-text-3);
+  font-family: var(--d-mono) !important;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.trust-cert-flag.is-own {
+  background: var(--d-accent-soft);
+  border-color: var(--d-accent-border);
+  color: var(--d-accent);
+}
+
+.trust-cert-flag.is-none {
+  background: var(--d-warn-bg);
+  border-color: var(--d-warn-border);
+  color: var(--d-warn-text);
+}
+
+.trust-cert h3 {
+  margin: 14px 0 6px;
   font-size: 18px;
-  line-height: 1.6;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
-.legal-doc .doc-section h3 {
-  margin-top: 34px;
+.trust-cert p {
+  margin: 0;
+  color: var(--d-text-3);
+  font-size: 14.5px;
+  line-height: 1.5;
 }
 
-.legal-doc .doc-section h3:first-child {
-  margin-top: 0;
-}
-
-/* Resumo do documento: bloco de leitura rápida antes das seções numeradas. */
+/* ------------------------------------------------------------------------------ blocos de leitura */
 .legal-summary {
   margin: 28px 0 4px;
   padding: 24px;
@@ -445,13 +836,19 @@
   margin-bottom: 0;
 }
 
-/* Tabelas de provedores e de selos. */
+/* Tabelas de provedores e de selos. O docs.css estica a tabela para fora em telas pequenas;
+   aqui o wrap acompanha a coluna e a rolagem fica só dentro dele. */
+.legal-article .table-wrap,
+.trust-section .table-wrap {
+  margin-right: 0;
+  margin-left: 0;
+}
+
 .legal-table {
   min-width: 620px;
   table-layout: fixed;
 }
 
-/* Cabeçalho de tabela longa pode quebrar em duas linhas; as larguras abaixo mandam no resto. */
 .legal-table th {
   white-space: normal;
 }
@@ -467,22 +864,26 @@
   width: 22%;
 }
 
-/* Larguras por tabela: nome curto à esquerda, texto longo com espaço para respirar. */
 .legal-table-selos th:first-child {
   width: 22%;
 }
+
 .legal-table-selos th:nth-child(2) {
   width: 28%;
 }
+
 .legal-table-onde th:first-child {
   width: 13%;
 }
+
 .legal-table-onde th:nth-child(2) {
   width: 28%;
 }
+
 .legal-table-onde th:nth-child(4) {
   width: 19%;
 }
+
 .legal-table-dados th:first-child {
   width: 28%;
 }
@@ -590,124 +991,99 @@
   line-height: 1.55;
 }
 
-/* Páginas legais no rodapé da navegação lateral. */
-.side-pages {
-  border-top: 1px solid var(--d-border);
-  padding: 14px 0 10px;
-}
-
-.side-pages-title {
-  margin: 0 0 6px;
-  padding: 0 16px;
-  color: var(--d-text-3);
-  font-family: var(--d-mono) !important;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  line-height: 1.4;
-  text-transform: uppercase;
-}
-
-.side-pages ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.side-pages a {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  border-left: 2px solid transparent;
-  color: var(--d-text-2);
-  font-size: 14px;
-  line-height: 20px;
-  text-decoration: none;
-  transition: color 0.15s var(--d-ease-ui), background-color 0.15s var(--d-ease-ui);
-}
-
-.side-pages a:hover {
-  color: var(--d-accent);
-}
-
-.side-pages a[aria-current="page"] {
-  border-left-color: var(--d-accent);
-  background: var(--d-accent-soft);
-  color: var(--d-accent);
-  font-weight: 600;
-}
-
-.side-pages .ico {
-  width: 15px;
-  height: 15px;
-  color: var(--d-text-3);
-  flex: none;
-}
-
-.side-pages a[aria-current="page"] .ico {
-  color: var(--d-accent);
-}
-
-.side-doc {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 9px 12px;
-  background: var(--d-bg-soft);
-  border: 1px solid var(--d-border);
-  border-radius: 2px;
-  color: var(--d-text);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.35;
-  text-decoration: none;
-  transition: border-color 0.15s var(--d-ease-ui), color 0.15s var(--d-ease-ui);
-}
-
-.side-doc:hover {
-  border-color: var(--d-accent);
-  color: var(--d-accent);
-}
-
-.side-doc .ico {
-  width: 14px;
-  height: 14px;
-  flex: none;
-}
-
-/* Ajustes de leitura em telas menores. */
-@media (max-width: 1279px) {
-  .legal-hero {
-    padding: 38px 36px 0;
+/* ----------------------------------------------------------------------------------------- responsivo */
+@media (min-width: 720px) {
+  .legal-shell,
+  .legal-body {
+    padding-right: 24px;
+    padding-left: 6vw;
   }
-  .legal-quick {
-    margin-right: -36px;
-    margin-left: -36px;
+  .trust-shell {
+    padding-right: 24px;
+    padding-left: 24px;
   }
-  /* O topo perde o link da documentação antes de o campo de busca encostar nele; o mesmo link está na lateral. */
-  .top-links .top-doc {
-    display: none;
+}
+
+@media (min-width: 1024px) {
+  .legal-shell,
+  .legal-body {
+    padding-right: max(32px, 3.3vw);
+    padding-left: 14vw;
+  }
+  .trust-shell {
+    padding-right: 32px;
+    padding-left: 32px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .legal-body {
+    display: grid;
+    grid-template-columns: minmax(0, 797px) minmax(220px, 328px);
+    align-items: start;
+    column-gap: 64px;
+  }
+  .legal-toc {
+    position: sticky;
+    top: calc(var(--d-topbar) + 40px);
+    display: block;
+    max-height: calc(100vh - var(--d-topbar) - 56px);
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
 }
 
 @media (max-width: 1023px) {
-  .legal-quick-item {
-    padding: 18px 18px 20px;
+  .trust-hero-in {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+    padding-top: 56px;
+    padding-bottom: 64px;
+  }
+  .trust-art {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1.4 / 1;
+  }
+  .trust-cert-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 860px) {
-  .legal-quick {
+@media (max-width: 899px) {
+  .legal-top-in {
+    padding: 0 16px;
+  }
+  .legal-hero-in {
+    padding-top: 56px;
+    padding-bottom: 48px;
+  }
+  .trust-hero h1 {
+    font-size: clamp(40px, 9.5vw, 64px);
+  }
+  .trust-contacts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding: 48px 0 52px;
+  }
+  .trust-split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .trust-split-head {
+    max-width: 68ch;
+  }
+  .trust-practice-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-  .legal-quick-item {
-    border-right: 0;
-    border-bottom: 1px solid var(--d-border);
+  .trust-practice:nth-child(3) {
+    grid-column: auto;
   }
-  .legal-quick-item:last-child {
-    border-bottom: 0;
+  .trust-art {
+    display: none;
+  }
+  .trust-section {
+    padding-top: 56px;
   }
   .legal-card-grid,
   .legal-duo,
@@ -717,31 +1093,21 @@
 }
 
 @media (max-width: 719px) {
-  .legal-hero {
-    padding: 30px 20px 0;
-  }
   .legal-hero h1 {
-    font-size: clamp(34px, 9.6vw, 44px);
+    font-size: clamp(36px, 9.6vw, 48px);
   }
-  .legal-hero .hero-lead {
+  .legal-hero-lead {
     font-size: 18px;
   }
-  .legal-quick {
-    margin: 28px -20px 0;
-  }
-  .legal-quick-item {
-    padding: 16px 20px 18px;
-  }
-  .legal-doc .doc-section {
+  .legal-article .doc-section {
     padding-top: 44px;
   }
-  .legal-doc .doc-section > h2 {
-    gap: 10px;
+  .legal-article .doc-section > h2 {
     font-size: clamp(27px, 7.4vw, 32px);
   }
-  .legal-doc .doc-section p,
-  .legal-doc .doc-list li,
-  .legal-doc .checklist li {
+  .legal-article .doc-section p,
+  .legal-article .doc-list li,
+  .legal-article .checklist li {
     font-size: 17px;
   }
   .legal-summary {
@@ -771,14 +1137,29 @@
 }
 
 @media (max-width: 559px) {
-  .legal-hero {
-    padding: 26px 16px 0;
+  .legal-top-in {
+    gap: 4px;
+    min-height: 60px;
+    padding: 0 12px;
   }
-  .legal-quick {
-    margin: 24px -16px 0;
+  .legal-top-nav {
+    gap: 0;
   }
-  .legal-quick-item {
-    padding: 15px 16px 17px;
+  .legal-top-nav a {
+    padding: 6px 7px;
+    font-size: 13px;
+  }
+  .legal-top-nav .top-cta {
+    height: 32px;
+    padding: 0 10px;
+  }
+  .legal-hero-in {
+    padding-top: 44px;
+    padding-bottom: 40px;
+  }
+  .legal-body {
+    padding-top: 36px;
+    padding-bottom: 72px;
   }
   .legal-summary {
     padding: 18px 16px;
@@ -786,50 +1167,77 @@
   .legal-card-top {
     gap: 8px;
   }
+  .trust-cert-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .legal-hero h1,
+  .trust-hero h1 {
+    font-size: clamp(34px, 10.4vw, 42px);
+  }
 }
 
 @media (max-width: 389px) {
-  .legal-hero h1 {
-    font-size: 32px;
+  .legal-top-in {
+    gap: 2px;
+    padding: 0 10px;
   }
-  .legal-num {
-    min-width: 27px;
-    padding: 3px 5px;
-    font-size: 11px;
+  .legal-top-in .brand {
+    font-size: 18px;
+  }
+  .legal-top-nav a {
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+  .legal-top-nav .top-cta {
+    height: 30px;
+    padding: 0 8px;
+  }
+  .legal-hero h1,
+  .trust-hero h1 {
+    font-size: 32px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .legal-quick-item,
-  .legal-quick-go .ico,
-  .side-pages a,
-  .side-doc {
+  .legal-toc-list a,
+  .legal-article .doc-section > h2 .anchor,
+  .trust-section > h2 .anchor,
+  .legal-top-nav a {
     transition: none;
   }
 }
 
 @media print {
-  .legal-hero {
-    padding: 0 0 12px;
-    border: 0;
-  }
+  .legal-top,
   .legal-hero::before,
-  .legal-quick,
+  .legal-toc,
   .legal-contact,
-  .legal-summary-head .legal-summary-ico {
+  .legal-summary-head .legal-summary-ico,
+  .trust-contacts,
+  .trust-art,
+  .legal-contact-actions {
     display: none !important;
   }
-  .legal-num {
+  .legal-hero {
     border: 0;
-    background: transparent;
-    color: #111111;
   }
-  .legal-doc .doc-section {
+  .legal-hero-in {
+    padding: 0 0 12px;
+  }
+  .legal-body {
+    display: block;
+    padding: 0;
+  }
+  .legal-article .doc-section,
+  .trust-section {
     padding-top: 24px;
   }
-  .legal-doc .doc-section p,
-  .legal-doc .doc-list li,
-  .legal-doc .checklist li {
+  .legal-article .doc-section p,
+  .legal-article .doc-list li,
+  .legal-article .checklist li,
+  .trust-section p,
+  .trust-section .doc-list li,
+  .trust-section .checklist li {
     font-size: 11pt;
     line-height: 1.45;
   }
