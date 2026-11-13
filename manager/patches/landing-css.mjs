@@ -3,9 +3,10 @@
  * Public site home (/): the five stylesheets in one minified file, so the browser waits for one request
  * instead of five before the first paint (Lighthouse "render-blocking requests" on mobile).
  *
- * Sources stay the files people edit: assets/geist.css, landing.css, landing-theme.css, landing-plus.css and
- * security.css. This script writes assets/landing.bundle.css (minified with esbuild) and points the <link> of the
- * home at it with ?v=<content hash>, so a changed source can never be served from an old cache.
+ * Sources stay the files people edit: assets/geist.css, tokens.css, landing.css, landing-theme.css, landing-plus.css,
+ * security.css and landing-cursor.css. This script writes assets/landing.bundle.css (minified with esbuild) and
+ * points the <link> of the home at it with ?v=<content hash>, so a changed source can never be served from an old
+ * cache.
  *
  * /seguranca, /termos and /privacidade moved to the documentation shell (docs.css + landing/legal.css), so they
  * are no longer part of this bundle.
@@ -23,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
-const SOURCES = ['geist.css', 'landing.css', 'landing-theme.css', 'landing-plus.css', 'security.css', 'landing-cursor.css'];
+const SOURCES = ['geist.css', 'tokens.css', 'landing.css', 'landing-theme.css', 'landing-plus.css', 'security.css', 'landing-cursor.css'];
 const PAGES = ['landing/index.html'];
 const BUNDLE = 'assets/landing.bundle.css';
 const LINK_RE = /<link rel="stylesheet" href="\/assets\/landing\.bundle\.css\?v=[0-9a-f]+" \/>/;
