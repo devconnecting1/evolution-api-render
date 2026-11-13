@@ -12,9 +12,9 @@
  * Âmbar é atenção e vermelho é erro; nada de roxo. Tema padrão Sistema.
  */
 
-/* O cabeçalho vem de /assets/site-header.css (o mesmo da home) e tem 64 px na altura do topo. */
+/* O cabeçalho vem de /assets/site-shell.css (o mesmo da landing) e tem 52 px na altura do topo. */
 :root {
-  --d-topbar: 64px;
+  --d-topbar: 52px;
 }
 
 /* ---------------------------------------------------------------------------------- coluna e herói */
