@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Currículo de Desenvolvedor Independente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap">
+<style>
+  /* Layout: folha A4 sobre mesa neutra, com cabeçalho de invoice, tabela de entregas e bloco de resumo. */
+  :root {
+    --desk: #e7e5e4;
+    --paper: #fafafa;
+    --ink: #0a0a0a;
+    --muted: #6f6b66;
+    --rule: #d6d3d1;
+    --band: #e7e5e4;
+    --accent: #0a0a0a;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--desk);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .screen-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 18px 0;
+  }
+
+  .screen-bar strong { font-size: 13px; letter-spacing: 0.02em; }
+  .screen-bar span { color: var(--muted); font-size: 11px; }
+  .screen-actions { display: flex; gap: 8px; }
+
+  .screen-bar button {
+    font: inherit;
+    font-size: 11px;
+    padding: 8px 12px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .screen-bar button.primary { background: var(--ink); color: var(--paper); }
+
+  .paper {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 auto;
+    padding: 13mm 16mm 12mm;
+    background: var(--paper);
+    color: var(--ink);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(10, 10, 10, 0.08), 0 18px 40px rgba(10, 10, 10, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 5mm;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10mm;
+  }
+
+  .mark {
+    width: 10mm;
+    height: 10mm;
+    border: 2px solid var(--ink);
+    display: grid;
+    place-items: center;
+    color: var(--accent);
+    font-size: 12pt;
+    font-weight: 600;
+    letter-spacing: -0.08em;
+    line-height: 1;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 24pt;
+    line-height: 0.95;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .meta {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.7fr;
+    gap: 8mm;
+    font-size: 8pt;
+    line-height: 1.7;
+    color: var(--ink);
+    border-top: 1px solid var(--rule);
+    padding-top: 3mm;
+  }
+
+  .meta b { font-weight: 600; }
+
+  .people {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 12mm;
+  }
+
+  .label {
+    margin: 0 0 2.2mm;
+    font-size: 7pt;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .name {
+    margin: 0;
+    font-size: 16pt;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .role {
+    margin: 1.5mm 0 0;
+    font-size: 9.5pt;
+    line-height: 1.4;
+  }
+
+  .place, .line {
+    margin: 1mm 0 0;
+    font-size: 8.5pt;
+    line-height: 1.55;
+  }
+
+  .contact { margin: 0; padding: 0; list-style: none; font-size: 8.5pt; line-height: 1.65; }
+  .contact li { display: flex; gap: 2mm; }
+  .contact .k { color: var(--muted); min-width: 14mm; }
+
+  .ph {
+    color: var(--muted);
+    border-bottom: 1px dotted var(--rule);
+  }
+
+  .profile p {
+    margin: 0;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    max-width: 176mm;
+  }
+
+  .section { display: flex; flex-direction: column; gap: 2.5mm; }
+
+  .table { width: 100%; }
+
+  .thead, .trow {
+    display: grid;
+    grid-template-columns: 24mm 42mm minmax(0, 1fr);
+    gap: 4mm;
+    align-items: start;
+  }
+
+  .thead {
+    background: var(--band);
+    padding: 2.4mm 3mm;
+    font-size: 7pt;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .trow {
+    padding: 2.6mm 3mm;
+    border-bottom: 1px solid var(--rule);
+    font-size: 8.4pt;
+    line-height: 1.45;
+  }
+
+  .trow .period { color: var(--muted); font-size: 8pt; }
+  .trow .front { font-weight: 600; }
+  .trow .delivery { min-width: 0; }
+
+  .next-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6mm;
+  }
+
+  .next-item {
+    border-top: 1px solid var(--rule);
+    padding-top: 2.5mm;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2mm;
+  }
+
+  .next-item b { font-size: 8.6pt; font-weight: 600; }
+  .next-item span { font-size: 8pt; line-height: 1.45; color: var(--muted); }
+
+  .note {
+    margin: -1.5mm 0 0;
+    font-size: 7.2pt;
+    color: var(--muted);
+  }
+
+  .bottom {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 12mm;
+    margin-top: auto;
+    align-items: end;
+  }
+
+  .stack { display: flex; flex-direction: column; gap: 3.5mm; }
+
+  .work { margin: 0; display: grid; gap: 2.2mm; }
+  .work div { display: grid; grid-template-columns: 30mm minmax(0, 1fr); gap: 3mm; }
+  .work dt { margin: 0; font-weight: 600; font-size: 8pt; line-height: 1.4; }
+  .work dd { margin: 0; font-size: 8pt; line-height: 1.4; color: var(--muted); }
+
+  .summary {
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    padding: 2.6mm 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2mm;
+    font-size: 8.2pt;
+    line-height: 1.45;
+  }
+
+  .summary div { display: flex; justify-content: space-between; gap: 6mm; }
+  .summary .total {
+    border-top: 1px solid var(--ink);
+    margin-top: 1.2mm;
+    padding-top: 2mm;
+    gap: 3mm;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 7.2pt;
+    letter-spacing: 0.02em;
+  }
+
+  .footer {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 12mm;
+    margin-top: auto;
+    padding-top: 3mm;
+    border-top: 1px solid var(--rule);
+    font-size: 7.5pt;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .footer p { margin: 0; }
+
+  /* Modo de captura: só a folha, sem a barra da tela. */
+  body.clean { background: var(--paper); }
+  body.clean .screen-bar { display: none; }
+  body.clean .paper { margin: 0; box-shadow: none; }
+
+  @media (max-width: 640px) {
+    html, body { font-size: 11px; }
+    .screen-bar { padding: 12px 16px; flex-wrap: wrap; }
+    .paper {
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      padding: 24px 20px;
+      gap: 22px;
+    }
+    .people, .bottom, .footer, .meta { grid-template-columns: 1fr; gap: 16px; }
+    .thead, .trow { grid-template-columns: 1fr; gap: 4px; }
+    .thead span:nth-child(n+2) { display: none; }
+    .next-grid { grid-template-columns: 1fr; gap: 12px; }
+    .profile p { max-width: none; }
+    .work div { grid-template-columns: 1fr; gap: 2px; }
+  }
+
+  @media print {
+    @page { size: A4; margin: 0; }
+    html, body {
+      width: 210mm;
+      height: 297mm;
+      margin: 0;
+      padding: 0;
+      background: var(--paper);
+      overflow: hidden;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .screen-bar { display: none !important; }
+    .paper {
+      width: 210mm;
+      height: 297mm;
+      margin: 0;
+      box-shadow: none;
+    }
+    .paper, .paper * {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .trow, .summary, .next-item, .work div { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="screen-bar">
+  <div>
+    <strong>Currículo · Desenvolvedor independente</strong><br>
+    <span>Versão final em A4, uma página. Use "Imprimir ou salvar em PDF".</span>
+  </div>
+  <div class="screen-actions">
+    <button type="button" onclick="window.print()">Imprimir ou salvar em PDF</button>
+  </div>
+</div>
+
+<article class="paper" id="paper">
+  <header class="masthead">
+    <div class="mark" aria-hidden="true">&lt;/&gt;</div>
+    <h1>Currículo</h1>
+  </header>
+
+  <div class="meta">
+    <div><b>Referência</b><br>CV-2026-11</div>
+    <div><b>Atualizado</b><br>15/11/2026</div>
+    <div><b>Página</b><br>1 de 1</div>
+  </div>
+
+  <section class="people">
+    <div>
+      <p class="label">Desenvolvedor</p>
+      <h2 class="name"><span class="ph">[Nome completo]</span></h2>
+      <p class="role">Desenvolvedor independente e empreendedor</p>
+      <p class="place"><span class="ph">[cidade, estado]</span> · Brasil</p>
+    </div>
+    <div>
+      <p class="label">Contato</p>
+      <ul class="contact">
+        <li><span class="k">e-mail</span><span class="ph">[voce@email.com]</span></li>
+        <li><span class="k">telefone</span><span class="ph">[+55 (DD) 90000-0000]</span></li>
+        <li><span class="k">produto</span><span>whatsaibr.vercel.app</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="profile">
+    <p class="label">O que faço</p>
+    <p>Crio sistemas e sites que resolvem problemas de empresas. Faço tudo: penso na ideia, construo e acompanho o funcionamento. Meu produto atual é o WhatsAI: um sistema que responde clientes no WhatsApp com inteligência artificial. Já tem um cliente usando de verdade. Trabalho com projetos sob medida e parcerias. Não quero emprego fixo.</p>
+  </section>
+
+  <section class="section">
+    <p class="label">O que já entreguei</p>
+    <div class="table">
+      <div class="thead" role="row">
+        <span>Período</span>
+        <span>Projeto</span>
+        <span>O que faz</span>
+      </div>
+      <div class="trow">
+        <span class="period">2026 · atual</span>
+        <span class="front">WhatsAI</span>
+        <span class="delivery">Sistema que responde clientes no WhatsApp com inteligência artificial. Organiza as conversas e atende 24 horas por dia. Já tem cliente usando de verdade.</span>
+      </div>
+      <div class="trow">
+        <span class="period">2026</span>
+        <span class="front">Site do WhatsAI</span>
+        <span class="delivery">Páginas com texto claro, visual profissional e pronto para crescer.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <p class="label">Próximos projetos</p>
+    <p class="note">Ainda vou construir. Estão em estudo.</p>
+    <div class="next-grid">
+      <div class="next-item"><b>Financeiro</b><span>Ajudar pequenas empresas a organizar o dinheiro que entra e o que sai.</span></div>
+      <div class="next-item"><b>ERP geral</b><span>Juntar vendas, estoque, clientes e contas em um só sistema.</span></div>
+      <div class="next-item"><b>Sistema escolar</b><span>Organizar alunos, professores, notas e recados para as famílias.</span></div>
+    </div>
+  </section>
+
+  <div class="bottom">
+    <div class="stack">
+      <div>
+        <p class="label">Como eu trabalho</p>
+        <dl class="work">
+          <div><dt>Projetos sob medida</dt><dd>combino o que será feito, o prazo e a entrega.</dd></div>
+          <div><dt>Parcerias</dt><dd>participo do produto e do dia a dia.</dd></div>
+          <div><dt>Sem vínculo formal</dt><dd>escolho os projetos com liberdade.</dd></div>
+        </dl>
+      </div>
+      <div>
+        <p class="label">Formação</p>
+        <p class="line"><b>Aprendi sozinho</b>, construindo projetos de verdade.</p>
+        <p class="line" style="color: var(--muted);">Não tenho diploma de faculdade.</p>
+        <p class="line" style="margin-top: 2.5mm;">Idiomas: Português nativo · Inglês [nível]</p>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div>
+        <p class="label">Em resumo</p>
+        <div class="summary">
+          <div><span>Ideia</span><span>eu penso</span></div>
+          <div><span>Construção</span><span>eu faço</span></div>
+          <div><span>Operação</span><span>eu acompanho</span></div>
+          <div class="total"><span>Aberto a novos projetos</span><span>e parcerias</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div>
+      <p><span class="ph">[voce@email.com]</span> · <span class="ph">[+55 (DD) 90000-0000]</span></p>
+      <p>github.com/devconnecting1 · whatsaibr.vercel.app</p>
+    </div>
+    <div>
+      <p>Currículo atualizado em novembro de 2026.</p>
+      <p>Documento em A4, uma página.</p>
+    </div>
+  </footer>
+</article>
+
+<script>
+  if (new URLSearchParams(window.location.search).has('clean')) {
+    document.body.classList.add('clean');
+  }
+</script>
+</body>
+</html>
