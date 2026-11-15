@@ -7,8 +7,8 @@
  *
  * Base: as mesmas cores da documentacao publica (/docs), definidas uma vez em assets/tokens.css e consumidas
  * pelos tokens --wa-* abaixo. Pagina #ffffff no claro e #0d0d0d no escuro, superficie suave #fafafa / #141414,
- * borda #e3e3e3 / #272727, tinta #0d0d0d / #ffffff. Um unico accent: verde escuro no claro (#0e7a4d) e verde
- * claro no escuro (#5fcf8a). Ambar e vermelho so com significado (atencao e erro), como na documentacao.
+ * borda #e3e3e3 / #272727, tinta #0d0d0d / #ffffff. Accent neutro: preto no claro (#0d0d0d) e branco no escuro
+ * (#ffffff); ambar e vermelho so com significado (atencao e erro), como na documentacao.
  * Tipografia: Geist local (geist.css) e a mesma escala do /docs, em tokens --type-* do arquivo global. Titulos de
  * pagina e secao em peso 300; subtitulos, corpo, apoio e rotulos seguem os papeis da documentacao. Os mockups
  * mantem tamanhos proprios porque representam a interface do painel, nao o texto da pagina.
@@ -25,24 +25,35 @@ body.wa-page {
   --wa-fg-3: var(--c-text-3);
   --wa-line: var(--c-border);
   --wa-line-strong: var(--c-border-strong);
+  /* Accent neutro: preto no claro e branco no escuro. O ambar fica reservado a atencao. */
+  --c-accent: var(--c-text);
+  --c-accent-strong: var(--c-text-2);
+  --c-accent-soft: var(--c-bg-muted);
+  --c-accent-soft-2: var(--c-bg-muted);
+  --c-accent-border: var(--c-border-strong);
+  --c-accent-glow: rgba(0, 0, 0, 0.06);
+  --c-accent-glow-2: rgba(0, 0, 0, 0.1);
+  --c-focus: var(--c-text);
+  --c-selection: var(--c-bg-muted);
+  --c-btn-hover: #272727;
   --wa-accent: var(--c-accent);
   --wa-accent-soft: var(--c-accent-soft);
   --wa-accent-line: var(--c-accent-border);
   --wa-btn: var(--c-btn-bg);
   --wa-btn-fg: var(--c-btn-text);
-  --wa-btn-hover: var(--c-btn-hover);
+  --wa-btn-hover: #272727;
   --wa-warn: var(--c-warn-text);
   --wa-warn-bg: var(--c-warn-bg);
   --wa-warn-line: var(--c-warn-border);
-  /* Paisagem decorativa: valores proprios da landing, nao sao cores de interface. */
+  /* Paisagem decorativa em cinza: valores proprios da landing, nao sao cores de interface. */
   --wa-art-sky: #fafafa;
   --wa-art-sky-2: #f0f0f0;
   --wa-art-hill: #e3e3e3;
   --wa-art-hill-2: #c7c7c7;
-  --wa-art-hill-3: #e9f5ee;
-  --wa-art-deep: #9fceb5;
-  --wa-art-glow: rgba(14, 122, 77, 0.1);
-  --wa-art-glow-2: rgba(14, 122, 77, 0.16);
+  --wa-art-hill-3: #ececec;
+  --wa-art-deep: #8f8f8f;
+  --wa-art-glow: rgba(0, 0, 0, 0.06);
+  --wa-art-glow-2: rgba(0, 0, 0, 0.1);
   --wa-shadow: var(--c-shadow);
   --wa-pad: 20px;
   --wa-max: 1440px;
@@ -69,26 +80,34 @@ body.wa-page {
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme-mode="light"]) body.wa-page {
+    --c-accent-glow: rgba(255, 255, 255, 0.08);
+    --c-accent-glow-2: rgba(255, 255, 255, 0.12);
+    --c-btn-hover: #e3e3e3;
+    --wa-btn-hover: #e3e3e3;
     --wa-art-sky: #141414;
     --wa-art-sky-2: #1f1f1f;
     --wa-art-hill: #272727;
     --wa-art-hill-2: #1f1f1f;
-    --wa-art-hill-3: #12241a;
-    --wa-art-deep: #1f5c3a;
-    --wa-art-glow: rgba(95, 207, 138, 0.14);
-    --wa-art-glow-2: rgba(95, 207, 138, 0.18);
+    --wa-art-hill-3: #1a1a1a;
+    --wa-art-deep: #4d4d4d;
+    --wa-art-glow: rgba(255, 255, 255, 0.08);
+    --wa-art-glow-2: rgba(255, 255, 255, 0.12);
   }
 }
 
 :root[data-theme-mode="dark"] body.wa-page {
+  --c-accent-glow: rgba(255, 255, 255, 0.08);
+  --c-accent-glow-2: rgba(255, 255, 255, 0.12);
+  --c-btn-hover: #e3e3e3;
+  --wa-btn-hover: #e3e3e3;
   --wa-art-sky: #141414;
   --wa-art-sky-2: #1f1f1f;
   --wa-art-hill: #272727;
   --wa-art-hill-2: #1f1f1f;
-  --wa-art-hill-3: #12241a;
-  --wa-art-deep: #1f5c3a;
-  --wa-art-glow: rgba(95, 207, 138, 0.14);
-  --wa-art-glow-2: rgba(95, 207, 138, 0.18);
+  --wa-art-hill-3: #1a1a1a;
+  --wa-art-deep: #4d4d4d;
+  --wa-art-glow: rgba(255, 255, 255, 0.08);
+  --wa-art-glow-2: rgba(255, 255, 255, 0.12);
 }
 
 /* ------------------------------------------------------------------ base da pagina */
@@ -182,7 +201,7 @@ body.wa-page {
   padding-inline: var(--wa-pad);
 }
 
-/* As paginas antigas pintam #planos, #duvidas e #segmentos com o cinza do tema; aqui o fundo e o creme. */
+/* As paginas antigas pintam #planos, #duvidas e #segmentos com o cinza do tema; aqui o fundo e o branco. */
 body.wa-page #segmentos,
 body.wa-page #planos,
 body.wa-page #duvidas {
@@ -199,28 +218,6 @@ body.wa-page #duvidas {
 
 .wa-section--tight {
   padding-block: clamp(52px, 6vw, 84px);
-}
-
-.wa-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  color: var(--wa-fg-3);
-  font-family: var(--font-mono);
-  font-size: var(--type-label-size);
-  font-weight: var(--type-label-weight);
-  letter-spacing: var(--type-label-ls);
-  line-height: var(--type-label-lh);
-  text-transform: uppercase;
-}
-
-.wa-kicker::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--wa-accent);
 }
 
 .wa-section-head {
@@ -859,13 +856,6 @@ body.wa-page #duvidas {
   white-space: nowrap;
 }
 
-.wa-caption {
-  margin-top: 10px;
-  color: var(--wa-fg-3);
-  font-size: 11px;
-  text-align: right;
-}
-
 @media (max-width: 1180px) {
   .wa-app {
     grid-template-columns: 214px minmax(0, 1fr);
@@ -907,9 +897,6 @@ body.wa-page #duvidas {
   }
   .wa-float-card {
     display: none;
-  }
-  .wa-caption {
-    text-align: left;
   }
 }
 
@@ -1109,26 +1096,8 @@ body.wa-page #duvidas {
   padding-top: 14px;
 }
 
-.wa-hcard-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--wa-fg-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.07em;
-  line-height: 1.4;
-  text-transform: uppercase;
-}
-
-.wa-hcard-kicker > span {
-  color: var(--wa-accent);
-  font-variant-numeric: tabular-nums;
-}
-
 .wa-hcard-title {
-  margin: 7px 0 0;
+  margin: 0;
   font-size: 20px;
   font-weight: 500;
   letter-spacing: -0.015em;
@@ -1136,7 +1105,8 @@ body.wa-page #duvidas {
 }
 
 .wa-hcard-title a:hover {
-  color: var(--wa-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .wa-hcard-text {
@@ -1160,15 +1130,13 @@ body.wa-page #duvidas {
 }
 
 .wa-hc-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  display: none;
+  justify-content: flex-end;
   margin-top: 14px;
 }
 
-.wa-hc-foot .wa-caption {
-  margin-top: 0;
+.js .wa-hc-foot {
+  display: flex;
 }
 
 .wa-hc-nav {
@@ -1210,7 +1178,8 @@ body.wa-page #duvidas {
 }
 
 @media (pointer: coarse) {
-  .js .wa-hc-nav {
+  .js .wa-hc-nav,
+  .js .wa-hc-foot {
     display: none;
   }
 }
@@ -1508,6 +1477,7 @@ body.wa-page #duvidas {
     padding: 18px 16px 0;
     aspect-ratio: auto;
     border-color: var(--c-dark-border);
+    background: #161616;
   }
 
   .wa-hcard-media .is-hide-sm {
@@ -1515,16 +1485,11 @@ body.wa-page #duvidas {
   }
 
   .wa-hcard-media::before {
-    opacity: 0.18;
+    opacity: 0.35;
   }
 
   .wa-hcard-media::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    background: linear-gradient(180deg, rgba(11, 61, 42, 0) 28%, rgba(11, 61, 42, 0.55) 56%, rgba(11, 61, 42, 0.94) 82%, #0b1f16 100%);
-    pointer-events: none;
+    display: none;
   }
 
   .wa-hc-pill,
@@ -1555,21 +1520,9 @@ body.wa-page #duvidas {
     color: var(--c-dark-text);
   }
 
-  .wa-hcard-kicker {
-    color: var(--c-dark-text-3);
-  }
-
-  .wa-hcard-kicker > span {
-    color: var(--c-dark-accent);
-  }
-
   .wa-hcard-title {
     color: var(--c-dark-text);
     font-size: 20px;
-  }
-
-  .wa-hcard-title a:hover {
-    color: var(--c-dark-accent);
   }
 
   .wa-hcard-text {
@@ -1589,8 +1542,8 @@ body.wa-page #duvidas {
   }
 
   .wa-hcard-action:hover {
-    border-color: var(--c-dark-accent);
-    background: var(--c-dark-accent);
+    border-color: var(--c-dark-text-2);
+    background: var(--c-dark-text-2);
     color: var(--c-dark-surface);
   }
 
@@ -1598,9 +1551,6 @@ body.wa-page #duvidas {
     margin-top: 12px;
   }
 
-  .wa-hc-foot .wa-caption {
-    font-size: 10.5px;
-  }
 }
 
 /* Em telas muito estreitas, o texto sobreposto precisa de mais altura que o card. */
@@ -1619,14 +1569,13 @@ body.wa-page #duvidas {
 
 .wa-proof-title {
   margin-bottom: 20px;
-  color: var(--wa-fg-3);
-  font-family: var(--font-mono);
-  font-size: var(--type-label-size);
-  font-weight: var(--type-label-weight);
-  letter-spacing: var(--type-label-ls);
-  line-height: var(--type-label-lh);
+  color: var(--wa-fg-2);
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
   text-align: center;
-  text-transform: uppercase;
 }
 
 .wa-proof-grid {
@@ -2080,16 +2029,6 @@ body.wa-page #duvidas {
   color: var(--wa-accent);
 }
 
-.wa-feature-label {
-  color: var(--wa-fg-3);
-  font-family: var(--font-mono);
-  font-size: var(--type-label-size);
-  font-weight: var(--type-label-weight);
-  letter-spacing: var(--type-label-ls);
-  line-height: var(--type-label-lh);
-  text-transform: uppercase;
-}
-
 .wa-feature h3 {
   margin: 0 0 8px;
   font-size: var(--type-card-title-size);
@@ -2341,6 +2280,205 @@ body.wa-page #duvidas {
   }
 }
 
+/* ------------------------------------------------------------------ destaque escuro */
+/* Faixa no padrao do bloco de console do opencode.ai: superficie grafite, grade de pontos, texto claro e uma acao.
+   O painel e o conteudo sao do WhatsAI. Sem accent cromatico: branco e cinza sobre o fundo escuro. */
+.wa-spotlight {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 72px);
+  overflow: hidden;
+  padding: clamp(28px, 4vw, 56px);
+  background: #1a1a1a;
+  color: #ffffff;
+  isolation: isolate;
+}
+
+.wa-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: 0.7;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.25), #000 55%, #000 100%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.25), #000 55%, #000 100%);
+}
+
+.wa-spot-art,
+.wa-spot-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.wa-spot-art {
+  display: flex;
+  justify-content: center;
+}
+
+.wa-spot-panel {
+  width: min(100%, 440px);
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 30px 60px -40px rgba(0, 0, 0, 0.9);
+}
+
+.wa-spot-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wa-spot-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+}
+
+.wa-spot-state i {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.wa-spot-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.wa-spot-stats b {
+  display: block;
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.wa-spot-stats span {
+  display: block;
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.wa-spot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 11px;
+}
+
+.wa-spot-row b {
+  color: #ffffff;
+  font-weight: 500;
+  text-align: right;
+}
+
+.wa-spot-bar {
+  height: 4px;
+  margin-top: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.wa-spot-bar i {
+  display: block;
+  width: 62%;
+  height: 100%;
+  background: #ffffff;
+}
+
+.wa-spot-copy h2 {
+  max-width: 15ch;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(30px, 3.2vw, 42px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+
+.wa-spot-copy p {
+  max-width: 44ch;
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.wa-spot-copy .wa-btn {
+  margin-top: 26px;
+}
+
+.wa-btn--on-dark {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #0d0d0d;
+}
+
+.wa-btn--on-dark:hover {
+  border-color: #e3e3e3;
+  background: #e3e3e3;
+  color: #0d0d0d;
+}
+
+@media (max-width: 900px) {
+  .wa-spotlight {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+  }
+  .wa-spot-copy {
+    order: 1;
+  }
+  .wa-spot-art {
+    order: 2;
+    justify-content: flex-start;
+  }
+  .wa-spot-panel {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .wa-spotlight {
+    padding: 24px 20px;
+  }
+  .wa-spot-stats b {
+    font-size: 24px;
+  }
+  .wa-spot-row {
+    font-size: 10px;
+  }
+  .wa-spot-copy p {
+    font-size: 15px;
+  }
+}
+
 /* ------------------------------------------------------------------ planos */
 .wa-plans {
   display: grid;
@@ -2360,6 +2498,12 @@ body.wa-page #duvidas {
 .wa-plan--featured {
   border-color: var(--wa-accent-line);
   box-shadow: inset 0 2px 0 var(--wa-accent);
+}
+
+.wa-plan--featured .wa-badge {
+  border-color: var(--wa-fg);
+  background: var(--wa-fg);
+  color: var(--wa-bg);
 }
 
 .wa-plan-top {
@@ -2443,8 +2587,12 @@ body.wa-page #duvidas {
   --wa-fg-3: var(--c-dark-text-3);
   --wa-line: var(--c-dark-border);
   --wa-line-strong: var(--c-dark-border-strong);
-  --wa-accent: var(--c-dark-accent);
-  --wa-accent-line: var(--c-dark-accent-line);
+  --c-accent: var(--c-dark-text);
+  --c-accent-soft: rgba(255, 255, 255, 0.08);
+  --c-accent-border: var(--c-dark-border-strong);
+  --wa-accent: var(--c-dark-text);
+  --wa-accent-soft: rgba(255, 255, 255, 0.08);
+  --wa-accent-line: var(--c-dark-border-strong);
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -2465,13 +2613,13 @@ body.wa-page #duvidas {
 }
 
 .wa-plan--px .wa-btn:hover {
-  background: var(--c-dark-accent-hover);
+  background: var(--c-dark-text-2);
 }
 
 .wa-plan--px .wa-badge {
-  border-color: var(--wa-accent-line);
-  background: rgba(95, 207, 138, 0.12);
-  color: var(--wa-accent);
+  border-color: var(--c-dark-border-strong);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--c-dark-text);
 }
 
 .wa-plan--px .px-bg {
@@ -2490,7 +2638,7 @@ body.wa-page #duvidas {
   .wa-plan--px {
     border-color: var(--c-dark-border);
     background:
-      radial-gradient(130% 70% at 50% 0%, rgba(95, 207, 138, 0.06), transparent 62%),
+      radial-gradient(130% 70% at 50% 0%, rgba(255, 255, 255, 0.05), transparent 62%),
       linear-gradient(180deg, #1a1a1a 0%, var(--c-dark-surface-2) 55%, #101010 100%);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 60px -32px rgba(0, 0, 0, 0.6);
   }
