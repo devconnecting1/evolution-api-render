@@ -6,18 +6,17 @@
 <title>Currículo de Desenvolvedor Independente</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap">
 <style>
   /* Layout: folha A4 sobre mesa neutra, com cabeçalho de invoice, tabela de entregas e bloco de resumo. */
   :root {
-    --desk: #e7e5e4;
-    --paper: #fafafa;
+    --desk: #f5f5f5;
+    --paper: #ffffff;
     --ink: #0a0a0a;
-    --muted: #6f6b66;
-    --rule: #d6d3d1;
-    --band: #e7e5e4;
-    --accent: #0a0a0a;
-    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --muted: #737373;
+    --rule: #e5e5e5;
+    --band: #f5f5f5;
+    --sans: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
   * { box-sizing: border-box; }
@@ -27,7 +26,7 @@
     padding: 0;
     background: var(--desk);
     color: var(--ink);
-    font-family: var(--mono);
+    font-family: var(--sans);
     font-size: 12px;
     -webkit-font-smoothing: antialiased;
   }
@@ -62,7 +61,7 @@
     width: 210mm;
     height: 297mm;
     margin: 0 auto;
-    padding: 13mm 16mm 12mm;
+    padding: 16mm 18mm 16mm;
     background: var(--paper);
     color: var(--ink);
     position: relative;
@@ -70,7 +69,7 @@
     box-shadow: 0 1px 2px rgba(10, 10, 10, 0.08), 0 18px 40px rgba(10, 10, 10, 0.12);
     display: flex;
     flex-direction: column;
-    gap: 5mm;
+    gap: 7mm;
   }
 
   .masthead {
@@ -81,24 +80,22 @@
   }
 
   .mark {
-    width: 10mm;
-    height: 10mm;
-    border: 2px solid var(--ink);
+    width: 11mm;
+    height: 11mm;
     display: grid;
-    place-items: center;
-    color: var(--accent);
-    font-size: 12pt;
-    font-weight: 600;
-    letter-spacing: -0.08em;
-    line-height: 1;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 1.2mm;
   }
+
+  .mark span { background: var(--ink); }
 
   h1 {
     margin: 0;
-    font-size: 24pt;
-    line-height: 0.95;
-    font-weight: 500;
-    letter-spacing: 0.16em;
+    font-size: 28pt;
+    line-height: 1;
+    font-weight: 300;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
   }
 
@@ -119,19 +116,21 @@
     display: grid;
     grid-template-columns: 1.25fr 1fr;
     gap: 12mm;
+    border-top: 1px solid var(--rule);
+    padding-top: 4mm;
   }
 
   .label {
-    margin: 0 0 2.2mm;
-    font-size: 7pt;
+    margin: 0 0 2.4mm;
+    font-size: 7.5pt;
     font-weight: 600;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
   .name {
     margin: 0;
-    font-size: 16pt;
+    font-size: 20pt;
     font-weight: 600;
     line-height: 1.15;
     letter-spacing: -0.01em;
@@ -139,17 +138,17 @@
 
   .role {
     margin: 1.5mm 0 0;
-    font-size: 9.5pt;
-    line-height: 1.4;
+    font-size: 10.5pt;
+    line-height: 1.45;
   }
 
   .place, .line {
     margin: 1mm 0 0;
-    font-size: 8.5pt;
-    line-height: 1.55;
+    font-size: 9pt;
+    line-height: 1.6;
   }
 
-  .contact { margin: 0; padding: 0; list-style: none; font-size: 8.5pt; line-height: 1.65; }
+  .contact { margin: 0; padding: 0; list-style: none; font-size: 9.2pt; line-height: 1.7; }
   .contact li { display: flex; gap: 2mm; }
   .contact .k { color: var(--muted); min-width: 14mm; }
 
@@ -160,8 +159,8 @@
 
   .profile p {
     margin: 0;
-    font-size: 8.5pt;
-    line-height: 1.5;
+    font-size: 9.2pt;
+    line-height: 1.6;
     max-width: 176mm;
   }
 
@@ -178,98 +177,82 @@
 
   .thead {
     background: var(--band);
-    padding: 2.4mm 3mm;
-    font-size: 7pt;
+    padding: 3.2mm 3mm;
+    font-size: 7.5pt;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
 
   .trow {
-    padding: 2.6mm 3mm;
+    padding: 4.2mm 3mm;
     border-bottom: 1px solid var(--rule);
-    font-size: 8.4pt;
-    line-height: 1.45;
+    font-size: 9.2pt;
+    line-height: 1.55;
   }
 
-  .trow .period { color: var(--muted); font-size: 8pt; }
+  .trow .period { color: var(--muted); font-size: 8.5pt; }
   .trow .front { font-weight: 600; }
   .trow .delivery { min-width: 0; }
 
   .next-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6mm;
+    gap: 10mm;
   }
 
   .next-item {
-    border-top: 1px solid var(--rule);
-    padding-top: 2.5mm;
     display: flex;
     flex-direction: column;
-    gap: 1.2mm;
+    gap: 1.4mm;
   }
 
-  .next-item b { font-size: 8.6pt; font-weight: 600; }
-  .next-item span { font-size: 8pt; line-height: 1.45; color: var(--muted); }
+  .next-item b { font-size: 9.2pt; font-weight: 600; }
+  .next-item span { font-size: 8.8pt; line-height: 1.5; color: var(--muted); }
 
   .note {
-    margin: -1.5mm 0 0;
-    font-size: 7.2pt;
+    margin: -1mm 0 0;
+    font-size: 8pt;
     color: var(--muted);
   }
 
   .bottom {
     display: grid;
     grid-template-columns: 1.05fr 0.95fr;
-    gap: 12mm;
-    margin-top: auto;
+    gap: 16mm;
+    margin-top: 18mm;
     align-items: end;
   }
 
-  .stack { display: flex; flex-direction: column; gap: 3.5mm; }
+  .stack { display: flex; flex-direction: column; gap: 6mm; }
 
-  .work { margin: 0; display: grid; gap: 2.2mm; }
-  .work div { display: grid; grid-template-columns: 30mm minmax(0, 1fr); gap: 3mm; }
-  .work dt { margin: 0; font-weight: 600; font-size: 8pt; line-height: 1.4; }
-  .work dd { margin: 0; font-size: 8pt; line-height: 1.4; color: var(--muted); }
+  .work { margin: 0; display: grid; gap: 3.6mm; }
+  .work div { display: grid; grid-template-columns: 32mm minmax(0, 1fr); gap: 4mm; }
+  .work dt { margin: 0; font-weight: 600; font-size: 9.2pt; line-height: 1.5; }
+  .work dd { margin: 0; font-size: 9.2pt; line-height: 1.5; color: var(--muted); }
 
   .summary {
-    border-top: 2px solid var(--ink);
-    border-bottom: 2px solid var(--ink);
-    padding: 2.6mm 0;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 4mm 0;
     display: flex;
     flex-direction: column;
-    gap: 1.2mm;
-    font-size: 8.2pt;
-    line-height: 1.45;
+    gap: 2mm;
+    font-size: 9.2pt;
+    line-height: 1.55;
   }
 
   .summary div { display: flex; justify-content: space-between; gap: 6mm; }
   .summary .total {
     border-top: 1px solid var(--ink);
-    margin-top: 1.2mm;
-    padding-top: 2mm;
+    margin-top: 1.5mm;
+    padding-top: 3mm;
     gap: 3mm;
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 7.2pt;
-    letter-spacing: 0.02em;
+    font-size: 8.2pt;
+    letter-spacing: 0.03em;
   }
-
-  .footer {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 12mm;
-    margin-top: auto;
-    padding-top: 3mm;
-    border-top: 1px solid var(--rule);
-    font-size: 7.5pt;
-    line-height: 1.6;
-    color: var(--muted);
-  }
-
-  .footer p { margin: 0; }
 
   /* Modo de captura: só a folha, sem a barra da tela. */
   body.clean { background: var(--paper); }
@@ -286,7 +269,7 @@
       padding: 24px 20px;
       gap: 22px;
     }
-    .people, .bottom, .footer, .meta { grid-template-columns: 1fr; gap: 16px; }
+    .people, .bottom { grid-template-columns: 1fr; gap: 16px; }
     .thead, .trow { grid-template-columns: 1fr; gap: 4px; }
     .thead span:nth-child(n+2) { display: none; }
     .next-grid { grid-template-columns: 1fr; gap: 12px; }
@@ -325,8 +308,7 @@
 
 <div class="screen-bar">
   <div>
-    <strong>Currículo · Desenvolvedor independente</strong><br>
-    <span>Versão final em A4, uma página. Use "Imprimir ou salvar em PDF".</span>
+    <strong>Currículo · Desenvolvedor independente</strong>
   </div>
   <div class="screen-actions">
     <button type="button" onclick="window.print()">Imprimir ou salvar em PDF</button>
@@ -335,15 +317,9 @@
 
 <article class="paper" id="paper">
   <header class="masthead">
-    <div class="mark" aria-hidden="true">&lt;/&gt;</div>
+    <div class="mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
     <h1>Currículo</h1>
   </header>
-
-  <div class="meta">
-    <div><b>Referência</b><br>CV-2026-11</div>
-    <div><b>Atualizado</b><br>15/11/2026</div>
-    <div><b>Página</b><br>1 de 1</div>
-  </div>
 
   <section class="people">
     <div>
@@ -364,7 +340,7 @@
 
   <section class="profile">
     <p class="label">O que faço</p>
-    <p>Crio sistemas e sites que resolvem problemas de empresas. Faço tudo: penso na ideia, construo e acompanho o funcionamento. Meu produto atual é o WhatsAI: um sistema que responde clientes no WhatsApp com inteligência artificial. Já tem um cliente usando de verdade. Trabalho com projetos sob medida e parcerias. Não quero emprego fixo.</p>
+    <p>Crio sistemas e sites que resolvem problemas de empresas. Faço tudo: penso na ideia, construo e acompanho o funcionamento. Meu produto atual é o WhatsAI: um sistema que responde clientes no WhatsApp com inteligência artificial. Já tem cliente usando de verdade. Trabalho com projetos sob medida e parcerias. Estou aberto a oportunidades.</p>
   </section>
 
   <section class="section">
@@ -405,14 +381,13 @@
         <dl class="work">
           <div><dt>Projetos sob medida</dt><dd>combino o que será feito, o prazo e a entrega.</dd></div>
           <div><dt>Parcerias</dt><dd>participo do produto e do dia a dia.</dd></div>
-          <div><dt>Sem vínculo formal</dt><dd>escolho os projetos com liberdade.</dd></div>
         </dl>
       </div>
       <div>
         <p class="label">Formação</p>
         <p class="line"><b>Aprendi sozinho</b>, construindo projetos de verdade.</p>
         <p class="line" style="color: var(--muted);">Não tenho diploma de faculdade.</p>
-        <p class="line" style="margin-top: 2.5mm;">Idiomas: Português nativo · Inglês [nível]</p>
+        <p class="line" style="margin-top: 2.5mm;">Idiomas: Português nativo · <span class="ph">Inglês [nível]</span></p>
       </div>
     </div>
 
@@ -420,25 +395,15 @@
       <div>
         <p class="label">Em resumo</p>
         <div class="summary">
-          <div><span>Ideia</span><span>eu penso</span></div>
-          <div><span>Construção</span><span>eu faço</span></div>
-          <div><span>Operação</span><span>eu acompanho</span></div>
-          <div class="total"><span>Aberto a novos projetos</span><span>e parcerias</span></div>
+          <div><span>Ideia</span><span>penso</span></div>
+          <div><span>Construção</span><span>faço</span></div>
+          <div><span>Operação</span><span>acompanho</span></div>
+          <div class="total"><span>Aberto a novas oportunidades</span><span>e parcerias</span></div>
         </div>
       </div>
     </div>
   </div>
 
-  <footer class="footer">
-    <div>
-      <p><span class="ph">[voce@email.com]</span> · <span class="ph">[+55 (DD) 90000-0000]</span></p>
-      <p>github.com/devconnecting1 · whatsaibr.vercel.app</p>
-    </div>
-    <div>
-      <p>Currículo atualizado em novembro de 2026.</p>
-      <p>Documento em A4, uma página.</p>
-    </div>
-  </footer>
 </article>
 
 <script>
