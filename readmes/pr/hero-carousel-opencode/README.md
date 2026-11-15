@@ -49,6 +49,8 @@ O conteúdo, os mockups, as cores e a tipografia são do WhatsAI. A referência 
 
 - Entrou entre "Sempre um passo à frente" e os planos: fundo grafite `#1a1a1a`, grade de pontos de 18 px, painel de
   operação à esquerda e título, texto e ação à direita.
+- A grade de pontos tem uma máscara de cima para baixo: fica quase apagada no topo e mais visível na base, como na
+  referência. O efeito usa `mask-image` com fallback de pontos uniformes.
 - O painel usa os mesmos números fictícios do restante da página: 12 leads organizados, 5 horários marcados, 3 com a
   equipe, próximo passo e uso do mês.
 - A ação é "Agendar demonstração", no mesmo fluxo de WhatsApp da página. Sem rótulo pequeno, sem autoplay e sem
@@ -89,7 +91,7 @@ ajuda no toque, como na referência.
 
 | Item | opencode.ai (console) | WhatsAI |
 | --- | --- | --- |
-| Fundo | Grafite `#1a1a1a` com pontos | Grafite `#1a1a1a` com pontos de 18 px |
+| Fundo | Grafite `#1a1a1a` com pontos | Grafite `#1a1a1a` com pontos de 18 px, mais visíveis na base |
 | Anatomia | Rótulo, título, texto e botão | Título, texto e botão, sem o rótulo |
 | Botão | Claro | Branco com texto preto |
 | Conteúdo | Console da opencode | Painel de operação do WhatsAI + convite para demonstração |
@@ -113,6 +115,7 @@ função de respiro escuro e de conversão no meio da página.
 | Ação no celular | 44 px de altura |
 | Tipografia | Geist; título de 20 px, texto de 14 px (13 px no celular) |
 | Faixa de destaque | 1300 x 368 px em 1440 px; 350 x 587 px em 390 px |
+| Pontos da faixa | Grade de 18 px; máscara de 6% no topo a 100% na base |
 | Topo do carrossel | 614 px em 1440 px; 689 px em 390 px |
 | Cores | Tokens `--wa-*` e `--c-*`; accent preto no claro e branco no escuro |
 
@@ -151,6 +154,12 @@ função de respiro escuro e de conversão no meio da página.
 ![Faixa de destaque da referência e do WhatsAI, 390 px, claro](comparacao/comparacao-destaque-390-light.png)
 
 ![Faixa de destaque da referência e do WhatsAI, 390 px, escuro](comparacao/comparacao-destaque-390-dark.png)
+
+### Pontos da faixa: antes e depois
+
+![Pontos da faixa de destaque antes e depois, 1440 px](comparacao/comparacao-pontos-1440-light.png)
+
+![Pontos da faixa de destaque antes e depois, 390 px](comparacao/comparacao-pontos-390-light.png)
 
 ### Primeira rodada (histórico)
 

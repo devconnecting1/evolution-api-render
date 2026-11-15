@@ -44,6 +44,10 @@ faixa (fundo #1a1a1a + pontos)
 A faixa fica entre "Sempre um passo à frente" e os planos. No celular, a copy vem antes do painel. Não há rótulo
 "CONSOLE" nem outro texto pequeno de seção, por decisão do dono.
 
+A grade de pontos é um pseudo-elemento mascarado de cima para baixo: 6% de opacidade no topo, 18% a 35%, 70% a 72% e
+100% na base. Assim os pontos quase somem atrás do título e ficam claros na parte de baixo, como na referência. Se o
+navegador não suportar `mask-image`, os pontos aparecem uniformes, sem quebrar o layout.
+
 ## Tokens
 
 | Uso | Token |
@@ -76,8 +80,8 @@ pixels animados, agora brancos e com brilho máximo de 0,18.
 - **Nota:** cartão flutuante no canto inferior direito, com ícone de linha e duas linhas de texto.
 - **Setas:** 32 px, sem borda, cor secundária, `aria-disabled` nas pontas, escondidas em `pointer: coarse` e sem JS.
 - **Ação do card:** fantasma neutra no desktop; branca de 44 px no celular.
-- **Faixa de destaque:** painel de operação com borda `rgba(255,255,255,.16)`, grade de pontos, números brancos,
-  linhas `rgba(255,255,255,.14)` e botão branco.
+- **Faixa de destaque:** painel de operação com borda `rgba(255,255,255,.16)`, grade de pontos mascarada de cima
+  para baixo, números brancos, linhas `rgba(255,255,255,.14)` e botão branco.
 
 ## Movimento
 
