@@ -451,17 +451,13 @@ body.shell-page .skip {
   gap: 2px;
 }
 
-.wa-docfoot-copy,
-.wa-docfoot-note {
+.wa-docfoot-copy {
   margin: 0;
   color: var(--c-text-3);
   font-size: 11px;
   line-height: 1.45;
 }
 
-.wa-docfoot-note {
-  font-size: 10.5px;
-}
 
 .wa-docfoot-wordmark {
   display: block;

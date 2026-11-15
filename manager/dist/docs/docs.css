@@ -1481,13 +1481,6 @@ td strong {
   margin: 0 auto;
   padding: 48px 32px 32px;
 }
-.foot-brand p {
-  max-width: 36ch;
-  margin: 12px 0 0;
-  color: var(--d-text-3);
-  font-size: 14px;
-  line-height: 1.5;
-}
 .foot-h {
   margin: 0 0 10px;
   color: var(--d-text-3);
