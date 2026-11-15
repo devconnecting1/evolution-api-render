@@ -81,22 +81,6 @@
   text-decoration: none;
 }
 
-.wa-brand-mark {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  place-items: center;
-  border-radius: 2px;
-  background: var(--c-text);
-  color: var(--c-bg);
-}
-
-.wa-brand-mark .wa-ico {
-  width: 14px;
-  height: 14px;
-  stroke-width: 1.8;
-}
-
 .wa-nav {
   display: contents;
 }
@@ -415,35 +399,6 @@ body.shell-page .skip {
   justify-content: flex-end;
 }
 
-.wa-docfoot-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--c-text);
-  font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  text-decoration: none;
-}
-
-.wa-docfoot-mark {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  place-items: center;
-  border-radius: 2px;
-  background: var(--c-text);
-  color: var(--c-bg);
-}
-
-.wa-docfoot-mark .wa-ico {
-  width: 12px;
-  height: 12px;
-  stroke-width: 1.8;
-}
-
 .wa-docfoot-status {
   display: inline-flex;
   min-height: 24px;
@@ -506,6 +461,27 @@ body.shell-page .skip {
 
 .wa-docfoot-note {
   font-size: 10.5px;
+}
+
+.wa-docfoot-wordmark {
+  display: block;
+  width: 100%;
+  margin-top: clamp(20px, 3vw, 40px);
+  padding-bottom: clamp(12px, 1.6vw, 20px);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: clamp(70px, 21vw, 300px);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.74;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: color 0.15s ease;
+}
+
+.wa-docfoot-wordmark:hover {
+  color: var(--c-text-2);
 }
 
 @media (max-width: 720px) {

@@ -5,9 +5,10 @@
  * --sh-* (cabecalho), mas passam a apontar para os tokens --c-* e --type-* daqui. Alterar um valor aqui muda as
  * paginas que consomem o token, sem repetir hex em cada arquivo.
  *
- * Tema: claro por padrao; escuro por prefers-color-scheme e por html[data-theme-mode="dark"] (docs.js). O verde e o
- * unico accent cromatico; ambar e atencao, vermelho e erro. O painel administrativo continua com os tokens --m-*
- * proprios; migrar o painel e uma mudanca separada.
+ * Tema: claro por padrao; escuro por prefers-color-scheme e por html[data-theme-mode="dark"] (docs.js). O accent e
+ * neutro: preto no claro e branco no escuro. Verde, ambar e vermelho ficam reservados a estados com significado (ok,
+ * atencao e erro). O painel administrativo continua com os tokens --m-* proprios; migrar o painel e uma mudanca
+ * separada.
  *
  * Tipografia: Geist local em woff2 (/assets/fonts, carregada por /assets/geist.css), pesos 100 a 900. A escala abaixo
  * e a mesma do /docs: titulo de pagina 48-64 px peso 300, titulo de secao 32-42 px peso 300, subtitulo 28 px peso 500,
@@ -39,20 +40,20 @@ html.theme-switching *::after {
   --c-text-2: #4d4d4d;
   --c-text-3: #6b6b6b;
   --c-text-4: #8f8f8f;
-  --c-accent: #0e7a4d;
-  --c-accent-strong: #0b5c3a;
-  --c-accent-soft: #e9f5ee;
-  --c-accent-soft-2: #d7ecdf;
-  --c-accent-border: #9fceb5;
-  --c-accent-glow: rgba(14, 122, 77, 0.1);
-  --c-accent-glow-2: rgba(14, 122, 77, 0.16);
-  --c-focus: #0e7a4d;
-  --c-selection: #d7ecdf;
+  --c-accent: #0d0d0d;
+  --c-accent-strong: #000000;
+  --c-accent-soft: #f0f0f0;
+  --c-accent-soft-2: #e3e3e3;
+  --c-accent-border: #c7c7c7;
+  --c-accent-glow: rgba(0, 0, 0, 0.06);
+  --c-accent-glow-2: rgba(0, 0, 0, 0.1);
+  --c-focus: #0d0d0d;
+  --c-selection: #f0f0f0;
   --c-overlay: rgba(0, 0, 0, 0.42);
   --c-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --c-btn-bg: #0d0d0d;
   --c-btn-text: #ffffff;
-  --c-btn-hover: #0e7a4d;
+  --c-btn-hover: #272727;
 
   /* Codigo e tabelas */
   --c-code-bg: #fafafa;
@@ -148,20 +149,20 @@ html.theme-switching *::after {
     --c-text-2: #e3e3e3;
     --c-text-3: #b3b3b3;
     --c-text-4: #8f8f8f;
-    --c-accent: #5fcf8a;
-    --c-accent-strong: #86efac;
-    --c-accent-soft: #12241a;
-    --c-accent-soft-2: #0d1f15;
-    --c-accent-border: #1f5c3a;
-    --c-accent-glow: rgba(95, 207, 138, 0.14);
-    --c-accent-glow-2: rgba(95, 207, 138, 0.18);
-    --c-focus: #86efac;
-    --c-selection: #1f5c3a;
+    --c-accent: #ffffff;
+    --c-accent-strong: #e3e3e3;
+    --c-accent-soft: #1f1f1f;
+    --c-accent-soft-2: #272727;
+    --c-accent-border: #4d4d4d;
+    --c-accent-glow: rgba(255, 255, 255, 0.08);
+    --c-accent-glow-2: rgba(255, 255, 255, 0.12);
+    --c-focus: #ffffff;
+    --c-selection: #1f1f1f;
     --c-overlay: rgba(0, 0, 0, 0.6);
     --c-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
     --c-btn-bg: #ffffff;
     --c-btn-text: #0d0d0d;
-    --c-btn-hover: #86efac;
+    --c-btn-hover: #e3e3e3;
     --c-code-bg: #141414;
     --c-code-head: #0d0d0d;
     --c-code-border: #272727;
@@ -195,20 +196,20 @@ html.theme-switching *::after {
   --c-text-2: #e3e3e3;
   --c-text-3: #b3b3b3;
   --c-text-4: #8f8f8f;
-  --c-accent: #5fcf8a;
-  --c-accent-strong: #86efac;
-  --c-accent-soft: #12241a;
-  --c-accent-soft-2: #0d1f15;
-  --c-accent-border: #1f5c3a;
-  --c-accent-glow: rgba(95, 207, 138, 0.14);
-  --c-accent-glow-2: rgba(95, 207, 138, 0.18);
-  --c-focus: #86efac;
-  --c-selection: #1f5c3a;
+  --c-accent: #ffffff;
+  --c-accent-strong: #e3e3e3;
+  --c-accent-soft: #1f1f1f;
+  --c-accent-soft-2: #272727;
+  --c-accent-border: #4d4d4d;
+  --c-accent-glow: rgba(255, 255, 255, 0.08);
+  --c-accent-glow-2: rgba(255, 255, 255, 0.12);
+  --c-focus: #ffffff;
+  --c-selection: #1f1f1f;
   --c-overlay: rgba(0, 0, 0, 0.6);
   --c-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
   --c-btn-bg: #ffffff;
   --c-btn-text: #0d0d0d;
-  --c-btn-hover: #86efac;
+  --c-btn-hover: #e3e3e3;
   --c-code-bg: #141414;
   --c-code-head: #0d0d0d;
   --c-code-border: #272727;

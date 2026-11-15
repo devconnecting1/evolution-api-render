@@ -8,8 +8,8 @@
  *   práticas, conformidade, suboperadores e os controles implementados, sem sidebar e sem índice lateral.
  * Referência de estrutura: as páginas públicas de termos, privacidade e segurança do Render, recriadas do zero
  * com marca, textos, classes, ícones e paleta do WhatsAI. Nenhum asset, fonte, texto ou CSS do Render é usado.
- * Paleta: verde escuro no tema claro (#0e7a4d) e verde claro no escuro (#5fcf8a), definidos em docs.css.
- * Âmbar é atenção e vermelho é erro; nada de roxo. Tema padrão Sistema.
+ * Paleta: accent neutro (preto no tema claro e branco no escuro), definido em tokens.css/docs.css. Verde, âmbar e
+ * vermelho ficam reservados a estados com significado (ok, atenção e erro); nada de roxo. Tema padrão Sistema.
  */
 
 /* O cabeçalho vem de /assets/site-shell.css (o mesmo da landing) e tem 52 px na altura do topo. */
@@ -684,11 +684,20 @@
 }
 
 .legal-card-n {
-  color: var(--d-text-4);
+  color: var(--d-text-3);
   font-family: var(--d-mono) !important;
   font-size: 12px;
   letter-spacing: 0.06em;
   line-height: 1;
+}
+
+/* Os titulos do fluxo usam h3 por semantica, mas mantem o tamanho dos antigos h4. */
+.trust-section .steps h3 {
+  margin: 1px 0 4px;
+  color: var(--d-text);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .legal-card h3 {
@@ -855,7 +864,7 @@
 }
 
 .legal-table .legal-no {
-  color: var(--d-warn-border);
+  color: var(--d-warn-text);
 }
 
 .legal-table .legal-yes .ico,
