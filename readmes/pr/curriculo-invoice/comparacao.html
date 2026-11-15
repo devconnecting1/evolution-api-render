@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice x Currículo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap">
+<style>
+  /* Layout: duas folhas A4 paisagem, comparação visual e decisões, com a mesma linguagem do currículo. */
+  :root {
+    --desk: #e7e5e4;
+    --paper: #fafafa;
+    --ink: #0a0a0a;
+    --muted: #6f6b66;
+    --rule: #d6d3d1;
+    --band: #e7e5e4;
+    --accent: #166534;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--desk); color: var(--ink); font-family: var(--mono); font-size: 12px; }
+
+  .screen-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    max-width: 297mm; margin: 0 auto; padding: 18px 0;
+  }
+  .screen-bar strong { font-size: 13px; }
+  .screen-bar span { color: var(--muted); font-size: 11px; }
+  .screen-bar button {
+    font: inherit; font-size: 11px; padding: 8px 12px; border: 1px solid var(--ink);
+    background: var(--paper); color: var(--ink); cursor: pointer;
+  }
+
+  .page {
+    width: 297mm; height: 210mm; margin: 0 auto 18px; padding: 12mm 14mm;
+    background: var(--paper); color: var(--ink); overflow: hidden;
+    box-shadow: 0 1px 2px rgba(10,10,10,.08), 0 18px 40px rgba(10,10,10,.12);
+    display: flex; flex-direction: column; gap: 3mm;
+  }
+
+  .masthead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10mm; }
+  .mark {
+    width: 10mm; height: 10mm; border: 2px solid var(--ink); display: grid; place-items: center;
+    color: var(--accent); font-size: 12pt; font-weight: 600; letter-spacing: -.08em; line-height: 1;
+  }
+  h1 { margin: 0; font-size: 22pt; line-height: .95; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+  .sub { margin: 1.5mm 0 0; font-size: 8pt; line-height: 1.5; color: var(--muted); }
+
+  .label { margin: 0 0 1.8mm; font-size: 7pt; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; }
+  .shot { border: 1px solid var(--rule); background: #fff; padding: 3mm; height: 100mm; display: flex; align-items: center; justify-content: center; }
+  .shot img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; }
+  .caption { margin: 2mm 0 0; font-size: 6.8pt; line-height: 1.4; color: var(--muted); }
+  .caption b { color: var(--ink); font-weight: 600; }
+
+  .notes { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; }
+  .note-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; }
+  .note { border-top: 1px solid var(--rule); padding-top: 2mm; }
+  .note b { display: block; font-size: 8pt; margin-bottom: .8mm; }
+  .note span { display: block; font-size: 7.2pt; line-height: 1.45; color: var(--muted); }
+
+  .table-head, .table-row { display: grid; grid-template-columns: 27mm 45mm 52mm minmax(0, 1fr); gap: 4mm; }
+  .table-head {
+    background: var(--band); padding: 2.2mm 3mm; font-size: 7pt; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+  .table-row { padding: 1.5mm 3mm; border-bottom: 1px solid var(--rule); font-size: 7.3pt; line-height: 1.35; }
+  .table-row .k { font-weight: 600; }
+  .table-row .muted { color: var(--muted); }
+
+  .recs { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm 8mm; }
+  .rec { display: grid; grid-template-columns: 5mm minmax(0, 1fr); gap: 2mm; font-size: 7.2pt; line-height: 1.4; }
+  .rec .n { color: var(--accent); font-weight: 600; }
+
+  .checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 8mm; font-size: 7.2pt; line-height: 1.4; }
+  .check { display: flex; gap: 2.5mm; }
+  .box { width: 3mm; height: 3mm; border: 1px solid var(--ink); flex: none; margin-top: .5mm; }
+
+  .next {
+    border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+    padding: 3mm 0; display: flex; justify-content: space-between; gap: 8mm;
+    font-size: 8.5pt; font-weight: 600;
+  }
+  .next span:last-child { text-align: right; }
+
+  .foot { margin-top: auto; padding-top: 2.5mm; border-top: 1px solid var(--rule); font-size: 7pt; line-height: 1.5; color: var(--muted); display: flex; justify-content: space-between; gap: 8mm; }
+
+  /* Modo de captura: só a folha, sem a barra da tela. */
+  body.clean { background: var(--paper); }
+  body.clean .screen-bar { display: none; }
+  body.clean .page { margin: 0; box-shadow: none; }
+  body.page-2 .page:first-of-type { display: none; }
+
+  @media print {
+    @page { size: A4 landscape; margin: 0; }
+    html, body { width: 297mm; background: var(--paper); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .screen-bar { display: none !important; }
+    .page { width: 297mm; height: 210mm; margin: 0; box-shadow: none; page-break-after: always; break-after: page; }
+    .page:last-of-type { page-break-after: auto; break-after: auto; }
+    .page, .page * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .table-row, .note, .rec, .next { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="screen-bar">
+  <div>
+    <strong>Invoice x Currículo</strong><br>
+    <span>Comparação visual e decisões. Use a impressão para salvar em PDF, A4 paisagem.</span>
+  </div>
+  <div><button type="button" onclick="window.print()">Imprimir ou salvar em PDF</button></div>
+</div>
+
+<section class="page">
+  <header class="masthead">
+    <div class="mark" aria-hidden="true">&lt;/&gt;</div>
+    <div style="text-align:right">
+      <h1>Invoice x Currículo</h1>
+      <p class="sub">O que veio da referência, o que mudou e por quê.</p>
+    </div>
+  </header>
+
+  <div class="compare">
+    <div>
+      <p class="label">Referência · invoice do Studio Admin</p>
+      <div class="shot">
+        <img src="referencia-invoice.png" alt="Invoice de referência com cabeçalho, dados de emissão, tabela de itens, totais e rodapé.">
+      </div>
+      <p class="caption"><b>Formato Letter, uma página.</b> Papel claro, tipografia mono, tabela com faixa de cabeçalho, bloco de totais alinhado à direita e rodapé de contato.</p>
+    </div>
+    <div>
+      <p class="label">Seu currículo · A4</p>
+      <div class="shot">
+        <img src="curriculo-preview.png" alt="Currículo em A4 com nome, contato, perfil, tabela de experiências, competências, formação e resumo.">
+      </div>
+      <p class="caption"><b>Formato A4, uma página.</b> A mesma estrutura vira histórico: identificação, perfil, projetos, competências e um fechamento com o modelo de trabalho.</p>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div>
+      <p class="label">O que foi adotado</p>
+      <div class="note-grid">
+        <div class="note"><b>Cabeçalho em duas colunas</b><span>Marca à esquerda, título à direita e linha de referência logo abaixo.</span></div>
+        <div class="note"><b>Tabela com faixa</b><span>Cabeçalho cinza, linhas separadas por fio e leitura em colunas.</span></div>
+        <div class="note"><b>Bloco de fechamento</b><span>O bloco de totais virou "Em resumo", com a última linha em destaque.</span></div>
+        <div class="note"><b>Rodapé de contato</b><span>Links e data de atualização fecham a página, como no invoice.</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="label">O que mudou para o seu caso</p>
+      <div class="note-grid">
+        <div class="note"><b>Cobrança vira histórico</b><span>Os itens e valores saem; entram período, frente e entregas reais.</span></div>
+        <div class="note"><b>Dados de cobrança viram prova</b><span>Conta e endereço de pagamento dão lugar a GitHub, produto em produção e contato.</span></div>
+        <div class="note"><b>Formação autodidata</b><span>Sem diploma inventado: aprendizado em projetos reais, documentação e código aberto.</span></div>
+        <div class="note"><b>Totais viram modelo de trabalho</b><span>O fechamento diz "projetos e parcerias, sem vínculo formal", não "aberto a posições".</span></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <span>Referência: studio-admin.arhamkhnz.com/dashboard/invoice · projeto MIT de Mohammed Arham Khan.</span>
+    <span>Currículo: WhatsAI · 15/11/2026 · página 1 de 2</span>
+  </footer>
+</section>
+
+<section class="page">
+  <header class="masthead">
+    <div class="mark" aria-hidden="true">&lt;/&gt;</div>
+    <div style="text-align:right">
+      <h1>Decisões</h1>
+      <p class="sub">Adaptação do invoice para um currículo de uma página.</p>
+    </div>
+  </header>
+
+  <div>
+    <p class="label">Invoice x currículo, item por item</p>
+    <div class="table-head">
+      <span>Decisão</span><span>No invoice</span><span>No seu currículo</span><span>Por quê</span>
+    </div>
+    <div class="table-row"><span class="k">Formato</span><span class="muted">Letter, 8,5 x 11 in</span><span>A4, 210 x 297 mm</span><span>Padrão de impressão no Brasil e em escritórios.</span></div>
+    <div class="table-row"><span class="k">Tipografia</span><span class="muted">Mono, títulos em caixa alta</span><span>Mono, mesma escala</span><span>Mantém o ar de documento técnico e organiza números e datas.</span></div>
+    <div class="table-row"><span class="k">Cor</span><span class="muted">Neutros</span><span>Neutros, verde só na marca</span><span>Cor com significado, sem enfeite. O verde é a assinatura do WhatsAI.</span></div>
+    <div class="table-row"><span class="k">Identificação</span><span class="muted">From / Bill to</span><span>Desenvolvedor / Contato</span><span>Mesma leitura em dois blocos, aplicada a quem se apresenta.</span></div>
+    <div class="table-row"><span class="k">Tabela</span><span class="muted">Itens, unidades e valores</span><span>Período, frente e entregas</span><span>A tabela deixa de ser cobrança e vira histórico de trabalho.</span></div>
+    <div class="table-row"><span class="k">Fechamento</span><span class="muted">Subtotal, imposto e saldo</span><span>Em resumo e modelo de trabalho</span><span>O bloco de totais vira a síntese da proposta, no mesmo lugar.</span></div>
+    <div class="table-row"><span class="k">Formação</span><span class="muted">Não existe</span><span>Autodidata, sem diploma universitário</span><span>Honestidade e prova real: o que vale é o que está em produção.</span></div>
+    <div class="table-row"><span class="k">Rodapé</span><span class="muted">Contato e emissor</span><span>Contato, produto e data</span><span>Fecha o documento com os links que o leitor vai usar.</span></div>
+  </div>
+
+  <div>
+    <p class="label">Recomendações para este currículo</p>
+    <div class="recs">
+      <div class="rec"><span class="n">01</span><span><b>Posicione-se como independente.</b> O documento é para projetos e parcerias, sem vínculo formal, não para uma vaga. Diga isso na primeira linha.</span></div>
+      <div class="rec"><span class="n">02</span><span><b>Fale de resultado antes de tecnologia.</b> Para um empresário, "o que foi entregue" e "qual problema resolveu" valem mais que a lista de frameworks.</span></div>
+      <div class="rec"><span class="n">03</span><span><b>Use prova em produção.</b> WhatsAI, site e GitHub são mais fortes que qualquer adjetivo. Deixe os links visíveis e testados.</span></div>
+      <div class="rec"><span class="n">04</span><span><b>Trate o diploma com naturalidade.</b> "Formação autodidata" e projetos reais bastam no papel. Na conversa, seja direto: não tem diploma, aprendeu construindo. Não invente formação.</span></div>
+      <div class="rec"><span class="n">05</span><span><b>Mantenha uma página.</b> Se entrar mais experiência, corte a menos relevante. Não reduza a fonte abaixo de 8 pt.</span></div>
+      <div class="rec"><span class="n">06</span><span><b>Preencha os campos marcados.</b> Nome, cidade, e-mail, telefone e nível de inglês. Teste e-mail, telefone e links antes de enviar.</span></div>
+      <div class="rec"><span class="n">07</span><span><b>Envie com uma mensagem curta.</b> Três linhas: quem você é, o que já entregou e o que gostaria de conversar. Se a conversa andar, leve uma proposta de uma página para um problema concreto do negócio dele.</span></div>
+      <div class="rec"><span class="n">08</span><span><b>Não copie a marca nem os dados de exemplo.</b> O invoice é referência de desenho, não de conteúdo. Nada de Weblabs, AIY Cap ou valores.</span></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="label">Checklist antes de enviar</p>
+    <div class="checklist">
+      <div class="check"><span class="box"></span><span>Nome e cidade corretos</span></div>
+      <div class="check"><span class="box"></span><span>E-mail e telefone testados</span></div>
+      <div class="check"><span class="box"></span><span>GitHub e produto abrindo</span></div>
+      <div class="check"><span class="box"></span><span>Nível de inglês preenchido</span></div>
+      <div class="check"><span class="box"></span><span>Modelo de trabalho claro</span></div>
+      <div class="check"><span class="box"></span><span>Uma página no PDF final</span></div>
+    </div>
+  </div>
+
+  <div class="next">
+    <span>Próximo passo: preencha os campos marcados.</span>
+    <span>O PDF final fica fora do Git, com os seus dados.</span>
+  </div>
+
+  <footer class="foot">
+    <span>Documento de comparação · não é o currículo final.</span>
+    <span>página 2 de 2</span>
+  </footer>
+</section>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('clean')) document.body.classList.add('clean');
+  if (params.get('page') === '2') document.body.classList.add('page-2');
+</script>
+</body>
+</html>

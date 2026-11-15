@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Currículo de Desenvolvedor Independente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap">
+<style>
+  /* Layout: folha A4 sobre mesa neutra, com cabeçalho de invoice, tabela de entregas e bloco de resumo. */
+  :root {
+    --desk: #e7e5e4;
+    --paper: #fafafa;
+    --ink: #0a0a0a;
+    --muted: #6f6b66;
+    --rule: #d6d3d1;
+    --band: #e7e5e4;
+    --accent: #166534;
+    --accent-soft: #dcfce7;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--desk);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .screen-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 18px 0;
+  }
+
+  .screen-bar strong { font-size: 13px; letter-spacing: 0.02em; }
+  .screen-bar span { color: var(--muted); font-size: 11px; }
+  .screen-actions { display: flex; gap: 8px; }
+
+  .screen-bar button {
+    font: inherit;
+    font-size: 11px;
+    padding: 8px 12px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .screen-bar button.primary { background: var(--ink); color: var(--paper); }
+
+  .paper {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 auto;
+    padding: 13mm 16mm 12mm;
+    background: var(--paper);
+    color: var(--ink);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(10, 10, 10, 0.08), 0 18px 40px rgba(10, 10, 10, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 5mm;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10mm;
+  }
+
+  .mark {
+    width: 10mm;
+    height: 10mm;
+    border: 2px solid var(--ink);
+    display: grid;
+    place-items: center;
+    color: var(--accent);
+    font-size: 12pt;
+    font-weight: 600;
+    letter-spacing: -0.08em;
+    line-height: 1;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 24pt;
+    line-height: 0.95;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .meta {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.7fr;
+    gap: 8mm;
+    font-size: 8pt;
+    line-height: 1.7;
+    color: var(--ink);
+    border-top: 1px solid var(--rule);
+    padding-top: 3mm;
+  }
+
+  .meta b { font-weight: 600; }
+
+  .people {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 12mm;
+  }
+
+  .label {
+    margin: 0 0 2.2mm;
+    font-size: 7pt;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .name {
+    margin: 0;
+    font-size: 16pt;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .role {
+    margin: 1.5mm 0 0;
+    font-size: 9.5pt;
+    line-height: 1.4;
+  }
+
+  .place, .line {
+    margin: 1mm 0 0;
+    font-size: 8.5pt;
+    line-height: 1.55;
+  }
+
+  .contact { margin: 0; padding: 0; list-style: none; font-size: 8.5pt; line-height: 1.65; }
+  .contact li { display: flex; gap: 2mm; }
+  .contact .k { color: var(--muted); min-width: 14mm; }
+
+  .ph {
+    color: var(--muted);
+    border-bottom: 1px dotted var(--rule);
+  }
+
+  .profile p {
+    margin: 0;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    max-width: 176mm;
+  }
+
+  .section { display: flex; flex-direction: column; gap: 2.5mm; }
+
+  .table { width: 100%; }
+
+  .thead, .trow {
+    display: grid;
+    grid-template-columns: 24mm 42mm minmax(0, 1fr);
+    gap: 4mm;
+    align-items: start;
+  }
+
+  .thead {
+    background: var(--band);
+    padding: 2.4mm 3mm;
+    font-size: 7pt;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .trow {
+    padding: 2.6mm 3mm;
+    border-bottom: 1px solid var(--rule);
+    font-size: 8.4pt;
+    line-height: 1.45;
+  }
+
+  .trow .period { color: var(--muted); font-size: 8pt; }
+  .trow .front { font-weight: 600; }
+  .trow .delivery { min-width: 0; }
+
+  .bottom {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 12mm;
+    margin-top: auto;
+  }
+
+  .stack { display: flex; flex-direction: column; gap: 3.5mm; }
+
+  .skill-group { display: grid; grid-template-columns: 27mm minmax(0, 1fr); gap: 3mm; }
+  .skill-group dt { margin: 0; color: var(--muted); font-size: 7.2pt; line-height: 1.45; }
+  .skill-group dd { margin: 0; font-size: 7.8pt; line-height: 1.45; }
+
+  .summary {
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    padding: 2.6mm 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2mm;
+    font-size: 8.2pt;
+    line-height: 1.45;
+  }
+
+  .summary div { display: flex; justify-content: space-between; gap: 6mm; }
+  .summary .total {
+    border-top: 1px solid var(--ink);
+    margin-top: 1.2mm;
+    padding-top: 2mm;
+    gap: 3mm;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 7.2pt;
+    letter-spacing: 0.02em;
+  }
+
+  .footer {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 12mm;
+    margin-top: auto;
+    padding-top: 3mm;
+    border-top: 1px solid var(--rule);
+    font-size: 7.5pt;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .footer p { margin: 0; }
+
+  /* Modo de captura: só a folha, sem a barra da tela. */
+  body.clean { background: var(--paper); }
+  body.clean .screen-bar { display: none; }
+  body.clean .paper { margin: 0; box-shadow: none; }
+
+  @media (max-width: 640px) {
+    html, body { font-size: 11px; }
+    .screen-bar { padding: 12px 16px; flex-wrap: wrap; }
+    .paper {
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      padding: 24px 20px;
+      gap: 22px;
+    }
+    .people, .bottom, .footer, .meta { grid-template-columns: 1fr; gap: 16px; }
+    .thead, .trow { grid-template-columns: 1fr; gap: 4px; }
+    .thead span:nth-child(n+2) { display: none; }
+    .profile p { max-width: none; }
+    .table, .trow { page-break-inside: avoid; }
+  }
+
+  @media print {
+    @page { size: A4; margin: 0; }
+    html, body {
+      width: 210mm;
+      height: 297mm;
+      margin: 0;
+      padding: 0;
+      background: var(--paper);
+      overflow: hidden;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .screen-bar { display: none !important; }
+    .paper {
+      width: 210mm;
+      height: 297mm;
+      margin: 0;
+      box-shadow: none;
+    }
+    .paper, .paper * {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .trow, .summary, .skill-group { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="screen-bar">
+  <div>
+    <strong>Currículo · Desenvolvedor independente</strong><br>
+    <span>Preencha os campos sublinhados antes de enviar. O PDF sai em A4, uma página.</span>
+  </div>
+  <div class="screen-actions">
+    <button type="button" onclick="window.print()">Imprimir ou salvar em PDF</button>
+  </div>
+</div>
+
+<article class="paper" id="paper">
+  <header class="masthead">
+    <div class="mark" aria-hidden="true">&lt;/&gt;</div>
+    <h1>Currículo</h1>
+  </header>
+
+  <div class="meta">
+    <div><b>Referência</b><br>CV-2026-11</div>
+    <div><b>Atualizado</b><br>15/11/2026</div>
+    <div><b>Página</b><br>1 de 1</div>
+  </div>
+
+  <section class="people">
+    <div>
+      <p class="label">Desenvolvedor</p>
+      <h2 class="name"><span class="ph">[Nome completo]</span></h2>
+      <p class="role">Desenvolvedor independente e empreendedor</p>
+      <p class="place"><span class="ph">[cidade, estado]</span> · Brasil</p>
+    </div>
+    <div>
+      <p class="label">Contato</p>
+      <ul class="contact">
+        <li><span class="k">e-mail</span><span class="ph">[voce@email.com]</span></li>
+        <li><span class="k">telefone</span><span class="ph">[+55 (DD) 90000-0000]</span></li>
+        <li><span class="k">github</span><span>github.com/devconnecting1</span></li>
+        <li><span class="k">produto</span><span>whatsaibr.vercel.app</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="profile">
+    <p class="label">Perfil</p>
+    <p>Desenvolvedor independente e empreendedor. Transformo problemas de negócio em produtos digitais completos: entendo o contexto, desenho a solução, programo, publico e acompanho a operação. Meu produto atual é o WhatsAI, uma plataforma de atendimento com IA no WhatsApp, com cliente real em produção. Também faço sites, painéis e automações. Trabalho por projetos sob medida e parcerias, com foco em clareza, segurança e custo de manutenção.</p>
+  </section>
+
+  <section class="section">
+    <p class="label">Experiência e projetos</p>
+    <div class="table">
+      <div class="thead" role="row">
+        <span>Período</span>
+        <span>Frente</span>
+        <span>Entregas</span>
+      </div>
+      <div class="trow">
+        <span class="period">2026 · atual</span>
+        <span class="front">WhatsAI, produto próprio</span>
+        <span class="delivery">Plataforma de atendimento com IA no WhatsApp, multi-instância e com painel administrativo. API em Node.js e TypeScript, PostgreSQL com Prisma, Redis e integração com WhatsApp (Baileys e Cloud API oficial). Inclui agente de IA por número, planos e limites, triagem de leads, agenda, processos, retenção LGPD e observabilidade. Deploy em Render, Vercel e Neon.</span>
+      </div>
+      <div class="trow">
+        <span class="period">2026</span>
+        <span class="front">Site, documentação e páginas legais</span>
+        <span class="delivery">Site público, documentação e páginas legais do WhatsAI. HTML, CSS e JavaScript sem framework, com tema claro e escuro, SEO, acessibilidade e deploy na Vercel. Lighthouse 100/100 nas quatro notas.</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="bottom">
+    <div class="stack">
+      <div>
+        <p class="label">Competências</p>
+        <dl class="stack" style="gap: 2.2mm; margin: 0;">
+          <div class="skill-group"><dt>Linguagens</dt><dd>TypeScript, JavaScript, SQL, HTML, CSS</dd></div>
+          <div class="skill-group"><dt>Back-end e dados</dt><dd>Node.js, Express, Prisma, PostgreSQL, MySQL, Redis</dd></div>
+          <div class="skill-group"><dt>Integrações</dt><dd>WhatsApp (Baileys e Cloud API), OpenAI, webhooks, APIs REST</dd></div>
+          <div class="skill-group"><dt>Infra e entrega</dt><dd>Docker, Git, GitHub Actions, Render, Vercel, Neon</dd></div>
+          <div class="skill-group"><dt>Produto</dt><dd>descoberta, escopo, prototipação e operação</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div>
+        <p class="label">Formação</p>
+        <p class="line"><b>Autodidata</b></p>
+        <p class="line">Aprendizado contínuo em projetos reais, documentação e código aberto.</p>
+        <p class="line" style="color: var(--muted);">Sem diploma universitário.</p>
+      </div>
+      <div>
+        <p class="label">Idiomas</p>
+        <p class="line">Português: nativo</p>
+        <p class="line ph">Inglês: [nível]</p>
+      </div>
+      <div>
+        <p class="label">Em resumo</p>
+        <div class="summary">
+          <div><span>Produto</span><span>da ideia à operação</span></div>
+          <div><span>Engenharia</span><span>código em produção</span></div>
+          <div><span>Negócio</span><span>solução sob medida</span></div>
+          <div class="total"><span>Projetos e parcerias</span><span>sem vínculo formal</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div>
+      <p><span class="ph">[voce@email.com]</span> · <span class="ph">[+55 (DD) 90000-0000]</span></p>
+      <p>github.com/devconnecting1 · whatsaibr.vercel.app</p>
+    </div>
+    <div>
+      <p>Currículo atualizado em novembro de 2026.</p>
+      <p>Documento em A4, uma página.</p>
+    </div>
+  </footer>
+</article>
+
+<script>
+  document.querySelectorAll('.ph').forEach(function (node) {
+    node.setAttribute('title', 'Campo a preencher');
+  });
+
+  if (new URLSearchParams(window.location.search).has('clean')) {
+    document.body.classList.add('clean');
+  }
+</script>
+</body>
+</html>

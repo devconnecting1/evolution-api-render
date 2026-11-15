@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detalhe: invoice x currículo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --paper: #fafafa;
+    --ink: #0a0a0a;
+    --muted: #6f6b66;
+    --rule: #d6d3d1;
+    --accent: #166534;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: var(--mono); }
+  .wrap { width: 1600px; padding: 36px 44px 28px; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--rule); padding-bottom: 14px; }
+  h1 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+  .sub { font-size: 11px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 24px; }
+  .label { margin: 0 0 10px; font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+  .shot { height: 620px; overflow: hidden; border: 1px solid var(--rule); background: #fff; padding: 10px; }
+  .shot img { display: block; width: 100%; height: auto; }
+  .caption { margin: 10px 0 0; font-size: 10px; line-height: 1.5; color: var(--muted); }
+  .caption b { color: var(--ink); }
+  .foot { margin-top: 22px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 9px; color: var(--muted); display: flex; justify-content: space-between; gap: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <h1>Detalhe: invoice x currículo</h1>
+    <div class="sub">Cabeçalho, tabela e fechamento na mesma linguagem</div>
+  </header>
+  <div class="grid">
+    <div>
+      <p class="label">Referência · invoice do Studio Admin</p>
+      <div class="shot"><img src="referencia-invoice.png" alt="Detalhe do cabeçalho e da tabela do invoice de referência."></div>
+      <p class="caption"><b>Cabeçalho em duas colunas, tabela com faixa e bloco de totais.</b> A leitura é técnica e direta: referência, emissão, origem, destino, itens e saldo.</p>
+    </div>
+    <div>
+      <p class="label">Seu currículo · A4</p>
+      <div class="shot"><img src="curriculo-preview.png" alt="Detalhe do cabeçalho, do perfil e da tabela do currículo."></div>
+      <p class="caption"><b>Mesma estrutura, conteúdo de carreira.</b> Identificação, contato, perfil, projetos e competências ocupam o lugar de origem, destino, itens e valores.</p>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Referência: studio-admin.arhamkhnz.com/dashboard/invoice · projeto MIT de Mohammed Arham Khan.</span>
+    <span>Currículo: WhatsAI · 15/11/2026</span>
+  </footer>
+</div>
+</body>
+</html>
