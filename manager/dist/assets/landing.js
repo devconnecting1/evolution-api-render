@@ -135,6 +135,48 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
     });
   });
 
+  // ------------------------------------------------------------------ hero carousel: arrows + native scroll
+  // A trilha rola nativamente (toque, trackpad e teclado). Nos aparelhos com ponteiro, os dois botões andam um card
+  // por vez; aria-disabled marca os fins e o estado acompanha a rolagem. Sem autoplay, sem timer e sem dependência.
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  document.querySelectorAll('[data-carousel]').forEach(function (box) {
+    const track = box.querySelector('[data-carousel-track]');
+    const prev = box.querySelector('[data-carousel-prev]');
+    const next = box.querySelector('[data-carousel-next]');
+    if (!track || !prev || !next) return;
+    const cards = Array.prototype.slice.call(track.children);
+    const cardStep = function () {
+      if (cards.length < 2) return track.clientWidth;
+      return cards[1].offsetLeft - cards[0].offsetLeft;
+    };
+    const maxScroll = function () {
+      return Math.max(0, track.scrollWidth - track.clientWidth);
+    };
+    const update = function () {
+      const max = maxScroll();
+      prev.setAttribute('aria-disabled', String(track.scrollLeft <= 2));
+      next.setAttribute('aria-disabled', String(track.scrollLeft >= max - 2));
+    };
+    const go = function (direction) {
+      const target = Math.max(0, Math.min(maxScroll(), track.scrollLeft + direction * cardStep()));
+      if (typeof track.scrollTo === 'function') {
+        track.scrollTo({ left: target, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+      } else {
+        track.scrollLeft = target;
+      }
+    };
+    prev.addEventListener('click', function () {
+      if (prev.getAttribute('aria-disabled') !== 'true') go(-1);
+    });
+    next.addEventListener('click', function () {
+      if (next.getAttribute('aria-disabled') !== 'true') go(1);
+    });
+    track.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    if (typeof reduceMotion.addEventListener === 'function') reduceMotion.addEventListener('change', update);
+    update();
+  });
+
   // ------------------------------------------------------------------ mobile menu
   const menuBtn = document.querySelector('[data-menu]');
   const nav = document.querySelector('[data-nav]');
