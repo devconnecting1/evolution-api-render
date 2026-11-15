@@ -1185,6 +1185,7 @@ td strong {
   font-weight: 600;
   flex: none;
 }
+.steps h3,
 .steps h4 {
   margin: 1px 0 4px;
   color: var(--d-text);

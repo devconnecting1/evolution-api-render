@@ -49,10 +49,10 @@
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=3" />
-    <link rel="stylesheet" href="/assets/tokens.css?v=2" />
-    <link rel="stylesheet" href="/docs/docs.css?v=5" />
-    <link rel="stylesheet" href="/landing/legal.css?v=3" />
-    <link rel="stylesheet" href="/assets/site-shell.css?v=1" />
+    <link rel="stylesheet" href="/assets/tokens.css?v=3" />
+    <link rel="stylesheet" href="/docs/docs.css?v=6" />
+    <link rel="stylesheet" href="/landing/legal.css?v=4" />
+    <link rel="stylesheet" href="/assets/site-shell.css?v=2" />
     <!-- Tema salvo é aplicado antes da primeira pintura; o restante do comportamento espera o DOM. -->
     <script src="/docs/docs.js?v=6"></script>
     <script src="/assets/landing.js?v=7" defer></script>
@@ -85,7 +85,6 @@
         <header class="wa-head" data-head>
       <div class="wa-wrap wa-head-in">
         <a class="wa-brand" href="/" aria-label="WhatsAI, página inicial">
-          <span class="wa-brand-mark" aria-hidden="true"><svg class="wa-ico"><use href="#i-chat" /></svg></span>
           WhatsAI
         </a>
         <nav class="wa-nav" id="menu-principal" aria-label="Principal" data-nav>
@@ -478,42 +477,42 @@
             <li>
               <span class="step-n">1</span>
               <div>
-                <h4>Contato</h4>
+                <h3>Contato</h3>
                 <p>Manda a mensagem pelo WhatsApp, como faria com qualquer empresa.</p>
               </div>
             </li>
             <li>
               <span class="step-n">2</span>
               <div>
-                <h4>WhatsApp</h4>
+                <h3>WhatsApp</h3>
                 <p>WhatsApp Web (Baileys) ou API oficial da Meta entrega a mensagem por uma conexão criptografada.</p>
               </div>
             </li>
             <li>
               <span class="step-n">3</span>
               <div>
-                <h4>API WhatsAI</h4>
+                <h3>API WhatsAI</h3>
                 <p>Confere a chave de cada pedido, limita tentativas erradas e mantém os segredos cifrados com <code>AES-256-GCM</code>.</p>
               </div>
             </li>
             <li>
               <span class="step-n">4</span>
               <div>
-                <h4>IA (OpenAI API)</h4>
+                <h3>IA (OpenAI API)</h3>
                 <p>Recebe por <code>HTTPS</code> só o necessário para responder; pela política da API, não treina com os dados.</p>
               </div>
             </li>
             <li>
               <span class="step-n">5</span>
               <div>
-                <h4>Banco de dados</h4>
+                <h3>Banco de dados</h3>
                 <p>Guarda a conversa por <code>TLS</code>, com o prazo de guarda escolhido pela empresa (LGPD).</p>
               </div>
             </li>
             <li>
               <span class="step-n">6</span>
               <div>
-                <h4>Painel</h4>
+                <h3>Painel</h3>
                 <p>A equipe acompanha pelo navegador ou app, por <code>HTTPS</code> e com a chave de acesso.</p>
               </div>
             </li>
@@ -700,10 +699,6 @@
     <footer class="wa-docfoot">
       <div class="wa-wrap wa-docfoot-in">
         <div class="wa-docfoot-side">
-          <a class="wa-docfoot-brand" href="/" aria-label="WhatsAI, página inicial">
-            <span class="wa-docfoot-mark" aria-hidden="true"><svg class="wa-ico"><use href="#i-chat" /></svg></span>
-            WhatsAI
-          </a>
           <a class="wa-docfoot-status" href="/#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero tirar algumas dúvidas.">
             <span class="wa-docfoot-dot" aria-hidden="true"></span>
             Falar no WhatsApp
@@ -723,6 +718,9 @@
             <p class="wa-docfoot-note">WhatsApp é marca da Meta; o WhatsAI não é afiliado à Meta nem à OpenAI.</p>
           </div>
         </div>
+      </div>
+      <div class="wa-wrap">
+        <a class="wa-docfoot-wordmark" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
       </div>
     </footer>
 
