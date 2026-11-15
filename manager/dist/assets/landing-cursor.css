@@ -395,7 +395,8 @@ body.wa-page #duvidas {
 .wa-art {
   position: relative;
   overflow: hidden;
-  background:
+  background-color: var(--wa-art-sky);
+  background-image:
     radial-gradient(70% 65% at 76% 10%, var(--wa-art-glow) 0%, transparent 64%),
     linear-gradient(180deg, var(--wa-art-sky) 0%, var(--wa-art-sky-2) 34%, var(--wa-art-hill) 58%, var(--wa-art-hill-2) 76%, var(--wa-art-hill-3) 100%);
 }
@@ -953,7 +954,8 @@ body.wa-page #duvidas {
   border: 1px solid var(--wa-line);
   --wa-hc-tint: var(--wa-card);
   --wa-hc-glow: var(--wa-art-glow);
-  background:
+  background-color: var(--wa-bg);
+  background-image:
     radial-gradient(80% 55% at 88% 106%, var(--wa-art-hill-3) 0%, transparent 70%),
     radial-gradient(90% 65% at 18% 4%, var(--wa-hc-glow) 0%, transparent 72%),
     linear-gradient(165deg, var(--wa-hc-tint) 0%, var(--wa-bg) 58%, var(--wa-card-2) 100%);
@@ -1094,6 +1096,7 @@ body.wa-page #duvidas {
   flex-direction: column;
   align-items: flex-start;
   padding-top: 14px;
+  background-color: var(--wa-bg);
 }
 
 .wa-hcard-title {
@@ -1517,6 +1520,7 @@ body.wa-page #duvidas {
     z-index: 3;
     align-items: flex-start;
     padding-top: 0;
+    background-color: transparent;
     color: var(--c-dark-text);
   }
 
@@ -2009,6 +2013,7 @@ body.wa-page #duvidas {
   padding: clamp(22px, 2.6vw, 34px);
   border-right: 1px solid var(--wa-line);
   border-bottom: 1px solid var(--wa-line);
+  background: var(--wa-card);
 }
 
 .wa-feature-top {
@@ -2324,7 +2329,7 @@ body.wa-page #duvidas {
   width: min(100%, 440px);
   padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.04);
+  background: #141414;
   box-shadow: 0 30px 60px -40px rgba(0, 0, 0, 0.9);
 }
 

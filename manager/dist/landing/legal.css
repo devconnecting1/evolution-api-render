@@ -303,7 +303,8 @@
 }
 
 .trust-art .ta-b2 {
-  background: radial-gradient(circle at 50% 50%, var(--d-accent) 0 18%, transparent 19%),
+  background-color: var(--d-bg);
+  background-image: radial-gradient(circle at 50% 50%, var(--d-accent) 0 18%, transparent 19%),
     radial-gradient(circle at 50% 50%, transparent 0 34%, var(--d-accent-border) 35% 36%, transparent 37%);
 }
 
@@ -316,7 +317,8 @@
 }
 
 .trust-art .ta-c2 {
-  background: repeating-linear-gradient(90deg, var(--d-accent-border) 0 1px, transparent 1px 12px);
+  background-color: var(--d-bg);
+  background-image: repeating-linear-gradient(90deg, var(--d-accent-border) 0 1px, transparent 1px 12px);
 }
 
 .trust-art .ta-c3 {
@@ -334,6 +336,7 @@
 
 .trust-contact {
   min-width: 0;
+  background-color: var(--d-bg);
 }
 
 .trust-contact-ico,
@@ -800,6 +803,7 @@
 .trust-section .table-wrap {
   margin-right: 0;
   margin-left: 0;
+  background-color: var(--d-bg);
 }
 
 .legal-table {
