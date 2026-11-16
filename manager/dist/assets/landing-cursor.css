@@ -3206,6 +3206,36 @@ body.wa-page #duvidas {
   color: var(--wa-accent);
 }
 
+/* ------------------------------------------------------------------ grupo de botoes conectados */
+.wa-btn-group {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
+}
+
+.wa-btn-group > .wa-btn {
+  border-radius: 0;
+}
+
+.wa-btn-group > .wa-btn:first-child {
+  border-radius: 2px 0 0 2px;
+}
+
+.wa-btn-group > .wa-btn:last-child {
+  margin-left: -1px;
+  border-radius: 0 2px 2px 0;
+}
+
+.wa-btn-group > .wa-btn:focus-visible {
+  position: relative;
+  z-index: 1;
+}
+
+.wa-btn-label-short {
+  display: none;
+}
+
 /* ------------------------------------------------------------------ tipografia no celular */
 @media (max-width: 719px) {
   .wa-hero-title {
@@ -3219,6 +3249,18 @@ body.wa-page #duvidas {
   }
   .wa-hero-meta span[aria-hidden="true"] {
     display: none;
+  }
+  .wa-hero-actions,
+  .wa-cta-actions {
+    width: 100%;
+  }
+  .wa-hero-actions > .wa-btn,
+  .wa-cta-actions > .wa-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-inline: 12px;
+    font-size: 13px;
+    white-space: nowrap;
   }
   .wa-section-title {
     font-size: clamp(30px, 8vw, 36px);
@@ -3240,6 +3282,20 @@ body.wa-page #duvidas {
   }
   .wa-plan-price strong {
     font-size: 32px;
+  }
+}
+
+@media (max-width: 389px) {
+  .wa-btn-label-full {
+    display: none;
+  }
+  .wa-btn-label-short {
+    display: inline;
+  }
+  .wa-hero-actions > .wa-btn,
+  .wa-cta-actions > .wa-btn {
+    padding-inline: 8px;
+    font-size: 12px;
   }
 }
 
