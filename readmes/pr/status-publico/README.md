@@ -116,8 +116,8 @@ nem OpenAI.
 - `node --check manager/dist/status/status.js`.
 - Todos os `manager/patches/*.py --check`, `node manager/patches/landing-css.mjs --check`, `npx esbuild` nos bundles,
   parse de `vercel.json`, `sitemap.xml` e `llms.txt`.
-- Playwright com a API simulada, em 1440 e 390 px, claro e escuro: sem rolagem horizontal, 280 barras, dois incidentes,
-  estados de erro e de carregamento.
+- Playwright com API simulada em 320, 390, 600, 768, 1024 e 1440 px, claro e escuro: sem rolagem horizontal, 280 barras
+  e nenhum erro de console. O estado de falha da API também foi conferido, com a lista de incidentes indisponível.
 - A página também foi conferida com a API real desligada e com a API simulada retornando falha.
 
 O endpoint real ainda não foi exercitado contra o banco de produção neste PR. A primeira consulta depois do deploy cria a
