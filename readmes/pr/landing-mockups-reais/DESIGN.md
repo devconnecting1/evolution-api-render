@@ -52,7 +52,8 @@ A captura clara tem fundo branco. Sem moldura, ela se funde com o fundo branco d
 `--wa-card-2` fazem a imagem parecer uma tela, não um bloco solto. A sombra é discreta e usa os tokens do site.
 
 No hero, a captura fica inserida 12 px dentro da moldura do card; no celular, ela ocupa o card inteiro e recebe o
-degrade inferior para o texto sobreposto. A primeira imagem é `eager` com prioridade alta; as outras são `lazy`.
+degrade inferior para o texto sobreposto. A primeira captura clara é `eager` com prioridade alta; as demais, inclusive
+a versão escura da primeira, são `lazy`.
 
 ## Destaque
 
