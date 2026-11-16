@@ -141,7 +141,7 @@ Fluxo de uma consulta:
 
 1. Se há resultado em cache com menos de 5 minutos, devolve sem tocar no banco.
 2. Senão, monta as visões Sistema e WhatsApp.
-3. Se a montagem falhou, devolve o fallback degradado e não grava nada.
+3. Se a montagem inteira falhou (probe indisponível), devolve o fallback degradado e não grava nada.
 4. Se funcionou, lê o `GlobalSetting`, atualiza a faixa atual e os incidentes, e grava somente se algo mudou.
 5. Guarda o resultado em memória.
 
@@ -156,8 +156,9 @@ O custo aceito: enquanto alguém mantém a página aberta, o cache expira e uma 
 - **API de status fora do ar:** o `fetch` falha, a página mostra "Não foi possível consultar o status", um alerta com
   "Tentar de novo" e os componentes como **Sem dados**. O site continua operacional porque a página carregou. O histórico
   não é inventado.
-- **Banco fora do ar:** a leitura das visões pode falhar; o serviço devolve o fallback degradado, com o banco em
-  **Sem dados** e a API operacional porque o endpoint respondeu.
+- **Banco fora do ar:** o cartão do banco fica **Indisponível** quando a conexão é recusada e o estado geral acompanha; a
+  API continua operacional porque o endpoint respondeu. Se a verificação inteira não puder ser montada (probe ausente), o
+  serviço devolve o fallback degradado, com o banco em **Sem dados**.
 - **Leitura do `GlobalSetting` falha:** o serviço usa um store vazio, não grava e continua servindo o estado atual. A
   próxima consulta tenta de novo.
 - **Gravação falha:** o serviço marca o store como não gravável naquele ciclo e continua servindo; não entra em loop de
