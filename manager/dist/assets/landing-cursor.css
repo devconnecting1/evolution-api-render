@@ -2585,7 +2585,7 @@ body.wa-page #duvidas {
   width: 100%;
 }
 
-/* Premium: cartao grafite com os pixels animados da landing atual (landing-pixels.js) */
+/* Premium: grafite no tema claro e claro no tema escuro, com os pixels animados (landing-pixels.js) */
 .wa-plan--px {
   --wa-fg: var(--c-dark-text);
   --wa-fg-2: var(--c-dark-text-2);
@@ -2598,11 +2598,13 @@ body.wa-page #duvidas {
   --wa-accent: var(--c-dark-text);
   --wa-accent-soft: rgba(255, 255, 255, 0.08);
   --wa-accent-line: var(--c-dark-border-strong);
+  --wa-premium-bg: var(--c-dark-surface);
+  --wa-premium-btn-hover: var(--c-dark-text-2);
   position: relative;
   isolation: isolate;
   overflow: hidden;
   border-color: transparent;
-  background: var(--c-dark-surface);
+  background: var(--wa-premium-bg);
   color: var(--wa-fg);
 }
 
@@ -2614,17 +2616,17 @@ body.wa-page #duvidas {
 .wa-plan--px .wa-btn {
   border-color: transparent;
   background: var(--wa-accent);
-  color: var(--c-dark-surface);
+  color: var(--wa-premium-bg);
 }
 
 .wa-plan--px .wa-btn:hover {
-  background: var(--c-dark-text-2);
+  background: var(--wa-premium-btn-hover);
 }
 
 .wa-plan--px .wa-badge {
-  border-color: var(--c-dark-border-strong);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--c-dark-text);
+  border-color: var(--wa-accent-line);
+  background: var(--wa-accent-soft);
+  color: var(--wa-accent);
 }
 
 .wa-plan--px .px-bg {
@@ -2639,13 +2641,58 @@ body.wa-page #duvidas {
   mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.18) 55%, transparent 80%);
 }
 
+:root[data-theme-mode="dark"] .wa-plan--px {
+  --wa-fg: #0d0d0d;
+  --wa-fg-2: #4d4d4d;
+  --wa-fg-3: #6b6b6b;
+  --wa-line: #e3e3e3;
+  --wa-line-strong: #c7c7c7;
+  --c-accent: #0d0d0d;
+  --c-accent-soft: #f0f0f0;
+  --c-accent-border: #c7c7c7;
+  --wa-accent: #0d0d0d;
+  --wa-accent-soft: #f0f0f0;
+  --wa-accent-line: #c7c7c7;
+  --wa-premium-bg: #f5f5f5;
+  --wa-premium-btn-hover: #272727;
+  border-color: #e3e3e3;
+  background-color: var(--wa-premium-bg);
+  background-image:
+    radial-gradient(130% 70% at 50% 0%, rgba(0, 0, 0, 0.04), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #f5f5f5 55%, #e9e9e9 100%);
+  color: var(--wa-fg);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 24px 60px -32px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme-mode="dark"] .wa-plan--px .px-bg {
+  filter: invert(1);
+}
+
 @media (prefers-color-scheme: dark) {
-  .wa-plan--px {
-    border-color: var(--c-dark-border);
-    background:
-      radial-gradient(130% 70% at 50% 0%, rgba(255, 255, 255, 0.05), transparent 62%),
-      linear-gradient(180deg, #1a1a1a 0%, var(--c-dark-surface-2) 55%, #101010 100%);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 60px -32px rgba(0, 0, 0, 0.6);
+  :root:not([data-theme-mode="light"]) .wa-plan--px {
+    --wa-fg: #0d0d0d;
+    --wa-fg-2: #4d4d4d;
+    --wa-fg-3: #6b6b6b;
+    --wa-line: #e3e3e3;
+    --wa-line-strong: #c7c7c7;
+    --c-accent: #0d0d0d;
+    --c-accent-soft: #f0f0f0;
+    --c-accent-border: #c7c7c7;
+    --wa-accent: #0d0d0d;
+    --wa-accent-soft: #f0f0f0;
+    --wa-accent-line: #c7c7c7;
+    --wa-premium-bg: #f5f5f5;
+    --wa-premium-btn-hover: #272727;
+    border-color: #e3e3e3;
+    background-color: var(--wa-premium-bg);
+    background-image:
+      radial-gradient(130% 70% at 50% 0%, rgba(0, 0, 0, 0.04), transparent 62%),
+      linear-gradient(180deg, #ffffff 0%, #f5f5f5 55%, #e9e9e9 100%);
+    color: var(--wa-fg);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 24px 60px -32px rgba(0, 0, 0, 0.45);
+  }
+  :root:not([data-theme-mode="light"]) .wa-plan--px .px-bg {
+    filter: invert(1);
   }
 }
 
