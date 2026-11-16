@@ -405,3 +405,63 @@ div:has(> main > [data-wa-home='instances']) > [data-wa-header],
 div:has(> main .wo-page) > [data-wa-header] {
   border-bottom-color: transparent;
 }
+
+/* Acesso do cliente e Contatos da IA: raios e chips do site */
+#root .wa-portal-card,
+#root .wa-portal-mod,
+#root .wa-portal-code,
+#root .wa-portal-fresh,
+#root .wa-portal-opt {
+  border-radius: 2px;
+}
+#root .wa-portal-btn {
+  border-radius: 2px;
+}
+#root .wa-portal-qr img {
+  border-radius: 2px;
+}
+#root .wa-portal-btn-danger-solid {
+  color: var(--m-bg);
+}
+#root .wa-ci-chip {
+  border-radius: 2px;
+}
+#root .wa-ci-chip[data-tone='ok'] {
+  background: var(--m-chip-green);
+  color: var(--m-chip-green-text);
+}
+#root .wa-ci-chip[data-tone='warn'] {
+  background: var(--m-chip-amber);
+  color: var(--m-chip-amber-text);
+}
+#root .wa-ci-chip[data-tone='bad'] {
+  background: var(--m-chip-red);
+  color: var(--m-chip-red-text);
+}
+
+/* Conversas: avatar, esqueletos, links e badge de não lidas nos tokens do site */
+#root .wa-chat-avatar-fallback {
+  background: var(--m-surface);
+  color: var(--m-text-2);
+}
+#root .wa-chat-sk {
+  background: var(--m-hover);
+}
+#root .wa-chat-sk--bubble,
+#root .wa-msg--out .wa-chat-sk--bubble {
+  background: var(--m-surface);
+}
+#root .wa-chat-unread {
+  background: var(--m-primary);
+  color: var(--m-on-primary);
+}
+#root .wa-msg--out .wa-bubble-time {
+  color: var(--m-text-3);
+}
+#root .wa-bubble a {
+  color: var(--m-text);
+}
+#root .wa-bubble,
+#root .wa-day-sep > span {
+  box-shadow: none;
+}

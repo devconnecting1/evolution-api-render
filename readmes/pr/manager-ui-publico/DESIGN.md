@@ -80,11 +80,31 @@ O bloco fica no fim de `design-system.css`, que já era o último CSS do painel 
 - Os alvos de toque mantêm 44 px em telas de toque; a densidade de 32/28 px vale para mouse.
 - O Docs usa corpo maior; o painel mantém 13/14 px para caber tabelas e filtros.
 
+### Páginas específicas
+
+- **Acesso do cliente e Contatos da IA:** os cards de módulo, códigos, mensagens prontas e chips usam os tokens
+  neutros; os chips semânticos recebem os fundos e textos de nota/aviso/erro do site. O botão de remover acesso usa o
+  fundo do tema como texto para continuar legível quando o vermelho do escuro é claro.
+- **Conversas:** avatar, esqueletos, links, badge de não lidas e horário da mensagem usam os tokens; as bolhas de
+  mensagem continuam com o raio de conversa.
+- **Notificações, Proxy e Webhook:** herdam a ponte; o Webhook é o representante dos formulários de integração.
+- **Entrada do cliente `/acesso`:** é uma página estática com CSS próprio (`acesso.css?v=2`). Ela foi alinhada
+  diretamente para a paleta neutra, o primário preto/branco, os raios de 2 px e o `theme-color`; não carrega o bundle
+  do painel.
+- **Integrações:** o catálogo é capturado; os formulários individuais usam o mesmo shell, a mesma ponte e os mesmos
+  componentes. O Webhook foi o representante capturado.
+
 ## Comparações
 
 As folhas em `comparacao/` mostram:
 
-- login, instâncias e visão geral em 1440, 768 e 390 px, claro e escuro;
+- operação: Leads, Processos, Acesso do cliente, Agenda, Conversas e Contatos da IA em 1440 px, claro;
+- configuração: Plano, Atendente IA, Configurações, Integrações, Conexão e Observabilidade em 1440 px, claro;
+- administração e cliente: Observabilidade, Chaves, Retenção, Equipe, Registro e `/acesso` em 1440 px, claro;
+- extras: Notificações, Proxy e Webhook em 1440 px, claro;
+- seis páginas principais no escuro em 1440 px;
+- quatro páginas de operação no tablet (768 px) e no celular (390 px);
+- o núcleo (login, instâncias e visão geral) em 1440, 768 e 390 px, claro e escuro;
 - a referência Render ao lado da Landing, do Docs e do painel depois.
 
 As capturas usam dados fictícios e uma API simulada. O Render é usado só como referência de linguagem; nenhum asset
@@ -130,8 +150,12 @@ Contrastes calculados sobre os tokens:
 - `manager/dist/assets/design-system.css`: bloco de ponte no fim, depois de todas as regras antigas.
 - `manager/patches/design-system.py`: `CSS_VERSION = 2`, `CACHE_VERSION = 82` e troca do link `?v=1` pelo `?v=2`.
 - `manager/dist/index.html`: `design-system.css?v=2` e bundle `?v=82`.
+- `manager/dist/assets/acesso.css` e `manager/dist/acesso/index.html`: paleta neutra, raios de 2 px, `theme-color`
+  neutro e `?v=2`.
 - Nenhum JS do bundle foi editado; o esqueleto de layout e os componentes continuam os mesmos.
 - O patch continua determinístico e todos os `--check` passam.
+- As exceções de componente (bolhas do chat, alvos de toque e preview de planilha em Leads) ficam documentadas e não
+  entram na regra geral de raio/cor.
 
 ## Limitações e próximos passos
 
@@ -140,6 +164,10 @@ Contrastes calculados sobre os tokens:
 - O `theme-color` do navegador ainda usa `#10100e`/`#f5f5f5` no script inline; mudar isso exige atualizar a CSP e o
   teste de segurança. Ficou fora desta rodada.
 - O painel mantém a densidade de sistema; se o dono quiser a escala de leitura do Docs, é uma decisão separada.
-- As bolhas do chat e os alvos de toque são exceções deliberadas.
+- A entrada do cliente `/acesso` tem CSS próprio; está alinhada, mas não participa da ponte automática.
+- As bolhas do chat e os alvos de toque são exceções deliberadas. O preview de planilha em Leads mantém o visual claro
+  de Excel porque representa o arquivo exportado.
+- Os formulários individuais de integração usam a mesma ponte, mas só o Webhook foi capturado como representante.
+- O `theme-color` do navegador no painel ainda usa o script inline antigo; o miolo da aplicação já está neutro.
 - O PR não foi mesclado; a revisão do dono decide se a ponte entra como está, se vira geração automática ou se o
   console deve perder mais estrutura.
