@@ -1567,8 +1567,6 @@ body.wa-page #duvidas {
 /* ------------------------------------------------------------------ prova social (segmentos) */
 .wa-proof {
   padding-block: clamp(44px, 5vw, 68px);
-  border-top: 1px solid var(--wa-line);
-  border-bottom: 1px solid var(--wa-line);
 }
 
 .wa-proof-title {
@@ -1708,7 +1706,6 @@ body.wa-page #duvidas {
 .wa-alt + .wa-alt {
   margin-top: clamp(56px, 7vw, 104px);
   padding-top: clamp(56px, 7vw, 104px);
-  border-top: 1px solid var(--wa-line);
 }
 
 .wa-mock-label {
@@ -1996,10 +1993,6 @@ body.wa-page #duvidas {
 }
 
 /* ------------------------------------------------------------------ grade de recursos */
-.wa-why {
-  border-top: 1px solid var(--wa-line);
-}
-
 .wa-feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2724,7 +2717,6 @@ body.wa-page #duvidas {
   gap: 8px 28px;
   margin-top: 20px;
   padding-top: 18px;
-  border-top: 1px solid var(--wa-line);
   color: var(--wa-fg-3);
   font-size: var(--type-meta-size);
   line-height: var(--type-meta-lh);
@@ -2862,7 +2854,6 @@ body.wa-page #duvidas {
 .wa-addon {
   margin-top: 28px;
   padding-top: 24px;
-  border-top: 1px solid var(--wa-line);
 }
 
 .wa-addon h3 {
@@ -3165,7 +3156,6 @@ body.wa-page #duvidas {
 /* ------------------------------------------------------------------ CTA final */
 .wa-cta {
   padding-block: clamp(88px, 12vw, 156px);
-  border-top: 1px solid var(--wa-line);
   text-align: center;
 }
 

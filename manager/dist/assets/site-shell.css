@@ -56,10 +56,6 @@
   background: var(--c-bg);
 }
 
-.wa-head.is-scrolled {
-  border-bottom-color: var(--c-border);
-}
-
 .wa-head-in {
   display: grid;
   grid-template-columns: 1fr auto 1fr auto;
@@ -375,7 +371,6 @@ body.shell-page .skip {
 
 /* ------------------------------------------------------------------ rodape compacto (padrao Render Docs) */
 .wa-docfoot {
-  border-top: 1px solid var(--c-border);
   background: var(--c-bg);
 }
 
