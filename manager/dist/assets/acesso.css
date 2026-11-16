@@ -12,39 +12,39 @@
  */
 
 :root {
-  --page: #faf9f4;
-  --text: #141414;
+  --page: #ffffff;
+  --text: #0d0d0d;
   --text-2: #6b6b6b;
   --field: #ffffff;
-  --field-border: #c9c7c0;
-  --field-border-strong: #9b998f;
-  --hover: #f1efe8;
-  --grid: #e9e5da;
+  --field-border: #c7c7c7;
+  --field-border-strong: #8f8f8f;
+  --hover: #f0f0f0;
+  --grid: #e3e3e3;
   --primary: #0d0d0d;
   --on-primary: #ffffff;
-  --primary-hover: #2a2a2a;
-  --accent: #0e7a4d;
+  --primary-hover: #272727;
+  --accent: #0d0d0d;
   --error: #b42318;
-  --focus: #0e7a4d;
+  --focus: #0d0d0d;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --page: #10100e;
-    --text: #f4f4ec;
-    --text-2: #a6a69c;
-    --field: #171714;
-    --field-border: #3d3d35;
-    --field-border-strong: #5a5a50;
-    --hover: #1c1c18;
-    --grid: #242420;
-    --primary: #0e7a4d;
-    --on-primary: #ffffff;
-    --primary-hover: #12945c;
-    --accent: #6fd695;
-    --error: #f87171;
-    --focus: #6fd695;
+    --page: #0d0d0d;
+    --text: #ffffff;
+    --text-2: #b3b3b3;
+    --field: #0d0d0d;
+    --field-border: #4d4d4d;
+    --field-border-strong: #8f8f8f;
+    --hover: #1f1f1f;
+    --grid: #272727;
+    --primary: #ffffff;
+    --on-primary: #0d0d0d;
+    --primary-hover: #e3e3e3;
+    --accent: #ffffff;
+    --error: #fca5a5;
+    --focus: #ffffff;
     color-scheme: dark;
   }
 }
@@ -137,12 +137,7 @@ body {
 }
 
 .brand::after {
-  content: '';
-  width: 7px;
-  height: 7px;
-  margin: -10px 0 0 3px;
-  border-radius: 9999px;
-  background: var(--accent);
+  display: none;
 }
 
 h1 {
@@ -171,10 +166,10 @@ label {
 
 input {
   width: 100%;
-  height: 40px;
+  height: 44px;
   padding: 0 12px;
   border: 1px solid var(--field-border);
-  border-radius: 4px;
+  border-radius: 2px;
   background: var(--field);
   color: var(--text);
   font: inherit;
@@ -204,10 +199,10 @@ button {
 
 .primary {
   width: 100%;
-  min-height: 48px;
+  min-height: 44px;
   margin-top: 16px;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 2px;
   background: var(--primary);
   color: var(--on-primary);
   font-size: 16px;
@@ -230,7 +225,7 @@ button {
   min-height: 40px;
   margin-top: 8px;
   border: 1px solid var(--field-border);
-  border-radius: 4px;
+  border-radius: 2px;
   background: transparent;
   color: var(--text);
   font-size: 14px;
@@ -247,7 +242,7 @@ a:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 2px;
 }
 
 .error {
