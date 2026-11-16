@@ -374,8 +374,15 @@
     }
     window.clearInterval(relativeTimer);
     relativeTimer = window.setInterval(updateRelative, 30_000);
+    window.clearTimeout(refreshTimer);
     var checked = lastData ? parseDate(lastData.checkedAt) : null;
-    if (!checked || Date.now() - checked.getTime() > 5 * 60_000) load();
+    var elapsed = checked ? Date.now() - checked.getTime() : Infinity;
+    if (!checked || elapsed > 5 * 60_000) {
+      load();
+      return;
+    }
+    var cadenceMs = (Number(lastData.nextCheckSeconds) || 300) * 1000;
+    refreshTimer = window.setTimeout(load, Math.max(REFRESH_FALLBACK_MS, cadenceMs - elapsed));
   });
 
   relativeTimer = window.setInterval(updateRelative, 30_000);
