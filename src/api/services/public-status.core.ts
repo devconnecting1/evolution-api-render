@@ -471,7 +471,7 @@ function publicIncidents(store: PublicStatusStore, now: number): PublicIncident[
 function notes(): string[] {
   return [
     'Verificação a cada 5 minutos. O intervalo protege o banco gratuito de consultas em segundo plano.',
-    'O histórico é gravado quando há mudança de estado; lacunas aparecem como “Sem dados”.',
+    'O histórico é gravado quando há mudança de estado ou o início de uma faixa de 3 horas; lacunas aparecem como “Sem dados”.',
     'Nenhum nome de cliente, número, mensagem ou chave é publicado nesta página.',
     'Horários em UTC; a página mostra o horário local do navegador.',
   ];

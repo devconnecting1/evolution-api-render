@@ -13,8 +13,9 @@ da operação do WhatsAI:
   disponibilidade.
 
 No backend, um endpoint público `GET /status` (sem chave) monta o retrato agregado. O histórico fica em uma linha de
-`GlobalSetting` (`public-status:v1`), sem migration, e só é gravado quando algum estado muda. Não existe timer no servidor:
-a verificação acontece quando a página ou o JSON é consultado, com cache em memória de cinco minutos.
+`GlobalSetting` (`public-status:v1`), sem migration, e só é gravado quando o estado muda ou começa uma faixa nova de 3
+horas. Não existe timer no servidor: a verificação acontece quando a página ou o JSON é consultado, com cache em memória
+de cinco minutos.
 
 A antiga página pública `/observability` foi substituída: a rota agora responde `308` para `/status`. A aba
 **Observabilidade do manager** continua existindo e privada, com a chave global, porque ela é a ferramenta de diagnóstico
@@ -69,7 +70,8 @@ WhatsAI não deve afirmar que um canal está bem quando não há nada para verif
   Uma mudança de degradado para indisponível fecha um incidente e abre outro, porque são estados diferentes.
 - Até 50 incidentes ficam guardados; a página mostra os 20 mais recentes. A janela é de 90 dias.
 - A persistência é uma linha `GlobalSetting` (`public-status:v1`), no banco de controle. Não há migration, tabela nova ou
-  job agendado. A gravação acontece no máximo uma vez a cada cinco minutos, quando o cache expira e há mudança.
+  job agendado. A gravação acontece no máximo uma vez a cada cinco minutos, quando o cache expira e há mudança de estado
+  ou o início de uma faixa nova de 3 horas.
 
 ## Cache, Neon e Render
 
@@ -79,7 +81,7 @@ O plano gratuito do Neon dorme por falta de tráfego. Para não criar um monitor
 - o resultado fica em memória por cinco minutos;
 - chamadas simultâneas compartilham a mesma verificação em andamento;
 - o navegador só atualiza enquanto a aba está visível;
-- o histórico só é gravado quando o estado muda.
+- o histórico só é gravado quando o estado muda ou começa uma faixa nova.
 
 O custo é uma leitura do banco quando o cache expira e alguém consulta a página. É o mesmo tipo de leitura que a
 Observabilidade já faz, agora limitada a uma vez a cada cinco minutos. A página não consulta Neon, Render, Vercel, GitHub
