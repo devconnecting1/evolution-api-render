@@ -248,10 +248,12 @@
     renderGroups(data);
     renderIncidents(data);
     window.clearTimeout(refreshTimer);
-    refreshTimer = window.setTimeout(
-      load,
-      Math.max(REFRESH_FALLBACK_MS, (Number(data.nextCheckSeconds) || 300) * 1000),
-    );
+    if (!document.hidden) {
+      refreshTimer = window.setTimeout(
+        load,
+        Math.max(REFRESH_FALLBACK_MS, (Number(data.nextCheckSeconds) || 300) * 1000),
+      );
+    }
   }
 
   function renderFailure(error) {
@@ -324,7 +326,7 @@
     renderIncidents(fallback);
     if (error && window.console && console.warn) console.warn('Status indisponível:', error);
     window.clearTimeout(refreshTimer);
-    refreshTimer = window.setTimeout(load, REFRESH_FALLBACK_MS);
+    if (!document.hidden) refreshTimer = window.setTimeout(load, REFRESH_FALLBACK_MS);
   }
 
   function load() {
