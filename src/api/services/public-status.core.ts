@@ -91,7 +91,7 @@ const COMPONENT_NAMES: Record<string, string> = {
 };
 
 const BUCKET_MS = 3 * 60 * 60 * 1000;
-const HISTORY_BUCKETS = 56;
+const HISTORY_BUCKETS = 24;
 const INCIDENT_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
 const MAX_INCIDENTS = 50;
 const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -531,7 +531,7 @@ export class PublicStatusService {
       history: publicHistory(this.store, now),
       incidents: publicIncidents(this.store, now),
       nextCheckSeconds: 300,
-      historyDays: 7,
+      historyDays: 3,
       bucketHours: 3,
       notes: [...notes(), ...(snapshotFailed ? ['Não foi possível ler todos os componentes agora.'] : [])],
     };

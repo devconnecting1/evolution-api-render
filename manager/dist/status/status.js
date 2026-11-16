@@ -1,7 +1,7 @@
 /*
  * WhatsAI: pagina publica de status.
  *
- * Le GET /status da API (sem chave) e desenha o estado atual, as faixas de 7 dias e os incidentes. O endpoint
+ * Le GET /status da API (sem chave) e desenha o estado atual, as faixas de 3 dias e os incidentes. O endpoint
  * agrega somente dados de sistema e WhatsApp, sem nomes, numeros, mensagens ou chaves. A pagina atualiza a cada
  * cinco minutos; nao ha timer no servidor.
  */
@@ -188,7 +188,7 @@
     detail.hidden = true;
     detail.setAttribute('aria-live', 'polite');
 
-    for (var i = 0; i < 56; i++) {
+    for (var i = 0; i < 24; i++) {
       var bucket = list[i];
       var state = (bucket && bucket.components && bucket.components[componentId]) || 'no_data';
       if (!STATES[state]) state = 'no_data';
@@ -205,7 +205,7 @@
     }
 
     var wrap = el('div', 'st-bars');
-    var active = 55;
+    var active = 23;
 
     function setActive(index, focus) {
       active = Math.max(0, Math.min(index, slots.length - 1));
@@ -265,7 +265,7 @@
       });
     wrap.setAttribute(
       'aria-label',
-      'Histórico de 7 dias de ' +
+      'Histórico de 3 dias de ' +
         componentName +
         ': ' +
         parts.join(', ') +
@@ -280,7 +280,7 @@
     var head = el('div', 'st-group-head');
     head.append(el('h2', null, name));
     var range = el('div', 'st-range');
-    range.append(el('span', null, '7 dias atrás'), el('span', null, 'Agora'));
+    range.append(el('span', null, '3 dias atrás'), el('span', null, 'Agora'));
     head.append(range);
     return head;
   }

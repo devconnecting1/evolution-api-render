@@ -5,7 +5,7 @@
 A página tinha a informação certa, mas a hierarquia estava errada:
 
 - o estado geral era um título solto, com um rótulo mono pequeno (“Verificado agora mesmo”) que parecia mais um metadado do que o estado da operação;
-- as faixas de 7 dias eram `span` com `title`. No celular, o `title` não aparece; no teclado, não havia como abrir; clicar não fazia nada;
+- as faixas de histórico eram `span` com `title`. No celular, o `title` não aparece; no teclado, não havia como abrir; clicar não fazia nada;
 - a legenda dizia o que cada cor significava, mas não o que aconteceu em um período específico.
 
 O pedido foi direto: remover o rótulo, transformar o estado atual em um cartão com cor de operação e fazer cada faixa mostrar a informação dela.
@@ -81,7 +81,7 @@ O grupo de faixas tem um único ponto de tabulação. Ao receber foco, ele leva 
 
 Cada botão tem `aria-label` com o período e o estado, `aria-pressed` para a faixa escolhida e `aria-controls` para o detalhe. O detalhe é `aria-live="polite"`.
 
-Isso evita 280 paradas de tabulação (56 faixas em 5 componentes) e mantém a navegação por teclado utilizável.
+Isso evita 120 paradas de tabulação (24 faixas em 5 componentes) e mantém a navegação por teclado utilizável.
 
 ## 7. Estados e casos de borda
 
@@ -94,7 +94,7 @@ Isso evita 280 paradas de tabulação (56 faixas em 5 componentes) e mantém a n
 ## 8. O que não foi feito
 
 - Tooltip flutuante ou popover: menos legível no celular e mais difícil de posicionar.
-- 280 botões tabuláveis: pior para quem usa teclado.
+- 120 botões tabuláveis: pior para quem usa teclado.
 - “Tudo operacional” verde para períodos sem coleta: inventaria disponibilidade.
 - Agrupar transições em um incidente ou mostrar uma nota manual: fica para a próxima evolução.
 - Monitor externo: o histórico ainda depende de alguém abrir a página; está registrado como próximo passo.

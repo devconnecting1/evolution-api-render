@@ -5,7 +5,7 @@
 Duas mudanças na página pública `/status`, no mesmo PR para revisão:
 
 1. **O topo vira um cartão de estado.** Sai o rótulo “Verificado agora mesmo” e o título solto. Entra um cartão com fundo e borda na cor da operação atual, com estado, título, resumo, uma recomendação curta, o horário da atualização e a cadência de verificação.
-2. **As faixas de 7 dias passam a responder ao clique.** Cada uma das 56 faixas por componente agora abre um detalhe com o período, o estado, o que ele significa e o que fazer. O detalhe vale para faixa verde, âmbar, vermelha e cinza.
+2. **As faixas de 3 dias passam a responder ao clique.** Cada uma das 24 faixas por componente agora abre um detalhe com o período, o estado, o que ele significa e o que fazer. O detalhe vale para faixa verde, âmbar, vermelha e cinza.
 
 O detalhe abre embaixo da linha do componente, sem popup e sem sair da página. Também funciona por toque e por teclado.
 
@@ -42,7 +42,7 @@ O detalhe de uma faixa cinza é explícito: não houve coleta, então a página 
 
 ## Teclado e acessibilidade
 
-- Um ponto de tabulação por componente, não 56. O grupo de faixas recebe o foco e abre a faixa atual.
+- Um ponto de tabulação por componente, não 24. O grupo de faixas recebe o foco e abre a faixa atual.
 - Setas esquerda/direita escolhem a faixa; Home e End vão aos extremos; Enter e Espaço abrem o detalhe.
 - `aria-pressed` marca a faixa escolhida; `aria-controls` liga a faixa ao detalhe; o detalhe é uma região `aria-live="polite"`.
 - O texto do estado não depende só da cor. O contraste usa os tokens existentes.

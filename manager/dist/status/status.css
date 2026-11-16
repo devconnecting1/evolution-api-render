@@ -1,6 +1,6 @@
 /*
  * WhatsAI: pagina publica de status.
- * A composicao segue a ideia do status.opencode.ai (estado geral, componentes com faixa de 7 dias, incidentes e
+ * A composicao segue a ideia do status.opencode.ai (estado geral, componentes com faixa de 3 dias, incidentes e
  * metodologia), com os tokens, a tipografia e a paleta semantica do WhatsAI. Sem logo, texto, imagem ou CSS de
  * terceiros.
  */
@@ -345,7 +345,7 @@ body.st-page {
 
 .st-bars {
   display: grid;
-  grid-template-columns: repeat(56, minmax(0, 1fr));
+  grid-template-columns: repeat(24, minmax(0, 1fr));
   gap: 2px;
   height: 18px;
   align-items: stretch;
