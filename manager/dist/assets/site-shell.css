@@ -470,6 +470,7 @@ body.shell-page .skip {
   font-weight: 600;
   letter-spacing: -0.06em;
   line-height: 0.74;
+  text-align: center;
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
