@@ -4,9 +4,9 @@ import { describe, test } from 'node:test';
 import type { ProviderView } from '@api/services/observability.shared';
 import {
   normalizeStore,
+  PublicSnapshot,
   PublicStatusService,
   PublicStatusStore,
-  PublicSnapshot,
 } from '@api/services/public-status.core';
 
 const AT = Date.UTC(2026, 10, 16, 12, 0, 0);

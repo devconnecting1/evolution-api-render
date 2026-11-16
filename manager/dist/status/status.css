@@ -639,6 +639,28 @@ body.st-page {
   margin: 0;
 }
 
+.st-foot-wordmark {
+  display: block;
+  width: 100%;
+  margin-top: clamp(20px, 3vw, 40px);
+  padding-bottom: clamp(12px, 1.6vw, 20px);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: clamp(70px, 21vw, 300px);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.74;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: color 0.15s ease;
+}
+
+.st-foot-wordmark:hover {
+  color: var(--c-text-2);
+}
+
 noscript {
   display: block;
   padding: 16px 24px;

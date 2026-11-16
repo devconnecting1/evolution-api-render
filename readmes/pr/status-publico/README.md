@@ -93,7 +93,8 @@ nem OpenAI.
 - A página `manager/dist/observability/` foi removida.
 - O CSP perdeu o hash do script inline que existia só nessa página; restaram os dois hashes do painel e da Área do
   cliente.
-- O link **Status** entrou no rodapé das páginas públicas. O painel não ganhou um link público novo.
+- O link **Status** entrou no rodapé das páginas públicas. O rodapé usa o mesmo wordmark grande do restante do site
+  (landing, Segurança, Privacidade e Termos). O painel não ganhou um link público novo.
 
 ## Arquivos principais
 
