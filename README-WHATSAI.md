@@ -89,7 +89,7 @@ Só existe `manager/dist` (bundle Vite do evolution-manager-v2 2.3.5, `assets/in
 | Google Agenda | `google-agenda.py` (+ `agenda.css?v=3`) | Botão "Conectar Google Agenda" na página Agenda, estado e "Desconectar" (seção 18.7) |
 | Observabilidade | `observability-ui.py`, `observability-grid.py`, `observability-alerts.py` (+ `render-style-observability.js`) | Página nativa com cartões por provedor e alertas (seção 10) |
 | Chaves e credenciais | `credentials-vault.py` + `credentials-vault.css` | Só chave global: chaves de cada instância mascaradas e "mostrar" uma por vez (seção 2) |
-| Rotas | `root-redirect.py`, `manager/dist/vercel.json` | A home antiga nunca aparece; rotas SPA e `/observability` com rewrites antes do catch-all |
+| Rotas | `root-redirect.py`, `manager/dist/vercel.json` | A home antiga nunca aparece; rotas SPA, `/status` e o redirect 308 de `/observability` com rewrites antes do catch-all |
 | Acesso do cliente | `client-portal.py` + `assets/client-portal.js`, `client-portal.css`, `acesso/` | Itens **Conexão** (cliente) e **Acesso do cliente** (administrador), menu filtrado pelos módulos do código, página `/acesso` e app pelo navegador (seção 19) |
 | Layout (app shell) | `app-shell.py` + `app-shell.css` | Estilo do bloco Sidebar do shadcn: a mesma lateral (Instâncias, Observabilidade, Chaves e credenciais, Retenção (LGPD), Sair) na lista e nas páginas globais; a página nunca rola, só o conteúdo; gaveta no celular e no tablet, recolhível no computador; abrir e fechar animados (~220 ms, só transform/opacity e a coluna do grid; desligado com "reduzir movimento") |
 | Layout da instância | `instance-shell.py` + `instance-shell.css` | As páginas da instância no mesmo layout Twenty da lista: lateral cinza de altura inteira com "WhatsAI" e "Recolher menu" no topo e o aviso da licença no pé, página dentro de um cartão com a barra de cima (trilha, uso da IA, busca, tema) como topo, títulos de página de 20 px. O menu recolhido vale para a lista e para as instâncias (`localStorage` `wa-shell-side`). Em "Nova instância" o canal é **WhatsApp pelo QR code (Baileys)**, o padrão, ou **WhatsApp Cloud API (oficial da Meta)**; a opção "Evolution" saiu (11/11/2026) |
@@ -288,9 +288,11 @@ Página pública: `/seguranca` (`manager/dist/landing/seguranca.html`), ligada p
 | Instância com banco próprio sem dados / erro de conexão | O projeto Neon da instância pode ter esgotado as 100 CU-h do mês (só ela fica sem banco até o mês virar). Veja o consumo no Neon Console |
 | DJEN com erro "HTTP 403" em Processos | Bloqueio geográfico (Render em Ohio); configure `DJEN_BASE_URL` com um repasse no Brasil (seção 17.1) |
 
-## 10. Observabilidade
+## 10. Observabilidade e status público
 
-A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/instance/:instanceId/observability`) mostra, em um só lugar, storage/consumo/limites de Neon, Render, Vercel e GitHub Actions. O endpoint `GET /observability` exige o header `apikey` (chave global) e usa cache de 60 s; `?refresh=1` força a consulta. Ele não grava nada, mas o cartão **Sistema** lê contagens do Postgres e a saúde OpenAI lê credenciais/bots. A rota antiga `/observability` redireciona para a página nativa.
+A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/instance/:instanceId/observability`) mostra, em um só lugar, storage/consumo/limites de Neon, Render, Vercel e GitHub Actions. O endpoint `GET /observability` exige o header `apikey` (chave global) e usa cache de 60 s; `?refresh=1` força a consulta. Ele não grava nada, mas o cartão **Sistema** lê contagens do Postgres e a saúde OpenAI lê credenciais/bots. A rota antiga `/observability` agora redireciona (308) para a página pública de status.
+
+O **status público** fica em `/status` (página no site) e em `GET /status` (JSON na API), sem chave. Ele lê apenas as visões locais **Sistema** e **WhatsApp**: API, banco, site/painel, WhatsApp Web e API oficial da Meta, sempre em agregado, sem nomes de clientes, números, mensagens, tokens ou chaves. O resultado fica em cache por 5 minutos; o histórico de 7 dias (faixas de 3 horas) e os incidentes de 90 dias são gravados em uma linha de `GlobalSetting` (`public-status:v1`), no máximo uma vez a cada cinco minutos, quando o estado muda ou começa uma faixa nova de 3 horas. Não há timer: a verificação acontece quando alguém consulta a página ou o JSON. Por isso, o histórico começa na primeira consulta e períodos sem consulta aparecem como **Sem dados**, em vez de disponibilidade inventada. Se a leitura falhar, a página mantém o site no ar e não inventa dados: o banco ou o canal sem resposta aparecem como indisponíveis ou sem dados; se a verificação inteira não puder ser montada, cai no fallback degradado. Ela nunca expõe o erro interno. A **Observabilidade do manager continua privada** e é o lugar para diagnosticar Neon, Render, Vercel, OpenAI e consumo.
 
 | Variável | Uso | Como obter |
 |---|---|---|
@@ -319,6 +321,7 @@ A aba **Observabilidade** do manager (`/manager/observability` ou `/manager/inst
 
 ## 11. Registro de decisões
 
+- 16/11/2026: **status público** em `/status` (página no site e JSON em `GET /status`, sem chave), no lugar da antiga página pública de Observabilidade: estado geral, grupos Atendimento e Plataforma, histórico de 7 dias em faixas de 3 horas, incidentes de 90 dias e metodologia. Lê só as visões locais Sistema e WhatsApp, em agregado, sem nomes, números, mensagens ou chaves; cache de 5 minutos e histórico em `GlobalSetting` (`public-status:v1`, sem migration), gravado quando o estado muda ou começa uma faixa nova de 3 horas, sem timer. Sem consulta, o período aparece como "Sem dados". A aba Observabilidade do manager continua privada, com a chave global. `/observability` passa a redirecionar (308) para `/status`.
 - Plano Render free por opção de custo; upgrade para Starter quando houver clientes pagantes.
 - Manager sem fonte: patches aplicados direto no bundle (seção 4).
 - Integrações habilitadas em `render.yaml`.

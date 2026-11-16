@@ -36,6 +36,7 @@ import { OpenaiHealthRouter } from './openai-health.router';
 import { OverviewRouter } from './overview.router';
 import { ProcessosRouter } from './processos.router';
 import { ProxyRouter } from './proxy.router';
+import { PublicStatusRouter } from './public-status.router';
 import { RetentionRouter } from './retention.router';
 import { MessageRouter } from './sendMessage.router';
 import { SettingsRouter } from './settings.router';
@@ -266,6 +267,8 @@ router
   .use('/client-access', new ClientAccessRouter().router)
   .use('/openai-health', new OpenaiHealthRouter(...guards).router)
   .use('/observability', new ObservabilityRouter().router)
+  // Status publico: sem chave, somente agregados de sistema e WhatsApp
+  .use('/status', new PublicStatusRouter().router)
   // Neon project quota and database wake log: global key only, never touch the database
   // Retenção das mensagens (LGPD): só a chave global
   .use('/admin/retention', new RetentionRouter().router)

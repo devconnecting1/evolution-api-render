@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg?v=3" />
+    <title>Status | WhatsAI</title>
+    <meta
+      name="description"
+      content="Status público do WhatsAI: API, banco de dados, site, painel e conexões de WhatsApp, verificados a cada cinco minutos."
+    />
+    <link rel="canonical" href="https://whatsaibr.vercel.app/status" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Status | WhatsAI" />
+    <meta property="og:description" content="Status público da operação do WhatsAI, com histórico e incidentes recentes." />
+    <meta property="og:url" content="https://whatsaibr.vercel.app/status" />
+    <meta property="og:image" content="https://whatsaibr.vercel.app/assets/images/og-whatsai-2026.png" />
+    <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/geist.css?v=3" />
+    <link rel="stylesheet" href="/assets/tokens.css?v=3" />
+    <link rel="stylesheet" href="/status/status.css?v=3" />
+  </head>
+  <body class="st-page">
+    <a class="st-skip" href="#conteudo">Pular para o conteúdo</a>
+
+    <header class="st-head">
+      <div class="st-wrap st-head-in">
+        <div class="st-head-brand">
+          <a class="st-brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+          <span class="st-head-status">Status</span>
+        </div>
+        <nav class="st-nav" aria-label="Navegação principal">
+          <a href="/">Site</a>
+          <a href="/docs">Documentação</a>
+          <a href="/seguranca">Segurança</a>
+          <a href="/manager/login">Painel</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="st-main" id="conteudo">
+      <div class="st-wrap">
+        <section class="st-hero" aria-labelledby="st-title" aria-busy="true" id="st-hero">
+          <p class="st-eyebrow">
+            <span class="st-state-dot" data-state="no_data" aria-hidden="true"></span>
+            <span id="st-updated">Carregando status…</span>
+          </p>
+          <h1 class="st-title" id="st-title">Verificando os sistemas…</h1>
+          <p class="st-lead" id="st-summary">A página consulta o status público do WhatsAI.</p>
+          <p class="st-cadence">
+            Verificação a cada <span id="st-cadence">5 minutos</span>.
+            <a href="#como-medimos">Como medimos</a>
+          </p>
+        </section>
+
+        <div class="st-alert" id="st-alert" role="alert" hidden></div>
+
+        <section class="st-groups" id="st-groups" aria-live="polite" aria-busy="true" aria-label="Componentes do WhatsAI">
+          <div class="st-skeleton-group" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="st-skeleton-group" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </section>
+
+        <div class="st-legend" aria-label="Legenda do histórico">
+          <span><i data-state="no_data" aria-hidden="true"></i>Sem dados</span>
+          <span><i data-state="outage" aria-hidden="true"></i>Indisponível</span>
+          <span><i data-state="degraded" aria-hidden="true"></i>Degradado</span>
+          <span><i data-state="operational" aria-hidden="true"></i>Operacional</span>
+          <span class="st-legend-note">Cada barra representa 3 horas; a barra mostra o pior estado do período.</span>
+        </div>
+
+        <section class="st-incidents" aria-labelledby="st-incidents-title">
+          <div class="st-section-head">
+            <h2 id="st-incidents-title">Incidentes recentes</h2>
+            <span>Últimos 90 dias</span>
+          </div>
+          <div class="st-incident-list" id="st-incidents" aria-live="polite">
+            <p class="st-empty">Carregando incidentes…</p>
+          </div>
+        </section>
+
+        <section class="st-about" id="como-medimos" aria-labelledby="st-about-title">
+          <p class="st-kicker">Sobre esta página</p>
+          <h2 class="st-about-title" id="st-about-title">Como medimos</h2>
+          <div class="st-faq">
+            <details>
+              <summary>O que é monitorado?</summary>
+              <p>
+                A API do WhatsAI, o banco de dados, o site e o painel na Vercel e as conexões de WhatsApp dos clientes.
+                A página não mostra nomes de clientes, números, mensagens ou chaves.
+              </p>
+            </details>
+            <details>
+              <summary>A cada quanto tempo o status é atualizado?</summary>
+              <p>
+                A API faz uma verificação a cada cinco minutos e guarda o resultado. O intervalo protege o banco gratuito
+                de consultas em segundo plano e mantém a página rápida. Um estado pode levar até cinco minutos para
+                aparecer aqui.
+              </p>
+            </details>
+            <details>
+              <summary>O que significam os estados?</summary>
+              <p>
+                <strong>Operacional:</strong> o componente responde normalmente. <strong>Degradado:</strong> há falhas
+                parciais ou lentidão. <strong>Indisponível:</strong> o componente não responde. <strong>Sem dados:</strong>
+                ainda não há uma verificação para aquele componente ou período.
+              </p>
+            </details>
+            <details>
+              <summary>Por que o histórico tem lacunas?</summary>
+              <p>
+                O histórico é gravado quando o status é consultado e há mudança de estado ou o início de uma faixa nova de
+                3 horas. Não existe um monitor externo rodando a cada segundo, e não acordamos o banco à toa. Períodos sem
+                consulta aparecem como “Sem dados”, em vez de inventar disponibilidade.
+              </p>
+            </details>
+            <details>
+              <summary>Como consumir o status de forma programática?</summary>
+              <p>
+                O JSON público fica em <a href="https://evolution-api-x93o.onrender.com/status">/status</a> na API. Não
+                exige chave e devolve estado atual, componentes, histórico de 7 dias e incidentes recentes.
+              </p>
+            </details>
+            <details>
+              <summary>Encontrei um problema. Como avisar?</summary>
+              <p>
+                Fale com a equipe pelo WhatsApp do site ou, se for uma falha de segurança, use o canal da página de
+                <a href="/seguranca#reportar">Segurança</a>.
+              </p>
+            </details>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="st-foot">
+      <div class="st-wrap st-foot-in">
+        <div class="st-foot-brand">
+          <a class="st-brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+          <p>Status público da operação. Verificado a cada cinco minutos.</p>
+        </div>
+        <nav class="st-foot-col" aria-label="Produto">
+          <p>Produto</p>
+          <a href="/">Site</a>
+          <a href="/docs">Documentação</a>
+          <a href="/novidades">Novidades</a>
+          <a href="https://evolution-api-x93o.onrender.com/status">API de status</a>
+        </nav>
+        <nav class="st-foot-col" aria-label="Recursos">
+          <p>Recursos</p>
+          <a href="/seguranca">Segurança</a>
+          <a href="/privacidade">Privacidade</a>
+          <a href="/termos">Termos</a>
+          <a href="/acesso">Área do cliente</a>
+        </nav>
+      </div>
+      <div class="st-wrap st-foot-legal">
+        <p>© 2026 WhatsAI. Todos os direitos reservados.</p>
+        <p>Horários em UTC; a página mostra o horário local do navegador.</p>
+      </div>
+      <div class="st-foot-wordmark-wrap">
+        <a class="st-foot-wordmark" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
+      </div>
+    </footer>
+
+    <noscript>Ative o JavaScript para ver o status atualizado.</noscript>
+    <script src="/status/status.js?v=5" defer></script>
+  </body>
+</html>
