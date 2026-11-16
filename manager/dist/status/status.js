@@ -20,6 +20,27 @@
     no_data: 'Sem dados',
   };
 
+  var RECOMMENDATIONS = {
+    operational: 'Nada a fazer: o atendimento está disponível.',
+    degraded: 'A instabilidade está registrada. Se o seu WhatsApp não responder, fale com a equipe.',
+    outage: 'O componente não está respondendo. Se o seu atendimento parou, fale com a equipe.',
+    no_data: 'Ainda não há leitura dos componentes. Tente de novo em alguns minutos.',
+  };
+
+  var STATE_MEANING = {
+    operational: 'A verificação encontrou o componente funcionando normalmente neste período.',
+    degraded: 'Houve falha parcial ou lentidão neste período.',
+    outage: 'O componente não respondeu neste período.',
+    no_data: 'Não houve verificação neste período; não é possível afirmar se estava funcionando.',
+  };
+
+  var STATE_ACTION = {
+    operational: 'Nada a fazer.',
+    degraded: 'Se você notou instabilidade nesse horário, fale com a equipe.',
+    outage: 'Se o atendimento parou nesse horário, fale com a equipe.',
+    no_data: 'Nenhuma ação: o período ficou sem coleta.',
+  };
+
   var hero = document.getElementById('st-hero');
   var title = document.getElementById('st-title');
   var summary = document.getElementById('st-summary');
@@ -29,6 +50,8 @@
   var groups = document.getElementById('st-groups');
   var incidents = document.getElementById('st-incidents');
   var heroDot = hero.querySelector('.st-state-dot');
+  var heroStateLabel = document.getElementById('st-state-label');
+  var recommendation = document.getElementById('st-recommendation');
 
   var lastData = null;
   var lastFailed = false;
@@ -57,7 +80,7 @@
     var date = parseDate(value);
     if (!date) return 'agora';
     var seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
-    if (seconds < 45) return 'agora mesmo';
+    if (seconds < 45) return 'agora';
     var minutes = Math.round(seconds / 60);
     if (minutes < 60) return 'há ' + minutes + ' min';
     var hours = Math.round(minutes / 60);
@@ -100,7 +123,10 @@
   }
 
   function setHeroState(state) {
+    hero.dataset.state = state;
     heroDot.dataset.state = state;
+    if (heroStateLabel) heroStateLabel.textContent = stateLabel(state);
+    if (recommendation) recommendation.textContent = RECOMMENDATIONS[state] || RECOMMENDATIONS.no_data;
   }
 
   function showAlert(message) {
@@ -120,24 +146,116 @@
     alert.textContent = '';
   }
 
-  function barsFor(componentId, history) {
+  function bucketRange(value) {
+    var from = parseDate(value);
+    if (!from) return 'Horário indisponível';
+    var to = new Date(from.getTime() + 3 * 60 * 60 * 1000);
+    var day = from.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    var fromTime = from.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    var toTime = to.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return day + ', ' + fromTime + '–' + toTime + ' · horário local';
+  }
+
+  function showBucket(detail, componentName, start, state) {
+    detail.textContent = '';
+    detail.dataset.state = state;
+    var head = el('div', 'st-bar-detail-head');
+    head.append(el('strong', null, componentName));
+    var badge = el('span', 'st-bar-detail-state', stateLabel(state));
+    badge.dataset.state = state;
+    head.append(badge);
+    detail.append(head);
+    detail.append(el('p', 'st-bar-detail-time', bucketRange(start)));
+    detail.append(el('p', 'st-bar-detail-text', STATE_MEANING[state] || STATE_MEANING.no_data));
+    detail.append(el('p', 'st-bar-detail-action', STATE_ACTION[state] || STATE_ACTION.no_data));
+    var close = el('button', 'st-bar-detail-close', 'Fechar');
+    close.type = 'button';
+    close.addEventListener('click', function () {
+      detail.hidden = true;
+      detail.textContent = '';
+    });
+    detail.append(close);
+    detail.hidden = false;
+  }
+
+  function barsFor(componentId, componentName, history) {
     var slots = [];
     var counts = { operational: 0, degraded: 0, outage: 0, no_data: 0 };
     var list = Array.isArray(history) ? history : [];
+    var detail = el('div', 'st-bar-detail');
+    var detailId = 'st-detail-' + componentId;
+    detail.id = detailId;
+    detail.hidden = true;
+    detail.setAttribute('aria-live', 'polite');
+
     for (var i = 0; i < 56; i++) {
       var bucket = list[i];
       var state = (bucket && bucket.components && bucket.components[componentId]) || 'no_data';
       if (!STATES[state]) state = 'no_data';
       counts[state]++;
-      var slot = el('span', 'st-bar');
+      var slot = el('button', 'st-bar');
+      slot.type = 'button';
       slot.dataset.state = state;
+      slot.tabIndex = -1;
+      slot.setAttribute('aria-pressed', 'false');
+      slot.setAttribute('aria-controls', detailId);
       slot.title = bucketTitle(bucket && bucket.start) + ' · ' + stateLabel(state);
+      slot.setAttribute('aria-label', slot.title);
       slots.push(slot);
     }
+
     var wrap = el('div', 'st-bars');
-    slots.forEach(function (slot) {
+    var active = 55;
+
+    function setActive(index, focus) {
+      active = Math.max(0, Math.min(index, slots.length - 1));
+      slots.forEach(function (slot, position) {
+        slot.tabIndex = -1;
+        slot.setAttribute('aria-pressed', position === active ? 'true' : 'false');
+      });
+      if (focus) slots[active].focus();
+    }
+
+    function activate(index) {
+      setActive(index, false);
+      var bucket = list[index];
+      showBucket(detail, componentName, bucket && bucket.start, slots[index].dataset.state);
+    }
+
+    slots.forEach(function (slot, index) {
+      slot.addEventListener('click', function () {
+        activate(index);
+      });
+      slot.addEventListener('focus', function () {
+        activate(index);
+      });
       wrap.append(slot);
     });
+
+    wrap.tabIndex = 0;
+    wrap.setAttribute('role', 'group');
+    wrap.addEventListener('focus', function () {
+      if (document.activeElement === wrap) setActive(active, true);
+    });
+    wrap.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowRight' || event.key === 'ArrowLeft' || event.key === 'Home' || event.key === 'End') {
+        event.preventDefault();
+        var next =
+          event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? slots.length - 1
+              : active + (event.key === 'ArrowRight' ? 1 : -1);
+        setActive(next, true);
+        activate(Math.max(0, Math.min(next, slots.length - 1)));
+        return;
+      }
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        activate(active);
+      }
+    });
+
     var parts = ['operational', 'degraded', 'outage', 'no_data']
       .filter(function (key) {
         return counts[key] > 0;
@@ -145,9 +263,17 @@
       .map(function (key) {
         return counts[key] + ' ' + stateLabel(key).toLowerCase();
       });
-    wrap.setAttribute('role', 'img');
-    wrap.setAttribute('aria-label', 'Histórico de 7 dias: ' + parts.join(', '));
-    return wrap;
+    wrap.setAttribute(
+      'aria-label',
+      'Histórico de 7 dias de ' +
+        componentName +
+        ': ' +
+        parts.join(', ') +
+        '. Use as setas para escolher uma faixa e Enter para ver o detalhe.',
+    );
+
+    var result = { bars: wrap, detail: detail };
+    return result;
   }
 
   function groupHeader(name) {
@@ -181,7 +307,8 @@
         if (component.detail) text.append(el('small', null, component.detail));
         state.append(dot, text);
 
-        row.append(name, barsFor(component.id, data.history), state);
+        var bars = barsFor(component.id, component.name || 'Componente', data.history);
+        row.append(name, bars.bars, state, bars.detail);
         list.append(row);
       });
 
@@ -239,7 +366,7 @@
     setHeroState(data.state || 'no_data');
     title.textContent = data.title || 'Status do WhatsAI';
     summary.textContent = data.summary || '';
-    updated.textContent = 'Verificado ' + relative(data.checkedAt);
+    updated.textContent = 'Atualizado ' + relative(data.checkedAt);
     if (data.nextCheckSeconds) {
       var minutes = Math.max(1, Math.round(data.nextCheckSeconds / 60));
       cadence.textContent = minutes + (minutes === 1 ? ' minuto' : ' minutos');
@@ -264,6 +391,11 @@
     summary.textContent =
       'A página carregou, mas a API de status não respondeu. Pode ser uma falha da API ou da sua conexão.';
     updated.textContent = 'Falha na consulta';
+    if (heroStateLabel) heroStateLabel.textContent = 'Sem leitura';
+    if (recommendation) {
+      recommendation.textContent =
+        'Não foi possível ler o status agora. Tente de novo ou fale com a equipe se o seu atendimento parou.';
+    }
     hero.setAttribute('aria-busy', 'false');
     showAlert('Tente de novo em alguns instantes. Se você é cliente e o WhatsApp parou, fale com a equipe.');
 
@@ -364,7 +496,7 @@
   function updateRelative() {
     if (document.hidden || lastFailed) return;
     if (lastData && lastData.checkedAt) {
-      updated.textContent = 'Verificado ' + relative(lastData.checkedAt);
+      updated.textContent = 'Atualizado ' + relative(lastData.checkedAt);
     }
   }
 

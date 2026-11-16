@@ -416,8 +416,9 @@ flowchart TD
 - **Status público** em `/status` (página) e `GET /status` (JSON, sem chave): lê só as visões locais Sistema e
   WhatsApp, em agregado; cache de 5 minutos; histórico de 7 dias em faixas de 3 horas e incidentes de 90 dias em
   `GlobalSetting` (`public-status:v1`), gravados quando o estado muda ou começa uma faixa nova de 3 horas, sem timer.
-  Sem nomes, números, mensagens, tokens ou chaves. `/observability` redireciona (308) para `/status`; a aba do manager
-  continua privada.
+  Sem nomes, números, mensagens, tokens ou chaves. O topo é um cartão com a cor do estado e uma recomendação; cada
+  faixa de 3 horas abre o período, o estado, o significado e a ação. `/observability` redireciona (308) para `/status`;
+  a aba do manager continua privada.
 
 ### 7.10 Retenção (LGPD)
 
