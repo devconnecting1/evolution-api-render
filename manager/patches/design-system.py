@@ -8,8 +8,11 @@ with 8 different heights, 3 radii, 3 card radii and content columns starting at 
           the bundle module script) and raises the bundle ?v= to CACHE_VERSION when it is lower.
 
 The rules themselves live in manager/dist/assets/design-system.css (written by hand): tokens for radius/control/
-content, page titles 20/28, a 1040px content column, 32/28px controls under @media (pointer: fine), 32/28px fields,
-8px cards and 22px/4px chips. Conversas, Agenda, Planilha and Instâncias keep the full width.
+content, a 1040px content column, 32/28px controls under @media (pointer: fine), 32/28px fields, 22px chips and a
+2px radius. The last section is the public-site bridge: it mirrors assets/tokens.css (neutral palette, light and dark),
+page titles 24/32 (20/28 on phones) and 2px cards/controls, so the panel speaks the same visual language as the
+landing and /docs while keeping the console shell (sidebar + top bar). Conversas, Agenda, Planilha and Instâncias
+keep the full width; chat bubbles and touch targets keep their component exceptions.
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: when the marker and the stylesheet are already in index.html, nothing is written.
@@ -28,10 +31,11 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 CSS = os.path.join(ROOT, 'manager', 'dist', 'assets', 'design-system.css')
-CACHE_VERSION = '62'
+CACHE_VERSION = '82'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
-CSS_VERSION = '1'
+CSS_VERSION = '2'
 CSS_TAG = '<link rel="stylesheet" href="/assets/design-system.css?v=' + CSS_VERSION + '" />'
+OLD_CSS_TAG = '<link rel="stylesheet" href="/assets/design-system.css?v=1" />'
 HTML_MARKER = '<!-- whatsai-patch:design-system:html -->'
 
 
@@ -51,12 +55,15 @@ def patch_index(html):
     if not current or int(current) < int(CACHE_VERSION):
         html = html[:start] + CACHE_VERSION + html[end:]
     if CSS_TAG not in html:
-        if '/assets/design-system.css' in html:
+        if OLD_CSS_TAG in html:
+            html = html.replace(OLD_CSS_TAG, CSS_TAG, 1)
+        elif '/assets/design-system.css' in html:
             raise PatchError('index.html: design-system.css present with another version; edit CSS_VERSION')
-        anchor = '    <script type="module" crossorigin src="/assets/index-b29a5d7a.js'
-        if html.count(anchor) != 1:
-            raise PatchError('index.html: bundle module script line expected once')
-        html = html.replace(anchor, '    ' + HTML_MARKER + '\n    ' + CSS_TAG + '\n' + anchor, 1)
+        else:
+            anchor = '    <script type="module" crossorigin src="/assets/index-b29a5d7a.js'
+            if html.count(anchor) != 1:
+                raise PatchError('index.html: bundle module script line expected once')
+            html = html.replace(anchor, '    ' + HTML_MARKER + '\n    ' + CSS_TAG + '\n' + anchor, 1)
     return html
 
 

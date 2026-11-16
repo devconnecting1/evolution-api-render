@@ -134,3 +134,274 @@
     border-radius: var(--m-radius-field);
   }
 }
+
+/* ========================================================================== ponte com o site público
+   O painel mantém a estrutura de console (sidebar + topo), mas passa a usar a mesma linguagem visual das páginas
+   públicas (/docs, landing, legais): fundo, superfícies, texto, bordas e accent neutro; raio de 2px; títulos 24/32
+   no desktop e 20/28 no celular; peso 500. Os valores abaixo espelham assets/tokens.css. O painel usa
+   data-theme="light|dark", por isso a ponte é própria: tokens públicos usam data-theme-mode.
+   Exceções de componente: bolhas do chat (--wc-radius) e alvos de toque do responsive.css continuam como estão. */
+
+:root {
+  --m-canvas: #ffffff;
+  --m-bg: #ffffff;
+  --m-card: #ffffff;
+  --m-surface: #fafafa;
+  --m-hover: #f0f0f0;
+  --m-selected: #e3e3e3;
+  --m-border: #e3e3e3;
+  --m-border-strong: #c7c7c7;
+  --m-border-input: #8f8f8f;
+  --m-text: #0d0d0d;
+  --m-text-2: #4d4d4d;
+  --m-text-3: #6b6b6b;
+  --m-primary: #0d0d0d;
+  --m-primary-hover: #272727;
+  --m-on-primary: #ffffff;
+  --m-tint: #f0f0f0;
+  --m-tint-hover: #e3e3e3;
+  --m-tint-line: #c7c7c7;
+  --m-tint-text: #0d0d0d;
+  --m-ok: #0e7a4d;
+  --m-warn: #d97706;
+  --m-warn-text: #5a3a00;
+  --m-bad: #b42318;
+  --m-info: #4d4d4d;
+  --m-out: #f0f0f0;
+  --m-wall: #fafafa;
+  --m-chip-green: #e9f5ee;
+  --m-chip-green-text: #0b3d26;
+  --m-chip-blue: #f0f0f0;
+  --m-chip-blue-text: #4d4d4d;
+  --m-chip-purple: #f0f0f0;
+  --m-chip-purple-text: #4d4d4d;
+  --m-chip-amber: #fdf0d5;
+  --m-chip-amber-text: #5a3a00;
+  --m-chip-red: #fde2e1;
+  --m-chip-red-text: #5a1210;
+  --m-chip-gray: #f0f0f0;
+  --m-chip-gray-text: #4d4d4d;
+  --m-side-bg: #ffffff;
+  --m-side-hover: #fafafa;
+  --m-side-active: #f0f0f0;
+  --m-side-active-text: #0d0d0d;
+  --m-side-text: #0d0d0d;
+  --m-side-text-2: #6b6b6b;
+  --m-side-border: #e3e3e3;
+  --m-deep: #0d0d0d;
+  --m-on-deep: #ffffff;
+  --m-on-deep-2: #e3e3e3;
+  --m-lime: #0d0d0d;
+  --m-gauge-track: #e3e3e3;
+  --m-warn-strip: #fdf0d5;
+  --m-warn-strip-text: #5a3a00;
+  --m-bad-strip: #fde2e1;
+  --m-bad-strip-text: #5a1210;
+  --m-chart-1: #0d0d0d;
+  --m-chart-2: #4d4d4d;
+  --m-chart-3: #6b6b6b;
+  --m-chart-4: #8f8f8f;
+  --m-chart-5: #c7c7c7;
+  --m-shadow-card: none;
+  --m-shadow-pop: 0 0 0 1px var(--m-border-strong);
+  --m-shadow-menu: 0 0 0 1px var(--m-border-strong);
+  --m-focus-halo: rgba(13, 13, 13, 0.14);
+  --m-veil: rgba(0, 0, 0, 0.42);
+  --m-ring: 0 0 0 2px var(--m-bg), 0 0 0 4px var(--m-primary);
+  --m-radius-field: 2px;
+  --m-radius-item: 2px;
+  --m-radius-card: 2px;
+
+  /* shadcn / Tailwind (index-DsIrum0U.css), triplas HSL */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 5%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 5%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 5%;
+  --muted: 0 0% 94%;
+  --muted-foreground: 0 0% 42%;
+  --border: 0 0% 89%;
+  --input: 0 0% 78%;
+  --primary: 0 0% 5%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 94%;
+  --secondary-foreground: 0 0% 5%;
+  --accent: 0 0% 94%;
+  --accent-foreground: 0 0% 5%;
+  --ring: 0 0% 5%;
+  --radius: 0.125rem;
+  --side-secondary: 0 0% 94%;
+  --side-muted-foreground: 0 0% 42%;
+  --side-foreground: 0 0% 5%;
+  --side-accent: 0 0% 98%;
+}
+
+:root[data-theme='dark'] {
+  --m-canvas: #0d0d0d;
+  --m-bg: #0d0d0d;
+  --m-card: #0d0d0d;
+  --m-surface: #141414;
+  --m-hover: #1f1f1f;
+  --m-selected: #272727;
+  --m-border: #272727;
+  --m-border-strong: #4d4d4d;
+  --m-border-input: #8f8f8f;
+  --m-text: #ffffff;
+  --m-text-2: #e3e3e3;
+  --m-text-3: #b3b3b3;
+  --m-primary: #ffffff;
+  --m-primary-hover: #e3e3e3;
+  --m-on-primary: #0d0d0d;
+  --m-tint: #1f1f1f;
+  --m-tint-hover: #272727;
+  --m-tint-line: #4d4d4d;
+  --m-tint-text: #ffffff;
+  --m-ok: #5fcf8a;
+  --m-warn: #fcd38d;
+  --m-warn-text: #fcd38d;
+  --m-bad: #fca5a5;
+  --m-info: #b3b3b3;
+  --m-out: #1f1f1f;
+  --m-wall: #141414;
+  --m-chip-green: #12241a;
+  --m-chip-green-text: #c9f7d9;
+  --m-chip-blue: #1f1f1f;
+  --m-chip-blue-text: #e3e3e3;
+  --m-chip-purple: #1f1f1f;
+  --m-chip-purple-text: #e3e3e3;
+  --m-chip-amber: #2a1f0c;
+  --m-chip-amber-text: #fcd38d;
+  --m-chip-red: #2d1414;
+  --m-chip-red-text: #fca5a5;
+  --m-chip-gray: #1f1f1f;
+  --m-chip-gray-text: #e3e3e3;
+  --m-side-bg: #0d0d0d;
+  --m-side-hover: #141414;
+  --m-side-active: #1f1f1f;
+  --m-side-active-text: #ffffff;
+  --m-side-text: #ffffff;
+  --m-side-text-2: #b3b3b3;
+  --m-side-border: #272727;
+  --m-deep: #141414;
+  --m-on-deep: #ffffff;
+  --m-on-deep-2: #b3b3b3;
+  --m-lime: #ffffff;
+  --m-gauge-track: #272727;
+  --m-warn-strip: #2a1f0c;
+  --m-warn-strip-text: #fcd38d;
+  --m-bad-strip: #2d1414;
+  --m-bad-strip-text: #fca5a5;
+  --m-chart-1: #ffffff;
+  --m-chart-2: #e3e3e3;
+  --m-chart-3: #b3b3b3;
+  --m-chart-4: #8f8f8f;
+  --m-chart-5: #6b6b6b;
+  --m-shadow-card: none;
+  --m-shadow-pop: 0 0 0 1px var(--m-border-strong);
+  --m-shadow-menu: 0 0 0 1px var(--m-border-strong);
+  --m-focus-halo: rgba(255, 255, 255, 0.12);
+  --m-veil: rgba(0, 0, 0, 0.6);
+  --m-ring: 0 0 0 2px var(--m-bg), 0 0 0 4px var(--m-primary);
+  --m-radius-field: 2px;
+  --m-radius-item: 2px;
+  --m-radius-card: 2px;
+
+  --background: 0 0% 5%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 5%;
+  --popover-foreground: 0 0% 100%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 70%;
+  --border: 0 0% 15%;
+  --input: 0 0% 56%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 5%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 0 0% 12%;
+  --accent-foreground: 0 0% 100%;
+  --ring: 0 0% 100%;
+  --radius: 0.125rem;
+  --side-secondary: 0 0% 12%;
+  --side-muted-foreground: 0 0% 70%;
+  --side-foreground: 0 0% 100%;
+  --side-accent: 0 0% 8%;
+}
+
+/* títulos com o ritmo do site; o painel mantém a densidade das tabelas */
+#root :is(.wa-page-title, .wa-list-title, .wl-title, .wag-title, .wu-title, .wv-title, .wp-title, .wo-title, .wa-chat-listtitle, .wa-ut-title),
+#root .wa-dash-title {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+@media (max-width: 1023px) {
+  #root :is(.wa-page-title, .wa-list-title, .wl-title, .wag-title, .wu-title, .wv-title, .wp-title, .wo-title, .wa-chat-listtitle, .wa-ut-title),
+  #root .wa-dash-title {
+    font-size: 20px;
+  }
+}
+
+/* o console perde a moldura de cartão; a lateral ganha a divisória vertical do /docs */
+#root .wa-ut-main {
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+#root .wa-ut-main header,
+#root header.flex.items-center.justify-between.px-4.py-2 {
+  border-color: transparent;
+}
+@media (min-width: 1024px) {
+  #root .wa-ut-side {
+    border-right: 1px solid var(--m-border);
+  }
+}
+
+/* chips quadrados como os do site; pílulas ficam só para status que já eram pílula */
+#root :is(.wt-chip, .wa-ut-chip, .wa-tw-badge, .wl-chip, .wag-chip, .wu-chip, .wv-chip) {
+  border-radius: 2px;
+}
+
+/* login flat: sem a faixa de marca no topo, canto de 2px e borda neutra */
+#root [data-wa-home='login'] .wa-login-card {
+  border: 1px solid var(--m-border);
+  border-radius: 2px;
+  box-shadow: none;
+}
+#root [data-wa-home='login'] .wa-login-card::before {
+  display: none;
+}
+#root [data-wa-home='login'] :is(input, .wa-login-submit) {
+  border-radius: 2px;
+}
+#root [data-wa-home='login'] input {
+  border-color: var(--m-border-strong);
+}
+#root [data-wa-home='login'] .wa-login-back a {
+  color: var(--m-text-2);
+}
+#root [data-wa-home='login'] .wa-login-back a:hover {
+  color: var(--m-text);
+}
+@media (max-width: 480px) {
+  #root [data-wa-home='login'] .wa-login-head {
+    padding: 24px 20px 0;
+  }
+  #root [data-wa-home='login'] .wa-login-body {
+    padding: 18px 20px 0;
+  }
+  #root [data-wa-home='login'] .wa-login-foot {
+    padding: 22px 20px 24px;
+  }
+}
+
+/* topo sem linha, como o topo das páginas públicas */
+div:has(> main > [data-wa-home='instances']) > [data-wa-header],
+div:has(> main .wo-page) > [data-wa-header] {
+  border-bottom-color: transparent;
+}
