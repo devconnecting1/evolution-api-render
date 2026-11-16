@@ -371,6 +371,7 @@ body.shell-page .skip {
 
 /* ------------------------------------------------------------------ rodape compacto (padrao Render Docs) */
 .wa-docfoot {
+  padding-bottom: clamp(16px, 2vw, 24px);
   background: var(--c-bg);
 }
 
