@@ -10,7 +10,7 @@
  * borda #e3e3e3 / #272727, tinta #0d0d0d / #ffffff. Accent neutro: preto no claro (#0d0d0d) e branco no escuro
  * (#ffffff); ambar e vermelho so com significado (atencao e erro), como na documentacao.
  * Tipografia: Geist local (geist.css) e a mesma escala do /docs, em tokens --type-* do arquivo global. Titulos de
- * pagina e secao em peso 300; subtitulos, corpo, apoio e rotulos seguem os papeis da documentacao. Os mockups
+ * pagina e secao em peso 300; subtitulos, corpo, apoio e rotulos seguem os papeis da documentacao. As capturas e os pequenos cartoes
  * mantem tamanhos proprios porque representam a interface do painel, nao o texto da pagina.
  * Sem imagens externas, sem logos de terceiros: a paisagem abstrata e os pequenos cartoes sao CSS + HTML, e as
  * telas do produto sao capturas reais do painel com dados ficticios (assets/images/landing).
@@ -904,7 +904,7 @@ body.wa-page #duvidas {
 
 /* ------------------------------------------------------------------ hero: carrossel de cards */
 /* Mecanica inspirada no carrossel de produtos do opencode.ai (trilha horizontal com snap, cards de midia 4:5 e
-   setas no canto), com os tokens, os mockups e o conteudo do WhatsAI. Sem imagens externas e sem autoplay.
+   setas no canto), com os tokens, as capturas reais e o conteudo do WhatsAI. Sem imagens externas e sem autoplay.
    No desktop o texto fica abaixo da midia; no celular, sobreposto na midia com um degrade escuro, como na
    referencia, para o card caber inteiro na dobra. */
 .wa-hcarousel {
@@ -3334,8 +3334,8 @@ body.wa-page #duvidas {
 /* As imagens sao capturas do proprio painel com dados ficticios. O hero usa capturas no formato 4:5 do painel
    no celular (780x974), para o card mostrar a interface inteira e legivel; as secoes de produto usam a tela de
    desktop 16:9. O tema troca a imagem em vez de filtrar a captura: o painel tem fundo branco no claro e grafite
-   no escuro, e o filtro estragaria os estados. So a imagem do tema ativo carrega: a outra fica display:none e
-   lazy. */
+   no escuro, e o filtro estragaria os estados. A imagem inativa fica display:none; as capturas sao lazy, exceto
+   a primeira clara, que e eager por ser o LCP. */
 .wa-shot-light,
 .wa-shot-dark {
   display: block;
