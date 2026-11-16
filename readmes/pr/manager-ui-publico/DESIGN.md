@@ -169,5 +169,5 @@ Contrastes calculados sobre os tokens:
   de Excel porque representa o arquivo exportado.
 - Os formulários individuais de integração usam a mesma ponte, mas só o Webhook foi capturado como representante.
 - O `theme-color` do navegador no painel ainda usa o script inline antigo; o miolo da aplicação já está neutro.
-- O PR não foi mesclado; a revisão do dono decide se a ponte entra como está, se vira geração automática ou se o
-  console deve perder mais estrutura.
+- A revisão do dono decide se a ponte entra como está, se vira geração automática ou se o console deve perder mais
+  estrutura.

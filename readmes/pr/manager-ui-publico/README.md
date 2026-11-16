@@ -132,7 +132,7 @@ entra no produto.
 - Nenhum arquivo público de CSS/JS do site mudou. A mudança é estática e leva `[skip render]`; a API no Render não
   reinicia.
 - Todos os `manager/patches/*.py --check` passam; `npx esbuild` no bundle e nos CSS alterados passa.
-- O PR fica aberto para revisão; não foi mesclado.
+- O merge é feito pelo dono após a revisão.
 
 ## Recomendações
 
