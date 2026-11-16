@@ -9,7 +9,7 @@
   'use strict';
 
   var DEFAULT_API = 'https://evolution-api-x93o.onrender.com';
-  var API_BASE = (new URLSearchParams(window.location.search).get('api') || DEFAULT_API).replace(/\/+$/, '');
+  var API_BASE = DEFAULT_API;
   var REFRESH_FALLBACK_MS = 60_000;
   var TIMEOUT_MS = 12_000;
 
