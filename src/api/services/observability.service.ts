@@ -272,6 +272,18 @@ export class ObservabilityService {
       options.openai !== undefined ? options.openai : options.system !== undefined ? null : openaiHealthService;
   }
 
+  /** Local system + WhatsApp views for the public status page. No external keys and no instance names. */
+  public async collectSystem(): Promise<{ system: ProviderView; whatsapp: ProviderView }> {
+    const probe = this.getSystemProbe();
+    if (!probe) throw new Error('Sistema indisponível');
+
+    const [system, whatsapp] = await Promise.all([
+      this.loadProvider('system', 'Sistema', 'Servidor da API, banco e instâncias', () => probe.collect()),
+      this.loadProvider('whatsapp', 'WhatsApp', 'Conexão de cada instância (número)', () => probe.collectWhatsapp()),
+    ]);
+    return { system, whatsapp };
+  }
+
   public async getOverview(force = false): Promise<Overview> {
     const age = this.cache ? this.now() - this.cache.at : Infinity;
     if (this.cache && age < (force ? FORCE_MIN_INTERVAL_MS : CACHE_TTL_MS)) {

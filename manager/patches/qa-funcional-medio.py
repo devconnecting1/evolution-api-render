@@ -19,15 +19,14 @@ changes the product structure or the backend:
                   one the Agenda shows), falling back to the local formatter only when the label is absent.
 6. instances    - the actions menu column gets width/padding and a visible "Ações" header, so the three-dot button is
                   not clipped; the name column releases the few pixels so 1440 still has no horizontal scroll.
-7. observability- removes the 60 s setInterval that called GET /observability; the page still loads on open, when
-                  the tab becomes visible again after 60 s and on the Atualizar button. The overview endpoint reads
-                  the control database (own databases and instance usage), so the polling could wake Neon every
-                  minute. The page texts that promised the automatic cycle are updated.
+7. observability- removes the 60 s setInterval that called GET /observability from the manager page; it still loads
+                  on open, when the tab becomes visible again after 60 s and on the Atualizar button. The overview
+                  endpoint reads the control database (own databases and instance usage), so the polling could wake
+                  Neon every minute. The page texts that promised the automatic cycle are updated. The old public
+                  observability page was replaced by /status and is no longer patched here.
 
 The CSS lives in manager/dist/assets/qa-funcional-medio.css (Processos table overflow, instances actions column,
-Agenda focus ring/contrast and the login advanced block). panel-a11y.js is patched in place (?v=2) and the
-observability page has its own JS/HTML files (the live page is the SPA component; the standalone files are kept
-consistent).
+Agenda focus ring/contrast and the login advanced block). panel-a11y.js is patched in place (?v=2).
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: groups whose marker is present are skipped, the CSS is only written when its content changes.
@@ -46,8 +45,6 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 CSS = os.path.join(ROOT, 'manager', 'dist', 'assets', 'qa-funcional-medio.css')
-OBS_INDEX = os.path.join(ROOT, 'manager', 'dist', 'observability', 'index.html')
-OBS_JS = os.path.join(ROOT, 'manager', 'dist', 'observability', 'observability.js')
 CACHE_VERSION = '76'
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 CSS_TAG = '<link rel="stylesheet" href="/assets/qa-funcional-medio.css?v=1" />'
@@ -128,26 +125,6 @@ CSS_CONTENT = '''/* WhatsAI panel: medium/low findings of the functional audit (
 }
 '''
 
-OBS_JS_OLD = """setInterval(() => {
-  if (autoRefresh && !document.hidden) load(false);
-}, REFRESH_MS);
-
-"""
-OBS_JS_NEW = """/*whatsai-patch:qa-funcional-medio:no-poll*/
-// No background polling. The overview reads the control database (own databases and instance usage), so it
-// only loads when the page opens, when the tab becomes visible again after 60 s and on the Atualizar button.
-"""
-OBS_JS_MARKER = '/*whatsai-patch:qa-funcional-medio:no-poll*/'
-OBS_HTML_MARKER = '<!-- whatsai-patch:qa-funcional-medio:obs -->'
-OBS_HELP_OLD = (
-    '<p>Depois de salvar as variáveis no Render, use <strong>Atualizar</strong> ou aguarde o próximo ciclo de '
-    '60 segundos.</p>'
-)
-OBS_HELP_NEW = '<p>Depois de salvar as variáveis no Render, use <strong>Atualizar</strong>.</p>'
-OBS_FOOT_OLD = '<span>Atualização automática a cada 60s.</span>'
-OBS_FOOT_NEW = '<span>Atualiza ao abrir a página, ao voltar para ela e no botão Atualizar.</span>'
-OBS_SCRIPT_OLD = 'src="/observability/observability.js?v=1"'
-OBS_SCRIPT_NEW = 'src="/observability/observability.js?v=2"'
 A11Y = os.path.join(ROOT, 'manager', 'dist', 'assets', 'panel-a11y.js')
 A11Y_MARKER = '/*whatsai-patch:qa-funcional-medio:agenda-labels*/'
 A11Y_SCRIPT_OLD = '<script src="/assets/panel-a11y.js?v=1" defer></script>'
@@ -412,27 +389,6 @@ GROUPS = [
 ]
 
 
-# ------------------------------------------------------------------------------------ observability
-def patch_obs_js(js):
-    if OBS_JS_MARKER in js:
-        return js
-    return rep(js, OBS_JS_OLD, OBS_JS_NEW, 'observability polling')
-
-
-def patch_obs_html(html):
-    if OBS_HTML_MARKER in html:
-        if OBS_SCRIPT_NEW not in html:
-            raise PatchError('observability/index.html: marker present but script version is not 2')
-        return html
-    html = rep(html, OBS_FOOT_OLD, OBS_FOOT_NEW, 'observability footer text')
-    html = rep(html, OBS_HELP_OLD, OBS_HELP_NEW, 'observability help text')
-    html = rep(html, OBS_SCRIPT_OLD, OBS_SCRIPT_NEW, 'observability script version')
-    anchor = '<footer class="obs-footer">'
-    if html.count(anchor) != 1:
-        raise PatchError('observability/index.html: footer expected once')
-    return html.replace(anchor, OBS_HTML_MARKER + '\n      ' + anchor, 1)
-
-
 def patch_a11y(js):
     if A11Y_MARKER in js:
         return js
@@ -476,18 +432,12 @@ def main():
     check = '--check' in sys.argv[1:]
     bundle = open(BUNDLE, encoding='utf-8').read()
     index = open(INDEX, encoding='utf-8').read()
-    obs_js = open(OBS_JS, encoding='utf-8').read()
-    obs_html = open(OBS_INDEX, encoding='utf-8').read()
     a11y = open(A11Y, encoding='utf-8').read()
     css = open(CSS, encoding='utf-8').read() if os.path.exists(CSS) else ''
 
     missing = [name for name, _ in GROUPS if marker(name) not in bundle]
     if QA_POLISH_MARKER not in index:
         missing.append('qa-polish.css marker (run qa-polish.py first)')
-    if OBS_JS_MARKER not in obs_js:
-        missing.append('observability polling removed')
-    if OBS_HTML_MARKER not in obs_html or OBS_SCRIPT_NEW not in obs_html:
-        missing.append('observability html')
     if A11Y_MARKER not in a11y:
         missing.append('panel-a11y agenda labels')
     if HTML_MARKER not in index or CSS_TAG not in index:
@@ -508,8 +458,6 @@ def main():
     for name, fn in GROUPS:
         if name in missing:
             new_bundle = marker(name) + fn(new_bundle)
-    new_obs_js = patch_obs_js(obs_js) if 'observability polling removed' in missing else obs_js
-    new_obs_html = patch_obs_html(obs_html) if 'observability html' in missing else obs_html
     new_a11y = patch_a11y(a11y) if 'panel-a11y agenda labels' in missing else a11y
     new_index = bump_index(patch_index(index))
 
@@ -517,10 +465,6 @@ def main():
         open(CSS, 'w', encoding='utf-8').write(CSS_CONTENT)
     if new_bundle != bundle:
         open(BUNDLE, 'w', encoding='utf-8').write(new_bundle)
-    if new_obs_js != obs_js:
-        open(OBS_JS, 'w', encoding='utf-8').write(new_obs_js)
-    if new_obs_html != obs_html:
-        open(OBS_INDEX, 'w', encoding='utf-8').write(new_obs_html)
     if new_a11y != a11y:
         open(A11Y, 'w', encoding='utf-8').write(new_a11y)
     if new_index != index:
@@ -528,7 +472,6 @@ def main():
 
     applied = [name for name, _ in GROUPS if name in missing]
     print('bundle groups applied: ' + (', '.join(applied) or 'none'))
-    print('observability: polling removed, texts updated, observability.js?v=2')
     print('panel-a11y.js: agenda labels with separators, ?v=2')
     print('index.html: qa-funcional-medio.css ?v=1, bundle ?v=' + CACHE_VERSION)
     return 0

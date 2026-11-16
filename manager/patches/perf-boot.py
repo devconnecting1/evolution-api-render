@@ -43,13 +43,13 @@ GEIST_VERSION = '3'
 GEIST_PAGES = (
     '404.html',
     'acesso/index.html',
-    'observability/index.html',
     'landing/index.html',
     'landing/novidades.html',
     'landing/seguranca.html',
     'landing/privacidade.html',
     'landing/termos.html',
     'docs/index.html',
+    'status/index.html',
 )
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 BOOT_TAG = '<link rel="stylesheet" href="/assets/boot.css?v=' + BOOT_VERSION + '" />'

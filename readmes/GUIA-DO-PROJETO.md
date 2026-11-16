@@ -413,6 +413,10 @@ flowchart TD
   instância desconectada >10 min e retorno; repetição no máximo a cada 6 h; timer de 60 s só em memória.
 - `GET /admin/db-activity` e a ferramenta MCP `get_database_info` mostram o que acordou o banco (só verbo/tabela,
   sem valores) e não gravam nada.
+- **Status público** em `/status` (página) e `GET /status` (JSON, sem chave): lê só as visões locais Sistema e
+  WhatsApp, em agregado; cache de 5 minutos; histórico de 7 dias em faixas de 3 horas e incidentes de 90 dias em
+  `GlobalSetting` (`public-status:v1`), gravados só na mudança de estado e sem timer. Sem nomes, números, mensagens,
+  tokens ou chaves. `/observability` redireciona (308) para `/status`; a aba do manager continua privada.
 
 ### 7.10 Retenção (LGPD)
 
@@ -542,15 +546,15 @@ HTML de `manager/dist`, atualize o hash SHA-256 em `manager/dist/vercel.json` (o
 ## 10. Site
 
 - O site é estático em `manager/dist/landing/` e é servido em `/` pela Vercel. Páginas: `/`, `/seguranca`,
-  `/privacidade`, `/termos`, além de `/acesso` (portal), `/observability` e os arquivos para agentes
-  (`llms.txt`, `agents/whatsai.md`, `ard.json`, `security.txt`).
+  `/privacidade`, `/termos`, além de `/acesso` (portal), `/status` (status público) e os arquivos para agentes
+  (`llms.txt`, `agents/whatsai.md`, `ard.json`, `security.txt`). `/observability` redireciona (308) para `/status`.
 - Os valores-núcleo do site precisam ser iguais aos de `llms.txt`, `agents/whatsai.md`, `readmes/RESUMO.md`,
   `readmes/README-COMERCIAL.md` e à seção 6 do manual.
 - **Segurança:** em `/seguranca` só entra o que está implementado e pode ser conferido. Nunca exiba selos que o
   WhatsAI não tem (SOC 2, ISO 27001 etc.). A licença do Evolution API (condição 1b) exige o aviso de uso no
   rodapé do manual e no README — não remova.
-- **CSP:** `manager/dist/vercel.json` tem três hashes SHA-256 de scripts inline (painel, `/acesso` e
-  `/observability`). `style-src` permite inline; scripts, não. O teste de segurança recalcula os hashes.
+- **CSP:** `manager/dist/vercel.json` tem dois hashes SHA-256 de scripts inline (painel e `/acesso`). `style-src`
+  permite inline; scripts, não. O teste de segurança recalcula os hashes.
 - **CSS do site:** edite as fontes e rode `node manager/patches/landing-css.mjs`; o `--check` falha se o bundle
   estiver velho.
 - **Meta:** Lighthouse 100 nas quatro notas e “Navegação agêntica” 4/4 em `/` e `/seguranca`, celular e computador.
@@ -576,7 +580,7 @@ HTML de `manager/dist`, atualize o hash SHA-256 em `manager/dist/vercel.json` (o
 - O `vercel.json` da raiz desliga o deploy automático da integração Git. Quem publica é o workflow
   `Deploy Manager`, em push no `main` que altere `manager/dist/**`, rodando
   `npx vercel@65.2.0 deploy --prod --yes --archive=tgz` dentro de `manager/dist`.
-- O projeto publica o conteúdo de `manager/dist`: site, painel, `/acesso`, `/observability`, páginas legais,
+- O projeto publica o conteúdo de `manager/dist`: site, painel, `/acesso`, `/status`, páginas legais,
   assets e arquivos de descoberta.
 - `[skip render]` **não** pula a Vercel; se `manager/dist/**` mudou, o painel é publicado.
 - Plano Hobby é para uso não comercial; o manual já registra a intenção de migrar quando houver cliente pagante.
