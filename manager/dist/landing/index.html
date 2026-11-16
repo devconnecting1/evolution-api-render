@@ -6,8 +6,9 @@
   Sem CDN, sem imagens externas.
   CONTATO: o numero do WhatsApp fica numa constante so, CONTACT_WHATSAPP, no topo de /assets/landing.js.
   Os botoes com data-wa-cta e o numero em data-wa-phone sao montados a partir dela.
-  MOCKUPS: os paineis, telefones e cartoes ilustrativos sao HTML + CSS, marcados como ficticios e com
-  role="img" + aria-label. Nada dentro deles recebe foco. Nao ha logo, texto, imagem ou CSS do Cursor.
+  CAPTURAS: o hero usa telas 4:5 do painel no celular, as secoes de produto usam telas 16:9 do desktop e a
+  faixa escura usa a Visao geral. Sao capturas reais do painel com dados ficticios, em WebP com variantes de
+  tamanho. Nao ha logo, texto, imagem ou CSS do Cursor.
   PLANOS: precos em "=== planos" e na nota de rodape dos planos; o JSON-LD abaixo repete o menor e o maior preco.
 -->
 <html lang="pt-BR">
@@ -50,7 +51,7 @@
     <meta name="twitter:image:alt" content="WhatsAI: atendimento com IA no WhatsApp. Seu WhatsApp responde em segundos; sua equipe assume quando quiser." />
 
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/assets/landing.bundle.css?v=23f933beb3" />
+    <link rel="stylesheet" href="/assets/landing.bundle.css?v=1c95c330b7" />
     <!-- whatsai-patch:theme:landing -->
     <script src="/assets/theme.js?v=2"></script>
     <script src="/assets/landing.js?v=8" defer></script>
@@ -138,9 +139,9 @@
           <div class="wa-nav-links">
             <a href="#produto">Produto</a>
             <a href="#recursos">Recursos</a>
+            <a href="#novidades">Novidades</a>
             <a href="#planos">Planos</a>
             <a href="#duvidas">Dúvidas</a>
-            <a href="/novidades">Novidades</a>
           </div>
           <div class="wa-nav-actions">
             <a class="wa-link" href="/docs">Documentação</a>
@@ -205,23 +206,15 @@
             </p>
           </div>
 
-          <!-- === hero: carrossel horizontal de cards (mecânica inspirada no opencode.ai; conteúdo, UI e mockups do WhatsAI) -->
+          <!-- === hero: carrossel horizontal de cards (mecânica inspirada no opencode.ai; capturas reais do painel do WhatsAI) -->
           <div class="wa-hcarousel" data-carousel role="group" aria-roledescription="carrossel" aria-labelledby="hero-carrossel-title" aria-describedby="hero-carrossel-nota">
             <h2 class="sr" id="hero-carrossel-title">O que o WhatsAI faz no atendimento</h2>
-            <p class="sr" id="hero-carrossel-nota">Mockups ilustrativos, com conversas, nomes e dados fictícios.</p>
+            <p class="sr" id="hero-carrossel-nota">Capturas reais do painel do WhatsAI, com conversas, nomes e dados fictícios.</p>
             <ul class="wa-hc-track" id="hero-carrossel-track" data-carousel-track tabindex="0" aria-label="Recursos do WhatsAI em cards">
               <li class="wa-hcard">
-                <div class="wa-hcard-media wa-hcard-media--chat" aria-hidden="true">
-                  <span class="wa-hc-mark"><svg class="wa-ico"><use href="#i-chat" /></svg></span>
-                  <span class="wa-hc-pill"><i></i>IA respondeu em 4 s</span>
-                  <div class="wa-hc-demo">
-                    <div class="wa-hc-demo-head"><span class="wa-hc-dots"><i></i><i></i><i></i></span><span>WhatsAI · Conversa</span></div>
-                    <div class="wa-hc-thread">
-                      <div class="wa-hc-bubble">Oi! Vocês têm horário para avaliação nesta semana?</div>
-                      <div class="wa-hc-bubble is-ai"><span>Assistente WhatsAI</span>Tenho quinta às 10h e 15h. Qual fica melhor para você?</div>
-                    </div>
-                  </div>
-                  <span class="wa-hc-note"><svg class="wa-ico"><use href="#i-check" /></svg><span><b>Horário marcado</b><small>Quinta, 10h · lembrete na véspera</small></span></span>
+                <div class="wa-hcard-media wa-hcard-media--chat">
+                  <img class="wa-hcard-shot wa-shot-light" src="/assets/images/landing/shot-chat-phone-light-780.webp" srcset="/assets/images/landing/shot-chat-phone-light-390.webp 390w, /assets/images/landing/shot-chat-phone-light-780.webp 780w" sizes="(max-width: 719px) 88vw, 325px" alt="Conversa no painel do WhatsAI, com a IA respondendo a uma cliente sobre a revisão de um contrato." width="780" height="974" loading="eager" fetchpriority="high" decoding="async" />
+                  <img class="wa-hcard-shot wa-shot-dark" src="/assets/images/landing/shot-chat-phone-dark-780.webp" srcset="/assets/images/landing/shot-chat-phone-dark-390.webp 390w, /assets/images/landing/shot-chat-phone-dark-780.webp 780w" sizes="(max-width: 719px) 88vw, 325px" alt="Conversa no painel do WhatsAI no tema escuro, com a IA respondendo a uma cliente sobre a revisão de um contrato." width="780" height="974" loading="lazy" decoding="async" />
                 </div>
                 <div class="wa-hcard-copy">
                   <h3 class="wa-hcard-title"><a href="#atendimento">Resposta em segundos</a></h3>
@@ -230,18 +223,9 @@
                 </div>
               </li>
               <li class="wa-hcard">
-                <div class="wa-hcard-media wa-hcard-media--pause" aria-hidden="true">
-                  <span class="wa-hc-mark"><svg class="wa-ico"><use href="#i-pause" /></svg></span>
-                  <span class="wa-hc-pill is-warn"><i></i>Pausa humana ativa</span>
-                  <div class="wa-hc-demo">
-                    <div class="wa-hc-demo-head"><span class="wa-hc-dots"><i></i><i></i><i></i></span><span>WhatsAI · Pausa humana</span></div>
-                    <div class="wa-hc-thread">
-                      <div class="wa-hc-bubble is-ai is-hide-sm"><span>Assistente WhatsAI</span>Claro. Vou chamar a equipe e ela continua daqui.</div>
-                      <div class="wa-hc-system"><i></i>IA pausou · Ana assumiu</div>
-                      <div class="wa-hc-bubble is-out"><span>Ana · Equipe</span>Oi, Rafael! Sou a Ana, vou continuar daqui.</div>
-                    </div>
-                  </div>
-                  <span class="wa-hc-note"><svg class="wa-ico"><use href="#i-user" /></svg><span><b>Ana assumiu</b><small>14:20 · pausa humana ativa</small></span></span>
+                <div class="wa-hcard-media wa-hcard-media--pause">
+                  <img class="wa-hcard-shot wa-shot-light" src="/assets/images/landing/shot-pause-phone-light-780.webp" srcset="/assets/images/landing/shot-pause-phone-light-390.webp 390w, /assets/images/landing/shot-pause-phone-light-780.webp 780w" sizes="(max-width: 719px) 88vw, 325px" alt="Contatos da IA no painel, com uma conversa ativa e outra em pausa humana." width="780" height="974" loading="lazy" decoding="async" />
+                  <img class="wa-hcard-shot wa-shot-dark" src="/assets/images/landing/shot-pause-phone-dark-780.webp" srcset="/assets/images/landing/shot-pause-phone-dark-390.webp 390w, /assets/images/landing/shot-pause-phone-dark-780.webp 780w" sizes="(max-width: 719px) 88vw, 325px" alt="Contatos da IA no painel no tema escuro, com uma conversa ativa e outra em pausa humana." width="780" height="974" loading="lazy" decoding="async" />
                 </div>
                 <div class="wa-hcard-copy">
                   <h3 class="wa-hcard-title"><a href="#pausa-humana">A equipe assume quando quiser</a></h3>
@@ -250,22 +234,9 @@
                 </div>
               </li>
               <li class="wa-hcard">
-                <div class="wa-hcard-media wa-hcard-media--agenda" aria-hidden="true">
-                  <span class="wa-hc-mark"><svg class="wa-ico"><use href="#i-calendar" /></svg></span>
-                  <span class="wa-hc-pill is-accent"><i></i>Horário confirmado</span>
-                  <div class="wa-hc-agenda">
-                    <div class="wa-hc-agenda-head">
-                      <svg class="wa-ico"><use href="#i-calendar" /></svg>
-                      <div><b>Quinta, 10h</b><small>Agenda</small></div>
-                    </div>
-                    <div class="wa-hc-week"><span>S</span><span>T</span><span class="is-on">Q</span><span>Q</span><span>S</span></div>
-                    <div class="wa-hc-slots"><span>09h</span><span class="is-on">10h</span><span>15h</span></div>
-                    <div class="wa-hc-confirm">
-                      <svg class="wa-ico"><use href="#i-check" /></svg>
-                      <div><b>Consulta confirmada</b><small>Quinta, 10h · Avaliação</small></div>
-                    </div>
-                  </div>
-                  <span class="wa-hc-note"><svg class="wa-ico"><use href="#i-clock" /></svg><span><b>Lembrete enviado</b><small>Véspera, 9h · pelo WhatsApp</small></span></span>
+                <div class="wa-hcard-media wa-hcard-media--agenda">
+                  <img class="wa-hcard-shot wa-shot-light" src="/assets/images/landing/shot-agenda-phone-light-780.webp" srcset="/assets/images/landing/shot-agenda-phone-light-390.webp 390w, /assets/images/landing/shot-agenda-phone-light-780.webp 780w" sizes="(max-width: 719px) 88vw, 325px" alt="Agenda do painel do WhatsAI, com horários marcados pela IA e um pedido pendente." width="780" height="974" loading="lazy" decoding="async" />
+                  <img class="wa-hcard-shot wa-shot-dark" src="/assets/images/landing/shot-agenda-phone-dark-780.webp" srcset="/assets/images/landing/shot-agenda-phone-dark-390.webp 390w, /assets/images/landing/shot-agenda-phone-dark-780.webp 780w" sizes="(max-width: 719px) 88vw, 325px" alt="Agenda do painel do WhatsAI no tema escuro, com horários marcados pela IA e um pedido pendente." width="780" height="974" loading="lazy" decoding="async" />
                 </div>
                 <div class="wa-hcard-copy">
                   <h3 class="wa-hcard-title"><a href="#agenda">Horários sem vaivém</a></h3>
@@ -274,15 +245,9 @@
                 </div>
               </li>
               <li class="wa-hcard">
-                <div class="wa-hcard-media wa-hcard-media--leads" aria-hidden="true">
-                  <span class="wa-hc-mark"><svg class="wa-ico"><use href="#i-target" /></svg></span>
-                  <span class="wa-hc-pill"><i></i>3 leads hoje</span>
-                  <div class="wa-hc-leads">
-                    <div class="wa-hc-lead"><span class="wa-hc-avatar">AV</span><div><b>Ana V.</b><small>Avaliação · urgente</small></div><span class="wa-hc-tag is-warn">Urgente</span></div>
-                    <div class="wa-hc-lead"><span class="wa-hc-avatar">CM</span><div><b>Carla M.</b><small>Agenda · quinta, 10h</small></div><span class="wa-hc-tag is-accent">Agendado</span></div>
-                    <div class="wa-hc-lead"><span class="wa-hc-avatar">JP</span><div><b>João P.</b><small>Orçamento · aguardando</small></div><span class="wa-hc-tag">Novo</span></div>
-                  </div>
-                  <span class="wa-hc-note"><svg class="wa-ico"><use href="#i-check" /></svg><span><b>Resumo para a equipe</b><small>Assunto, prioridade e próximo passo</small></span></span>
+                <div class="wa-hcard-media wa-hcard-media--leads">
+                  <img class="wa-hcard-shot wa-shot-light" src="/assets/images/landing/shot-leads-phone-light-780.webp" srcset="/assets/images/landing/shot-leads-phone-light-390.webp 390w, /assets/images/landing/shot-leads-phone-light-780.webp 780w" sizes="(max-width: 719px) 88vw, 325px" alt="Leads no painel do WhatsAI, com área, cidade, prioridade e status de cada atendimento." width="780" height="974" loading="lazy" decoding="async" />
+                  <img class="wa-hcard-shot wa-shot-dark" src="/assets/images/landing/shot-leads-phone-dark-780.webp" srcset="/assets/images/landing/shot-leads-phone-dark-390.webp 390w, /assets/images/landing/shot-leads-phone-dark-780.webp 780w" sizes="(max-width: 719px) 88vw, 325px" alt="Leads no painel do WhatsAI no tema escuro, com área, cidade, prioridade e status de cada atendimento." width="780" height="974" loading="lazy" decoding="async" />
                 </div>
                 <div class="wa-hcard-copy">
                   <h3 class="wa-hcard-title"><a href="#leads">Cada conversa organizada</a></h3>
@@ -320,7 +285,7 @@
         </div>
       </section>
 
-      <!-- === produto: secoes alternadas com mockups -->
+      <!-- === produto: secoes alternadas com capturas reais do painel -->
       <section class="wa-section" id="produto" aria-labelledby="produto-title">
         <div class="wa-wrap">
           <div class="wa-alt" id="atendimento">
@@ -330,57 +295,9 @@
               <a class="wa-link" href="#recursos">Ver todos os recursos <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
             </div>
             <figure class="wa-alt-art">
-              <div class="wa-mock">
-                <div class="wa-window" role="img" aria-label="Mockup ilustrativo de uma conversa no painel do WhatsAI, com a IA respondendo e a ficha do atendimento ao lado.">
-                  <div class="wa-window-bar" aria-hidden="true">
-                    <span class="wa-window-dots"><i></i><i></i><i></i></span>
-                    <span class="wa-window-title">WhatsAI · Conversas</span>
-                  </div>
-                  <div class="wa-mock-body" aria-hidden="true">
-                    <div class="wa-mock-chat">
-                      <div class="wa-chat-head">
-                        <span class="wa-avatar wa-avatar--lg">CM</span>
-                        <div class="wa-conv-main">
-                          <span class="wa-chat-title">Carla M.</span>
-                          <span class="wa-conv-snip">Avaliação · WhatsApp</span>
-                        </div>
-                        <span class="wa-badge wa-badge--accent"><i></i>IA</span>
-                      </div>
-                      <div class="wa-thread">
-                        <span class="wa-system">Hoje, 09:38</span>
-                        <div class="wa-bubble">Oi! Vocês têm horário para avaliação nesta semana?</div>
-                        <div class="wa-bubble wa-bubble--ai">
-                          <span class="wa-bubble-who">Assistente WhatsAI</span>
-                          Tenho quinta às 10h e 15h. Qual fica melhor?
-                        </div>
-                        <div class="wa-bubble">Quinta às 10h.</div>
-                        <div class="wa-bubble wa-bubble--ai">
-                          <span class="wa-bubble-who">Assistente WhatsAI</span>
-                          Agendado. Vou te lembrar na véspera.
-                        </div>
-                      </div>
-                      <div class="wa-composer">
-                        <span>Escreva uma mensagem...</span>
-                        <span class="wa-composer-end"><svg class="wa-ico"><use href="#i-send" /></svg></span>
-                      </div>
-                    </div>
-                    <div class="wa-mock-aside">
-                      <p class="wa-mock-label">Ficha do atendimento</p>
-                      <div class="wa-summary">
-                        <b>Lead qualificado</b>
-                        <p>A IA organizou o pedido e confirmou um horário para a equipe.</p>
-                        <div class="wa-summary-list">
-                          <span><svg class="wa-ico"><use href="#i-check" /></svg>Assunto: avaliação</span>
-                          <span><svg class="wa-ico"><use href="#i-check" /></svg>Horário: quinta, 10h</span>
-                          <span><svg class="wa-ico"><use href="#i-check" /></svg>Próximo passo: confirmar</span>
-                        </div>
-                      </div>
-                      <p class="wa-mock-label">Etiquetas</p>
-                      <span class="wa-badge wa-badge--accent">Agendado</span>
-                      <span class="wa-badge">Avaliação</span>
-                    </div>
-                  </div>
-                </div>
+              <div class="wa-shot">
+                <img class="wa-shot-img wa-shot-light" src="/assets/images/landing/shot-chat-light-1600.webp" srcset="/assets/images/landing/shot-chat-light-900.webp 900w, /assets/images/landing/shot-chat-light-1600.webp 1600w" sizes="(max-width: 900px) 92vw, 807px" alt="Painel de conversas do WhatsAI, com a IA respondendo a uma cliente sobre a revisão de um contrato." width="1320" height="743" loading="lazy" decoding="async" />
+                <img class="wa-shot-img wa-shot-dark" src="/assets/images/landing/shot-chat-dark-1600.webp" srcset="/assets/images/landing/shot-chat-dark-900.webp 900w, /assets/images/landing/shot-chat-dark-1600.webp 1600w" sizes="(max-width: 900px) 92vw, 807px" alt="Painel de conversas do WhatsAI no tema escuro, com a IA respondendo a uma cliente sobre a revisão de um contrato." width="1320" height="743" loading="lazy" decoding="async" />
               </div>
             </figure>
           </div>
@@ -392,57 +309,9 @@
               <a class="wa-link" href="#duvidas">Como a pausa funciona <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
             </div>
             <figure class="wa-alt-art">
-              <div class="wa-mock">
-                <div class="wa-window" role="img" aria-label="Mockup ilustrativo da pausa humana: a IA deixa a conversa e uma pessoa da equipe assume.">
-                  <div class="wa-window-bar" aria-hidden="true">
-                    <span class="wa-window-dots"><i></i><i></i><i></i></span>
-                    <span class="wa-window-title">WhatsAI · Conversa</span>
-                  </div>
-                  <div class="wa-mock-body" aria-hidden="true">
-                    <div class="wa-mock-chat">
-                      <div class="wa-chat-head">
-                        <span class="wa-avatar wa-avatar--lg">RS</span>
-                        <div class="wa-conv-main">
-                          <span class="wa-chat-title">Rafael S.</span>
-                          <span class="wa-conv-snip">Orçamento · WhatsApp</span>
-                        </div>
-                        <span class="wa-badge wa-badge--warn"><i></i>Pausa humana</span>
-                      </div>
-                      <div class="wa-thread">
-                        <span class="wa-system">Hoje, 14:18</span>
-                        <div class="wa-bubble">Queria falar com uma pessoa sobre o orçamento.</div>
-                        <div class="wa-bubble wa-bubble--ai">
-                          <span class="wa-bubble-who">Assistente WhatsAI</span>
-                          Claro. Vou chamar a equipe e ela continua daqui.
-                        </div>
-                        <span class="wa-system">IA pausou · Ana assumiu</span>
-                        <div class="wa-bubble wa-bubble--out">
-                          <span class="wa-bubble-who">Ana · Equipe</span>
-                          Oi, Rafael! Sou a Ana, vou continuar daqui.
-                        </div>
-                        <div class="wa-bubble">Perfeito, obrigado.</div>
-                      </div>
-                      <div class="wa-composer">
-                        <span>Escreva uma mensagem...</span>
-                        <span class="wa-composer-end"><svg class="wa-ico"><use href="#i-send" /></svg></span>
-                      </div>
-                    </div>
-                    <div class="wa-mock-aside">
-                      <p class="wa-mock-label">Pausa humana</p>
-                      <div class="wa-summary">
-                        <b>Conversa com a equipe</b>
-                        <p>A IA sai da conversa quando alguém da equipe responde.</p>
-                        <div class="wa-summary-list">
-                          <span><svg class="wa-ico"><use href="#i-pause" /></svg>Status: pausada</span>
-                          <span><svg class="wa-ico"><use href="#i-user" /></svg>Responsável: Ana</span>
-                          <span><svg class="wa-ico"><use href="#i-refresh" /></svg>Retoma em 2 h</span>
-                        </div>
-                      </div>
-                      <p class="wa-mock-label">Depois da pausa</p>
-                      <p class="wa-summary" aria-hidden="true"><b>A IA volta sozinha</b><span>Depois do tempo sem mensagens da equipe, ela retoma o atendimento.</span></p>
-                    </div>
-                  </div>
-                </div>
+              <div class="wa-shot">
+                <img class="wa-shot-img wa-shot-light" src="/assets/images/landing/shot-pause-light-1600.webp" srcset="/assets/images/landing/shot-pause-light-900.webp 900w, /assets/images/landing/shot-pause-light-1600.webp 1600w" sizes="(max-width: 900px) 92vw, 807px" alt="Contatos da IA no painel do WhatsAI, mostrando a IA ativa em uma conversa e a equipe no comando de outra." width="1824" height="1026" loading="lazy" decoding="async" />
+                <img class="wa-shot-img wa-shot-dark" src="/assets/images/landing/shot-pause-dark-1600.webp" srcset="/assets/images/landing/shot-pause-dark-900.webp 900w, /assets/images/landing/shot-pause-dark-1600.webp 1600w" sizes="(max-width: 900px) 92vw, 807px" alt="Contatos da IA no painel do WhatsAI no tema escuro, mostrando a IA ativa em uma conversa e a equipe no comando de outra." width="1824" height="1026" loading="lazy" decoding="async" />
               </div>
             </figure>
           </div>
@@ -454,44 +323,9 @@
               <a class="wa-link" href="#planos">Ver o que cada plano inclui <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
             </div>
             <figure class="wa-alt-art">
-              <div class="wa-art-panel wa-art wa-art--dawn" role="img" aria-label="Ilustracao ficticia de um celular com conversa de WhatsApp ao lado de um cartão de agenda com consulta confirmada e lembrete.">
-                <div class="wa-phone" aria-hidden="true">
-                  <div class="wa-phone-screen">
-                    <div class="wa-phone-head">
-                      <span class="wa-avatar">MC</span>
-                      <div>
-                        <b>Marina C.</b>
-                        <small>online · IA</small>
-                      </div>
-                    </div>
-                    <div class="wa-phone-thread">
-                      <div class="wa-bubble">Oi! Tem horário para consulta na quinta?</div>
-                      <div class="wa-bubble wa-bubble--ai">Tenho quinta às 10h e 15h. Qual prefere?</div>
-                      <div class="wa-bubble">10h</div>
-                      <div class="wa-bubble wa-bubble--ai">Agendado para quinta, 10h. Vou te lembrar na véspera.</div>
-                      <span class="wa-system">A IA respondeu em 4 s</span>
-                    </div>
-                    <div class="wa-composer">
-                      <span>Mensagem...</span>
-                      <span class="wa-composer-end"><svg class="wa-ico"><use href="#i-send" /></svg></span>
-                    </div>
-                  </div>
-                </div>
-                <div class="wa-agenda-card" aria-hidden="true">
-                  <div class="wa-agenda-top">
-                    <svg class="wa-ico"><use href="#i-calendar" /></svg>
-                    <div>
-                      <b>Consulta confirmada</b>
-                      <small>Quinta, 10h · Avaliação</small>
-                    </div>
-                  </div>
-                  <div class="wa-agenda-rows">
-                    <span>Cliente <b>Marina C.</b></span>
-                    <span>Lembrete <b>Véspera, 9h</b></span>
-                    <span>Profissional <b>Dra. Helena</b></span>
-                    <span class="wa-badge wa-badge--accent">Agenda confirmada</span>
-                  </div>
-                </div>
+              <div class="wa-shot">
+                <img class="wa-shot-img wa-shot-light" src="/assets/images/landing/shot-processos-light-1600.webp" srcset="/assets/images/landing/shot-processos-light-900.webp 900w, /assets/images/landing/shot-processos-light-1600.webp 1600w" sizes="(max-width: 900px) 92vw, 807px" alt="Processos no painel do WhatsAI, com número CNJ, cliente, tribunal, última movimentação e aviso de novidade." width="1824" height="1026" loading="lazy" decoding="async" />
+                <img class="wa-shot-img wa-shot-dark" src="/assets/images/landing/shot-processos-dark-1600.webp" srcset="/assets/images/landing/shot-processos-dark-900.webp 900w, /assets/images/landing/shot-processos-dark-1600.webp 1600w" sizes="(max-width: 900px) 92vw, 807px" alt="Processos no painel do WhatsAI no tema escuro, com número CNJ, cliente, tribunal, última movimentação e aviso de novidade." width="1824" height="1026" loading="lazy" decoding="async" />
               </div>
             </figure>
           </div>
@@ -503,47 +337,9 @@
               <a class="wa-link" href="/seguranca">Segurança e LGPD <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
             </div>
             <figure class="wa-alt-art">
-              <div class="wa-mock">
-                <div class="wa-window" role="img" aria-label="Mockup ilustrativo da lista de leads do dia, com prioridades, agendamentos e resumo para a equipe.">
-                  <div class="wa-window-bar" aria-hidden="true">
-                    <span class="wa-window-dots"><i></i><i></i><i></i></span>
-                    <span class="wa-window-title">WhatsAI · Leads</span>
-                  </div>
-                  <div class="wa-mock-body wa-mock-body--list" aria-hidden="true">
-                    <div class="wa-mock-aside">
-                      <p class="wa-mock-label">Leads de hoje</p>
-                      <ul class="wa-row-list">
-                        <li><span class="wa-avatar">AV</span><div><b>Ana V.</b><small>Avaliação · urgente</small></div><span class="wa-badge wa-badge--warn">Urgente</span></li>
-                        <li><span class="wa-avatar">CM</span><div><b>Carla M.</b><small>Agenda · quinta, 10h</small></div><span class="wa-badge wa-badge--accent">Agendado</span></li>
-                        <li><span class="wa-avatar">JP</span><div><b>João P.</b><small>Orçamento · aguardando</small></div><span class="wa-badge">Novo</span></li>
-                        <li><span class="wa-avatar">LF</span><div><b>Lúcia F.</b><small>Dúvida · respondida</small></div><span class="wa-badge">IA</span></li>
-                        <li><span class="wa-avatar">RS</span><div><b>Rafael S.</b><small>Retorno · equipe</small></div><span class="wa-badge wa-badge--warn">Equipe</span></li>
-                      </ul>
-                    </div>
-                    <div class="wa-mock-chat">
-                      <p class="wa-mock-label">Resumo do dia</p>
-                      <div class="wa-stats">
-                        <div class="wa-stat"><b>12</b><span>leads organizados</span></div>
-                        <div class="wa-stat"><b>5</b><span>horários marcados</span></div>
-                        <div class="wa-stat"><b>3</b><span>com a equipe</span></div>
-                      </div>
-                      <div class="wa-summary">
-                        <b>Próximo passo</b>
-                        <p>A equipe revisa os casos urgentes e a IA continua os atendimentos simples.</p>
-                        <div class="wa-summary-list">
-                          <span><svg class="wa-ico"><use href="#i-check" /></svg>2 leads aguardando retorno</span>
-                          <span><svg class="wa-ico"><use href="#i-check" /></svg>1 processo com andamento novo</span>
-                          <span><svg class="wa-ico"><use href="#i-check" /></svg>Lembretes de amanhã agendados</span>
-                        </div>
-                      </div>
-                      <div class="wa-summary">
-                        <b>Processos</b>
-                        <p>Para escritórios, andamentos e intimações ficam organizados junto do atendimento.</p>
-                        <span class="wa-badge wa-badge--accent">Revisar com a equipe</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div class="wa-shot">
+                <img class="wa-shot-img wa-shot-light" src="/assets/images/landing/shot-leads-light-1600.webp" srcset="/assets/images/landing/shot-leads-light-900.webp 900w, /assets/images/landing/shot-leads-light-1600.webp 1600w" sizes="(max-width: 900px) 92vw, 807px" alt="Leads no painel do WhatsAI, com triagem por área, cidade, prioridade e status." width="1824" height="1026" loading="lazy" decoding="async" />
+                <img class="wa-shot-img wa-shot-dark" src="/assets/images/landing/shot-leads-dark-1600.webp" srcset="/assets/images/landing/shot-leads-dark-900.webp 900w, /assets/images/landing/shot-leads-dark-1600.webp 1600w" sizes="(max-width: 900px) 92vw, 807px" alt="Leads no painel do WhatsAI no tema escuro, com triagem por área, cidade, prioridade e status." width="1824" height="1026" loading="lazy" decoding="async" />
               </div>
             </figure>
           </div>
@@ -667,20 +463,9 @@
       <section class="wa-section wa-section--tight" aria-labelledby="destaque-title">
         <div class="wa-wrap">
           <div class="wa-spotlight">
-            <div class="wa-spot-art" aria-hidden="true">
-              <div class="wa-spot-panel">
-                <div class="wa-spot-head">
-                  <span>WhatsAI · Operação</span>
-                  <span class="wa-spot-state"><i></i>IA atendendo</span>
-                </div>
-                <div class="wa-spot-stats">
-                  <div><b>12</b><span>leads organizados</span></div>
-                  <div><b>5</b><span>horários marcados</span></div>
-                  <div><b>3</b><span>com a equipe</span></div>
-                </div>
-                <div class="wa-spot-row"><span>Próximo passo</span><b>Revisar 2 casos urgentes</b></div>
-                <div class="wa-spot-row"><span>Uso do mês</span><b>1.240 / 2.000</b></div>
-                <div class="wa-spot-bar"><i></i></div>
+            <div class="wa-spot-art">
+              <div class="wa-spot-shot">
+                <img src="/assets/images/landing/shot-panel-dark-1400.webp" srcset="/assets/images/landing/shot-panel-dark-800.webp 800w, /assets/images/landing/shot-panel-dark-1400.webp 1400w" sizes="(max-width: 900px) 90vw, 520px" alt="Visão geral do painel do WhatsAI, com leads novos, agendamentos, respostas da IA, gráfico da semana e agenda do dia." width="1824" height="1026" loading="lazy" decoding="async" />
               </div>
             </div>
             <div class="wa-spot-copy">
@@ -691,6 +476,100 @@
                 <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg>
               </a>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- === novidades: cards de changelog -->
+      <section class="wa-section wa-section--tight" id="novidades" aria-labelledby="changelog-title">
+        <div class="wa-wrap">
+          <div class="wa-cards-head">
+            <div>
+              <h2 id="changelog-title">O produto não para.</h2>
+            </div>
+            <a class="wa-link" href="/novidades">Ver todas as novidades <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
+          </div>
+          <div class="wa-card-grid">
+            <a class="wa-card" href="/novidades">
+              <span class="wa-card-date">Produto</span>
+              <span class="wa-card-title">Pausa humana com retomada automática</span>
+              <span class="wa-card-meta"><span class="wa-card-avatar" aria-hidden="true">WA</span>Equipe WhatsAI</span>
+            </a>
+            <a class="wa-card" href="/novidades">
+              <span class="wa-card-date">Agenda</span>
+              <span class="wa-card-title">Lembretes de horário pelo WhatsApp</span>
+              <span class="wa-card-meta"><span class="wa-card-avatar" aria-hidden="true">WA</span>Equipe WhatsAI</span>
+            </a>
+            <a class="wa-card" href="/novidades">
+              <span class="wa-card-date">Advocacia</span>
+              <span class="wa-card-title">Processos: andamentos e intimações</span>
+              <span class="wa-card-meta"><span class="wa-card-avatar" aria-hidden="true">WA</span>Equipe WhatsAI</span>
+            </a>
+            <a class="wa-card" href="/novidades">
+              <span class="wa-card-date">Operação</span>
+              <span class="wa-card-title">Uso da IA visível no painel</span>
+              <span class="wa-card-meta"><span class="wa-card-avatar" aria-hidden="true">WA</span>Equipe WhatsAI</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- === por dentro do produto: pesquisa e processo -->
+      <section class="wa-section wa-section--tight" aria-labelledby="research-title">
+        <div class="wa-wrap">
+          <div class="wa-research">
+            <div class="wa-research-copy">
+              <h2 id="research-title">Uma IA que trabalha com as regras do seu negócio.</h2>
+              <p class="wa-alt-lead">Ela não inventa: responde com o que você ensinou, avisa quando não sabe e chama a equipe quando o assunto precisa de gente. Todo atendimento fica registrado para consulta.</p>
+              <a class="wa-link" href="/seguranca">Segurança e LGPD <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
+            </div>
+            <figure class="wa-research-art wa-art wa-art--dawn" role="img" aria-label="Fluxo ilustrativo de uma conversa: o cliente pergunta, a IA responde com contexto, a equipe assume quando precisa e tudo fica no painel.">
+              <div class="wa-timeline" aria-hidden="true">
+                <b>Como uma conversa acontece</b>
+                <ol>
+                  <li><div><span>Cliente pergunta</span><small>Pelo WhatsApp, a qualquer hora.</small></div></li>
+                  <li><div><span>IA responde com contexto</span><small>Usando as informações e as regras da empresa.</small></div></li>
+                  <li><div><span>Equipe assume quando precisa</span><small>A IA pausa e volta sozinha depois.</small></div></li>
+                  <li><div><span>Tudo fica no painel</span><small>Conversa, lead, agenda e próximo passo.</small></div></li>
+                </ol>
+              </div>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- === destaques -->
+      <section class="wa-section wa-section--tight" aria-labelledby="highlights-title">
+        <div class="wa-wrap">
+          <div class="wa-cards-head">
+            <h2 id="highlights-title">Destaques</h2>
+            <a class="wa-link" href="/novidades">Ver mais <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
+          </div>
+          <div class="wa-card-grid">
+            <a class="wa-card wa-highlight-card" href="#produto">
+              <span class="wa-highlight-art" aria-hidden="true"></span>
+              <span class="wa-card-date">Guia rápido</span>
+              <span class="wa-card-title">O primeiro atendimento em segundos</span>
+              <span class="wa-card-meta">Como a IA responde com contexto</span>
+            </a>
+            <a class="wa-card wa-highlight-card" href="#duvidas">
+              <span class="wa-highlight-art" aria-hidden="true"></span>
+              <span class="wa-card-date">Guia rápido</span>
+              <span class="wa-card-title">A equipe no controle da conversa</span>
+              <span class="wa-card-meta">Pausa humana sem complicação</span>
+            </a>
+            <a class="wa-card wa-highlight-card" href="#recursos">
+              <span class="wa-highlight-art" aria-hidden="true"></span>
+              <span class="wa-card-date">Guia rápido</span>
+              <span class="wa-card-title">Leads que chegam organizados</span>
+              <span class="wa-card-meta">Triagem, prioridade e próximo passo</span>
+            </a>
+            <a class="wa-card wa-highlight-card" href="/seguranca">
+              <span class="wa-highlight-art" aria-hidden="true"></span>
+              <span class="wa-card-date">Guia rápido</span>
+              <span class="wa-card-title">Privacidade desde a concepção</span>
+              <span class="wa-card-meta">Segurança, LGPD e permissões</span>
+            </a>
           </div>
         </div>
       </section>
@@ -921,100 +800,6 @@
                 <p>Sim. Cada número (recepção, vendas, filial) tem a própria IA e as próprias instruções. Cada plano inclui 1 número. O número adicional tem os mesmos recursos e a mesma franquia do plano, com IA, servidor e banco de dados próprios: R$ 287, R$ 497 ou R$ 927 por mês, conforme o plano.</p>
               </details>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- === novidades: cards de changelog -->
-      <section class="wa-section wa-section--tight" id="novidades" aria-labelledby="changelog-title">
-        <div class="wa-wrap">
-          <div class="wa-cards-head">
-            <div>
-              <h2 id="changelog-title">O produto não para.</h2>
-            </div>
-            <a class="wa-link" href="/novidades">Ver todas as novidades <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
-          </div>
-          <div class="wa-card-grid">
-            <a class="wa-card" href="/novidades">
-              <span class="wa-card-date">Produto</span>
-              <span class="wa-card-title">Pausa humana com retomada automática</span>
-              <span class="wa-card-meta"><span class="wa-card-avatar" aria-hidden="true">WA</span>Equipe WhatsAI</span>
-            </a>
-            <a class="wa-card" href="/novidades">
-              <span class="wa-card-date">Agenda</span>
-              <span class="wa-card-title">Lembretes de horário pelo WhatsApp</span>
-              <span class="wa-card-meta"><span class="wa-card-avatar" aria-hidden="true">WA</span>Equipe WhatsAI</span>
-            </a>
-            <a class="wa-card" href="/novidades">
-              <span class="wa-card-date">Advocacia</span>
-              <span class="wa-card-title">Processos: andamentos e intimações</span>
-              <span class="wa-card-meta"><span class="wa-card-avatar" aria-hidden="true">WA</span>Equipe WhatsAI</span>
-            </a>
-            <a class="wa-card" href="/novidades">
-              <span class="wa-card-date">Operação</span>
-              <span class="wa-card-title">Uso da IA visível no painel</span>
-              <span class="wa-card-meta"><span class="wa-card-avatar" aria-hidden="true">WA</span>Equipe WhatsAI</span>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <!-- === por dentro do produto: pesquisa e processo -->
-      <section class="wa-section wa-section--tight" aria-labelledby="research-title">
-        <div class="wa-wrap">
-          <div class="wa-research">
-            <div class="wa-research-copy">
-              <h2 id="research-title">Uma IA que trabalha com as regras do seu negócio.</h2>
-              <p class="wa-alt-lead">Ela não inventa: responde com o que você ensinou, avisa quando não sabe e chama a equipe quando o assunto precisa de gente. Todo atendimento fica registrado para consulta.</p>
-              <a class="wa-link" href="/seguranca">Segurança e LGPD <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
-            </div>
-            <figure class="wa-research-art wa-art wa-art--dawn" role="img" aria-label="Fluxo ilustrativo de uma conversa: o cliente pergunta, a IA responde com contexto, a equipe assume quando precisa e tudo fica no painel.">
-              <div class="wa-timeline" aria-hidden="true">
-                <b>Como uma conversa acontece</b>
-                <ol>
-                  <li><div><span>Cliente pergunta</span><small>Pelo WhatsApp, a qualquer hora.</small></div></li>
-                  <li><div><span>IA responde com contexto</span><small>Usando as informações e as regras da empresa.</small></div></li>
-                  <li><div><span>Equipe assume quando precisa</span><small>A IA pausa e volta sozinha depois.</small></div></li>
-                  <li><div><span>Tudo fica no painel</span><small>Conversa, lead, agenda e próximo passo.</small></div></li>
-                </ol>
-              </div>
-            </figure>
-          </div>
-        </div>
-      </section>
-
-      <!-- === destaques -->
-      <section class="wa-section wa-section--tight" aria-labelledby="highlights-title">
-        <div class="wa-wrap">
-          <div class="wa-cards-head">
-            <h2 id="highlights-title">Destaques</h2>
-            <a class="wa-link" href="/novidades">Ver mais <svg class="wa-ico" aria-hidden="true"><use href="#i-arrow" /></svg></a>
-          </div>
-          <div class="wa-card-grid">
-            <a class="wa-card wa-highlight-card" href="#produto">
-              <span class="wa-highlight-art" aria-hidden="true"></span>
-              <span class="wa-card-date">Guia rápido</span>
-              <span class="wa-card-title">O primeiro atendimento em segundos</span>
-              <span class="wa-card-meta">Como a IA responde com contexto</span>
-            </a>
-            <a class="wa-card wa-highlight-card" href="#duvidas">
-              <span class="wa-highlight-art" aria-hidden="true"></span>
-              <span class="wa-card-date">Guia rápido</span>
-              <span class="wa-card-title">A equipe no controle da conversa</span>
-              <span class="wa-card-meta">Pausa humana sem complicação</span>
-            </a>
-            <a class="wa-card wa-highlight-card" href="#recursos">
-              <span class="wa-highlight-art" aria-hidden="true"></span>
-              <span class="wa-card-date">Guia rápido</span>
-              <span class="wa-card-title">Leads que chegam organizados</span>
-              <span class="wa-card-meta">Triagem, prioridade e próximo passo</span>
-            </a>
-            <a class="wa-card wa-highlight-card" href="/seguranca">
-              <span class="wa-highlight-art" aria-hidden="true"></span>
-              <span class="wa-card-date">Guia rápido</span>
-              <span class="wa-card-title">Privacidade desde a concepção</span>
-              <span class="wa-card-meta">Segurança, LGPD e permissões</span>
-            </a>
           </div>
         </div>
       </section>
