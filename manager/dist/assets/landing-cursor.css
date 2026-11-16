@@ -12,7 +12,8 @@
  * Tipografia: Geist local (geist.css) e a mesma escala do /docs, em tokens --type-* do arquivo global. Titulos de
  * pagina e secao em peso 300; subtitulos, corpo, apoio e rotulos seguem os papeis da documentacao. Os mockups
  * mantem tamanhos proprios porque representam a interface do painel, nao o texto da pagina.
- * Sem imagens externas, sem logos de terceiros: a paisagem abstrata e os mockups sao CSS + HTML.
+ * Sem imagens externas, sem logos de terceiros: a paisagem abstrata e os pequenos cartoes sao CSS + HTML, e as
+ * telas do produto sao capturas reais do painel com dados ficticios (assets/images/landing).
  */
 
 body.wa-page {
@@ -1660,6 +1661,7 @@ body.wa-page #duvidas {
 
 .wa-alt-art {
   min-width: 0;
+  margin: 0;
 }
 
 .wa-mock {
@@ -3325,5 +3327,118 @@ body.wa-page #duvidas {
     scroll-behavior: auto !important;
     transition: none !important;
     animation: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------ capturas reais do painel */
+/* As imagens sao capturas do proprio painel com dados ficticios. O hero usa capturas no formato 4:5 do painel
+   no celular (780x974), para o card mostrar a interface inteira e legivel; as secoes de produto usam a tela de
+   desktop 16:9. O tema troca a imagem em vez de filtrar a captura: o painel tem fundo branco no claro e grafite
+   no escuro, e o filtro estragaria os estados. So a imagem do tema ativo carrega: a outra fica display:none e
+   lazy. */
+.wa-shot-light,
+.wa-shot-dark {
+  display: block;
+}
+
+.wa-shot-dark {
+  display: none;
+}
+
+:root[data-theme-mode="dark"] .wa-shot-light {
+  display: none;
+}
+
+:root[data-theme-mode="dark"] .wa-shot-dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme-mode="light"]) .wa-shot-light {
+    display: none;
+  }
+  :root:not([data-theme-mode="light"]) .wa-shot-dark {
+    display: block;
+  }
+}
+
+.wa-hcard-media {
+  background: var(--wa-card-2);
+}
+
+.wa-hcard-shot {
+  position: absolute;
+  inset: 12px;
+  width: calc(100% - 24px);
+  height: calc(100% - 24px);
+  border: 1px solid var(--wa-line-strong);
+  background: var(--wa-bg);
+  object-fit: cover;
+  object-position: center;
+  box-shadow: 0 12px 26px -18px rgba(0, 0, 0, 0.4);
+}
+
+.wa-hcard-media::before {
+  display: none;
+}
+
+.wa-shot {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(8px, 1.2vw, 14px);
+  border: 1px solid var(--wa-line);
+  background: var(--wa-card-2);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
+}
+
+.wa-shot-img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--wa-line-strong);
+  background: var(--wa-bg);
+}
+
+.wa-spot-shot {
+  width: min(100%, 520px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #141414;
+  box-shadow: 0 30px 60px -40px rgba(0, 0, 0, 0.9);
+}
+
+.wa-spot-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 719px) {
+  .wa-hcard-media {
+    min-height: 420px;
+    padding: 0;
+    background: #161616;
+  }
+
+  .wa-hcard-shot {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .wa-hcard-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: block;
+    background: linear-gradient(180deg, rgba(13, 13, 13, 0) 32%, rgba(13, 13, 13, 0.5) 58%, rgba(13, 13, 13, 0.94) 100%);
+    pointer-events: none;
+  }
+
+  .wa-hcard-copy {
+    inset-inline: 16px;
+    bottom: 16px;
   }
 }
