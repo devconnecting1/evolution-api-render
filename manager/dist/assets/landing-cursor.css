@@ -1827,21 +1827,6 @@ body.wa-page #duvidas {
   white-space: nowrap;
 }
 
-.wa-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--wa-fg-3);
-}
-
-.wa-dot--ok {
-  background: var(--wa-accent);
-}
-
-.wa-dot--warn {
-  background: var(--wa-warn);
-}
-
 .wa-art-panel {
   position: relative;
   height: clamp(420px, 42vw, 585px);
@@ -2264,11 +2249,6 @@ body.wa-page #duvidas {
   border-top: 1px solid var(--wa-line);
   color: var(--wa-fg-2);
   font-size: 8px;
-}
-
-.wa-mini-task .wa-dot {
-  width: 5px;
-  height: 5px;
 }
 
 @media (max-width: 900px) {
@@ -2843,14 +2823,17 @@ body.wa-page #duvidas {
 }
 
 .wa-channel .wa-note {
-  display: flex;
-  gap: 7px;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--wa-line);
   color: var(--wa-fg-3);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.wa-channel .wa-note strong {
+  color: var(--wa-fg-2);
+  font-weight: 600;
 }
 
 .wa-addon {
