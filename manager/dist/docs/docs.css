@@ -182,7 +182,6 @@ th {
   top: 0;
   z-index: 50;
   background: var(--d-bg);
-  border-bottom: 1px solid var(--d-border);
 }
 
 .topbar-in {
@@ -1494,7 +1493,6 @@ td strong {
 
 /* ------------------------------------------------------------------------------------------------ rodapé */
 .doc-footer {
-  border-top: 1px solid var(--d-border);
   background: var(--d-bg);
 }
 .foot-in {
@@ -1538,7 +1536,6 @@ td strong {
   max-width: 1920px;
   margin: 0 auto;
   padding: 20px 32px 40px;
-  border-top: 1px solid var(--d-border);
 }
 .foot-license p {
   max-width: 110ch;

@@ -28,7 +28,6 @@
   position: relative;
   overflow: hidden;
   background: var(--d-bg);
-  border-bottom: 1px solid var(--d-border);
 }
 
 /* Grade de referência: linhas finas que somem no fim do herói. */
@@ -331,7 +330,6 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 40px;
   padding: 60px 0 68px;
-  border-bottom: 1px solid var(--d-border);
 }
 
 .trust-contact {
