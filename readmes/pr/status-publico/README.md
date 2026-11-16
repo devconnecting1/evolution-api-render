@@ -1,3 +1,5 @@
+> Nota: o histórico passou de 7 para 3 dias (24 faixas de 3 horas) no PR #181; este documento registra a versão inicial.
+
 # Status público do WhatsAI
 
 ## O que este PR faz

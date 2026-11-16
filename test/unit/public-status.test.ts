@@ -121,7 +121,7 @@ describe('public status', () => {
     assert.equal(componentState(data, 'api'), 'operational');
     assert.equal(componentState(data, 'database'), 'operational');
     assert.equal(componentState(data, 'site'), 'operational');
-    assert.equal(data.history.length, 56);
+    assert.equal(data.history.length, 24);
     assert.equal(data.history.at(-1)?.components['whatsapp-web'], 'operational');
     const json = JSON.stringify(data);
     assert.equal(json.includes('Cliente Confidencial'), false);

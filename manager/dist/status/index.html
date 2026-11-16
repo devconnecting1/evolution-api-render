@@ -21,7 +21,7 @@
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=3" />
     <link rel="stylesheet" href="/assets/tokens.css?v=3" />
-    <link rel="stylesheet" href="/status/status.css?v=3" />
+    <link rel="stylesheet" href="/status/status.css?v=6" />
   </head>
   <body class="st-page">
     <a class="st-skip" href="#conteudo">Pular para o conteúdo</a>
@@ -43,13 +43,17 @@
 
     <main class="st-main" id="conteudo">
       <div class="st-wrap">
-        <section class="st-hero" aria-labelledby="st-title" aria-busy="true" id="st-hero">
-          <p class="st-eyebrow">
-            <span class="st-state-dot" data-state="no_data" aria-hidden="true"></span>
-            <span id="st-updated">Carregando status…</span>
-          </p>
+        <section class="st-hero" data-state="no_data" aria-labelledby="st-title" aria-busy="true" id="st-hero">
+          <div class="st-card-head">
+            <span class="st-status-label">
+              <span class="st-state-dot" data-state="no_data" aria-hidden="true"></span>
+              <span id="st-state-label">Verificando</span>
+            </span>
+            <span class="st-updated" id="st-updated">Consultando os sistemas…</span>
+          </div>
           <h1 class="st-title" id="st-title">Verificando os sistemas…</h1>
           <p class="st-lead" id="st-summary">A página consulta o status público do WhatsAI.</p>
+          <p class="st-recommendation" id="st-recommendation">Aguarde a primeira verificação.</p>
           <p class="st-cadence">
             Verificação a cada <span id="st-cadence">5 minutos</span>.
             <a href="#como-medimos">Como medimos</a>
@@ -72,7 +76,7 @@
           <span><i data-state="outage" aria-hidden="true"></i>Indisponível</span>
           <span><i data-state="degraded" aria-hidden="true"></i>Degradado</span>
           <span><i data-state="operational" aria-hidden="true"></i>Operacional</span>
-          <span class="st-legend-note">Cada barra representa 3 horas; a barra mostra o pior estado do período.</span>
+          <span class="st-legend-note">Cada barra representa 3 horas e mostra o pior estado do período. Clique em uma barra para ver o detalhe.</span>
         </div>
 
         <section class="st-incidents" aria-labelledby="st-incidents-title">
@@ -124,7 +128,7 @@
               <summary>Como consumir o status de forma programática?</summary>
               <p>
                 O JSON público fica em <a href="https://evolution-api-x93o.onrender.com/status">/status</a> na API. Não
-                exige chave e devolve estado atual, componentes, histórico de 7 dias e incidentes recentes.
+                exige chave e devolve estado atual, componentes, histórico de 3 dias e incidentes recentes.
               </p>
             </details>
             <details>
@@ -143,7 +147,7 @@
       <div class="st-wrap st-foot-in">
         <div class="st-foot-brand">
           <a class="st-brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
-          <p>Status público da operação. Verificado a cada cinco minutos.</p>
+          <p>Status público da operação. Atualizado a cada cinco minutos.</p>
         </div>
         <nav class="st-foot-col" aria-label="Produto">
           <p>Produto</p>
@@ -170,6 +174,6 @@
     </footer>
 
     <noscript>Ative o JavaScript para ver o status atualizado.</noscript>
-    <script src="/status/status.js?v=5" defer></script>
+    <script src="/status/status.js?v=9" defer></script>
   </body>
 </html>
