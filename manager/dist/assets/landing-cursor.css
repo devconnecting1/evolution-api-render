@@ -2753,37 +2753,70 @@ body.wa-page #duvidas {
 .wa-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--wa-line-strong) transparent;
+}
+
+.wa-table-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+
+.wa-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wa-table-wrap::-webkit-scrollbar-thumb {
+  background: var(--wa-line-strong);
+}
+
+.wa-table-wrap.is-scrollable:not(.is-at-end) {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
+.table-scroll-hint {
+  margin: 0 0 6px;
+  color: var(--wa-fg-3);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.table-scroll-hint + .wa-table-wrap,
+.wa-addon .table-scroll-hint + .wa-table-wrap {
+  margin-top: 8px;
 }
 
 .wa-table {
   width: 100%;
   min-width: 720px;
   border-collapse: collapse;
-  font-size: var(--type-meta-size);
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.4;
 }
 
 .wa-table th,
 .wa-table td {
-  padding: 10px 14px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--wa-line);
   text-align: left;
   vertical-align: top;
 }
 
 .wa-table thead th {
+  padding: 10px 20px;
   color: var(--wa-fg-3);
   font-family: var(--font-mono);
-  font-size: var(--type-label-size);
-  font-weight: var(--type-label-weight);
-  letter-spacing: var(--type-label-ls);
-  line-height: var(--type-label-lh);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .wa-table tbody th {
-  color: var(--wa-fg-2);
-  font-weight: 400;
+  color: var(--wa-fg);
+  font-weight: 500;
 }
 
 .wa-table td {
@@ -2858,7 +2891,6 @@ body.wa-page #duvidas {
 
 .wa-addon .wa-table-wrap {
   margin-top: 16px;
-  border: 1px solid var(--wa-line);
 }
 
 @media (max-width: 900px) {
@@ -3458,11 +3490,14 @@ body.wa-page #duvidas {
 
 .wa-scene-mark {
   position: absolute;
+  top: -10%;
+  left: -2%;
   z-index: 1;
   width: 34%;
   aspect-ratio: 1;
   color: var(--wa-fg);
   opacity: 0.055;
+  transform: rotate(-8deg);
   pointer-events: none;
 }
 
@@ -3491,47 +3526,6 @@ body.wa-page #duvidas {
   border: 0;
 }
 
-.wa-scene--chat .wa-scene-mark {
-  top: -10%;
-  left: -2%;
-  transform: rotate(-8deg);
-}
-
-.wa-scene--pause .wa-shot {
-  right: auto;
-  left: -24px;
-}
-
-.wa-scene--pause .wa-scene-mark {
-  top: -10%;
-  right: -2%;
-  transform: rotate(8deg);
-}
-
-.wa-scene--processos .wa-shot {
-  top: -24px;
-  bottom: auto;
-}
-
-.wa-scene--processos .wa-scene-mark {
-  bottom: -10%;
-  left: -2%;
-  transform: rotate(-8deg);
-}
-
-.wa-scene--leads .wa-shot {
-  top: -24px;
-  right: auto;
-  bottom: auto;
-  left: -24px;
-}
-
-.wa-scene--leads .wa-scene-mark {
-  right: -2%;
-  bottom: -10%;
-  transform: rotate(8deg);
-}
-
 @media (max-width: 900px) {
   .wa-scene {
     height: clamp(360px, 58vw, 460px);
@@ -3541,23 +3535,6 @@ body.wa-page #duvidas {
     right: -18px;
     bottom: -18px;
     width: 88%;
-  }
-
-  .wa-scene--pause .wa-shot {
-    right: auto;
-    left: -18px;
-  }
-
-  .wa-scene--processos .wa-shot {
-    top: -18px;
-    bottom: auto;
-  }
-
-  .wa-scene--leads .wa-shot {
-    top: -18px;
-    right: auto;
-    bottom: auto;
-    left: -18px;
   }
 }
 
