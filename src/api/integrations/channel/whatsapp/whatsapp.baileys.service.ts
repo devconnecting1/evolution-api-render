@@ -81,14 +81,16 @@ import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import { Boom } from '@hapi/boom';
 import { createId as cuid } from '@paralleldrive/cuid2';
 import { Instance, Message, Prisma } from '@prisma/client';
-import { registerBotMessageId } from '@utils/botMessageRegistry';
+import { isBotMessageId, registerBotMessageId } from '@utils/botMessageRegistry';
 import { createJid } from '@utils/createJid';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
 import { LidPnPair, toLidPnPair } from '@utils/lidJid';
 import { makeProxyAgent, makeProxyAgentUndici } from '@utils/makeProxyAgent';
+import { sentByForReceived, sentByForSend } from '@utils/message-sender';
 import { databaseErrorCode, recordMessageStoreFailure } from '@utils/messageStoreFailures';
 import { getOnWhatsappCache, saveOnWhatsappCache } from '@utils/onWhatsappCache';
 import { PlaceholderResendTracker } from '@utils/placeholderResendTracker';
+import { RecentWrites } from '@utils/recent-writes';
 import { status } from '@utils/renderStatus';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import { unwrapMessageContent } from '@utils/unwrapMessageContent';
@@ -875,6 +877,9 @@ export class BaileysStartupService extends ChannelStartupService {
     },
   };
 
+  /** Contatos já gravados por este processo (evita repetir escritas idênticas: cada uma acorda o Neon). */
+  private readonly contactWrites = new RecentWrites();
+
   private readonly contactHandle = {
     'contacts.upsert': async (contacts: Contact[]) => {
       try {
@@ -888,8 +893,14 @@ export class BaileysStartupService extends ChannelStartupService {
         if (contactsRaw.length > 0) {
           this.sendDataWebhook(Events.CONTACTS_UPSERT, contactsRaw);
 
-          if (this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS)
-            await this.prismaRepository.contact.createMany({ data: contactsRaw, skipDuplicates: true });
+          if (this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS) {
+            // skipDuplicates já ignorava os existentes; só os ainda não gravados por este processo vão ao banco
+            const fresh = contactsRaw.filter((c: any) => !this.contactWrites.unchanged(`c:${c.remoteJid}`, '1'));
+            if (fresh.length) {
+              await this.prismaRepository.contact.createMany({ data: fresh, skipDuplicates: true });
+              for (const c of fresh) this.contactWrites.remember(`c:${c.remoteJid}`, '1');
+            }
+          }
 
           const usersContacts = contactsRaw.filter((c) => c.remoteJid.includes('@s.whatsapp'));
           if (usersContacts) {
@@ -931,11 +942,17 @@ export class BaileysStartupService extends ChannelStartupService {
           this.sendDataWebhook(Events.CONTACTS_UPDATE, updatedContacts);
           await Promise.all(
             updatedContacts.map(async (contact) => {
-              if (this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS) {
+              const picKey = `p:${contact.remoteJid}`;
+              const picValue = String(contact.profilePicUrl ?? '');
+              if (
+                this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS &&
+                !this.contactWrites.unchanged(picKey, picValue)
+              ) {
                 await this.prismaRepository.contact.updateMany({
                   where: { remoteJid: contact.remoteJid, instanceId: this.instanceId },
                   data: { profilePicUrl: contact.profilePicUrl },
                 });
+                this.contactWrites.remember(picKey, picValue);
               }
 
               if (this.configService.get<Chatwoot>('CHATWOOT').ENABLED && this.localChatwoot?.enabled) {
@@ -979,14 +996,32 @@ export class BaileysStartupService extends ChannelStartupService {
       this.sendDataWebhook(Events.CONTACTS_UPDATE, contactsRaw);
 
       if (this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS) {
-        const updateTransactions = contactsRaw.map((contact) =>
-          this.prismaRepository.contact.upsert({
-            where: { remoteJid_instanceId: { remoteJid: contact.remoteJid, instanceId: contact.instanceId } },
-            create: contact,
-            update: contact,
-          }),
+        // Só os contatos que mudaram desde a última gravação deste processo (o upsert igual não muda nada)
+        const changed = contactsRaw.filter(
+          (contact) =>
+            !this.contactWrites.unchanged(
+              `u:${contact.remoteJid}`,
+              JSON.stringify([contact.pushName ?? null, contact.profilePicUrl ?? null]),
+            ),
         );
-        await this.prismaRepository.$transaction(updateTransactions);
+        if (changed.length) {
+          const updateTransactions = changed.map((contact) =>
+            this.prismaRepository.contact.upsert({
+              where: { remoteJid_instanceId: { remoteJid: contact.remoteJid, instanceId: contact.instanceId } },
+              create: contact,
+              update: contact,
+            }),
+          );
+          await this.prismaRepository.$transaction(updateTransactions);
+          for (const contact of changed) {
+            this.contactWrites.remember(
+              `u:${contact.remoteJid}`,
+              JSON.stringify([contact.pushName ?? null, contact.profilePicUrl ?? null]),
+            );
+            this.contactWrites.remember(`c:${contact.remoteJid}`, '1');
+            this.contactWrites.remember(`p:${contact.remoteJid}`, String(contact.profilePicUrl ?? ''));
+          }
+        }
       }
 
       //const usersContacts = contactsRaw.filter((c) => c.remoteJid.includes('@s.whatsapp'));
@@ -1470,7 +1505,12 @@ export class BaileysStartupService extends ChannelStartupService {
             try {
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { pollUpdates, ...messageData } = messageRaw;
-              const msg = await this.prismaRepository.message.create({ data: messageData });
+              // Who wrote it (src/utils/message-sender.ts): the contact, or another device of the number
+              const sentBy = sentByForReceived(
+                received.key.fromMe,
+                !!received.key.fromMe && (await isBotMessageId(this.instanceId, received.key.id)),
+              );
+              const msg = await this.prismaRepository.message.create({ data: { ...messageData, sentBy } });
 
               const { remoteJid } = received.key;
               const timestamp = msg.messageTimestamp;
@@ -2598,7 +2638,10 @@ export class BaileysStartupService extends ChannelStartupService {
       }
 
       if (this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE) {
-        const msg = await this.prismaRepository.message.create({ data: messageRaw });
+        // Who wrote it: an automatic answer (fromChatbot), the panel (x-wa-origin) or another API call
+        const msg = await this.prismaRepository.message.create({
+          data: { ...messageRaw, sentBy: sentByForSend(fromChatbot) },
+        });
 
         if (isMedia && this.configService.get<S3>('S3').ENABLE) {
           try {
@@ -5362,6 +5405,7 @@ export class BaileysStartupService extends ChannelStartupService {
         instanceId: true,
         source: true,
         contextInfo: true,
+        sentBy: true,
         MessageUpdate: { select: { status: true } },
       },
     });

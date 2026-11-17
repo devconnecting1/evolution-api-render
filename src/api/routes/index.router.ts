@@ -12,6 +12,7 @@ import { auditLogService, prismaRepository, waMonitor } from '@api/server.module
 import { Auth, configService, Database, Facebook, Openai } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
+import { sendOriginMiddleware } from '@utils/message-sender';
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
 import mimeTypes from 'mime-types';
@@ -247,7 +248,8 @@ router
     });
   })
   .use('/instance', new InstanceRouter(configService, ...guards).router)
-  .use('/message', new MessageRouter(...guards).router)
+  // x-wa-origin: panel marks the sends written in the panel (Message.sentBy, src/utils/message-sender.ts)
+  .use('/message', sendOriginMiddleware, new MessageRouter(...guards).router)
   .use('/call', new CallRouter(...guards).router)
   .use('/chat', new ChatRouter(...guards).router)
   .use('/business', new BusinessRouter(...guards).router)

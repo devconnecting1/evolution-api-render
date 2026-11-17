@@ -3,6 +3,8 @@ import '@utils/instrumentSentry';
 
 // Now import other modules
 import { ProviderFiles } from '@api/provider/sessions';
+import { dbActivity } from '@api/repository/db-activity';
+import { redisDailyStore } from '@api/repository/db-activity.redis';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { HttpStatus, router } from '@api/routes/index.router';
 import { eventManager, instanceDatabases, processosService, waMonitor } from '@api/server.module';
@@ -176,6 +178,9 @@ async function bootstrap() {
   }
 
   server.listen(httpServer.PORT, () => logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT));
+
+  // Acordadas do banco: resumo diário no Redis (sobrevive aos deploys; GET /admin/db-activity)
+  dbActivity.attachDailyStore(redisDailyStore());
 
   // "Processos": in-process ticker (5 min; touches the database only when something is due)
   if (configService.get<Processos>('PROCESSOS').TICKER) processosService.startTicker();

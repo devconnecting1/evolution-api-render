@@ -93,6 +93,10 @@
       "dest": "/landing/novidades.html"
     },
     {
+      "src": "^/marca/?$",
+      "dest": "/landing/marca.html"
+    },
+    {
       "src": "^/privacidade/?$",
       "dest": "/landing/privacidade.html"
     },

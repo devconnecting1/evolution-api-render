@@ -1,0 +1,19 @@
+/* whatsai-patch:origem-mensagens - "IA" label on the bubbles of AI messages (Conversas).
+   Only var(--m-*) tokens, so light and dark both apply. */
+#root .wa-bubble-ai {
+  display: inline-block;
+  margin: 0 0 2px;
+  padding: 0 6px;
+  border: 1px solid var(--m-border);
+  border-radius: 999px;
+  background: var(--m-card);
+  color: var(--m-text-2);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  vertical-align: top;
+}
+#root .wa-bubble-ai + .wa-bubble-body {
+  display: block;
+}
