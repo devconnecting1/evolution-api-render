@@ -6,6 +6,8 @@ import { ConfigService } from '@config/env.config';
 import { Logger } from '@config/logger.config';
 import { IntegrationSession } from '@prisma/client';
 
+import { currentReplyTicket } from './reply-ticket';
+
 /**
  * Base class for all chatbot service implementations
  * Contains common methods shared across different chatbot integrations
@@ -181,6 +183,18 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
   }
 
   /**
+   * Right before a WhatsApp message of a coordinated reply goes out (see reply-ticket.ts): false when the reply was
+   * cancelled because the customer wrote again meanwhile (it is merged into the next reply). The first successful
+   * call commits the reply: from then on it is sent to the end.
+   */
+  protected claimReplySend(remoteJid: string): boolean {
+    const ticket = currentReplyTicket();
+    if (!ticket || ticket.tryCommit()) return true;
+    this.logger.log(`Reply to ${remoteJid} not sent: the customer wrote again, answering everything together`);
+    return false;
+  }
+
+  /**
    * End of a bot turn (after the last 'paused'): unless the instance is set to always online, tell WhatsApp this
    * device is offline again, so the phone of the office keeps getting push notifications (#2469, #2537).
    * Baileys only; a failure here never affects the answer.
@@ -247,6 +261,8 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
           this.logger.warn(`[BaseChatbot] Human took over ${remoteJid}, remaining media discarded`);
           return sent;
         }
+
+        if (!this.claimReplySend(remoteJid)) return sent;
 
         // Handle sending the media
         try {
@@ -340,6 +356,9 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
 
     this.logger.debug(`[BaseChatbot] Sending single message with linkPreview: ${linkPreview}`);
 
+    // Cancelled while the answer was generated: no typing indicator, nothing sent
+    if (currentReplyTicket()?.cancelled) return false;
+
     if (instance.integration === Integration.WHATSAPP_BAILEYS) {
       await instance.client.presenceSubscribe(remoteJid);
       await instance.client.sendPresenceUpdate('composing', remoteJid);
@@ -349,6 +368,13 @@ export abstract class BaseChatbotService<BotType = any, SettingsType = any> {
 
     if (await this.shouldStopSending(instance, remoteJid)) {
       this.logger.warn(`[BaseChatbot] Human took over ${remoteJid}, remaining message parts discarded`);
+      if (instance.integration === Integration.WHATSAPP_BAILEYS) {
+        await instance.client.sendPresenceUpdate('paused', remoteJid);
+      }
+      return false;
+    }
+
+    if (!this.claimReplySend(remoteJid)) {
       if (instance.integration === Integration.WHATSAPP_BAILEYS) {
         await instance.client.sendPresenceUpdate('paused', remoteJid);
       }
