@@ -2,7 +2,7 @@ import { localToUtc, parseStart } from '@utils/agenda';
 import { z } from 'zod';
 
 import { resolveInstance } from '../mcp.instance';
-import { contactArg, defineTool, instanceArg, READ_ONLY } from '../mcp.tool';
+import { changedArgs, contactArg, defineTool, instanceArg, READ_ONLY } from '../mcp.tool';
 import { jsonResult, McpToolError, normalizeContactJid } from '../mcp.util';
 
 const agendaError = (error: any): never => {
@@ -98,6 +98,15 @@ export const createAppointment = defineTool({
       .describe('Permitir horário fora da disponibilidade (ainda sem sobrepor outro agendamento). Padrão: não.'),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  confirm: {
+    when: (args) => args.notify_client !== false,
+    preview: async (args, ctx) => ({
+      action: 'criar este agendamento e ENVIAR a confirmação ao cliente pelo WhatsApp',
+      instance: (await resolveInstance(ctx, args.instance)).name,
+      contact: normalizeContactJid(args.contact),
+      appointment: changedArgs(args, ['instance', 'contact', 'confirm']),
+    }),
+  },
   run: async (args, ctx) => {
     const resolved = await resolveInstance(ctx, args.instance);
     const settings = await ctx.deps.agenda.getSettings(resolved.id);
@@ -130,6 +139,14 @@ export const cancelAppointment = defineTool({
     notify_client: z.boolean().optional().describe('Avisar o cliente (padrão: sim).'),
   },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
+  confirm: {
+    when: (args) => args.notify_client !== false,
+    preview: async (args, ctx) => ({
+      action: 'cancelar este agendamento e AVISAR o cliente pelo WhatsApp',
+      instance: (await resolveInstance(ctx, args.instance)).name,
+      id: args.id,
+    }),
+  },
   run: async ({ instance, id, notify_client }, ctx) => {
     const resolved = await resolveInstance(ctx, instance);
     const appointment = await ctx.deps.agenda
@@ -309,6 +326,16 @@ export const updateAppointment = defineTool({
       .describe('Permitir horário fora da disponibilidade (ainda sem sobrepor outro agendamento). Padrão: não.'),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  confirm: {
+    // only a new start is announced to the customer (status, type and notes are internal)
+    when: (args) => args.start !== undefined && args.notify_client !== false,
+    preview: async (args, ctx) => ({
+      action: 'remarcar este agendamento e AVISAR o cliente pelo WhatsApp',
+      instance: (await resolveInstance(ctx, args.instance)).name,
+      id: args.id,
+      changes: changedArgs(args, ['instance', 'id', 'confirm']),
+    }),
+  },
   run: async (args, ctx) => {
     if (args.start === undefined && !args.status && !args.type && args.notes === undefined) {
       throw new McpToolError('nada para alterar: informe start, status, type ou notes.');

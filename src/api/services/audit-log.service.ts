@@ -7,7 +7,7 @@
  */
 import { AUDIT_TYPE_LABEL, AUDIT_TYPES, AuditType, csvCell } from '@utils/audit-log';
 
-export type AuditActorKind = 'owner' | 'team' | 'client' | 'instance';
+export type AuditActorKind = 'owner' | 'team' | 'client' | 'instance' | 'mcp';
 
 export type AuditEntry = {
   actor: string;
@@ -200,6 +200,7 @@ export class AuditLogService {
       team: 'Equipe',
       client: 'Cliente',
       instance: 'Token da instância',
+      mcp: 'MCP',
     };
     const lines = rows.map((r: any) => {
       const v = AuditLogService.view(r);

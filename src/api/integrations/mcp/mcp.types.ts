@@ -89,6 +89,8 @@ export interface McpDeps {
   /** Saúde das chaves OpenAI (OpenaiHealthService). Optional: tests without it get a clear error. */
   openaiHealth?: Pick<import('@api/services/openai-health.service').OpenaiHealthService, 'overview' | 'test'>;
   isBotMessageId: (instanceId: string, messageId: string) => Promise<boolean>;
+  /** "Registro de ações" (AuditLogService): the write tools are recorded with the actor kind "mcp". */
+  audit?: Pick<import('@api/services/audit-log.service').AuditLogService, 'record'>;
   config: McpConfig;
   logger: McpLogger;
 }
@@ -96,4 +98,6 @@ export interface McpDeps {
 export interface McpContext {
   auth: McpAuth;
   deps: McpDeps;
+  /** Instances resolved during one tool call (mcp.instance.ts): the lookup is made once per call. */
+  instanceCache?: Map<string, Promise<any>>;
 }

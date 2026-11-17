@@ -10,6 +10,7 @@ import {
   isoFromSeconds,
   jsonResult,
   logMessage,
+  maskUrl,
   McpToolError,
   mediaInfo,
   messageText,
@@ -318,7 +319,8 @@ export const getMedia = defineTool({
       fromMe: !!stored.key?.fromMe,
       timestamp: isoFromSeconds(stored.messageTimestamp),
       ...info,
-      mediaUrl: typeof stored.message?.mediaUrl === 'string' ? stored.message.mediaUrl : undefined,
+      // a signed storage link opens the file for anyone who has it: only its shape is shown
+      mediaUrl: typeof stored.message?.mediaUrl === 'string' ? maskUrl(stored.message.mediaUrl) : undefined,
     };
 
     const wanted = isImage || !!include_base64;
@@ -398,6 +400,20 @@ export const sendTextMessage = defineTool({
       .describe('Espera com "digitando..." antes de enviar, em ms (0 a 10000).'),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  confirm: {
+    preview: async ({ instance, number, text, delay_ms }, ctx) => {
+      const recipient = normalizeRecipient(number);
+      const resolved = await resolveLoadedInstance(ctx, instance);
+      return {
+        action: 'enviar esta mensagem de texto pelo WhatsApp',
+        instance: resolved.name,
+        to: recipient,
+        text,
+        delay_ms: delay_ms ?? null,
+        connected: connectionStateOf(resolved) === 'open',
+      };
+    },
+  },
   run: async ({ instance, number, text, delay_ms }, ctx) => {
     const recipient = normalizeRecipient(number);
     const resolved = await resolveLoadedInstance(ctx, instance);
