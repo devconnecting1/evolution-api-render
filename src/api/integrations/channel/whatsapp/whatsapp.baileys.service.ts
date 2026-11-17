@@ -81,11 +81,12 @@ import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import { Boom } from '@hapi/boom';
 import { createId as cuid } from '@paralleldrive/cuid2';
 import { Instance, Message, Prisma } from '@prisma/client';
-import { registerBotMessageId } from '@utils/botMessageRegistry';
+import { isBotMessageId, registerBotMessageId } from '@utils/botMessageRegistry';
 import { createJid } from '@utils/createJid';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
 import { LidPnPair, toLidPnPair } from '@utils/lidJid';
 import { makeProxyAgent, makeProxyAgentUndici } from '@utils/makeProxyAgent';
+import { sentByForReceived, sentByForSend } from '@utils/message-sender';
 import { databaseErrorCode, recordMessageStoreFailure } from '@utils/messageStoreFailures';
 import { getOnWhatsappCache, saveOnWhatsappCache } from '@utils/onWhatsappCache';
 import { PlaceholderResendTracker } from '@utils/placeholderResendTracker';
@@ -1470,7 +1471,12 @@ export class BaileysStartupService extends ChannelStartupService {
             try {
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { pollUpdates, ...messageData } = messageRaw;
-              const msg = await this.prismaRepository.message.create({ data: messageData });
+              // Who wrote it (src/utils/message-sender.ts): the contact, or another device of the number
+              const sentBy = sentByForReceived(
+                received.key.fromMe,
+                !!received.key.fromMe && (await isBotMessageId(this.instanceId, received.key.id)),
+              );
+              const msg = await this.prismaRepository.message.create({ data: { ...messageData, sentBy } });
 
               const { remoteJid } = received.key;
               const timestamp = msg.messageTimestamp;
@@ -2598,7 +2604,10 @@ export class BaileysStartupService extends ChannelStartupService {
       }
 
       if (this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE) {
-        const msg = await this.prismaRepository.message.create({ data: messageRaw });
+        // Who wrote it: an automatic answer (fromChatbot), the panel (x-wa-origin) or another API call
+        const msg = await this.prismaRepository.message.create({
+          data: { ...messageRaw, sentBy: sentByForSend(fromChatbot) },
+        });
 
         if (isMedia && this.configService.get<S3>('S3').ENABLE) {
           try {
@@ -5362,6 +5371,7 @@ export class BaileysStartupService extends ChannelStartupService {
         instanceId: true,
         source: true,
         contextInfo: true,
+        sentBy: true,
         MessageUpdate: { select: { status: true } },
       },
     });
