@@ -198,3 +198,22 @@ describe('OpenAI controller: groups', () => {
     assert.equal(reachedSession, true);
   });
 });
+
+describe('OpenAI controller: unreadable messages', () => {
+  test('a reaction is not "unknown" content: it is dropped before the debounce', async () => {
+    const { OpenaiController } = await import('@api/integrations/chatbot/openai/controllers/openai.controller');
+    const bot: any = new OpenaiController(
+      new OpenaiService({ waInstances: {} } as any, {} as any, configService),
+      {} as any,
+      { waInstances: {} } as any,
+    );
+    const reaction = {
+      key: { id: 'R1', remoteJid: REMOTE_JID, fromMe: false },
+      message: { reactionMessage: { text: '🙏' } },
+    };
+    assert.equal(bot.getConversationContent(reaction), undefined);
+    const typed = { key: { id: 'R2', remoteJid: REMOTE_JID, fromMe: false }, message: { conversation: 'unknown' } };
+    assert.equal(bot.getConversationContent(typed), 'unknown', 'the customer really typed it');
+    assert.equal(bot.skipsUnreadableMessages(), true);
+  });
+});

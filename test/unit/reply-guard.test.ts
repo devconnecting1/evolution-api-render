@@ -5,6 +5,7 @@ import { describe, test } from 'node:test';
 
 import {
   analyzeReply,
+  dropRepeatedWithin,
   FALLBACK_ACKNOWLEDGEMENT,
   guardReply,
   isQuestion,
@@ -29,6 +30,14 @@ describe('reply guard: repetition', () => {
         candidate,
       );
     }
+  });
+
+  test('the very same short question is a repetition too', () => {
+    const issues = analyzeReply('Certo. Como você se chama?', ['Certo. Como você se chama?']);
+    assert.deepEqual(
+      issues.map((issue) => issue.kind),
+      ['repeated_question'],
+    );
   });
 
   test('a different question is not a repetition', () => {
@@ -86,6 +95,20 @@ describe('reply guard: repetition', () => {
     assert.equal(result.fallback, true);
   });
 
+  test('never the same message as an earlier reply, even when only a short sentence is left', async () => {
+    const previous = ['Está tudo anotado. A equipe vai falar com você em breve.', 'Está tudo anotado.'];
+    const result = await guardReply({
+      candidate: 'Está tudo anotado. A equipe vai falar com você em breve.',
+      previousReplies: previous,
+    });
+    assert.equal(result.text, FALLBACK_ACKNOWLEDGEMENT);
+    const again = await guardReply({
+      candidate: 'Está tudo anotado.',
+      previousReplies: [...previous, FALLBACK_ACKNOWLEDGEMENT],
+    });
+    assert.equal(again.text, 'Combinado!');
+  });
+
   test('a regeneration that fails keeps the first candidate (minus repetitions)', async () => {
     const result = await guardReply({
       candidate: 'Anotado. Qual o nome do seu plano de saúde?',
@@ -138,10 +161,33 @@ describe('reply guard: shape', () => {
     assert.equal(isQuestion('Qual o seu nome.'), false);
   });
 
+  test('dots inside numbers never split a sentence (OAB, money, process numbers)', () => {
+    assert.deepEqual(
+      splitSentences('O registro é OAB/RJ 000.000. Ficou R$ 1.500,00 e o nº 0001234-56.2026.8.19.0001?'),
+      ['O registro é OAB/RJ 000.000.', 'Ficou R$ 1.500,00 e o nº 0001234-56.2026.8.19.0001?'],
+    );
+    assert.equal(
+      keepLastQuestion('O registro é OAB/RJ 000.000. Qual o seu nome?').text,
+      'O registro é OAB/RJ 000.000. Qual o seu nome?',
+    );
+  });
+
   test('at most one question: the last one is kept', () => {
     const { text, trimmed } = keepLastQuestion('Entendi. Qual o seu nome? E a sua cidade? Qual o assunto?');
     assert.equal(text, 'Entendi. Qual o assunto?');
     assert.equal(trimmed, 2);
+  });
+
+  test('a follow-up question keeps its main question ("Se sim, ..."), never alone', () => {
+    assert.equal(keepLastQuestion('O bebê já nasceu? Se sim, em que mês?').text, 'O bebê já nasceu?');
+    assert.equal(keepLastQuestion('Qual o seu nome? Em qual cidade? Caso não, tudo bem?').text, 'Em qual cidade?');
+  });
+
+  test('a sentence said twice in the same reply is kept once', () => {
+    const sentence = 'Vou explicar com calma como funciona o atendimento do escritório.';
+    const { text, removed } = dropRepeatedWithin(`${sentence} ${sentence} ${sentence} Qual o seu nome?`);
+    assert.equal(text, `${sentence} Qual o seu nome?`);
+    assert.equal(removed, 2);
   });
 
   test('long replies are cut at a sentence boundary and keep the question', () => {

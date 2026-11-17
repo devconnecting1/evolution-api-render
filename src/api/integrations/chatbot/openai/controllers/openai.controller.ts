@@ -18,6 +18,10 @@ import { BaseChatbotController } from '../../base-chatbot.controller';
 import { ReplyMeta } from '../../reply-ticket';
 import { extractAdReferral } from '../ai-context';
 
+/** The customer really typed "unknown". */
+const hasTypedUnknown = (msg: any) =>
+  msg?.message?.conversation === 'unknown' || msg?.message?.extendedTextMessage?.text === 'unknown';
+
 export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto> {
   constructor(
     private readonly openaiService: OpenaiService,
@@ -92,7 +96,18 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
 
   // Video, sticker, location and shared contact reach the model as a clear sentence (other bots keep the raw text)
   protected getConversationContent(msg: any): string {
-    return describeOpenaiMessage(msg) ?? getConversationMessage(msg);
+    const described = describeOpenaiMessage(msg);
+    if (described) return described;
+    const content = getConversationMessage(msg);
+    // getConversationMessage returns the literal "unknown" for types it cannot read (reaction, poll...): that is
+    // not something the customer wrote, and the model used to answer it
+    if (content === 'unknown' && !hasTypedUnknown(msg)) return undefined;
+    return content;
+  }
+
+  // Reactions and other unreadable messages never reach the model (alone or joined to a burst)
+  protected skipsUnreadableMessages(): boolean {
+    return true;
   }
 
   // A reply to an older message tells the model what is being answered (#2078): `[respondendo a: "..."]`
