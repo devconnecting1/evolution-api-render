@@ -307,7 +307,7 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     },
   };
 
-  return { deps, calls, sessions, usageTables, agendaTables, agendaSent };
+  return { deps, calls, sessions, records, usageTables, agendaTables, agendaSent };
 }
 
 // --------------------------------------------------------------------------------------------- http helpers
@@ -317,13 +317,14 @@ type Harness = {
   server: Server;
   calls: Calls;
   sessions: any[];
+  records: any[];
   usageTables: ReturnType<typeof createUsageTables>;
   agendaTables: any;
   agendaSent: { jid: string; text: string }[];
 };
 
 async function startServer(overrides: Partial<McpDeps['config']> = {}, limiter?: FailedAuthLimiter): Promise<Harness> {
-  const { deps, calls, sessions, usageTables, agendaTables, agendaSent } = fakeDeps(overrides);
+  const { deps, calls, sessions, records, usageTables, agendaTables, agendaSent } = fakeDeps(overrides);
   const app = express();
   app.use(express.json());
   app.use(
@@ -336,7 +337,16 @@ async function startServer(overrides: Partial<McpDeps['config']> = {}, limiter?:
   });
   const { port } = server.address() as AddressInfo;
 
-  return { url: `http://127.0.0.1:${port}/mcp`, server, calls, sessions, usageTables, agendaTables, agendaSent };
+  return {
+    url: `http://127.0.0.1:${port}/mcp`,
+    server,
+    calls,
+    sessions,
+    records,
+    usageTables,
+    agendaTables,
+    agendaSent,
+  };
 }
 
 let nextRpcId = 1;
@@ -596,17 +606,68 @@ describe('MCP: tools', () => {
     assert.equal(json.total, 2);
     const [incoming, image] = json.messages;
     assert.equal(incoming.messageId, 'MSG-IN');
-    assert.equal(incoming.sender, 'contact');
+    assert.equal(incoming.sender, 'cliente');
     assert.equal(incoming.senderName, 'Maria');
     assert.equal(incoming.text, 'Olá, quero marcar uma consulta');
     assert.equal(incoming.hasMedia, false);
 
-    assert.equal(image.sender, 'me');
+    assert.equal(image.sender, 'equipe_celular', 'fromMe with an id that is not 3EB0: the phone');
     assert.equal(image.hasMedia, true);
     assert.equal(image.media.kind, 'image');
     assert.equal(image.media.sizeBytes, 2048);
     assert.equal(image.text, 'Foto');
     assert.equal(image.status, 'READ');
+  });
+
+  test('get_messages tells who wrote each message: stored value, AI answer of the session, or not identified', async () => {
+    const jid = '5511988887777@s.whatsapp.net';
+    const extra = [
+      {
+        id: 'db3',
+        key: { id: '3EB0PANEL', remoteJid: jid, fromMe: true },
+        sentBy: 'panel',
+        message: { conversation: 'Aqui é a Ana' },
+      },
+      {
+        id: 'db4',
+        key: { id: '3EB0AI', remoteJid: jid, fromMe: true },
+        sentBy: 'ai',
+        message: { conversation: 'Posso ajudar?' },
+      },
+      {
+        id: 'db5',
+        key: { id: '3EB0OLD1', remoteJid: jid, fromMe: true },
+        message: { conversation: 'Qual o melhor horário?' },
+      },
+      { id: 'db6', key: { id: '3EB0OLD2', remoteJid: jid, fromMe: true }, message: { conversation: 'Te ligo depois' } },
+      {
+        id: 'db7',
+        key: { id: '3EB0API', remoteJid: jid, fromMe: true },
+        sentBy: 'api',
+        message: { conversation: 'Lembrete' },
+      },
+    ];
+    h.records.push(...extra);
+    h.sessions[0].context = { history: [{ role: 'assistant', content: 'Qual o melhor horário?' }] };
+    try {
+      const { json, result } = await callTool(h.url, 'get_messages', { instance: 'escritorio', contact: jid });
+      assert.ok(!result.isError, JSON.stringify(result));
+      const byId = Object.fromEntries(json.messages.map((m: any) => [m.messageId, m.sender]));
+      assert.deepEqual(
+        {
+          panel: byId['3EB0PANEL'],
+          ai: byId['3EB0AI'],
+          oldAi: byId['3EB0OLD1'],
+          old: byId['3EB0OLD2'],
+          api: byId['3EB0API'],
+        },
+        { panel: 'equipe_painel', ai: 'ia', oldAi: 'ia', old: 'nao_identificado', api: 'api' },
+      );
+      assert.doesNotMatch(json.note, /10 min/);
+    } finally {
+      h.records.splice(h.records.length - extra.length, extra.length);
+      delete h.sessions[0].context;
+    }
   });
 
   test('get_messages needs a loaded instance', async () => {
