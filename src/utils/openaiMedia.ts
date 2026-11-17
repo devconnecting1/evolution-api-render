@@ -87,6 +87,8 @@ export const MEDIA_TEXT = {
   audio: '[o contato enviou um áudio]',
   audioTooLong: (minutes: number) => `[o contato enviou um áudio de ${minutes} min; a equipe vai ouvir]`,
   image: '[o contato enviou uma imagem]',
+  imageUnreadable:
+    '[o contato enviou uma imagem que não pôde ser aberta; peça que descreva o que ela mostra ou envie de novo]',
   video: '[o contato enviou um vídeo]',
   sticker: '[figurinha]',
 };

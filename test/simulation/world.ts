@@ -61,7 +61,7 @@ export class World {
   constructor(
     readonly clock: VirtualClock,
     model: any,
-    options: { apiKey?: string; model?: string; realModel?: boolean } = {},
+    options: { apiKey?: string; model?: string; realModel?: boolean; reasoningEffort?: string | null } = {},
   ) {
     this.prisma = createSimPrisma(options.apiKey ?? 'sk-sim-not-real');
     const waInstances: Record<string, any> = {};
@@ -78,10 +78,13 @@ export class World {
     this.chatbot = new ChatbotController(this.prisma, { waInstances } as any);
     serverModuleOverrides.openaiController = { emit: (data: any) => this.controller.emit(data) };
     this.modelName = options.model ?? 'sim-triage';
+    // With the real model the bot mirrors production: room for reasoning and the level set on the bot
+    this.realBot = options.realModel ? { maxTokens: 8000, reasoningEffort: options.reasoningEffort ?? null } : null;
     this.waInstances = waInstances;
   }
 
   private readonly modelName: string;
+  private readonly realBot: { maxTokens: number; reasoningEffort: string | null } | null;
   private readonly waInstances: Record<string, any>;
 
   /** Creates an office instance (bot + settings + limits) and its channel. */
@@ -104,7 +107,8 @@ export class World {
         systemMessages: [SYSTEM_PROMPT],
         assistantMessages: [],
         userMessages: [],
-        maxTokens: 800,
+        maxTokens: this.realBot?.maxTokens ?? 800,
+        ...(this.realBot ? { reasoningEffort: this.realBot.reasoningEffort } : {}),
         keywordFinish: '#sair',
         stopBotFromMe: true,
         listeningFromMe: false,

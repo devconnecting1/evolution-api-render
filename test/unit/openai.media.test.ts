@@ -493,6 +493,34 @@ describe('OpenaiService: images and other media', { concurrency: true }, () => {
     assert.deepEqual(t.lastUserContent(), [{ type: 'image_url', image_url: { url: `data:image/png;base64,${PNG}` } }]);
   });
 
+  test('model rejects the image (400): retried once with it described, answer sent instead of the failure', async () => {
+    const t = setup({ bot: { readImages: true } });
+    t.openai.reply(
+      apiError(400, 'You uploaded an unsupported image. Please make sure your image is valid.'),
+      'pode descrever?',
+    );
+    const msg = imageMsg(REMOTE_JID, { base64: PNG, mimetype: 'image/png' });
+    await t.ask(`imageMessage|${msg.key.id}`, msg);
+
+    assert.equal(t.openai.requests.length, 2);
+    assert.equal(t.openai.requests[0].messages.at(-1).content[0].type, 'image_url');
+    assert.deepEqual(t.openai.requests[1].messages.at(-1).content, [
+      {
+        type: 'text',
+        text: '[o contato enviou uma imagem que não pôde ser aberta; peça que descreva o que ela mostra ou envie de novo]',
+      },
+    ]);
+    assert.deepEqual(texts(t.waInstance), ['pode descrever?']);
+  });
+
+  test('an error that is not about the image is not retried', async () => {
+    const t = setup({ bot: { readImages: true } });
+    t.openai.reply(apiError(400, 'Something else went wrong.'));
+    const msg = imageMsg(REMOTE_JID, { base64: PNG, mimetype: 'image/png' });
+    await t.ask(`imageMessage|${msg.key.id}`, msg);
+    assert.equal(t.openai.requests.length, 1);
+  });
+
   test('video content reaching the service is described (caption kept)', async () => {
     const t = setup();
     await t.ask('videoMessage|VID1|olha o vídeo', { key: { id: 'VID1' }, message: { videoMessage: {} } });
