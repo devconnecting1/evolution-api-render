@@ -11,6 +11,7 @@ import { BusinessController } from './controllers/business.controller';
 import { CallController } from './controllers/call.controller';
 import { ChatController } from './controllers/chat.controller';
 import { ExportController } from './controllers/export.controller';
+import { ReviewExportController } from './controllers/review-export.controller';
 import { GroupController } from './controllers/group.controller';
 import { InstanceController } from './controllers/instance.controller';
 import { LabelController } from './controllers/label.controller';
@@ -56,6 +57,7 @@ import { BillingService } from './services/billing.service';
 import { CacheService } from './services/cache.service';
 import { ClientAccessService } from './services/client-access.service';
 import { ExportService } from './services/export.service';
+import { ReviewExportService } from './services/review-export.service';
 import { GoogleCalendarService } from './services/google-calendar.service';
 import { GoogleLoginService } from './services/google-login.service';
 import { LeadsService } from './services/leads.service';
@@ -180,6 +182,9 @@ export const usageController = new UsageController(usageService, prismaRepositor
 /** "Exportar dados da instância": read-only ZIP of the instance data (src/api/services/export.service.ts). */
 export const exportService = new ExportService(prismaRepository);
 export const exportController = new ExportController(exportService, prismaRepository);
+/** "Exportar conversas para revisão": masked transcripts of a period for the review of the AI (admin only). */
+export const reviewExportService = new ReviewExportService(prismaRepository);
+export const reviewExportController = new ReviewExportController(reviewExportService, prismaRepository);
 
 // "Processos" (DataJud + DJEN): one instance (in-memory ticker state, rate limits, AI context provider)
 const processosConfig = configService.get<Processos>('PROCESSOS');

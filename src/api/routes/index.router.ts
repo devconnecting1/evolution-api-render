@@ -43,6 +43,7 @@ import { MessageRouter } from './sendMessage.router';
 import { SettingsRouter } from './settings.router';
 import { TeamRouter } from './team.router';
 import { TemplateRouter } from './template.router';
+import { ReviewExportRouter } from './review-export.router';
 import { UsageRouter } from './usage.router';
 import { ViewsRouter } from './view.router';
 
@@ -259,6 +260,7 @@ router
   .use('/proxy', new ProxyRouter(...guards).router)
   .use('/label', new LabelRouter(...guards).router)
   .use('/usage', new UsageRouter(...guards).router)
+  .use('/export', new ReviewExportRouter(...guards).router)
   .use('/overview', new OverviewRouter(...guards).router)
   .use('/processos', new ProcessosRouter(...guards).router)
   .use('/leads', new LeadsRouter(...guards).router)
