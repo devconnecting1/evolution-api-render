@@ -1,0 +1,553 @@
+/*
+ * WhatsAI: pagina /marca. Usa os tokens globais (assets/tokens.css), o cabecalho e o rodape de assets/site-shell.css
+ * e a escala tipografica da documentacao. As classes .mk-* ficam aqui e so valem em body.marca-page.
+ *
+ * Estrutura no formato das paginas de marca: hero curto com atalhos, uma secao por assunto (texto a esquerda,
+ * exemplos a direita no computador) e um bloco de downloads com SVG e PNG. Cartoes com fundo suave e canto de
+ * 14 px, sem borda; o verde aparece so no simbolo e na amostra de cor de estado.
+ */
+
+body.marca-page {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
+  -webkit-font-smoothing: antialiased;
+}
+
+.marca-page *,
+.marca-page *::before,
+.marca-page *::after {
+  box-sizing: border-box;
+}
+
+.marca-page .sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.marca-page .skip {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  padding: 10px 16px;
+  border-radius: 2px;
+  background: var(--c-btn-bg);
+  color: var(--c-btn-text);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.marca-page .skip:focus {
+  top: 10px;
+}
+
+.marca-page :focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 3px;
+}
+
+.mk .wa-ico {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mk [id] {
+  scroll-margin-top: 72px;
+}
+
+.mk-wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-inline: 20px;
+}
+
+@media (min-width: 1200px) {
+  .mk-wrap {
+    padding-inline: 40px;
+  }
+}
+
+/* ------------------------------------------------------------------ hero */
+.mk-hero {
+  padding-block: clamp(56px, 7vw, 104px) clamp(40px, 5vw, 64px);
+}
+
+.mk-eyebrow {
+  margin: 0 0 14px;
+  color: var(--c-text-3);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mk-title {
+  margin: 0;
+  font-size: var(--type-display-size);
+  font-weight: var(--type-display-weight);
+  line-height: var(--type-display-lh);
+  letter-spacing: var(--type-display-ls);
+}
+
+.mk-lead {
+  max-width: 640px;
+  margin: 20px 0 0;
+  color: var(--c-text-2);
+}
+
+.mk-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 24px;
+  margin-top: 28px;
+}
+
+.mk-btn {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--c-btn-bg);
+  color: var(--c-btn-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.mk-btn:hover {
+  background: var(--c-btn-hover);
+}
+
+.mk-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mk-jump a {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--c-text-2);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.mk-jump a:hover {
+  background: var(--c-bg-soft);
+  color: var(--c-text);
+}
+
+/* ------------------------------------------------------------------ secoes */
+.mk-section {
+  padding-block: clamp(40px, 5vw, 72px);
+}
+
+.mk-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 24px clamp(32px, 6vw, 96px);
+}
+
+.mk-copy h2 {
+  margin: 0;
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: var(--type-title-lh);
+  letter-spacing: var(--type-title-ls);
+}
+
+.mk-copy p {
+  max-width: 560px;
+  margin: 14px 0 0;
+  color: var(--c-text-2);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.mk-section > .mk-wrap:not(.mk-split) > .mk-copy {
+  margin-bottom: 28px;
+}
+
+/* ------------------------------------------------------------------ cartoes de exemplo */
+.mk-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mk-tiles--sym {
+  grid-template-columns: repeat(2, minmax(0, 220px));
+}
+
+.mk-tile {
+  display: flex;
+  min-height: 200px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 0;
+  padding: 32px 24px 18px;
+  border-radius: 14px;
+}
+
+.mk-tile img {
+  width: min(100%, 220px);
+  height: auto;
+}
+
+.mk-tile .mk-sym {
+  width: 96px;
+  border-radius: 22px;
+}
+
+.mk-tile figcaption {
+  margin-top: auto;
+  color: var(--c-text-3);
+  font-size: 12px;
+}
+
+/* os exemplos mostram o logo como ele deve aparecer: o fundo do cartao nao muda com o tema da pagina */
+.mk-tile--light {
+  background: #f0f0f0;
+}
+
+.mk-tile--light figcaption {
+  color: #6b6b6b;
+}
+
+.mk-tile--dark {
+  background: #0d0d0d;
+  box-shadow: inset 0 0 0 1px var(--c-border);
+}
+
+.mk-tile--dark figcaption {
+  color: #b3b3b3;
+}
+
+.mk-tile--space {
+  grid-column: 1 / -1;
+  background: #f0f0f0;
+}
+
+.mk-tile--space figcaption {
+  color: #6b6b6b;
+}
+
+.mk-space {
+  display: inline-flex;
+  padding: 26px;
+  border: 1px dashed #8f8f8f;
+  background: #ffffff;
+}
+
+.mk-space img {
+  width: 150px;
+}
+
+/* ------------------------------------------------------------------ cores */
+.mk-colors {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-colors li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 12px 16px;
+  border-radius: 14px;
+  background: var(--c-bg-soft);
+  font-size: 14px;
+}
+
+.mk-swatch {
+  display: block;
+  height: 96px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--c-border);
+}
+
+.mk-sw-ink {
+  background: #0d0d0d;
+}
+
+.mk-sw-paper {
+  background: #ffffff;
+}
+
+.mk-sw-soft {
+  background: #f0f0f0;
+}
+
+.mk-sw-mid {
+  background: #4d4d4d;
+}
+
+.mk-sw-ok {
+  background: #0e7a4d;
+}
+
+.mk-colors code {
+  color: var(--c-text-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.mk-colors small {
+  color: var(--c-text-3);
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ tipografia */
+.mk-type {
+  padding: clamp(20px, 3vw, 36px);
+  border-radius: 14px;
+  background: var(--c-bg-soft);
+}
+
+.mk-type p {
+  margin: 0;
+}
+
+.mk-type-display {
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+
+.mk-type-heading {
+  margin-top: 18px !important;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.mk-type-body {
+  max-width: 520px;
+  margin-top: 10px !important;
+  color: var(--c-text-2);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.mk-type-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 22px !important;
+  color: var(--c-text-3);
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ nome e o que evitar */
+.mk-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mk-do,
+.mk-dont,
+.mk-avoid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 20px;
+  border-radius: 14px;
+  background: var(--c-bg-soft);
+  list-style: none;
+  font-size: 15px;
+}
+
+.mk-do li,
+.mk-dont li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.mk-do .wa-ico {
+  margin-top: 4px;
+  color: var(--c-ok);
+}
+
+.mk-dont .wa-ico {
+  margin-top: 4px;
+  color: var(--c-bad-border);
+}
+
+.mk-avoid {
+  padding-left: 40px;
+  list-style: disc;
+  color: var(--c-text-2);
+}
+
+/* ------------------------------------------------------------------ capturas */
+.mk-shots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mk-shot {
+  margin: 0;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--c-bg-muted);
+}
+
+.mk-shot a {
+  display: block;
+}
+
+.mk-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+}
+
+.mk-shot figcaption {
+  margin-top: 10px;
+  color: var(--c-text-3);
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ downloads */
+.mk-files {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-file {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 12px 16px;
+  border-radius: 14px;
+  background: var(--c-bg-soft);
+}
+
+.mk-file-art {
+  display: grid;
+  height: 140px;
+  place-items: center;
+  border-radius: 10px;
+}
+
+.mk-file-art img {
+  width: 70%;
+  height: auto;
+}
+
+.mk-file-art .mk-sym {
+  width: 64px;
+  border-radius: 14px;
+}
+
+.mk-file p {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding-inline: 4px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.mk-file small {
+  color: var(--c-text-3);
+  font-size: 13px;
+}
+
+.mk-file-dl {
+  display: flex;
+  gap: 8px;
+  padding-inline: 4px;
+}
+
+.mk-dl {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: 999px;
+  color: var(--c-text);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.mk-dl:hover {
+  background: var(--c-bg);
+}
+
+.mk-dl .wa-ico {
+  width: 14px;
+  height: 14px;
+}
+
+/* ------------------------------------------------------------------ responsivo */
+@media (max-width: 960px) {
+  .mk-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mk-colors {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .mk-files {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mk-shots {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .mk-tiles,
+  .mk-rules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mk-tiles--sym {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mk-colors {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mk-files {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

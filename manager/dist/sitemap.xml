@@ -24,6 +24,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://whatsaibr.vercel.app/marca</loc>
+    <lastmod>2026-11-17</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
     <loc>https://whatsaibr.vercel.app/privacidade</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>

@@ -1,0 +1,109 @@
+{
+  "pagina": "/ (landing)",
+  "antes": "origin/main f3edd26, no inicio do trabalho",
+  "depois": "branch feat/site-elevenlabs",
+  "como_medir": "Playwright Chromium, tema claro, viewport 1440x900 e 390x900, reducedMotion=reduce, depois de rolar a pagina inteira; titulos = h1 e h2 visiveis dentro de <main>. Dados da faixa de status sao ficticios (resposta simulada de GET /status).",
+  "medidas": {
+    "1440": {
+      "altura_px": {
+        "antes": 11910,
+        "depois": 11147,
+        "diferenca": -763
+      },
+      "titulos_de_secao": {
+        "antes": 15,
+        "depois": 12
+      },
+      "rolagem_horizontal": {
+        "antes": false,
+        "depois": false
+      },
+      "lista_de_titulos": {
+        "antes": [
+          "Seu WhatsApp responde em segundos. Sua equipe assume quando quiser.",
+          "Feito para quem atende no WhatsApp todos os dias",
+          "A IA responde com o contexto do seu negócio.",
+          "Quando a conversa precisa de gente, a IA sai do caminho.",
+          "WhatsApp, agenda e processos no mesmo fluxo.",
+          "Menos repetição. Mais tempo para o que exige gente.",
+          "Menos fila. Mais conversa resolvida.",
+          "Sempre um passo à frente.",
+          "O atendimento inteiro em um só painel.",
+          "O produto não para.",
+          "Uma IA que trabalha com as regras do seu negócio.",
+          "Destaques",
+          "Implantação uma vez, mensalidade mês a mês. Sem fidelidade.",
+          "Perguntas frequentes",
+          "Veja o WhatsAI atendendo os clientes do seu negócio."
+        ],
+        "depois": [
+          "Seu WhatsApp responde em segundos. Sua equipe assume quando quiser.",
+          "Feito para quem atende no WhatsApp todos os dias",
+          "A IA atende. A equipe decide.",
+          "Menos fila. Mais conversa resolvida.",
+          "Sempre um passo à frente.",
+          "O atendimento inteiro em um só painel.",
+          "O produto não para.",
+          "Uma IA que trabalha com as regras do seu negócio.",
+          "Destaques",
+          "Implantação uma vez, mensalidade mês a mês. Sem fidelidade.",
+          "Perguntas frequentes",
+          "Veja o WhatsAI atendendo os clientes do seu negócio."
+        ]
+      }
+    },
+    "390": {
+      "altura_px": {
+        "antes": 16498,
+        "depois": 16474,
+        "diferenca": -24
+      },
+      "titulos_de_secao": {
+        "antes": 15,
+        "depois": 12
+      },
+      "rolagem_horizontal": {
+        "antes": false,
+        "depois": false
+      },
+      "lista_de_titulos": {
+        "antes": [
+          "Seu WhatsApp responde em segundos. Sua equipe assume quando quiser.",
+          "Feito para quem atende no WhatsApp todos os dias",
+          "A IA responde com o contexto do seu negócio.",
+          "Quando a conversa precisa de gente, a IA sai do caminho.",
+          "WhatsApp, agenda e processos no mesmo fluxo.",
+          "Menos repetição. Mais tempo para o que exige gente.",
+          "Menos fila. Mais conversa resolvida.",
+          "Sempre um passo à frente.",
+          "O atendimento inteiro em um só painel.",
+          "O produto não para.",
+          "Uma IA que trabalha com as regras do seu negócio.",
+          "Destaques",
+          "Implantação uma vez, mensalidade mês a mês. Sem fidelidade.",
+          "Perguntas frequentes",
+          "Veja o WhatsAI atendendo os clientes do seu negócio."
+        ],
+        "depois": [
+          "Seu WhatsApp responde em segundos. Sua equipe assume quando quiser.",
+          "Feito para quem atende no WhatsApp todos os dias",
+          "A IA atende. A equipe decide.",
+          "Menos fila. Mais conversa resolvida.",
+          "Sempre um passo à frente.",
+          "O atendimento inteiro em um só painel.",
+          "O produto não para.",
+          "Uma IA que trabalha com as regras do seu negócio.",
+          "Destaques",
+          "Implantação uma vez, mensalidade mês a mês. Sem fidelidade.",
+          "Perguntas frequentes",
+          "Veja o WhatsAI atendendo os clientes do seu negócio."
+        ]
+      }
+    }
+  },
+  "observacoes": {
+    "marca": "Antes, /marca nao existia: as capturas 'antes' de marca-topo e marca-downloads mostram a pagina 404.",
+    "conversa": "Antes nao havia conversa de exemplo: 'conversa-antes' mostra o bloco de texto do topo no mesmo lugar.",
+    "abas": "Antes eram quatro secoes alternadas: 'abas-antes' e a secao #produto inteira; 'depois' tem uma captura por aba."
+  }
+}
