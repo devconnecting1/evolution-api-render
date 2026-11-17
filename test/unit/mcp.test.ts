@@ -1152,6 +1152,9 @@ describe('MCP: segurança (confirmação, contexto do banco, registro de ações
     const bot = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio', time_per_char: 40 });
     assert.equal(bot.json.preview, true);
     assert.deepEqual(bot.json.changes, { time_per_char: 40 });
+    const effort = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio', reasoning_effort: 'low' });
+    assert.equal(effort.json.preview, true, 'reasoning_effort also needs confirm');
+    assert.deepEqual(effort.json.changes, { reasoning_effort: 'low' });
     const empty = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio' });
     assert.equal(empty.result.isError, true, 'the preview validates like the real call');
 
