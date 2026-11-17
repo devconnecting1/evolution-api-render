@@ -120,6 +120,8 @@ const MODULE_RULES: Record<ClientModule, Rule[]> = {
 
 /** Writes that stay with the administrator even inside an allowed module. */
 const DENIED: Rule[] = [
+  // the conversations of the office leave only with the administrator ("Exportar conversas para revisão")
+  { methods: ANY, pattern: /^\/export(\/.*)?$/ },
   { methods: ['POST', 'PUT', 'PATCH', 'DELETE'], pattern: /^\/processos\/:i\/(settings|oab)(\/[^/]+)?$/ },
 ];
 

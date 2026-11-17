@@ -14,6 +14,8 @@
     "test:unit": "tsx --test --test-reporter=spec \"test/unit/**/*.test.ts\"",
     "test:integration": "tsx --test --test-reporter=spec \"test/integration/**/*.test.ts\"",
     "test:types": "tsc --noEmit -p test/tsconfig.json",
+    "test:sim": "tsx test/simulation/run.ts",
+    "test:sim:eval": "tsx test/simulation/run.ts --real-model",
     "test:db:start": "bash test/scripts/local-postgres.sh start",
     "test:db:stop": "bash test/scripts/local-postgres.sh stop",
     "lint": "eslint --fix \"src/**/*.ts\" \"test/**/*.ts\"",

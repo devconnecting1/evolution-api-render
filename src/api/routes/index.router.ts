@@ -39,6 +39,7 @@ import { ProcessosRouter } from './processos.router';
 import { ProxyRouter } from './proxy.router';
 import { PublicStatusRouter } from './public-status.router';
 import { RetentionRouter } from './retention.router';
+import { ReviewExportRouter } from './review-export.router';
 import { MessageRouter } from './sendMessage.router';
 import { SettingsRouter } from './settings.router';
 import { TeamRouter } from './team.router';
@@ -259,6 +260,7 @@ router
   .use('/proxy', new ProxyRouter(...guards).router)
   .use('/label', new LabelRouter(...guards).router)
   .use('/usage', new UsageRouter(...guards).router)
+  .use('/export', new ReviewExportRouter(...guards).router)
   .use('/overview', new OverviewRouter(...guards).router)
   .use('/processos', new ProcessosRouter(...guards).router)
   .use('/leads', new LeadsRouter(...guards).router)

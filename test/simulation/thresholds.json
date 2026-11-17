@@ -1,0 +1,12 @@
+{
+  "$comment": "Floors/ceilings of the quality metrics (CI fails only when one is crossed). Hard gates are always zero. Measured on main with the scripted model: completeness 0.63, turns p95 6, repetition 0.006, chars p95 ~120, questions 0.71, first reply p95 18 s, campaign 1.0.",
+  "slotCompleteness": { "min": 0.55 },
+  "turnsToTriageP95": { "max": 9 },
+  "repetitionRate": { "max": 0.03 },
+  "replyCharsAvg": { "max": 300 },
+  "replyCharsP95": { "max": 600 },
+  "questionsPerMessage": { "max": 1 },
+  "handoverRecall": { "min": 0.95 },
+  "firstReplySecondsP95": { "max": 40 },
+  "campaignFirstQuestion": { "min": 0.9 }
+}
