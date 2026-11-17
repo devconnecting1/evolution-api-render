@@ -446,7 +446,7 @@ export class LeadsService {
     }
     const creds = credsId ? await this.prisma.openaiCreds.findUnique({ where: { id: credsId } }) : null;
     if (!creds?.apiKey) return null;
-    return { apiKey: creds.apiKey as string, model: settings.extractionModel ?? bot?.model ?? 'gpt-4o-mini' };
+    return { apiKey: creds.apiKey as string, model: settings.extractionModel ?? bot?.model ?? 'gpt-6-luna' };
   }
 
   /**
@@ -548,7 +548,7 @@ export class LeadsService {
     }
 
     const creds = params.apiKey
-      ? { apiKey: params.apiKey, model: settings.extractionModel ?? params.model ?? 'gpt-4o-mini' }
+      ? { apiKey: params.apiKey, model: settings.extractionModel ?? params.model ?? 'gpt-6-luna' }
       : await this.credentialsOf(instanceId, settings);
     if (!creds) return { status: 'skipped', reason: 'sem credencial OpenAI' };
 

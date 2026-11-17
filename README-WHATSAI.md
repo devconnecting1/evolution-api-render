@@ -746,15 +746,44 @@ Níveis por modelo (páginas oficiais da OpenAI, nov/2026; tabela em `src/api/in
 | gpt-6-astra, gpt-6.1-sol | low, medium, high, xhigh, max | medium |
 | gpt-5.5 | none, low, medium, high, xhigh | medium |
 | gpt-5.4 (mini, nano) | none, low, medium, high, xhigh | none |
-| gpt-5.1, gpt-5.2 | none, low, medium, high | none |
+| gpt-5.2 | none, low, medium, high, xhigh | none |
+| gpt-5.1 | none, low, medium, high | none |
 | gpt-5 (mini, nano) | minimal, low, medium, high | medium |
 | o1, o3, o4-mini | low, medium, high | medium |
 | gpt-4o, gpt-4.1 e outros sem raciocínio | o parâmetro não é enviado | - |
 
 - **`none` não é "automático":** é a IA respondendo sem pensar antes (mais rápida, menos cuidadosa). "Automático" usa o padrão do modelo (`medium` no gpt-6-luna).
 - **Recomendação:** `high` para triagens com regras (advocacia, saúde); `low` para dúvidas simples e rápidas (a OpenAI recomenda `low` para atendimento/chat). `xhigh` e `max` só quando um teste mostrar ganho: são mais lentos e gastam mais. Os tokens de raciocínio são cobrados como saída e entram no `maxTokens`: com `high` ou mais, use `maxTokens` de 8000 ou mais (no gpt-6-luna, 8000 tokens de saída custam cerca de US$ 0,004).
-- **Ferramentas:** no gpt-6-luna, gpt-6-sol e gpt-5.6, o Chat Completions só aceita ferramentas (agenda, `transferir_para_equipe`) com `none`. Uma resposta que oferece ferramentas vai com `none` (aviso uma vez por bot no log); as outras usam o nível escolhido. Para usar ferramentas com raciocínio é preciso migrar para a Responses API (não feito).
+- **Ferramentas:** no gpt-6-luna e no gpt-6-sol, o Chat Completions só aceita ferramentas (agenda, `transferir_para_equipe`) com `none`. Uma resposta que oferece ferramentas vai com `none` (aviso uma vez por bot no log); as outras usam o nível escolhido. Para usar ferramentas com raciocínio é preciso migrar para a Responses API (não feito) ou usar o gpt-5.6-luna, que aceita ferramentas em qualquer nível. O gpt-6-astra, o gpt-6.1-sol e o gpt-6.1-terra não aceitam ferramentas no Chat Completions: o bot responde sem elas.
 - Nível que o modelo não aceita vai para o mais próximo (`minimal` vira `low`; `max` vira `xhigh` no gpt-5.4). Se a OpenAI ainda responder 400 sobre `reasoning_effort`, a chamada é repetida uma vez sem o parâmetro e o modelo fica memorizado sem ele (só em memória).
+
+### 12.14 Modelos da OpenAI: o que funciona no bot (nov/2026)
+
+"Buscar modelos" no painel (`GET /openai/getModels/{instancia}`) devolve só os modelos que o bot consegue chamar pelo Chat Completions, com uma nota curta: preço de saída comparado ao gpt-6-luna, recomendação ou data de desligamento (`src/api/integrations/chatbot/openai/openai-models.ts`). Saem da lista os modelos de áudio, voz, imagem, embeddings, busca, codex, os `-pro` e os `cyber` (não funcionam no Chat Completions ou pedem aprovação). Fontes: páginas de modelos, preços e descontinuações em developers.openai.com.
+
+| Modelo | US$ por 1M tokens (entrada / saída) | Ferramentas no Chat Completions | Situação |
+| --- | --- | --- | --- |
+| gpt-6-luna | 0,10 / 0,50 | só com raciocínio `none` | atual, **recomendado** |
+| gpt-5.6-luna | 0,20 / 1,20 | sim | atual |
+| gpt-6.1-terra | 1 / 5 | não (só Responses API) | atual |
+| gpt-6.1-sol | 2 / 10 | não (só Responses API) | atual |
+| gpt-6-sol | 2 / 10 | só com `none` | atual |
+| gpt-5.4-mini | 0,75 / 4,50 | sim | atual |
+| gpt-5.6-terra | 2 / 12 | sim | atual |
+| gpt-5.2 | 1,75 / 14 | sim | atual |
+| gpt-5.4 | 2,50 / 15 | sim | atual |
+| gpt-5.6-sol | 4 / 20 | sim | atual |
+| gpt-5.5 | 5 / 30 | sim | atual |
+| chat-latest | 5 / 30 | sim | atual (muda sem aviso) |
+| gpt-6-astra | 10 / 50 | não | atual, o mais capaz |
+| gpt-5, gpt-5-mini, gpt-5-nano, o3 | - | sim | **desliga em 11/12/2026** |
+| gpt-4.1, gpt-4.1-mini, gpt-4o, gpt-4o-mini | - | sim | **desliga em 14/01/2027** |
+| gpt-5.4-nano | - | sim | desliga em 01/04/2027 |
+| o4-mini | - | - | desligado em 23/10/2026 |
+
+- **Leitura de PDF:** pela documentação, só os modelos da família gpt-5.x (até 5.5) e os gpt-4.x aceitam arquivo; gpt-6-luna e os outros GPT-6 aceitam texto e imagem. Com eles, o bot manda o PDF, a OpenAI recusa e o bot repete uma vez com a descrição do documento (seção 12.10).
+- **Transcrição de áudio:** padrão `gpt-transcribe` (atual, US$ 0,0045/min). A reserva `whisper-1` e os `gpt-4o(-mini)-transcribe` desligam em 26/02/2027.
+- **Leads:** sem `extractionModel`, a triagem usa o modelo do bot; a reserva interna sem bot passou de `gpt-4o-mini` para `gpt-6-luna`.
 
 ## 13. O que é automático e o que é serviço (auditoria de 02/11/2026)
 

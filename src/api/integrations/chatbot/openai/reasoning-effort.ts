@@ -2,13 +2,14 @@
  * Reasoning effort of the OpenAI models (Chat Completions `reasoning_effort`).
  *
  * Levels and defaults come from the official model pages (developers.openai.com/api/docs/models, Nov 2026):
- * - gpt-6-luna, gpt-6-sol, gpt-5.6-*: none, low, medium (default), high, xhigh, max. In Chat Completions these
- *   models only accept function calling with `none`, so a request with tools always goes with `none`.
+ * - gpt-6-luna, gpt-6-sol: none, low, medium (default), high, xhigh, max. In Chat Completions these models only
+ *   accept function calling with `none`, so a request with tools always goes with `none`.
+ * - gpt-5.6-* (luna, terra, sol): the same levels, with function calling at any level.
  * - gpt-6-astra, gpt-6.1-sol: low, medium (default), high, xhigh, max (no `none`: HTTP 400).
  * - gpt-6.1-terra: none, low, medium (default), high, xhigh, max.
  * - gpt-5.5: none, low, medium (default), high, xhigh.
  * - gpt-5.4 (mini, nano): none (default), low, medium, high, xhigh.
- * - gpt-5.1 / gpt-5.2: none (default), low, medium, high.
+ * - gpt-5.2: none (default), low, medium, high, xhigh. gpt-5.1: none (default), low, medium, high.
  * - gpt-5 (mini, nano): minimal, low, medium (default), high.
  * - o-series (o1, o3, o4-mini): low, medium (default), high.
  * Models without reasoning (gpt-4o, gpt-4.1...) never get the parameter.
@@ -29,7 +30,7 @@ export interface ReasoningProfile {
   levels: ReasoningEffortLevel[];
   /** Level the model uses when the parameter is not sent. */
   defaultLevel: ReasoningEffortLevel;
-  /** Chat Completions accepts function calling only with `none` (gpt-6-luna, gpt-6-sol, gpt-5.6). */
+  /** Chat Completions accepts function calling only with `none` (gpt-6-luna, gpt-6-sol). */
   toolsOnlyWithNone: boolean;
 }
 
@@ -60,13 +61,14 @@ export function reasoningProfile(model: string | null | undefined): ReasoningPro
   if (/^gpt-6\.1-sol\b/.test(id) || /^gpt-6(\.\d+)?-astra\b/.test(id)) return profile(NO_NONE, 'medium');
   if (/^gpt-6\.1-terra\b/.test(id)) return profile(ALL, 'medium');
   if (/^gpt-6(\.0)?-(luna|sol)\b/.test(id)) return profile(ALL, 'medium', true);
-  if (/^gpt-5\.6-/.test(id)) return profile(ALL, 'medium', true);
+  if (/^gpt-5\.6-/.test(id)) return profile(ALL, 'medium');
   // Other gpt-6 variants not listed above: the levels every reasoning model accepts
   if (/^gpt-6/.test(id)) return profile(O_SERIES, 'medium');
   if (/^gpt-5(\.\d+)?-pro\b/.test(id)) return profile(['high'], 'high');
   if (/^gpt-5\.5\b/.test(id)) return profile(UP_TO_XHIGH, 'medium');
   if (/^gpt-5\.4\b/.test(id)) return profile(UP_TO_XHIGH, 'none');
-  if (/^gpt-5\.[123]\b/.test(id)) return profile(UP_TO_HIGH, 'none');
+  if (/^gpt-5\.2\b/.test(id)) return profile(UP_TO_XHIGH, 'none');
+  if (/^gpt-5\.[13]\b/.test(id)) return profile(UP_TO_HIGH, 'none');
   if (/^gpt-5-chat\b/.test(id)) return null;
   if (/^gpt-5(-mini|-nano)?$/.test(id) || /^gpt-5-(mini|nano)\b/.test(id)) return profile(GPT5, 'medium');
   if (/^o[134](-mini|-pro)?\b/.test(id)) return profile(O_SERIES, 'medium');

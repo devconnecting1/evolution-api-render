@@ -13,7 +13,8 @@ Groups:
 1. helper  - function WaRE(model) with the levels per model family (mirror of src/.../openai/reasoning-effort.ts).
 2. form    - schema field, default 'auto', the select (with help text) after the tokenParam select.
 3. payload - create and update send `reasoningEffort`; the edit form starts with the saved value ('auto' for null).
-4. html    - raises the bundle ?v= to CACHE_VERSION.
+4. models  - the model select shows the label the server adds (price compared to gpt-6-luna, shutdown date).
+5. html    - raises the bundle ?v= to CACHE_VERSION.
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
 Re-running is safe: groups whose marker is present are skipped. Order: after openai-fields.py and openai-media.py.
@@ -55,12 +56,14 @@ HELPER = r'''function WaRE(m){
   let lv=null,def="medium",tools=!1;
   if(/^gpt-6\.1-sol\b/.test(id)||/^gpt-6(\.\d+)?-astra\b/.test(id))lv=NONONE;
   else if(/^gpt-6\.1-terra\b/.test(id))lv=ALL;
-  else if(/^gpt-6(\.0)?-(luna|sol)\b/.test(id)||/^gpt-5\.6-/.test(id)){lv=ALL;tools=!0}
+  else if(/^gpt-6(\.0)?-(luna|sol)\b/.test(id)){lv=ALL;tools=!0}
+  else if(/^gpt-5\.6-/.test(id))lv=ALL;
   else if(/^gpt-6/.test(id))lv=["low","medium","high"];
   else if(/^gpt-5(\.\d+)?-pro\b/.test(id)){lv=["high"];def="high"}
   else if(/^gpt-5\.5\b/.test(id))lv=["none","low","medium","high","xhigh"];
   else if(/^gpt-5\.4\b/.test(id)){lv=["none","low","medium","high","xhigh"];def="none"}
-  else if(/^gpt-5\.[123]\b/.test(id)){lv=["none","low","medium","high"];def="none"}
+  else if(/^gpt-5\.2\b/.test(id)){lv=["none","low","medium","high","xhigh"];def="none"}
+  else if(/^gpt-5\.[13]\b/.test(id)){lv=["none","low","medium","high"];def="none"}
   else if(/^gpt-5-chat\b/.test(id))lv=null;
   else if(/^gpt-5(-mini|-nano)?$/.test(id)||/^gpt-5-(mini|nano)\b/.test(id))lv=["minimal","low","medium","high"];
   else if(/^o[134](-mini|-pro)?\b/.test(id))lv=["low","medium","high"];
@@ -127,7 +130,15 @@ def g_payload(s):
                'update payload')
 
 
-GROUPS = [('helper', g_helper), ('form', g_form), ('payload', g_payload)]
+def g_models(s):
+    # "Buscar modelos": the server already filters the list to the models the bot can call and adds a label
+    return rep(s,
+               'options:M?.map(D=>({label:D.id,value:D.id}))??[]',
+               'options:M?.map(D=>({label:D.label||D.id,value:D.id}))??[]',
+               'model options label')
+
+
+GROUPS = [('helper', g_helper), ('form', g_form), ('payload', g_payload), ('models', g_models)]
 
 
 def bump_index(html):
