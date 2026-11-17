@@ -9,8 +9,12 @@
  * e o tema continua visivel ao lado do botao do menu. As paginas legais ganham padding-top de 52 px porque o
  * cabecalho e fixo, como na landing.
  *
- * Rodape: barra compacta no padrao do Render Docs, com marca, "Falar no WhatsApp", links essenciais, copyright
- * e aviso de marcas. O numero do WhatsApp e montado pelo landing.js a partir de data-wa-cta.
+ * Rodape: "Falar no WhatsApp" e copyright a esquerda; Produto, Empresa e Legal em tres colunas curtas (com Status
+ * e Marca); a marca grande embaixo. O numero do WhatsApp e montado pelo landing.js a partir de data-wa-cta.
+ *
+ * Aviso do topo (so na landing, body.has-annc): uma linha acima do cabecalho que rola com a pagina; o cabecalho
+ * vira sticky para ficar logo abaixo dele e grudar no topo depois. A gaveta do celular abre logo abaixo do
+ * cabecalho (--wa-nav-top, definido pelo landing.js).
  */
 
 /* ------------------------------------------------------------------ largura e espacamento da casca */
@@ -358,6 +362,112 @@ html.menu-open body {
   overflow: hidden;
 }
 
+/* ------------------------------------------------------------------ aviso do topo (E10, so na landing) */
+/* O aviso fica no fluxo, acima do cabecalho, e rola com a pagina; o cabecalho passa a sticky para ficar logo
+   abaixo dele e grudar no topo depois. Fechado (html.annc-off, aplicado pelo theme.js antes da pintura), a pagina
+   volta ao cabecalho fixo de sempre. */
+.wa-annc {
+  position: relative;
+  z-index: 101;
+  background: var(--c-text);
+  color: var(--c-bg);
+  font-family: var(--font-sans);
+}
+
+.wa-annc-in {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-inline: 44px;
+}
+
+.wa-annc-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 12px;
+  margin: 0;
+  padding-block: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.wa-annc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.wa-annc-link .wa-ico {
+  width: 14px;
+  height: 14px;
+}
+
+.wa-annc-close {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: none;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.js .wa-annc-close {
+  display: inline-flex;
+}
+
+.wa-annc-close:hover {
+  background: rgba(127, 127, 127, 0.28);
+}
+
+.wa-annc-close:focus-visible,
+.wa-annc-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+body.has-annc {
+  padding-top: 0;
+}
+
+body.has-annc .wa-head {
+  position: sticky;
+  top: 0;
+}
+
+html.annc-off .wa-annc {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  body.has-annc .wa-nav {
+    top: var(--wa-nav-top, 52px);
+  }
+}
+
+@media (max-width: 520px) {
+  .wa-annc-extra {
+    display: none;
+  }
+}
+
 /* O topo e fixo: as paginas legais e /novidades precisam do mesmo espaco da landing. */
 body.legal-page,
 body.shell-page {
@@ -369,30 +479,25 @@ body.shell-page .skip {
   z-index: 150;
 }
 
-/* ------------------------------------------------------------------ rodape compacto (padrao Render Docs) */
+/* ------------------------------------------------------------------ rodape (E9): contato a esquerda, tres colunas curtas */
 .wa-docfoot {
   padding-bottom: clamp(16px, 2vw, 24px);
   background: var(--c-bg);
 }
 
 .wa-docfoot-in {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 32px;
-  padding-block: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 32px 48px;
+  padding-block: clamp(32px, 4vw, 56px) 8px;
 }
 
-.wa-docfoot-side {
+.wa-docfoot-brand {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 24px;
-}
-
-.wa-docfoot-side--end {
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .wa-docfoot-status {
@@ -400,8 +505,9 @@ body.shell-page .skip {
   min-height: 24px;
   align-items: center;
   gap: 8px;
-  color: var(--c-accent);
-  font-size: 12px;
+  color: var(--c-text);
+  font-size: 14px;
+  font-weight: 500;
   line-height: 1.4;
   text-decoration: none;
 }
@@ -419,41 +525,51 @@ body.shell-page .skip {
   background: currentColor;
 }
 
-.wa-docfoot-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
+.wa-docfoot-cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, auto));
+  gap: 24px clamp(32px, 5vw, 80px);
 }
 
-.wa-docfoot-links a {
-  display: inline-flex;
-  min-height: 24px;
-  align-items: center;
+.wa-docfoot-h {
+  margin: 0 0 10px;
   color: var(--c-text-3);
   font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.wa-docfoot-col ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wa-docfoot-col a {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  color: var(--c-text);
+  font-size: 14px;
   line-height: 1.4;
   text-decoration: none;
 }
 
-.wa-docfoot-links a:hover {
-  color: var(--c-accent);
+.wa-docfoot-col a:hover {
+  color: var(--c-text-2);
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-.wa-docfoot-legal {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
 .wa-docfoot-copy {
   margin: 0;
   color: var(--c-text-3);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
 }
-
 
 .wa-docfoot-wordmark {
   display: block;
@@ -479,16 +595,9 @@ body.shell-page .skip {
 
 @media (max-width: 720px) {
   .wa-docfoot-in {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
   }
-  .wa-docfoot-side--end {
-    align-items: flex-start;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 10px;
-  }
-  .wa-docfoot-links {
-    gap: 8px 14px;
+  .wa-docfoot-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

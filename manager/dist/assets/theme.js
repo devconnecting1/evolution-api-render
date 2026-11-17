@@ -11,6 +11,15 @@
   var root = document.documentElement;
   var THEMES = ['system', 'light', 'dark'];
 
+  // Antes da primeira pintura: marca que ha JavaScript (abas e controles que so funcionam com ele) e esconde o aviso
+  // do topo se a pessoa ja fechou (a mesma chave que o landing.js grava).
+  root.classList.add('js');
+  try {
+    if (window.localStorage.getItem('wa-annc') === 'piloto-14d') root.classList.add('annc-off');
+  } catch (error) {
+    /* sem armazenamento: o aviso aparece */
+  }
+
   function storedTheme() {
     try {
       var value = window.localStorage.getItem(THEME_KEY);
