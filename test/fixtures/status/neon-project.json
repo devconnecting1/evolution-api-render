@@ -1,0 +1,16 @@
+{
+  "project": {
+    "id": "spring-boat-00000000",
+    "name": "WhatsAI",
+    "region_id": "aws-us-east-2",
+    "pg_version": 16,
+    "owner": { "subscription_type": "free_v3", "branches_limit": 10 },
+    "branch_logical_size_limit_bytes": 1073741824,
+    "synthetic_storage_size": 52428800,
+    "compute_time_seconds": 237600,
+    "data_transfer_bytes": 120000000,
+    "consumption_period_start": "2026-11-01T00:00:00Z",
+    "consumption_period_end": "2026-12-01T00:00:00Z",
+    "compute_last_active_at": "2026-11-16T21:49:14Z"
+  }
+}
