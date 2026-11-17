@@ -17,6 +17,7 @@
  * Nothing in a lead is ever sent to the client. The only message this service sends is the optional internal notice
  * to the team numbers (off by default), once per lead.
  */
+import { isReasoningEffortError, resolveReasoningEffort } from '@api/integrations/chatbot/openai/reasoning-effort';
 import { Logger } from '@config/logger.config';
 import {
   AWAITING_STATUSES,
@@ -61,6 +62,16 @@ const OPENAI_TIMEOUT_MS = 30_000;
 const REASONING_MODEL = /^(ft:)?(o\d|gpt-5|gpt-6)/i;
 const MAX_TOKENS = 600;
 const MAX_REASONING_TOKENS = 2500;
+/** Room for the analysis by reasoning level (reasoning tokens count inside the limit and are billed as output). */
+const REASONING_TOKENS_BY_LEVEL: Record<string, number> = {
+  none: 2500,
+  minimal: 2500,
+  low: 2500,
+  medium: 4000,
+  high: 8000,
+  xhigh: 16000,
+  max: 16000,
+};
 const FAILURE_BACKOFF_MS = 10 * 60_000;
 const EXPORT_MAX = 5000;
 const BACKFILL_CONCURRENCY = 2;
@@ -98,6 +109,8 @@ export type BotReplyContext = {
   pushName?: string | null;
   apiKey: string;
   model?: string | null;
+  /** Reasoning level of the bot (OpenaiBot.reasoningEffort): the analysis uses the same one. */
+  reasoningEffort?: string | null;
 };
 
 export type AnalyzeResult = { status: 'created' | 'updated' | 'skipped' | 'error'; reason?: string; lead?: any };
@@ -434,7 +447,7 @@ export class LeadsService {
     const bot = await this.prisma.openaiBot.findFirst({
       where: { instanceId, enabled: true },
       orderBy: { createdAt: 'asc' },
-      select: { openaiCredsId: true, model: true },
+      select: { openaiCredsId: true, model: true, reasoningEffort: true },
     });
     let credsId = bot?.openaiCredsId ?? null;
     if (!credsId) {
@@ -446,7 +459,11 @@ export class LeadsService {
     }
     const creds = credsId ? await this.prisma.openaiCreds.findUnique({ where: { id: credsId } }) : null;
     if (!creds?.apiKey) return null;
-    return { apiKey: creds.apiKey as string, model: settings.extractionModel ?? bot?.model ?? 'gpt-6-luna' };
+    return {
+      apiKey: creds.apiKey as string,
+      model: settings.extractionModel ?? bot?.model ?? 'gpt-6-luna',
+      reasoningEffort: bot?.reasoningEffort ?? null,
+    };
   }
 
   /**
@@ -461,6 +478,7 @@ export class LeadsService {
     pushName?: string | null;
     apiKey?: string;
     model?: string | null;
+    reasoningEffort?: string | null;
     trigger: LeadTrigger;
   }): Promise<AnalyzeResult> {
     const { instanceId, remoteJid } = params;
@@ -499,6 +517,7 @@ export class LeadsService {
     pushName?: string | null;
     apiKey?: string;
     model?: string | null;
+    reasoningEffort?: string | null;
     trigger: LeadTrigger;
     settings: LeadSettingsView;
     channel: any;
@@ -548,7 +567,11 @@ export class LeadsService {
     }
 
     const creds = params.apiKey
-      ? { apiKey: params.apiKey, model: settings.extractionModel ?? params.model ?? 'gpt-6-luna' }
+      ? {
+          apiKey: params.apiKey,
+          model: settings.extractionModel ?? params.model ?? 'gpt-6-luna',
+          reasoningEffort: params.reasoningEffort ?? null,
+        }
       : await this.credentialsOf(instanceId, settings);
     if (!creds) return { status: 'skipped', reason: 'sem credencial OpenAI' };
 
@@ -564,7 +587,15 @@ export class LeadsService {
 
     let extraction;
     try {
-      extraction = await this.extract(creds.apiKey, creds.model, settings.areas, transcript.text, lead, pushName);
+      extraction = await this.extract(
+        creds.apiKey,
+        creds.model,
+        settings.areas,
+        transcript.text,
+        lead,
+        pushName,
+        creds.reasoningEffort,
+      );
     } catch (error) {
       this.failedAt.set(params.key, now.getTime());
       this.logger.error(
@@ -706,9 +737,14 @@ export class LeadsService {
     transcript: string,
     lead: any,
     pushName: string | null,
+    reasoningEffort?: string | null,
   ) {
     const client = this.openai(apiKey);
     const reasoning = REASONING_MODEL.test(model);
+    // Same reasoning level as the bot (no tools here, so gpt-6-luna/sol keep it); more thinking, more room
+    const effort = resolveReasoningEffort(model, reasoningEffort);
+    let sendEffort = effort.send;
+    const reasoningTokens = REASONING_TOKENS_BY_LEVEL[effort.effective ?? 'medium'] ?? MAX_REASONING_TOKENS;
     const messages: any[] = [
       { role: 'system', content: extractionSystemPrompt(areas) },
       { role: 'user', content: extractionUserPrompt(transcript, lead, pushName) },
@@ -716,13 +752,14 @@ export class LeadsService {
     let tokenParam: 'max_tokens' | 'max_completion_tokens' = reasoning ? 'max_completion_tokens' : 'max_tokens';
     let format: any = { type: 'json_schema', json_schema: extractionJsonSchema(areas) };
 
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 4; attempt++) {
       const body: any = {
         model,
         messages,
         response_format: format,
-        [tokenParam]: reasoning ? MAX_REASONING_TOKENS : MAX_TOKENS,
+        [tokenParam]: reasoning ? reasoningTokens : MAX_TOKENS,
       };
+      if (sendEffort) body.reasoning_effort = sendEffort;
       if (!reasoning) body.temperature = 0;
       try {
         const completion: any = await client.chat.completions.create(body, {
@@ -739,6 +776,11 @@ export class LeadsService {
         const status = error?.status ?? error?.response?.status;
         const text = String(error?.message ?? error?.error?.message ?? '');
         const param = error?.param ?? error?.error?.param;
+        if (sendEffort && isReasoningEffortError(error)) {
+          this.logger.warn(`Model ${model} rejected reasoning_effort "${sendEffort}" in the lead analysis: without it`);
+          sendEffort = undefined;
+          continue;
+        }
         if (status === 400 && (param === tokenParam || text.includes(`'${tokenParam}'`))) {
           tokenParam = tokenParam === 'max_tokens' ? 'max_completion_tokens' : 'max_tokens';
           continue;
@@ -934,6 +976,7 @@ export class LeadsService {
       remoteJid,
       apiKey: creds.apiKey,
       model: creds.model,
+      reasoningEffort: creds.reasoningEffort,
       trigger: 'manual',
     });
   }
@@ -1186,6 +1229,7 @@ export class LeadsService {
             remoteJid,
             apiKey: creds.apiKey,
             model: creds.model,
+            reasoningEffort: creds.reasoningEffort,
             trigger: reanalyze ? 'reanalyze' : 'backfill',
           });
           if (result.status === 'created') state.created++;

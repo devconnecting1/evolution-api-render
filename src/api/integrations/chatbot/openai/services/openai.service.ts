@@ -389,6 +389,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
             pushName,
             apiKey: creds.apiKey,
             model: openaiBot.model,
+            reasoningEffort: (openaiBot as any).reasoningEffort ?? null,
           });
         }
       } else {
