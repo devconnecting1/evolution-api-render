@@ -1,0 +1,21 @@
+{
+  "page": { "id": "tyfhm2rrt1tl", "name": "Render", "url": "https://status.render.com", "time_zone": "Etc/UTC", "updated_at": "2026-11-16T20:54:46.319Z" },
+  "components": [
+    { "id": "j45c7rjc3n51", "name": "Render Dashboard", "status": "operational", "position": 1, "group": false },
+    { "id": "k1", "name": "Web Services - Ohio", "status": "degraded_performance", "position": 2, "group": false }
+  ],
+  "incidents": [
+    {
+      "id": "inc1",
+      "name": "Degraded deploys in Ohio",
+      "status": "investigating",
+      "impact": "minor",
+      "shortlink": "https://stspg.io/abc123",
+      "started_at": "2026-11-16T19:40:00.000Z",
+      "incident_updates": [{ "body": "We are investigating <script>x</script>" }]
+    },
+    { "id": "inc0", "name": "Old resolved", "status": "resolved", "impact": "major", "shortlink": "https://stspg.io/old" }
+  ],
+  "scheduled_maintenances": [],
+  "status": { "indicator": "minor", "description": "Minor Service Outage" }
+}

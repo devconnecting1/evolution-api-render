@@ -8,11 +8,11 @@ redacted), at most 31 days. Admin only: the server refuses client access codes a
 Groups:
   1. card - a second card in the "Exportar dados" tab: two dates (last 7 days by default), the format and a download
             button. Hidden for client access codes (the tab already is) and for the "equipe"/"leitura" team roles.
-  2. html - links exportar-revisao.css and raises the bundle ?v= one above the current value (at least 84).
+  2. html - links exportar-revisao.css and raises the bundle ?v= one above the current value (at least 85).
 
 Every anchor must match exactly once, otherwise the script stops without writing anything.
-Re-running is safe: the markers in the bundle and in index.html make it a no-op. Order: after cobranca-exportacao.py
-and origem-mensagens.py.
+Re-running is safe: the markers in the bundle and in index.html make it a no-op. Order: after cobranca-exportacao.py,
+origem-mensagens.py and openai-reasoning.py.
 
 Usage (from the repository root):
   python3 -I manager/patches/exportar-revisao.py           # apply
@@ -27,8 +27,8 @@ BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 ASSETS = os.path.join(ROOT, 'manager', 'dist', 'assets')
 CSS_VERSION = '1'
-# 83 is the bundle version left by origem-mensagens.py; this patch always goes one above the current value.
-MIN_CACHE_VERSION = 83
+# 84 is the bundle version left by openai-reasoning.py; this patch always goes one above the current value (85+).
+MIN_CACHE_VERSION = 84
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 MODULE_ANCHOR = '    <script type="module" crossorigin src="/assets/index-b29a5d7a.js'
 HTML_MARKER = '<!-- whatsai-patch:exportar-revisao:html -->'

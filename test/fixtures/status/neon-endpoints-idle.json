@@ -1,0 +1,5 @@
+{
+  "endpoints": [
+    { "id": "ep-x", "type": "read_write", "current_state": "idle", "disabled": false, "suspended_at": "2026-11-16T21:55:00Z", "last_active": "2026-11-16T21:49:14Z", "autoscaling_limit_min_cu": 0.25, "autoscaling_limit_max_cu": 2 }
+  ]
+}

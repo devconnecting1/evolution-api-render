@@ -53,6 +53,10 @@ export const openaiSchema: JSONSchema7 = {
     userMessages: { type: 'array', items: { type: 'string' } },
     maxTokens: { type: 'integer' },
     tokenParam: { type: 'string', enum: ['auto', 'max_tokens', 'max_completion_tokens'] },
+    reasoningEffort: {
+      type: ['string', 'null'],
+      enum: ['auto', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', null],
+    },
     humanResumeMinutes: { type: 'integer', minimum: 0 },
     ...mediaProperties,
     triggerType: { type: 'string', enum: ['all', 'keyword', 'none', 'advanced'] },

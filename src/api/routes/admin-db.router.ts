@@ -12,7 +12,8 @@ export interface AdminDbOptions {
 /**
  * Admin-only database info, none of which touches the database (so reading it never wakes Neon):
  *   GET /admin/database-quota  Neon project quota for the "Nova instância" choice (own / shared database).
- *   GET /admin/db-activity     what woke the main database lately (table + SQL verb only, never values).
+ *   GET /admin/db-activity     what woke the main database lately (table + SQL verb only, never values), plus
+ *                              `daily`: wakes per day/hour/cause kept in Redis so they survive deploys.
  */
 export class AdminDbRouter extends RouterBroker {
   public readonly router: Router = Router();
@@ -42,9 +43,12 @@ export class AdminDbRouter extends RouterBroker {
             };
         res.status(200).json(quota);
       })
-      .get('/db-activity', guard, noStore, (req: Request, res: Response) => {
+      .get('/db-activity', guard, noStore, async (req: Request, res: Response) => {
         const limit = Math.min(300, Math.max(1, Number.parseInt(String(req.query.limit ?? '50'), 10) || 50));
-        res.status(200).json(dbActivity.snapshot(limit));
+        const days = Math.min(35, Math.max(1, Number.parseInt(String(req.query.days ?? '14'), 10) || 14));
+        // `daily` vem do Redis (sobrevive aos deploys); o resto é a memória deste processo
+        const daily = await dbActivity.daily(days).catch((): Awaited<ReturnType<typeof dbActivity.daily>> => []);
+        res.status(200).json({ ...dbActivity.snapshot(limit), daily });
       });
   }
 }
