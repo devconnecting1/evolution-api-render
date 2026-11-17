@@ -89,6 +89,7 @@ import { makeProxyAgent, makeProxyAgentUndici } from '@utils/makeProxyAgent';
 import { databaseErrorCode, recordMessageStoreFailure } from '@utils/messageStoreFailures';
 import { getOnWhatsappCache, saveOnWhatsappCache } from '@utils/onWhatsappCache';
 import { PlaceholderResendTracker } from '@utils/placeholderResendTracker';
+import { RecentWrites } from '@utils/recent-writes';
 import { status } from '@utils/renderStatus';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import { unwrapMessageContent } from '@utils/unwrapMessageContent';
@@ -875,6 +876,9 @@ export class BaileysStartupService extends ChannelStartupService {
     },
   };
 
+  /** Contatos já gravados por este processo (evita repetir escritas idênticas: cada uma acorda o Neon). */
+  private readonly contactWrites = new RecentWrites();
+
   private readonly contactHandle = {
     'contacts.upsert': async (contacts: Contact[]) => {
       try {
@@ -888,8 +892,14 @@ export class BaileysStartupService extends ChannelStartupService {
         if (contactsRaw.length > 0) {
           this.sendDataWebhook(Events.CONTACTS_UPSERT, contactsRaw);
 
-          if (this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS)
-            await this.prismaRepository.contact.createMany({ data: contactsRaw, skipDuplicates: true });
+          if (this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS) {
+            // skipDuplicates já ignorava os existentes; só os ainda não gravados por este processo vão ao banco
+            const fresh = contactsRaw.filter((c: any) => !this.contactWrites.unchanged(`c:${c.remoteJid}`, '1'));
+            if (fresh.length) {
+              await this.prismaRepository.contact.createMany({ data: fresh, skipDuplicates: true });
+              for (const c of fresh) this.contactWrites.remember(`c:${c.remoteJid}`, '1');
+            }
+          }
 
           const usersContacts = contactsRaw.filter((c) => c.remoteJid.includes('@s.whatsapp'));
           if (usersContacts) {
@@ -931,11 +941,17 @@ export class BaileysStartupService extends ChannelStartupService {
           this.sendDataWebhook(Events.CONTACTS_UPDATE, updatedContacts);
           await Promise.all(
             updatedContacts.map(async (contact) => {
-              if (this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS) {
+              const picKey = `p:${contact.remoteJid}`;
+              const picValue = String(contact.profilePicUrl ?? '');
+              if (
+                this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS &&
+                !this.contactWrites.unchanged(picKey, picValue)
+              ) {
                 await this.prismaRepository.contact.updateMany({
                   where: { remoteJid: contact.remoteJid, instanceId: this.instanceId },
                   data: { profilePicUrl: contact.profilePicUrl },
                 });
+                this.contactWrites.remember(picKey, picValue);
               }
 
               if (this.configService.get<Chatwoot>('CHATWOOT').ENABLED && this.localChatwoot?.enabled) {
@@ -979,14 +995,32 @@ export class BaileysStartupService extends ChannelStartupService {
       this.sendDataWebhook(Events.CONTACTS_UPDATE, contactsRaw);
 
       if (this.configService.get<Database>('DATABASE').SAVE_DATA.CONTACTS) {
-        const updateTransactions = contactsRaw.map((contact) =>
-          this.prismaRepository.contact.upsert({
-            where: { remoteJid_instanceId: { remoteJid: contact.remoteJid, instanceId: contact.instanceId } },
-            create: contact,
-            update: contact,
-          }),
+        // Só os contatos que mudaram desde a última gravação deste processo (o upsert igual não muda nada)
+        const changed = contactsRaw.filter(
+          (contact) =>
+            !this.contactWrites.unchanged(
+              `u:${contact.remoteJid}`,
+              JSON.stringify([contact.pushName ?? null, contact.profilePicUrl ?? null]),
+            ),
         );
-        await this.prismaRepository.$transaction(updateTransactions);
+        if (changed.length) {
+          const updateTransactions = changed.map((contact) =>
+            this.prismaRepository.contact.upsert({
+              where: { remoteJid_instanceId: { remoteJid: contact.remoteJid, instanceId: contact.instanceId } },
+              create: contact,
+              update: contact,
+            }),
+          );
+          await this.prismaRepository.$transaction(updateTransactions);
+          for (const contact of changed) {
+            this.contactWrites.remember(
+              `u:${contact.remoteJid}`,
+              JSON.stringify([contact.pushName ?? null, contact.profilePicUrl ?? null]),
+            );
+            this.contactWrites.remember(`c:${contact.remoteJid}`, '1');
+            this.contactWrites.remember(`p:${contact.remoteJid}`, String(contact.profilePicUrl ?? ''));
+          }
+        }
       }
 
       //const usersContacts = contactsRaw.filter((c) => c.remoteJid.includes('@s.whatsapp'));
