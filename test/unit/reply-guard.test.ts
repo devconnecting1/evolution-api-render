@@ -67,11 +67,11 @@ describe('reply guard: repetition', () => {
 
   test('still repeating after the regeneration: the repeated sentence is removed', async () => {
     const result = await guardReply({
-      candidate: 'Obrigado pelas informações. Qual o nome do seu plano de saúde?',
+      candidate: 'Anotei as informações. Qual o nome do seu plano de saúde?',
       previousReplies: ['Qual o nome do seu plano de saúde?'],
-      regenerate: async () => 'Obrigado pelas informações. Qual o nome do seu plano de saúde?',
+      regenerate: async () => 'Anotei as informações. Qual o nome do seu plano de saúde?',
     });
-    assert.equal(result.text, 'Obrigado pelas informações.');
+    assert.equal(result.text, 'Anotei as informações.');
     assert.deepEqual(result.removed, ['Qual o nome do seu plano de saúde?']);
   });
 
@@ -81,6 +81,8 @@ describe('reply guard: repetition', () => {
       previousReplies: ['Qual o nome do seu plano de saúde?'],
     });
     assert.equal(result.text, FALLBACK_ACKNOWLEDGEMENT);
+    assert.equal(FALLBACK_ACKNOWLEDGEMENT, 'Certo, entendi. Vou passar isso para a equipe.');
+    assert.doesNotMatch(FALLBACK_ACKNOWLEDGEMENT, /obrigad[oa]/i, 'neutral: no gendered word');
     assert.equal(result.fallback, true);
   });
 

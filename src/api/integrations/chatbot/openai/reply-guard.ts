@@ -29,8 +29,11 @@ export const MAX_QUESTIONS_PER_MESSAGE = 1;
 export const MAX_REPLY_CHARS = 600;
 /** How many previous AI replies of the conversation are kept for the comparison (session.context.botReplies). */
 export const PREVIOUS_REPLIES_KEPT = 20;
-/** Sent when nothing is left after the guard (never an empty message). */
-export const FALLBACK_ACKNOWLEDGEMENT = 'Certo, entendi. Obrigado pelas informações!';
+/**
+ * Sent when nothing is left after the guard (never an empty message). Neutral: the assistant speaks as "a
+ * assistente", so no gendered word ("obrigado/obrigada").
+ */
+export const FALLBACK_ACKNOWLEDGEMENT = 'Certo, entendi. Vou passar isso para a equipe.';
 
 export type GuardPolicy = { advocacia?: boolean };
 
