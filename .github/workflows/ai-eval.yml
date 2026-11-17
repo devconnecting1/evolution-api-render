@@ -6,23 +6,23 @@ name: AI Eval (real model)
 # the 10 worst conversations for a human to read and the trend against the previous eval report.
 #
 # Runs only by hand (Actions → AI Eval → Run workflow) or when the `ai-eval` label is added to a pull request.
-# Needs the repository secret OPENAI_API_KEY.
+# Needs the repository secret OPENAI_EVAL_API_KEY (a key used only for this eval, with a low monthly limit).
 
 on:
   workflow_dispatch:
     inputs:
       bot_model:
         description: Model of the bot (same as production)
-        default: gpt-5-mini
+        default: gpt-6-luna
         required: true
       reasoning_effort:
         description: reasoning_effort sent with every bot call ("none" to omit; dropped automatically if the model rejects it)
         type: choice
         default: high
-        options: [high, medium, low, minimal, none]
+        options: [high, medium, low, none, xhigh, max]
       judge_model:
-        description: Model of the LLM judge (a cheap one is enough)
-        default: gpt-5-mini
+        description: Model of the LLM judge (stronger than the bot; gpt-6.1-terra costs about 10x gpt-6-luna)
+        default: gpt-6.1-terra
         required: true
       sample:
         description: Matrix conversations to evaluate (the 48 golden ones are always included)
@@ -54,19 +54,19 @@ jobs:
 
     env:
       DATABASE_PROVIDER: postgresql
-      BOT_MODEL: ${{ inputs.bot_model || 'gpt-5-mini' }}
+      BOT_MODEL: ${{ inputs.bot_model || 'gpt-6-luna' }}
       REASONING_EFFORT: ${{ inputs.reasoning_effort || 'high' }}
-      JUDGE_MODEL: ${{ inputs.judge_model || 'gpt-5-mini' }}
+      JUDGE_MODEL: ${{ inputs.judge_model || 'gpt-6.1-terra' }}
       SAMPLE: ${{ inputs.sample || '60' }}
       FAIL_ON_GATES: ${{ github.event_name == 'pull_request' || inputs.fail_on_gates }}
 
     steps:
       - name: Check the API key
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_EVAL_API_KEY }}
         run: |
           if [ -z "$OPENAI_API_KEY" ]; then
-            echo "::error::Repository secret OPENAI_API_KEY is not set: the real-model eval cannot run."
+            echo "::error::Repository secret OPENAI_EVAL_API_KEY is not set: the real-model eval cannot run."
             exit 1
           fi
 
@@ -104,7 +104,7 @@ jobs:
 
       - name: Run the eval
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_EVAL_API_KEY }}
         run: |
           extra=""
           if [ "$FAIL_ON_GATES" != "true" ]; then extra="--no-fail-on-gates"; fi

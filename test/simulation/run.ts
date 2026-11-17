@@ -248,8 +248,8 @@ async function runEval() {
     console.error('OPENAI_API_KEY não definido: a avaliação com o modelo real precisa da chave.');
     return false;
   }
-  const botModel = option('bot-model', 'gpt-5-mini')!;
-  const judgeModel = option('judge-model', 'gpt-5-mini')!;
+  const botModel = option('bot-model', 'gpt-6-luna')!;
+  const judgeModel = option('judge-model', 'gpt-6.1-terra')!;
   const effort = (option('reasoning-effort', 'high') || null) as ReasoningEffort | null;
   const sample = Number(option('sample', '60'));
   const all = buildCases(COUNT, SEED);
