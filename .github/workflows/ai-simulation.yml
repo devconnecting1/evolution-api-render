@@ -1,0 +1,89 @@
+name: AI Simulation
+
+# 1,200 simulated WhatsApp customers (pairwise coverage matrix), the golden regression set and a 1,000-contact
+# burst, through the real chatbot pipeline with a scripted model and a virtual clock. Deterministic, no network,
+# no secrets. Fails when a hard gate, a golden conversation, the burst or a metric floor fails.
+# The report is the job summary and the `ai-simulation-report` artifact; runs on main keep the baseline that the
+# pull requests compare against ("what changed vs main").
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "src/**"
+      - "prisma/**"
+      - "test/simulation/**"
+      - "test/helpers/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/ai-simulation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "prisma/**"
+      - "test/simulation/**"
+      - "test/helpers/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/ai-simulation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ai-simulation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      DATABASE_PROVIDER: postgresql
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install packages
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Baseline report of main
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ai-simulation.yml --branch main \
+            --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name ai-simulation-report --dir baseline
+          else
+            echo "No successful run on main yet: no baseline."
+          fi
+
+      - name: Run the simulator (4 processes)
+        run: npm run test:sim -- --shards 4 --out sim-report --baseline baseline/report.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-simulation-report
+          path: |
+            sim-report/report.json
+            sim-report/report.md
+          retention-days: 90

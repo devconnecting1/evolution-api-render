@@ -46,3 +46,7 @@ lerna-debug.log*
 
 /prisma/migrations/*
 .neon
+
+# AI simulator reports (npm run test:sim / test:sim:eval)
+sim-report/
+eval-report/

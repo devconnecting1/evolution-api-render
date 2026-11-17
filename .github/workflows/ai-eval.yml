@@ -1,0 +1,123 @@
+name: AI Eval (real model)
+
+# Opt-in evaluation with the REAL OpenAI API (costs tokens): a sample of the simulator matrix plus the golden set
+# talk to the bot model, the deterministic hard gates check every transcript, and an LLM judge scores each
+# conversation 1-5 (entendeu, clareza, empatia, segue as regras, não repete, conduz a triagem). The report lists
+# the 10 worst conversations for a human to read and the trend against the previous eval report.
+#
+# Runs only by hand (Actions → AI Eval → Run workflow) or when the `ai-eval` label is added to a pull request.
+# Needs the repository secret OPENAI_API_KEY.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bot_model:
+        description: Model of the bot (same as production)
+        default: gpt-5-mini
+        required: true
+      reasoning_effort:
+        description: reasoning_effort sent with every bot call ("none" to omit; dropped automatically if the model rejects it)
+        type: choice
+        default: high
+        options: [high, medium, low, minimal, none]
+      judge_model:
+        description: Model of the LLM judge (a cheap one is enough)
+        default: gpt-5-mini
+        required: true
+      sample:
+        description: Matrix conversations to evaluate (the 48 golden ones are always included)
+        default: "60"
+        required: true
+      previous_run_id:
+        description: Run id of a previous AI Eval to compare with (empty = the latest successful one)
+        required: false
+      fail_on_gates:
+        description: Fail the run when a hard gate fails
+        type: boolean
+        default: true
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ai-eval-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  eval:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'ai-eval'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      DATABASE_PROVIDER: postgresql
+      BOT_MODEL: ${{ inputs.bot_model || 'gpt-5-mini' }}
+      REASONING_EFFORT: ${{ inputs.reasoning_effort || 'high' }}
+      JUDGE_MODEL: ${{ inputs.judge_model || 'gpt-5-mini' }}
+      SAMPLE: ${{ inputs.sample || '60' }}
+      FAIL_ON_GATES: ${{ github.event_name == 'pull_request' || inputs.fail_on_gates }}
+
+    steps:
+      - name: Check the API key
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::Repository secret OPENAI_API_KEY is not set: the real-model eval cannot run."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install packages
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Previous eval report
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIOUS_RUN_ID: ${{ inputs.previous_run_id }}
+        run: |
+          run_id="$PREVIOUS_RUN_ID"
+          if [ -z "$run_id" ]; then
+            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ai-eval.yml --status success --limit 1 \
+              --json databaseId --jq '.[0].databaseId // empty')
+          fi
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name ai-eval-report --dir previous
+          else
+            echo "No previous eval: no trend this time."
+          fi
+
+      - name: Run the eval
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          extra=""
+          if [ "$FAIL_ON_GATES" != "true" ]; then extra="--no-fail-on-gates"; fi
+          npm run test:sim:eval -- --out eval-report --previous previous/report.json \
+            --bot-model "$BOT_MODEL" --reasoning-effort "$REASONING_EFFORT" \
+            --judge-model "$JUDGE_MODEL" --sample "$SAMPLE" $extra
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-eval-report
+          path: |
+            eval-report/report.json
+            eval-report/report.md
+          retention-days: 90
