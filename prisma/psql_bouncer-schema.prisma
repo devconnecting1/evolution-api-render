@@ -462,6 +462,7 @@ model OpenaiBot {
   userMessages      Json?            @db.JsonB
   maxTokens         Int?             @db.Integer
   tokenParam         String?          @db.VarChar(30)
+  reasoningEffort    String?          @db.VarChar(10)
   humanResumeMinutes Int?             @db.Integer
   transcribeAudio    Boolean? @db.Boolean
   transcriptionModel String?          @db.VarChar(100)

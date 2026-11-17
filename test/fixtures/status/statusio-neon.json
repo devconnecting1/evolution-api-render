@@ -1,0 +1,10 @@
+{
+  "result": {
+    "status_overall": { "updated": "2026-11-13T22:57:11.228Z", "status": "Degraded Performance", "status_code": 300 },
+    "status": [
+      { "id": "x", "name": "Database Connectivity", "status": "Degraded Performance", "status_code": 300, "containers": [{ "id": "c", "name": "AWS us-east-2", "status": "Degraded Performance", "status_code": 300 }] }
+    ],
+    "incidents": [{ "_id": "i1", "name": "Elevated connection latency in us-east-2", "datetime_open": "2026-11-16T19:00:00.000Z" }],
+    "maintenance": { "active": [], "upcoming": [] }
+  }
+}
