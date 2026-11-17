@@ -929,3 +929,121 @@ noscript {
     transition: none !important;
   }
 }
+
+/* ------------------------------------------------------------------ manutenção, período, cobertura (v7) */
+
+.st-hero[data-state="maintenance"] {
+  border-color: var(--c-border-strong);
+}
+
+.st-state-dot[data-state="maintenance"],
+.st-bar[data-state="maintenance"],
+.st-legend i[data-state="maintenance"] {
+  background: #4f6bed;
+}
+
+.st-bar-detail[data-state="maintenance"] {
+  border-left-color: #4f6bed;
+}
+
+.st-bar-detail-state[data-state="maintenance"] {
+  color: #4f6bed;
+}
+
+.st-bars[data-range="90d"] {
+  grid-template-columns: repeat(90, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.st-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: -8px 0 12px;
+}
+
+.st-range-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.st-range-btn[aria-pressed="true"] {
+  border-color: var(--c-text);
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.st-range-btn:focus-visible {
+  outline: 2px solid var(--c-text);
+  outline-offset: 2px;
+}
+
+.st-row-name .st-row-meta {
+  margin-top: 4px;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.01em;
+}
+
+.st-row-name h3 a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--c-border-strong);
+  text-underline-offset: 3px;
+}
+
+.st-upstream-link {
+  display: block;
+  margin-top: 2px;
+  color: var(--c-text-2);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.st-incident-type {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 6px;
+  border: 1px solid var(--c-border);
+  border-radius: 2px;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+}
+
+.st-incident-detail {
+  margin: 4px 0 0;
+  color: var(--c-text-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.st-incident[data-state="maintenance"] .st-incident-mark {
+  border-color: #4f6bed;
+  color: #4f6bed;
+}
+
+#st-coverage {
+  color: var(--c-text-2);
+}
+
+@media (max-width: 760px) {
+  .st-bars[data-range="90d"] {
+    gap: 0;
+  }
+
+  .st-toolbar {
+    justify-content: flex-start;
+    margin-top: 0;
+  }
+}
