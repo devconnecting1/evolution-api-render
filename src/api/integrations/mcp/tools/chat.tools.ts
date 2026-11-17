@@ -183,17 +183,35 @@ export const getMessages = defineTool({
   name: 'get_messages',
   title: 'Mensagens de um contato',
   description:
-    'Lê as mensagens de uma conversa, da mais nova para a mais antiga (página 1 = mais recentes), como o findMessages: texto, quem escreveu (cliente, IA, equipe pelo painel, equipe no celular, API ou não identificado), data, tipo, se tem mídia e o messageId (use em get_media). Junta LID e telefone do mesmo contato.',
+    'Lê as mensagens de uma conversa, da mais nova para a mais antiga (página 1 = mais recentes), como o findMessages: texto, quem escreveu (cliente, IA, equipe pelo painel, equipe no celular, API ou não identificado), data, tipo, se tem mídia e o messageId (use em get_media). Junta LID e telefone do mesmo contato. Informe o contato ou o message_id de uma mensagem da conversa (por exemplo, de um sinal de find_ai_issues).',
   input: {
     instance: instanceArg,
-    contact: contactArg,
+    contact: contactArg.optional(),
+    message_id: z
+      .string()
+      .min(4)
+      .max(128)
+      .optional()
+      .describe('Em vez do contato: messageId de uma mensagem da conversa (abre a conversa dessa mensagem).'),
     page: z.number().int().min(1).max(10000).optional().describe('Página (1 = mais recentes). Padrão: 1.'),
     page_size: z.number().int().min(1).max(100).optional().describe('Mensagens por página (1 a 100). Padrão: 20.'),
   },
   annotations: READ_ONLY,
-  run: async ({ instance, contact, page = 1, page_size = 20 }, ctx) => {
+  run: async ({ instance, contact, message_id, page = 1, page_size = 20 }, ctx) => {
     const resolved = await resolveLoadedInstance(ctx, instance);
-    const remoteJid = normalizeContactJid(contact);
+    let remoteJid: string;
+    if (contact) {
+      remoteJid = normalizeContactJid(contact);
+    } else if (message_id) {
+      const stored = await findMessageByKeyId(ctx.deps.prisma, ctx.deps.config.dbProvider, resolved.id, message_id);
+      const jid = stored?.key?.remoteJidAlt?.endsWith?.('@s.whatsapp.net')
+        ? stored.key.remoteJidAlt
+        : stored?.key?.remoteJid;
+      if (!jid) throw new McpToolError(`mensagem "${message_id}" não encontrada nesta instância.`);
+      remoteJid = jid;
+    } else {
+      throw new McpToolError('informe contact ou message_id.');
+    }
 
     const result = await resolved.channel.fetchMessages({
       where: { key: { remoteJid } },
