@@ -45,10 +45,10 @@
     <link rel="stylesheet" href="/assets/tokens.css?v=3" />
     <link rel="stylesheet" href="/docs/docs.css?v=10" />
     <link rel="stylesheet" href="/landing/legal.css?v=7" />
-    <link rel="stylesheet" href="/assets/site-shell.css?v=6" />
+    <link rel="stylesheet" href="/assets/site-shell.css?v=7" />
     <!-- Tema salvo é aplicado antes da primeira pintura; o restante do comportamento espera o DOM. -->
     <script src="/docs/docs.js?v=6"></script>
-    <script src="/assets/landing.js?v=7" defer></script>
+    <script src="/assets/landing.js?v=9" defer></script>
     <script src="/assets/table-scroll.js?v=1" defer></script>
   </head>
   <body class="legal-page" data-wa-origin="privacidade">
@@ -329,26 +329,40 @@
 
     <footer class="wa-docfoot">
       <div class="wa-wrap wa-docfoot-in">
-        <div class="wa-docfoot-side">
+        <div class="wa-docfoot-brand">
           <a class="wa-docfoot-status" href="/#contato" data-wa-cta data-wa-msg="Olá! Vi o site do WhatsAI e quero tirar algumas dúvidas.">
             <span class="wa-docfoot-dot" aria-hidden="true"></span>
             Falar no WhatsApp
           </a>
+          <p class="wa-docfoot-copy">© 2026 WhatsAI. Todos os direitos reservados.</p>
         </div>
-        <div class="wa-docfoot-side wa-docfoot-side--end">
-          <nav class="wa-docfoot-links" aria-label="Rodapé">
-            <a href="/docs">Documentação</a>
-            <a href="/seguranca">Segurança</a>
-            <a href="/privacidade">Privacidade</a>
-            <a href="/termos">Termos</a>
-            <a href="/status">Status</a>
-            <a href="/acesso">Área do cliente</a>
-            <a href="/manager/login">Painel</a>
-          </nav>
-          <div class="wa-docfoot-legal">
-            <p class="wa-docfoot-copy">© 2026 WhatsAI. Todos os direitos reservados.</p>
+        <nav class="wa-docfoot-cols" aria-label="Rodapé">
+          <div class="wa-docfoot-col">
+            <p class="wa-docfoot-h" id="foot-produto">Produto</p>
+            <ul aria-labelledby="foot-produto">
+              <li><a href="/#planos">Planos</a></li>
+              <li><a href="/novidades">Novidades</a></li>
+              <li><a href="/docs">Documentação</a></li>
+              <li><a href="/status">Status</a></li>
+            </ul>
           </div>
-        </div>
+          <div class="wa-docfoot-col">
+            <p class="wa-docfoot-h" id="foot-empresa">Empresa</p>
+            <ul aria-labelledby="foot-empresa">
+              <li><a href="/marca">Marca</a></li>
+              <li><a href="/acesso">Área do cliente</a></li>
+              <li><a href="/manager/login">Painel</a></li>
+            </ul>
+          </div>
+          <div class="wa-docfoot-col">
+            <p class="wa-docfoot-h" id="foot-legal">Legal</p>
+            <ul aria-labelledby="foot-legal">
+              <li><a href="/seguranca">Segurança</a></li>
+              <li><a href="/privacidade">Privacidade</a></li>
+              <li><a href="/termos">Termos</a></li>
+            </ul>
+          </div>
+        </nav>
       </div>
       <div class="wa-wrap">
         <a class="wa-docfoot-wordmark" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>

@@ -11,9 +11,18 @@
  * máximo 40 caracteres cada. Links internos com data-keep-utm levam os mesmos utm_* para a próxima página.
  * FORMULÁRIO (data-wa-form): os campos data-wa-field só montam o texto do campo oculto "text" e o formulário abre o
  * wa.me numa nova aba. Nada vai para um servidor nosso; sem JavaScript, abre com a mensagem padrão do campo oculto.
+ *
+ * STATUS (data-status): uma leitura de GET /status da API (STATUS_API), com 3 s de limite e sem credenciais. Mostra o
+ * estado medido agora e quanto a API levou para responder; se falhar, a faixa continua escondida.
+ * EXEMPLO DE CONVERSA (data-demo): conversa fictícia por segmento que se desenrola sozinha; pausa fora da tela e
+ * pelo botão, e com "reduzir movimento" mostra só o estado final.
+ * AVISO DO TOPO (data-annc): o botão fecha e grava ANNC_KEY no localStorage; o theme.js lê a mesma chave antes da pintura.
  */
 const CONTACT_WHATSAPP = '5521974699723';
 const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstração.';
+const STATUS_API = 'https://evolution-api-x93o.onrender.com/status';
+const ANNC_KEY = 'wa-annc';
+const ANNC_VALUE = 'piloto-14d';
 
 (function () {
   'use strict';
@@ -154,6 +163,7 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
     };
     const update = function () {
       const max = maxScroll();
+      box.classList.toggle('is-static', max <= 2);
       prev.setAttribute('aria-disabled', String(track.scrollLeft <= 2));
       next.setAttribute('aria-disabled', String(track.scrollLeft >= max - 2));
     };
@@ -184,6 +194,11 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
     const label = menuBtn.querySelector('.sr');
     const icon = menuBtn.querySelector('use');
     const setOpen = function (open) {
+      if (open) {
+        const headBox = document.querySelector('[data-head]');
+        const bottom = headBox ? Math.round(headBox.getBoundingClientRect().bottom) : 52;
+        root.style.setProperty('--wa-nav-top', bottom + 'px');
+      }
       menuBtn.setAttribute('aria-expanded', String(open));
       nav.classList.toggle('is-open', open);
       root.classList.toggle('menu-open', open);
@@ -243,6 +258,10 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
       });
     });
     tabBoxes.push({ box: box, tabs: tabs, select: select });
+    const first = tabs.find(function (t) {
+      return t.getAttribute('aria-selected') === 'true';
+    }) || tabs[0];
+    if (first) select(first, false);
   });
   const openHashTab = function () {
     let id = '';
@@ -269,6 +288,200 @@ const DEFAULT_MESSAGE = 'Olá! Vi o site do WhatsAI e quero agendar uma demonstr
   if (tabBoxes.length) {
     openHashTab();
     window.addEventListener('hashchange', openHashTab);
+    // a link to the hash already in the URL fires no hashchange: open the tab anyway
+    document.addEventListener('click', function (e) {
+      const a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (a && a.getAttribute('href') === window.location.hash) window.setTimeout(openHashTab, 0);
+    });
+  }
+
+  // ------------------------------------------------------------------ example conversation (hero, data-demo)
+  // Steps appear one by one; after the last one the next segment starts. Stops off screen and on the pause button.
+  // With "reduce motion" (or when paused) every step is shown at once. Picking a tab by hand stops the auto-advance.
+  document.querySelectorAll('[data-demo]').forEach(function (demo) {
+    const tabs = Array.prototype.slice.call(demo.querySelectorAll('[role="tab"]'));
+    const panels = tabs.map(function (t) {
+      return document.getElementById(t.getAttribute('aria-controls'));
+    });
+    if (!tabs.length || panels.indexOf(null) >= 0) return;
+    const toggle = demo.querySelector('[data-demo-toggle]');
+    const toggleLabel = demo.querySelector('[data-demo-toggle-label]');
+    let current = Math.max(0, tabs.findIndex(function (t) {
+      return t.getAttribute('aria-selected') === 'true';
+    }));
+    let step = 0;
+    let timer = 0;
+    let paused = false;
+    let onScreen = false;
+    let auto = true;
+
+    const steps = function (i) {
+      return Array.prototype.slice.call(panels[i].querySelectorAll('[data-step]'));
+    };
+    const canAnimate = function () {
+      return !reduceMotion.matches && !paused;
+    };
+    const stop = function () {
+      window.clearTimeout(timer);
+      timer = 0;
+    };
+    const showAll = function (i) {
+      steps(i).forEach(function (el) {
+        el.classList.add('is-in');
+      });
+    };
+    const delayFor = function (el) {
+      const words = (el.textContent || '').trim().split(/\s+/).length;
+      return Math.min(2600, 700 + words * 55);
+    };
+    const tick = function () {
+      timer = 0;
+      if (!canAnimate() || !onScreen) return;
+      const list = steps(current);
+      if (step < list.length) {
+        list[step].classList.add('is-in');
+        step += 1;
+        timer = window.setTimeout(tick, step < list.length ? delayFor(list[step]) : 4800);
+      } else if (auto) {
+        select((current + 1) % tabs.length, false, true);
+      }
+    };
+    const start = function () {
+      stop();
+      demo.classList.toggle('is-anim', canAnimate());
+      if (!canAnimate()) {
+        showAll(current);
+        return;
+      }
+      steps(current).forEach(function (el, k) {
+        el.classList.toggle('is-in', k < step);
+      });
+      if (onScreen) timer = window.setTimeout(tick, step ? 600 : 500);
+    };
+    const select = function (i, focus, fromAuto) {
+      tabs.forEach(function (t, k) {
+        const on = k === i;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        panels[k].hidden = !on;
+      });
+      if (!fromAuto) auto = false;
+      current = i;
+      step = 0;
+      start();
+      if (focus) tabs[i].focus();
+    };
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () {
+        select(i, false);
+      });
+      t.addEventListener('keydown', function (e) {
+        const last = tabs.length - 1;
+        const next =
+          e.key === 'ArrowRight' ? (i === last ? 0 : i + 1)
+          : e.key === 'ArrowLeft' ? (i === 0 ? last : i - 1)
+          : e.key === 'Home' ? 0
+          : e.key === 'End' ? last
+          : -1;
+        if (next >= 0) {
+          e.preventDefault();
+          select(next, true);
+        }
+      });
+    });
+    const syncToggle = function () {
+      if (!toggle) return;
+      toggle.hidden = reduceMotion.matches;
+      demo.classList.toggle('is-paused', paused);
+      if (toggleLabel) toggleLabel.textContent = paused ? 'Retomar animação' : 'Pausar animação';
+    };
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        paused = !paused;
+        syncToggle();
+        if (!paused) step = 0;
+        start();
+      });
+    }
+    if (typeof reduceMotion.addEventListener === 'function') {
+      reduceMotion.addEventListener('change', function () {
+        syncToggle();
+        start();
+      });
+    }
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        onScreen = entries[0].isIntersecting;
+        if (!onScreen) stop();
+        else if (!timer) start();
+      }, { threshold: 0.25 }).observe(demo);
+    } else {
+      onScreen = true;
+    }
+    syncToggle();
+    start();
+  });
+
+  // ------------------------------------------------------------------ measured status (data-status)
+  // One GET /status, 3 s limit, no credentials. Shows the state measured now and how long the API took to answer.
+  const statusBox = document.querySelector('[data-status]');
+  if (statusBox && typeof window.fetch === 'function') {
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const limit = window.setTimeout(function () {
+      if (controller) controller.abort();
+    }, 3000);
+    const started = Date.now();
+    window
+      .fetch(STATUS_API, { credentials: 'omit', cache: 'no-store', signal: controller ? controller.signal : undefined })
+      .then(function (res) {
+        if (!res.ok) throw new Error('status ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        window.clearTimeout(limit);
+        const ms = Date.now() - started;
+        const state = String(data && data.state || '');
+        if (!data || typeof data.title !== 'string' || ['operational', 'degraded', 'outage'].indexOf(state) < 0) return;
+        let total = 0;
+        let ok = 0;
+        (Array.isArray(data.groups) ? data.groups : []).forEach(function (g) {
+          (Array.isArray(g.components) ? g.components : []).forEach(function (c) {
+            if (!c || c.state === 'no_data') return;
+            total += 1;
+            if (c.state === 'operational') ok += 1;
+          });
+        });
+        const parts = [];
+        if (total) parts.push(ok + ' de ' + total + ' componentes funcionando');
+        parts.push('a API respondeu em ' + ms.toLocaleString('pt-BR') + ' ms');
+        statusBox.querySelector('[data-status-title]').textContent = data.title.slice(0, 80);
+        statusBox.querySelector('[data-status-meta]').textContent = parts.join(' · ');
+        statusBox.setAttribute('data-state', state);
+        statusBox.hidden = false;
+      })
+      .catch(function () {
+        window.clearTimeout(limit);
+      });
+  }
+
+  // ------------------------------------------------------------------ announcement bar (data-annc)
+  const annc = document.querySelector('[data-annc]');
+  if (annc) {
+    const close = annc.querySelector('[data-annc-close]');
+    if (close) {
+      close.addEventListener('click', function () {
+        root.classList.add('annc-off');
+        try {
+          window.localStorage.setItem(ANNC_KEY, ANNC_VALUE);
+        } catch (e) {
+          /* not remembered: it comes back on the next visit */
+        }
+        const skip = document.querySelector('.wa-skip');
+        const brand = document.querySelector('.wa-brand');
+        if (brand) brand.focus();
+        else if (skip) skip.focus();
+      });
+    }
   }
 
   // ------------------------------------------------------------------ mobile contact bar: only after the hero button scrolls away

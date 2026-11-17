@@ -8,6 +8,7 @@ Site em português do Brasil. O painel (/manager) é privado e exige chave de ac
 
 - [Página inicial](https://whatsaibr.vercel.app/): como funciona, tour do produto, segmentos, planos e perguntas frequentes.
 - [Status](https://whatsaibr.vercel.app/status): estado público da API, banco, site, painel e conexões de WhatsApp, com histórico de 3 dias e incidentes recentes.
+- [Marca](https://whatsaibr.vercel.app/marca): logo, símbolo, cores, tipografia, como escrever o nome e arquivos em SVG e PNG.
 - [Documentação](https://whatsaibr.vercel.app/docs/): guia público de primeiros passos, conexão, atendente de IA, Leads, Agenda, Processos, segurança, planos e operação.
 - [Como funciona](https://whatsaibr.vercel.app/#como-funciona): conectar o WhatsApp (QR code ou API oficial da Meta), configurar a IA com as informações da empresa e acompanhar pelo painel.
 - [WhatsApp Web ou API oficial](https://whatsaibr.vercel.app/#canais): diferenças, riscos e quando usar cada conexão.
