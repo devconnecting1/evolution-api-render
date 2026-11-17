@@ -125,6 +125,7 @@ O pacote do Artefato do Projeto (27 propostas) mudou o painel e o site:
 - **Celular**: listas de Leads, Processos e Instâncias viram cartões abaixo de 640 px; abas rolam de lado.
 - **Visão Geral**: números da semana, agenda do dia e alertas no lugar do cartão técnico; o token e as ações destrutivas ficam em Conexão.
 - **Cobrança e exportação**: abas Cobrança e Exportar dados em Plano e limites; ZIP em streaming com CSVs de conversas, mensagens, contatos, leads e agenda.
+- **Exportar conversas para revisão** (Plano e limites > Exportar dados; `GET /export/review/{instancia}?from=AAAA-MM-DD&to=AAAA-MM-DD&format=md|jsonl`, até 31 dias): ZIP com um Markdown por conversa (`[14:03] Cliente: ...`, `[14:03] IA: ...`, `[14:05] Equipe (celular): ...`) e um JSONL, para revisar a IA. Números só com os 4 últimos dígitos, sem nomes; e-mails, CPF, CNPJ e sequências longas de números ocultados. Só administrador (chave global, token da instância, sessão do dono ou chave de equipe Dono); o código do cliente nunca exporta.
 - **Central de notificações**: sino no cabeçalho com desconexão, limite do plano, processos e agenda, com atalho para resolver.
 - **Sistema visual**: medidas, cantos, tipografia e largura iguais em todas as telas; primeiro acesso com boot screen, cache imutável e fonte versionada.
 - **Equipe (etapa 1)**: API de login por pessoa com Google, sessão revogável e quadro de acessos. O painel ainda entra pela chave global; a tela de login e os papéis entram na etapa 2.
@@ -919,6 +920,7 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `get_agenda_settings` | leitura | Configurações da Agenda: horários, tipos, lembretes, permissões da IA, números da equipe |
 | `update_agenda_settings` | escrita | Liga/desliga e altera a Agenda (listas substituem as atuais). Marcada como destrutiva; devolve os valores anteriores |
 | `get_openai_health` | leitura | Chaves OpenAI de cada cliente: funcionando, sem crédito, inválida ou modelo indisponível, com o que fazer. `test=true` testa agora (custo ~US$ 0,00000002; 1 vez a cada 30 s por chave) |
+| `export_conversations_for_review` | leitura | Conversas de um período (até 31 dias) em texto compacto, com quem escreveu cada mensagem, mascaradas como a exportação para revisão. Paginado por conversa com `cursor` |
 | `get_database_info` | leitura | Cota de projetos do Neon (banco próprio por instância) e as últimas "acordadas" do banco com as consultas que as causaram. Responde da memória, sem consultar o banco (só chave global) |
 | `list_credentials` | leitura | Chaves guardadas de cada instância (OpenAI, token, webhook, Dify, Chatwoot etc.) **sempre mascaradas** e se a instância usa a chave OpenAI global. Para ver um valor, use a página Chaves e credenciais (só chave global) |
 

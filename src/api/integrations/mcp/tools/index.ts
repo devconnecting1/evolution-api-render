@@ -8,6 +8,7 @@ import { instanceTools } from './instance.tools';
 import { leadTools } from './leads.tools';
 import { openaiHealthTools } from './openai-health.tools';
 import { processosTools } from './processos.tools';
+import { reviewTools } from './review.tools';
 import { usageTools } from './usage.tools';
 
 /**
@@ -26,6 +27,7 @@ export const allTools: ToolSpec<any>[] = [
   ...agendaTools,
   ...databaseTools,
   ...openaiHealthTools,
+  ...reviewTools,
 ];
 
 export const TOOL_NAMES = allTools.map((tool) => tool.name);
