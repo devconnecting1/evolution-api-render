@@ -108,6 +108,7 @@ export const getBotConfig = defineTool({
           ignoreJids: settings.ignoreJids ?? null,
           tokenParam: settings.tokenParam ?? null,
           ethicsProfile: settings.ethicsProfile ?? 'none',
+          handoffTool: settings.handoffTool === true,
           historyMessages: settings.historyMessages ?? null,
           fallbackBotId: settings.openaiIdFallback ?? null,
           credentialId: settings.openaiCredsId ?? null,
@@ -426,6 +427,12 @@ export const updateBotSettings = defineTool({
       .describe(
         'Regras éticas que o sistema coloca acima do prompt, para a instância toda: "advocacia" (Código de Ética e Disciplina da OAB e Provimento 205/2021: sem consulta jurídica, sem promessa de resultado, sem valores de honorários, sem captação, sigilo) ou "none".',
       ),
+    handoff_tool: z
+      .boolean()
+      .optional()
+      .describe(
+        'Para a instância toda: a IA pode transferir a conversa para a equipe quando o cliente pedir uma pessoa, desconfiar ou relatar urgência (pausa a IA para o contato e avisa os números de Leads).',
+      ),
     max_tokens: z
       .number()
       .int()
@@ -503,7 +510,7 @@ export const updateBotSettings = defineTool({
     ];
     for (const [arg, field] of direct) if (args[arg] !== undefined) changes[field] = args[arg];
 
-    if (!Object.keys(changes).length && args.ethics_profile === undefined)
+    if (!Object.keys(changes).length && args.ethics_profile === undefined && args.handoff_tool === undefined)
       throw new McpToolError('nenhum campo para alterar foi informado.');
     if (ctx.deps.openaiController?.integrationEnabled === false) {
       throw new McpToolError('a integração OpenAI está desativada neste servidor (OPENAI_ENABLED).');
@@ -513,19 +520,29 @@ export const updateBotSettings = defineTool({
 
     // instance-wide setting (default settings of the OpenAI bot): changed directly, the bot is not touched
     let ethics: { before: string; after: string } | null = null;
-    if (args.ethics_profile !== undefined) {
+    let handoff: { before: boolean; after: boolean } | null = null;
+    if (args.ethics_profile !== undefined || args.handoff_tool !== undefined) {
       const row = await ctx.deps.prisma.openaiSetting.findFirst({
         where: { instanceId: resolved.id },
-        select: { id: true, ethicsProfile: true },
+        select: { id: true, ethicsProfile: true, handoffTool: true },
       });
       if (!row) throw new McpToolError('a instância ainda não tem as configurações padrão do bot OpenAI.');
       await ctx.deps.prisma.openaiSetting.update({
         where: { id: row.id },
-        data: { ethicsProfile: args.ethics_profile },
+        data: {
+          ...(args.ethics_profile !== undefined ? { ethicsProfile: args.ethics_profile } : {}),
+          ...(args.handoff_tool !== undefined ? { handoffTool: args.handoff_tool } : {}),
+        },
       });
-      ethics = { before: row.ethicsProfile ?? 'none', after: args.ethics_profile };
+      if (args.ethics_profile !== undefined)
+        ethics = { before: row.ethicsProfile ?? 'none', after: args.ethics_profile };
+      if (args.handoff_tool !== undefined) handoff = { before: row.handoffTool === true, after: args.handoff_tool };
       if (!Object.keys(changes).length) {
-        return jsonResult({ updated: true, instance: resolved.name, changes: { ethicsProfile: ethics } });
+        return jsonResult({
+          updated: true,
+          instance: resolved.name,
+          changes: { ...(ethics ? { ethicsProfile: ethics } : {}), ...(handoff ? { handoffTool: handoff } : {}) },
+        });
       }
     }
 
@@ -548,7 +565,7 @@ export const updateBotSettings = defineTool({
       updated: true,
       instance: resolved.name,
       botId: bot.id,
-      changes: ethics ? { ...diff, ethicsProfile: ethics } : diff,
+      changes: { ...diff, ...(ethics ? { ethicsProfile: ethics } : {}), ...(handoff ? { handoffTool: handoff } : {}) },
     });
   },
 });

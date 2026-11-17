@@ -15,6 +15,7 @@ import {
   texts,
   unsupportedParamError,
   useFakeOpenai,
+  withoutContextNote,
 } from '../helpers/fakes';
 import { createPrismaMock } from '../helpers/prisma-mock';
 
@@ -242,7 +243,7 @@ describe('OpenaiService: ethics profile and fixed messages', { concurrency: true
     const t = setup({ bot: { assistantMessages: [''], userMessages: ['  '], systemMessages: ['Prompt', ''] } });
     t.openai.reply('ok');
     await t.ask('oi');
-    const messages = t.openai.requests[0].messages;
+    const messages = withoutContextNote(t.openai.requests[0].messages);
     assert.deepEqual(
       messages.map((message: any) => message.role),
       ['system', 'user'],
@@ -415,7 +416,7 @@ describe('OpenaiService: images', { concurrency: true }, () => {
     const msg = imageMsg(REMOTE_JID, { caption: 'nova', base64: PNG });
     await t.ask(`imageMessage|${msg.key.id}|nova`, msg);
 
-    const sentMessages = t.openai.requests[0].messages;
+    const sentMessages = withoutContextNote(t.openai.requests[0].messages);
     assert.ok(!JSON.stringify(sentMessages.slice(0, -1)).includes('mmg.whatsapp.net'), 'old image block stripped');
     assert.deepEqual(sentMessages.at(-3).content, [{ type: 'text', text: '[imagem]' }]);
 

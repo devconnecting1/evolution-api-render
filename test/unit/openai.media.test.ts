@@ -24,6 +24,7 @@ import {
   nextId,
   texts,
   useFakeOpenai,
+  withoutContextNote,
 } from '../helpers/fakes';
 import { objectStreamPdf, plainPdf } from '../helpers/pdf';
 import { createPrismaMock } from '../helpers/prisma-mock';
@@ -654,7 +655,7 @@ describe('OpenaiService: conversation window (historyMessages)', { concurrency: 
     }));
 
   /** Previous messages sent to the model (between the system prompt and the current message). */
-  const previous = (t: ReturnType<typeof setup>) => t.openai.requests.at(-1).messages.slice(1, -1);
+  const previous = (t: ReturnType<typeof setup>) => withoutContextNote(t.openai.requests.at(-1).messages).slice(1, -1);
 
   test('default: 10 previous messages sent and 10 stored (same as before)', async () => {
     const t = setup({ session: { context: JSON.stringify({ history: history(30) }) } });

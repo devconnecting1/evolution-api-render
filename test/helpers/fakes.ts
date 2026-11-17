@@ -186,3 +186,12 @@ export function imageMsg(remoteJid: string, options: { caption?: string; base64?
     messageTimestamp: Math.floor(Date.now() / 1000),
   };
 }
+
+/** The dynamic context note (date, hours, ad) the OpenAI bot adds right before the customer's message. */
+export const isContextNote = (message: any) =>
+  message?.role === 'system' &&
+  typeof message.content === 'string' &&
+  message.content.startsWith('Contexto desta conversa (nota interna do sistema');
+
+/** Messages of a request without the context note (tests about the static prompt and the history). */
+export const withoutContextNote = (messages: any[]) => messages.filter((message) => !isContextNote(message));

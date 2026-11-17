@@ -15,6 +15,8 @@ import { withQuotedContext } from '@utils/quotedContext';
 import OpenAI from 'openai';
 
 import { BaseChatbotController } from '../../base-chatbot.controller';
+import { ReplyMeta } from '../../reply-ticket';
+import { extractAdReferral } from '../ai-context';
 
 export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto> {
   constructor(
@@ -73,8 +75,14 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
     return {
       tokenParam: bot?.tokenParam ?? settings?.tokenParam ?? 'auto',
       ethicsProfile: settings?.ethicsProfile ?? 'none',
+      handoffTool: settings?.handoffTool === true,
       ...resolveOpenaiMediaOptions(bot, settings),
     };
+  }
+
+  // The Click-to-WhatsApp ad of any message of a burst survives the debounce merge (see ai-context.ts)
+  protected getReplyMeta(msg: any): ReplyMeta {
+    return { adReferral: extractAdReferral(msg) };
   }
 
   // Video, sticker, location and shared contact reach the model as a clear sentence (other bots keep the raw text)
@@ -452,6 +460,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
         maxDocumentMB: data.maxDocumentMB,
         historyMessages: data.historyMessages,
         ethicsProfile: data.ethicsProfile,
+        handoffTool: data.handoffTool,
       };
 
       if (existingSettings) {
@@ -500,6 +509,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       tokenParam: settings?.tokenParam ?? 'auto',
       humanResumeMinutes: settings?.humanResumeMinutes ?? 0,
       ethicsProfile: settings?.ethicsProfile ?? 'none',
+      handoffTool: settings?.handoffTool === true,
       ...resolveOpenaiMediaOptions(null, settings),
     };
   }

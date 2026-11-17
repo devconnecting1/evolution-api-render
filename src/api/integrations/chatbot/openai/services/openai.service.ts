@@ -7,7 +7,7 @@ import { Integration } from '@api/types/wa.types';
 import { ConfigService, Language, Openai as OpenaiConfig } from '@config/env.config';
 import { IntegrationSession, OpenaiBot, OpenaiSetting } from '@prisma/client';
 import { ethicsSystemPrompt } from '@utils/ethics';
-import { hasHumanWrittenSince, isHumanPaused } from '@utils/humanPause';
+import { hasHumanWrittenSince, isHumanPaused, withManualPause } from '@utils/humanPause';
 import { openaiHealthRegistry } from '@utils/openai-health';
 import {
   countPdfPages,
@@ -36,6 +36,7 @@ import OpenAI, { toFile } from 'openai';
 import P from 'pino';
 
 import { BaseChatbotService } from '../../base-chatbot.service';
+import { currentReplyTicket, ReplyCancelledError } from '../../reply-ticket';
 import {
   buildAgendaContext,
   contactJidsOf,
@@ -43,6 +44,15 @@ import {
   modelsWithoutTools,
   runToolLoop,
 } from '../agenda-ai';
+import {
+  buildContextNote,
+  CONTEXT_NOTE_HEADER,
+  extractAdReferral,
+  stripAdMarker,
+  stripAdMarkerFromMessage,
+} from '../ai-context';
+import { buildHandoffContext, HANDOFF_FAREWELL, handoffNotificationText, HandoffRequest } from '../handoff-ai';
+import { guardReply, PREVIOUS_REPLIES_KEPT } from '../reply-guard';
 
 type TokenParamName = 'max_tokens' | 'max_completion_tokens';
 type TokenParamMode = 'auto' | TokenParamName;
@@ -93,6 +103,8 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
   protected readonly usage: UsageService;
   /** "Leads (triagem)": each answered conversation may be analysed in the background (never delays the answer). */
   public leads: LeadsService | null;
+  /** Hand-over requested by the model during the reply of a session, applied after the reply is sent. */
+  private readonly pendingHandoffs = new Map<string, HandoffRequest>();
 
   constructor(
     waMonitor: WAMonitoringService,
@@ -358,8 +370,11 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       if (message) {
         this.logger.log('Sending message to WhatsApp');
         const sent = await this.sendMessageWhatsApp(instance, remoteJid, message, settings, true);
+        const handoff = this.pendingHandoffs.get(session.id);
+        this.pendingHandoffs.delete(session.id);
         if (sent > 0) {
           await this.usage.recordAnswer(instance.instanceId, remoteJid);
+          if (handoff) await this.applyHandoff(instance, session, remoteJid, pushName, handoff);
           // Not an answer of the plan: a background analysis of the conversation for the team (never sent to the client)
           this.leads?.afterBotReply({
             instance,
@@ -386,6 +401,12 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         },
       });
     } catch (error) {
+      this.pendingHandoffs.delete(session.id);
+      // The customer wrote again before the reply went out: it is answered together with the new message
+      if (error instanceof ReplyCancelledError) {
+        this.logger.log(`Reply to ${remoteJid} cancelled before sending: merged with the next message`);
+        return;
+      }
       // Never forward the raw error to the customer: log everything, send only the configured fallback
       this.logOpenaiError('sendMessageToBot', error);
       await this.sendErrorFallback(instance, remoteJid, settings, session);
@@ -393,6 +414,45 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     } finally {
       // The turn is over (answer, discarded answer or fallback): offline again unless alwaysOnline (#2469/#2537)
       await this.sendUnavailablePresence(instance);
+    }
+  }
+
+  /**
+   * The model called the hand-over tool and its reply went out: pause the session like "Assumir conversa"
+   * (manual pause, only the team reactivates it) and tell the team numbers of "Leads". Never throws.
+   */
+  private async applyHandoff(
+    instance: any,
+    session: IntegrationSession,
+    remoteJid: string,
+    pushName: string,
+    request: HandoffRequest,
+  ): Promise<void> {
+    try {
+      const current = await this.prismaRepository.integrationSession.findUnique({ where: { id: session.id } });
+      if (current && current.status !== 'closed') {
+        await this.prismaRepository.integrationSession.update({
+          where: { id: session.id },
+          data: { status: 'paused', parameters: withManualPause(current.parameters) },
+        });
+      }
+      this.logger.log(`Hand-over to the team for ${remoteJid} (${request.reason}): AI paused for this contact`);
+
+      const settings = await this.leads?.getSettings(instance.instanceId).catch((): null => null);
+      const numbers: string[] = settings?.notify?.enabled ? (settings.notify.numbers ?? []) : [];
+      const phone = remoteJid.endsWith('@s.whatsapp.net') ? remoteJid.split('@')[0] : null;
+      const text = handoffNotificationText(request, { name: pushName || null, phone });
+      for (const number of numbers) {
+        if (!number || number === phone) continue;
+        try {
+          // Trailing `true`: a chatbot send, so the echo never pauses the bot of that chat
+          await instance.textMessage({ number, text, delay: 0, linkPreview: false }, false, true);
+        } catch (error) {
+          this.logger.error(`Hand-over notice to a team number failed: ${error?.message ?? error}`);
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Hand-over for ${remoteJid} failed: ${error?.message ?? error}`);
     }
   }
 
@@ -578,6 +638,9 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     // How many previous messages the model sees (bot > settings > 10)
     const historyLimit = resolveOpenaiMediaOptions(openaiBot, settings).historyMessages;
     let conversationHistory = [];
+    // The AI's previous replies (longer than the history kept for the model): repetition guard
+    let previousReplies: string[] = [];
+    const previousContext = session?.context ?? null;
 
     if (session && session.context) {
       try {
@@ -587,8 +650,13 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         // Strip image blocks saved by older versions (raw base64 / invalid WhatsApp URLs that make
         // every following request fail with "400 Failed to download file")
         conversationHistory = (sessionData.history || [])
-          .map((message) => this.stripMediaFromMessage(message))
+          .map((message) => stripAdMarkerFromMessage(this.stripMediaFromMessage(message)))
           .slice(-historyLimit);
+        previousReplies = Array.isArray(sessionData.botReplies)
+          ? sessionData.botReplies.filter((reply: unknown) => typeof reply === 'string')
+          : (sessionData.history || [])
+              .filter((message: any) => message?.role === 'assistant' && typeof message.content === 'string')
+              .map((message: any) => message.content);
         this.logger.log(`Retrieved conversation history from session, ${conversationHistory.length} messages`);
       } catch (error) {
         this.logger.error(`Error parsing session context: ${error.message}`);
@@ -621,10 +689,20 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
 
     // Prepare current message (images as data URLs, PDFs as file inputs)
     const media = resolveOpenaiMediaOptions(openaiBot, settings);
+    // The ad marker of Click-to-WhatsApp is context (in the note below), never text the customer wrote
     const messageData: any = {
       role: 'user',
-      content: await this.buildChatCompletionContent(instance, content, msg, media),
+      content: await this.buildChatCompletionContent(instance, stripAdMarker(content), msg, media),
     };
+
+    // Dynamic context, last (static prompt first for the prompt cache): date/time, business hours, ad clicked
+    const limits = await this.usage.getEffectiveLimits(instance.instanceId).catch((): null => null);
+    const contextNote = buildContextNote({
+      now: new Date(),
+      timezone: limits?.businessHours?.timezone,
+      hours: limits?.businessHours,
+      ad: currentReplyTicket()?.meta?.adReferral ?? extractAdReferral(msg),
+    });
 
     // "Processos": dates of the last updates of THIS contact's monitored processes (opt-in, never saved in history)
     const processContext = await getProcessAiContext(instance.instanceId, remoteJid, stripQuotedContext(content));
@@ -636,6 +714,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       ...messagesUser,
       ...conversationHistory,
       ...(processContext ? [{ role: 'system', content: processContext }] : []),
+      { role: 'system', content: contextNote },
       messageData,
     ];
 
@@ -652,6 +731,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     // Send the request to OpenAI
     try {
       this.logger.log('Sending request to OpenAI API');
+      const handoff = (settings as any)?.handoffTool === true ? buildHandoffContext() : null;
       const completions = await this.createAnswerCompletion(
         client,
         instance,
@@ -660,22 +740,51 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         messages,
         tokenParam,
         msg,
+        handoff,
       );
 
       if (instance.integration === Integration.WHATSAPP_BAILEYS) {
         await instance.client.sendPresenceUpdate('paused', remoteJid);
       }
 
-      const responseContent = completions.choices?.[0]?.message?.content;
+      const rawContent = completions.choices?.[0]?.message?.content;
       this.logger.log(`Received response from OpenAI: ${JSON.stringify(completions.choices?.[0])}`);
 
-      if (!responseContent) {
+      if (!rawContent && !handoff?.request) {
         // e.g. reasoning models that spend the whole token budget (finish_reason "length") or a refusal
         throw new Error(
           `OpenAI returned empty content (model: ${openaiBot.model}, finish_reason: ` +
             `${completions.choices?.[0]?.finish_reason ?? 'unknown'})`,
         );
       }
+
+      // The customer wrote again meanwhile: this reply is merged into the next one (nothing saved, nothing sent)
+      currentReplyTicket()?.throwIfCancelled();
+
+      // Guardrails before sending: no repeated question/sentence, one question, rules of the ethics profile
+      const guarded = await guardReply({
+        candidate: rawContent || (handoff?.request ? HANDOFF_FAREWELL : ''),
+        previousReplies,
+        policy: { advocacia: (settings as any)?.ethicsProfile === 'advocacia' },
+        regenerate: async (instruction) => {
+          const retry = await this.createChatCompletionWithFiles(
+            client,
+            openaiBot,
+            [...messages, { role: 'assistant', content: rawContent }, { role: 'system', content: instruction }],
+            tokenParam,
+          );
+          return retry?.choices?.[0]?.message?.content ?? null;
+        },
+      });
+      if (guarded.issues.length || guarded.questionsTrimmed || guarded.truncated) {
+        this.logger.log(
+          `Reply guard for ${remoteJid}: ${guarded.issues.map((issue) => issue.kind).join(', ') || 'shape'}` +
+            `${guarded.regenerated ? ' (regenerated)' : ''}${guarded.removed.length ? `, ${guarded.removed.length} sentence(s) removed` : ''}`,
+        );
+      }
+      const responseContent = guarded.text;
+      currentReplyTicket()?.throwIfCancelled();
+      if (handoff?.request && session) this.pendingHandoffs.set(session.id, handoff.request);
 
       // Add the current exchange to the conversation history and update the session
       // (images and documents are replaced by a text placeholder so base64 never lands in session.context)
@@ -697,15 +806,23 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
           data: {
             context: JSON.stringify({
               history: conversationHistory,
+              botReplies: [...previousReplies, responseContent].slice(-PREVIOUS_REPLIES_KEPT),
             }),
           },
         });
         this.logger.log(`Updated session with conversation history, now ${conversationHistory.length} messages`);
+        // Cancelled during the typing delay (nothing sent): the next reply must not see this exchange
+        currentReplyTicket()?.onRollback(async () => {
+          await this.prismaRepository.integrationSession.update({
+            where: { id: session.id },
+            data: { context: previousContext },
+          });
+        });
       }
 
       return responseContent;
     } catch (error) {
-      this.logOpenaiError('processChatCompletionMessage', error);
+      if (!(error instanceof ReplyCancelledError)) this.logOpenaiError('processChatCompletionMessage', error);
 
       if (instance.integration === Integration.WHATSAPP_BAILEYS) {
         await instance.client.sendPresenceUpdate('paused', remoteJid).catch(() => undefined);
@@ -1223,6 +1340,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     messages: any[],
     tokenParam: { mode: TokenParamMode; param: TokenParamName },
     msg?: any,
+    handoff?: ReturnType<typeof buildHandoffContext> | null,
   ) {
     const agenda = await buildAgendaContext(this.agenda, instance?.instanceId, remoteJid, {
       msg,
@@ -1232,21 +1350,46 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       this.logger.error(`Agenda tools unavailable: ${error?.message ?? error}`);
       return null;
     });
-    if (!agenda) return this.createChatCompletionWithFiles(client, openaiBot, messages, tokenParam);
+    // Groups never get tools; models that rejected tools neither
+    const handoffOn = !!handoff && !remoteJid.endsWith('@g.us') && !modelsWithoutTools.has(openaiBot.model || '');
+    const contexts = [agenda, handoffOn ? handoff : null].filter(Boolean) as {
+      systemPrompt: string;
+      tools: any[];
+      execute: (name: string, args: any) => Promise<any>;
+    }[];
+    if (!contexts.length) return this.createChatCompletionWithFiles(client, openaiBot, messages, tokenParam);
 
-    const firstOther = messages.findIndex((message) => message?.role !== 'system');
+    // Tool prompts are static: right after the leading system prompts, before the history and the dynamic note
+    const firstOther = messages.findIndex(
+      (message) =>
+        message?.role !== 'system' ||
+        (typeof message.content === 'string' && message.content.startsWith(CONTEXT_NOTE_HEADER)),
+    );
     const withNote = [...messages];
-    withNote.splice(firstOther < 0 ? withNote.length : firstOther, 0, { role: 'system', content: agenda.systemPrompt });
+    withNote.splice(
+      firstOther < 0 ? withNote.length : firstOther,
+      0,
+      ...contexts.map((context) => ({ role: 'system', content: context.systemPrompt })),
+    );
+    const owner = new Map<string, (typeof contexts)[number]>();
+    for (const context of contexts) for (const tool of context.tools) owner.set(tool.function.name, context);
+    const merged = {
+      tools: contexts.flatMap((context) => context.tools),
+      execute: async (name: string, args: any) => {
+        const context = owner.get(name);
+        return context ? context.execute(name, args) : { ok: false, erro: 'ferramenta_desconhecida' };
+      },
+    };
     try {
-      const { completion, calls } = await runToolLoop(withNote, agenda, (convo, extra) =>
+      const { completion, calls } = await runToolLoop(withNote, merged, (convo, extra) =>
         this.createChatCompletionWithFiles(client, openaiBot, convo, tokenParam, extra),
       );
-      if (calls.length) this.logger.log(`Agenda tools used for ${remoteJid}: ${calls.join(', ')}`);
+      if (calls.length) this.logger.log(`Tools used for ${remoteJid}: ${calls.join(', ')}`);
       return completion;
     } catch (error) {
       if (!isToolsUnsupportedError(error)) throw error;
       if (openaiBot.model) modelsWithoutTools.add(openaiBot.model);
-      this.logger.warn(`Model ${openaiBot.model} does not accept tools: answering without the agenda tools`);
+      this.logger.warn(`Model ${openaiBot.model} does not accept tools: answering without tools`);
       return this.createChatCompletionWithFiles(client, openaiBot, messages, tokenParam);
     }
   }

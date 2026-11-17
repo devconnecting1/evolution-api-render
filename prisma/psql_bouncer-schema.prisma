@@ -538,6 +538,7 @@ model OpenaiSetting {
   maxDocumentMB      Int?         @default(10) @db.Integer
   historyMessages    Int?         @default(10) @db.Integer
   ethicsProfile      String?      @default("none") @db.VarChar(20)
+  handoffTool        Boolean?     @default(false) @db.Boolean
   createdAt        DateTime?    @default(now()) @db.Timestamp
   updatedAt        DateTime     @updatedAt @db.Timestamp
   OpenaiCreds      OpenaiCreds? @relation(fields: [openaiCredsId], references: [id])
