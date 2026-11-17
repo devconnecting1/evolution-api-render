@@ -733,6 +733,29 @@ Para escritórios de advocacia, ligue nas settings do bot **`ethicsProfile: "adv
 - Mensagens fixas vazias do bot (`assistantMessages`/`userMessages` com `""`, que o painel salva em campos em branco) deixaram de ser enviadas à OpenAI.
 - **Fora do bot**, o produto já segue as mesmas regras: Leads é triagem interna, sem nota numérica de pessoas, e nada vai ao cliente (seção 16.7); Processos só manda ao cliente a frase neutra (seção 17.2); a Agenda não informa preço nem promete (seção 18.1). Mensagens de "retomada" de atendimento só para quem procurou o escritório e sobre o pedido dela, uma vez; nunca campanhas para listas.
 
+### 12.13 Raciocínio da IA (`reasoningEffort`)
+
+Campo do bot (`OpenaiBot.reasoningEffort`, migration aditiva `20261117120000_add_openai_reasoning_effort`), enviado como `reasoning_effort` no Chat Completions. Valores: `auto` (gravado como `null` = padrão do modelo), `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. No painel: **Atendente IA > Modelo e chave > Raciocínio da IA** (a lista mostra só os níveis que o modelo escolhido aceita). No MCP: `update_bot_settings` com `reasoning_effort`; `get_bot_config` mostra o valor salvo e o efetivo.
+
+Níveis por modelo (páginas oficiais da OpenAI, nov/2026; tabela em `src/api/integrations/chatbot/openai/reasoning-effort.ts`):
+
+| Modelo | Níveis | Padrão |
+| --- | --- | --- |
+| gpt-6-luna, gpt-6-sol, gpt-5.6-* | none, low, medium, high, xhigh, max | medium |
+| gpt-6.1-terra | none, low, medium, high, xhigh, max | medium |
+| gpt-6-astra, gpt-6.1-sol | low, medium, high, xhigh, max | medium |
+| gpt-5.5 | none, low, medium, high, xhigh | medium |
+| gpt-5.4 (mini, nano) | none, low, medium, high, xhigh | none |
+| gpt-5.1, gpt-5.2 | none, low, medium, high | none |
+| gpt-5 (mini, nano) | minimal, low, medium, high | medium |
+| o1, o3, o4-mini | low, medium, high | medium |
+| gpt-4o, gpt-4.1 e outros sem raciocínio | o parâmetro não é enviado | - |
+
+- **`none` não é "automático":** é a IA respondendo sem pensar antes (mais rápida, menos cuidadosa). "Automático" usa o padrão do modelo (`medium` no gpt-6-luna).
+- **Recomendação:** `high` para triagens com regras (advocacia, saúde); `low` para dúvidas simples e rápidas (a OpenAI recomenda `low` para atendimento/chat). `xhigh` e `max` só quando um teste mostrar ganho: são mais lentos e gastam mais. Os tokens de raciocínio são cobrados como saída e entram no `maxTokens`: com `high` ou mais, use `maxTokens` de 8000 ou mais (no gpt-6-luna, 8000 tokens de saída custam cerca de US$ 0,004).
+- **Ferramentas:** no gpt-6-luna, gpt-6-sol e gpt-5.6, o Chat Completions só aceita ferramentas (agenda, `transferir_para_equipe`) com `none`. Uma resposta que oferece ferramentas vai com `none` (aviso uma vez por bot no log); as outras usam o nível escolhido. Para usar ferramentas com raciocínio é preciso migrar para a Responses API (não feito).
+- Nível que o modelo não aceita vai para o mais próximo (`minimal` vira `low`; `max` vira `xhigh` no gpt-5.4). Se a OpenAI ainda responder 400 sobre `reasoning_effort`, a chamada é repetida uma vez sem o parâmetro e o modelo fica memorizado sem ele (só em memória).
+
 ## 13. O que é automático e o que é serviço (auditoria de 02/11/2026)
 
 Conferido no código (`src/api/integrations/chatbot/openai/**`, `base-chatbot.*`, `src/utils/humanPause.ts`, `src/utils/openaiMedia.ts`, `channel/meta/**`, `observability*`). Use esta lista para não prometer o que não existe.

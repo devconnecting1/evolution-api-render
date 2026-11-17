@@ -52,6 +52,7 @@ import {
   stripAdMarkerFromMessage,
 } from '../ai-context';
 import { buildHandoffContext, HANDOFF_FAREWELL, handoffNotificationText, HandoffRequest } from '../handoff-ai';
+import { isReasoningEffortError, resolveReasoningEffort } from '../reasoning-effort';
 import { guardReply, PREVIOUS_REPLIES_KEPT } from '../reply-guard';
 
 type TokenParamName = 'max_tokens' | 'max_completion_tokens';
@@ -68,6 +69,10 @@ const MAX_COMPLETION_TOKENS_MODEL_REGEX = /^(ft:)?(o\d|gpt-5|gpt-6)/i;
  * OpenAI rejected the other one. Process-wide, shared by every instance.
  */
 const learnedTokenParamByModel = new Map<string, TokenParamName>();
+/** Models that answered 400 to `reasoning_effort` (per process): called without it from then on. */
+const modelsWithoutReasoningEffort = new Set<string>();
+/** Bots already warned that tools forced `reasoning_effort: none` (one log line per bot and process). */
+const warnedToolsEffort = new Set<string>();
 
 /** Errors already logged in full, to avoid duplicated stack traces when rethrown. */
 const loggedOpenaiErrors = new WeakSet<object>();
@@ -620,8 +625,10 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     }
 
     const tokenParam = this.resolveTokenParam(openaiBot, settings);
+    const effort = resolveReasoningEffort(openaiBot.model, (openaiBot as any).reasoningEffort);
     this.logger.log(
-      `Using model: ${openaiBot.model}, tokenParam: ${tokenParam.mode} -> ${tokenParam.param}=${openaiBot.maxTokens || 500}`,
+      `Using model: ${openaiBot.model}, tokenParam: ${tokenParam.mode} -> ${tokenParam.param}=${openaiBot.maxTokens || 500}` +
+        (effort.effective ? `, reasoning: ${effort.send ?? `${effort.effective} (model default)`}` : ''),
     );
 
     // Get existing conversation history from the session (by id: the chat may show up as @lid or @s.whatsapp.net)
@@ -1468,14 +1475,40 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     extra: Record<string, any> = {},
   ) {
     const maxTokens = openaiBot.maxTokens || 500;
+    const model = openaiBot.model || '';
+    const withTools = Array.isArray(extra?.tools) && extra.tools.length > 0;
+    const effort = resolveReasoningEffort(model, (openaiBot as any).reasoningEffort, withTools);
+    if (effort.adjusted === 'tools' && !warnedToolsEffort.has(openaiBot.id)) {
+      warnedToolsEffort.add(openaiBot.id);
+      this.logger.warn(
+        `Model ${model} only accepts tools in Chat Completions with reasoning_effort "none": ` +
+          `requests with tools of bot ${openaiBot.id} go with "none"`,
+      );
+    }
     const buildParams = (param: TokenParamName) => {
       const params: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = { ...extra, model: openaiBot.model, messages };
       params[param] = maxTokens;
+      if (effort.send && !modelsWithoutReasoningEffort.has(model)) (params as any).reasoning_effort = effort.send;
       return params;
+    };
+    // A model that rejects reasoning_effort (400) is remembered and called again once without it
+    const create = async (param: TokenParamName) => {
+      const params = buildParams(param);
+      try {
+        return await client.chat.completions.create(params);
+      } catch (error) {
+        if (!('reasoning_effort' in params) || !isReasoningEffortError(error)) throw error;
+        modelsWithoutReasoningEffort.add(model);
+        this.logger.warn(
+          `Model ${model} rejected reasoning_effort "${(params as any).reasoning_effort}" ` +
+            `(${error?.message}); calling it without the parameter from now on`,
+        );
+        return await client.chat.completions.create(buildParams(param));
+      }
     };
 
     try {
-      return await client.chat.completions.create(buildParams(tokenParam.param));
+      return await create(tokenParam.param);
     } catch (error) {
       if (!this.isUnsupportedTokenParamError(error, tokenParam.param)) {
         throw error;
@@ -1495,7 +1528,7 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
         );
       }
 
-      const completion = await client.chat.completions.create(buildParams(fallbackParam));
+      const completion = await create(fallbackParam);
 
       if (tokenParam.mode === 'auto' && openaiBot.model) {
         learnedTokenParamByModel.set(openaiBot.model, fallbackParam);

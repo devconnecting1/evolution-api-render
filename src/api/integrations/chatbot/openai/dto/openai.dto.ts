@@ -8,6 +8,9 @@ import { BaseChatbotDto, BaseChatbotSettingDto } from '../../base-chatbot.dto';
  */
 export type OpenaiTokenParam = 'auto' | 'max_tokens' | 'max_completion_tokens';
 
+/** Reasoning effort of the bot ('auto' = model default; see reasoning-effort.ts). */
+export type OpenaiReasoningEffort = 'auto' | 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+
 export class OpenaiCredsDto {
   name: string;
   apiKey: string;
@@ -24,6 +27,8 @@ export class OpenaiDto extends BaseChatbotDto {
   userMessages?: string[];
   maxTokens?: number;
   tokenParam?: OpenaiTokenParam;
+  /** null or 'auto' = model default; requests with tools on gpt-6-luna/sol always go with 'none'. */
+  reasoningEffort?: OpenaiReasoningEffort | null;
   humanResumeMinutes?: number;
   // Media and conversation window: absent/null on the bot = inherit from the default settings
   transcribeAudio?: boolean;

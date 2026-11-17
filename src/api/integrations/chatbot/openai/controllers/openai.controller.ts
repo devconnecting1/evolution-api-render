@@ -17,6 +17,13 @@ import OpenAI from 'openai';
 import { BaseChatbotController } from '../../base-chatbot.controller';
 import { ReplyMeta } from '../../reply-ticket';
 import { extractAdReferral } from '../ai-context';
+import { normalizeReasoningEffort } from '../reasoning-effort';
+
+/** 'auto' (or null) is stored as null = model default; undefined leaves the column as it is. */
+function reasoningEffortField(value: OpenaiDto['reasoningEffort']): string | null | undefined {
+  if (value === undefined) return undefined;
+  return normalizeReasoningEffort(value);
+}
 
 export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto> {
   constructor(
@@ -107,6 +114,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       userMessages: data.userMessages,
       maxTokens: data.maxTokens,
       tokenParam: data.tokenParam,
+      reasoningEffort: reasoningEffortField(data.reasoningEffort),
       humanResumeMinutes: data.humanResumeMinutes,
       transcribeAudio: data.transcribeAudio,
       transcriptionModel: data.transcriptionModel,
@@ -131,6 +139,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       userMessages: data.userMessages,
       maxTokens: data.maxTokens,
       tokenParam: data.tokenParam,
+      reasoningEffort: reasoningEffortField(data.reasoningEffort),
       humanResumeMinutes: data.humanResumeMinutes,
       transcribeAudio: data.transcribeAudio,
       transcriptionModel: data.transcriptionModel,
