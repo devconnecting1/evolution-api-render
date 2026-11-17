@@ -65,6 +65,11 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
     return true;
   }
 
+  // The OpenAI bot is a 1:1 assistant (triage, agenda): it never answers in groups, even with groupsIgnore off
+  protected ignoresGroups(): boolean {
+    return true;
+  }
+
   // Webhook `openai.change_status` on pause (human or manual) and resume
   protected getChangeStatusEvent(): Events | null {
     return Events.OPENAI_CHANGE_STATUS;

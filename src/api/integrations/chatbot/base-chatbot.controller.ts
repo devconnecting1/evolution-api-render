@@ -911,6 +911,14 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     return {};
   }
 
+  /**
+   * Whether group chats are never handed to this bot, whatever `groupsIgnore` / `ignoreJids` say (the instance
+   * default lets groups through). False keeps the legacy behaviour.
+   */
+  protected ignoresGroups(): boolean {
+    return false;
+  }
+
   /** Integration-specific values added to the merged settings handed to processBot. */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
@@ -1192,6 +1200,9 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
       });
 
       if (this.checkIgnoreJids(settings?.ignoreJids, remoteJid)) return;
+
+      // Integrations that only talk to one person at a time never answer (nor pause) in group chats
+      if (this.ignoresGroups() && String(remoteJid).endsWith('@g.us')) return;
 
       const sessionJids = await this.resolveSessionJids(instance, remoteJid, msg);
 

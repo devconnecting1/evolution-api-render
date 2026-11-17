@@ -166,3 +166,35 @@ describe('OpenaiService guardrails', () => {
     assert.ok(isHumanPaused(session) && isManualPause(session), 'manual pause: only the team reactivates');
   });
 });
+
+describe('OpenAI controller: groups', () => {
+  test('group chats are never handed to the OpenAI bot (groupsIgnore off by default)', async () => {
+    const { OpenaiController } = await import('@api/integrations/chatbot/openai/controllers/openai.controller');
+    const settingsRepository = { findFirst: async () => ({ ignoreJids: [] }) };
+    const controller: any = new OpenaiController(
+      new OpenaiService({ waInstances: {} } as any, {} as any, configService),
+      {} as any,
+      { waInstances: {} } as any,
+    );
+    controller.settingsRepository = settingsRepository;
+    let reachedSession = false;
+    controller.resolveSessionJids = async () => {
+      reachedSession = true;
+      return [];
+    };
+    await controller.emit({
+      instance: { instanceName: 'unit', instanceId: 'inst-1' },
+      remoteJid: '120363000000000000@g.us',
+      msg: { key: { id: 'G1', remoteJid: '120363000000000000@g.us', fromMe: false }, message: { conversation: 'oi' } },
+    });
+    assert.equal(reachedSession, false);
+
+    // Control: a contact goes on to the session lookup
+    await controller.emit({
+      instance: { instanceName: 'unit', instanceId: 'inst-1' },
+      remoteJid: REMOTE_JID,
+      msg: { key: { id: 'C1', remoteJid: REMOTE_JID, fromMe: false }, message: { conversation: 'oi' } },
+    });
+    assert.equal(reachedSession, true);
+  });
+});
