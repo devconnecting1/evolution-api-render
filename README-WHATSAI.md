@@ -735,7 +735,7 @@ Para escritórios de advocacia, ligue nas settings do bot **`ethicsProfile: "adv
 
 ### 12.13 Raciocínio da IA (`reasoningEffort`)
 
-Campo do bot (`OpenaiBot.reasoningEffort`, migration aditiva `20261117120000_add_openai_reasoning_effort`), enviado como `reasoning_effort` no Chat Completions. Valores: `auto` (gravado como `null` = padrão do modelo), `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. No painel: **Atendente IA > Modelo e chave > Raciocínio da IA** (a lista mostra só os níveis que o modelo escolhido aceita). No MCP: `update_bot_settings` com `reasoning_effort`; `get_bot_config` mostra o valor salvo e o efetivo.
+Campo do bot (`OpenaiBot.reasoningEffort`, migration aditiva `20261117130000_add_openai_reasoning_effort`), enviado como `reasoning_effort` no Chat Completions. Valores: `auto` (gravado como `null` = padrão do modelo), `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. No painel: **Atendente IA > Modelo e chave > Raciocínio da IA** (a lista mostra só os níveis que o modelo escolhido aceita). No MCP: `update_bot_settings` com `reasoning_effort`; `get_bot_config` mostra o valor salvo e o efetivo.
 
 Níveis por modelo (páginas oficiais da OpenAI, nov/2026; tabela em `src/api/integrations/chatbot/openai/reasoning-effort.ts`):
 
@@ -892,7 +892,7 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `get_database_info` | leitura | Cota de projetos do Neon (banco próprio por instância) e as últimas "acordadas" do banco com as consultas que as causaram. Responde da memória, sem consultar o banco (só chave global) |
 | `list_credentials` | leitura | Chaves guardadas de cada instância (OpenAI, token, webhook, Dify, Chatwoot etc.) **sempre mascaradas** e se a instância usa a chave OpenAI global. Para ver um valor, use a página Chaves e credenciais (só chave global) |
 
-Na coluna de remetente, `bot` só é identificado nos últimos 10 minutos (o banco não marca a origem das mensagens, seção 13); depois aparece como `me` (número da instância).
+Na coluna de remetente (`sender`): `cliente`, `ia` (resposta automática: IA, avisos da Agenda, resposta de chamada), `equipe_painel` (pessoa da equipe pelo painel), `equipe_celular` (celular ou WhatsApp Web), `api` (outro sistema) e `nao_identificado`. Desde 17/11/2026 cada mensagem guarda quem a escreveu (`Message.sentBy`: `ai`, `panel`, `api`, `device`, `contact`, em `src/utils/message-sender.ts`); o envio do painel é marcado pelo cabeçalho `x-wa-origin: panel`. Nas mensagens antigas a leitura deduz o que dá: não enviada pelo número é o cliente; id que não começa com `3EB0` veio do celular; `3EB0` é a API ou o WhatsApp Web (mesmo prefixo) e só vira `ia` quando o texto é exatamente uma resposta guardada no histórico do bot. O script `scripts/backfill-message-sender.ts` grava esses valores nas linhas antigas (simulação por padrão; `--apply` grava; rode antes contra uma cópia, nunca direto em produção sem o OK do dono).
 
 **Recursos:** os manuais (`README-WHATSAI.md` e `readmes/*.md`) como `whatsai://docs/<nome>`. **Prompts:** `resumo_do_dia` (resume as conversas de um dia) e `revisar_atendimento` (revisa a conversa de um contato e sugere uma resposta **sem enviar**).
 

@@ -25,6 +25,7 @@ import { BadRequestException, InternalServerErrorException } from '@exceptions';
 import { detectAudioFormat, detectAudioFormatFromBase64 } from '@utils/audioFormat';
 import { isBotMessageId, registerBotMessageId } from '@utils/botMessageRegistry';
 import { createJid } from '@utils/createJid';
+import { sentByForReceived, sentByForSend } from '@utils/message-sender';
 import { status } from '@utils/renderStatus';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import axios from 'axios';
@@ -534,7 +535,7 @@ export class BusinessStartupService extends ChannelStartupService {
                 });
 
                 const createdMessage = await this.prismaRepository.message.create({
-                  data: messageRaw,
+                  data: { ...messageRaw, sentBy: sentByForReceived(messageRaw?.key?.fromMe, false) },
                 });
 
                 await this.prismaRepository.media.create({
@@ -724,7 +725,7 @@ export class BusinessStartupService extends ChannelStartupService {
 
         if (!this.isMediaMessage(message) && message.type !== 'sticker') {
           await this.prismaRepository.message.create({
-            data: messageRaw,
+            data: { ...messageRaw, sentBy: sentByForReceived(messageRaw?.key?.fromMe, false) },
           });
         }
 
@@ -1050,7 +1051,8 @@ export class BusinessStartupService extends ChannelStartupService {
 
     if (this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE) {
       await this.prismaRepository.message.create({
-        data: messageRaw,
+        // Echo of the WhatsApp Business app (the phone): written by the team, the bot ids were skipped above
+        data: { ...messageRaw, sentBy: 'device' },
       });
     }
   }
@@ -1414,7 +1416,7 @@ export class BusinessStartupService extends ChannelStartupService {
         });
 
       await this.prismaRepository.message.create({
-        data: messageRaw,
+        data: { ...messageRaw, sentBy: sentByForSend(fromChatbot) },
       });
 
       return messageRaw;

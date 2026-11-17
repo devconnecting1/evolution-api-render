@@ -199,11 +199,14 @@ model Message {
   Media                        Media?
   webhookUrl                   String?         @db.VarChar(500)
   status                       String?         @db.VarChar(30)
+  /// Who wrote it: ai, panel, api, device or contact (src/utils/message-sender.ts). Null on older rows.
+  sentBy                       String?         @db.VarChar(16)
 
   sessionId String?
   session   IntegrationSession? @relation(fields: [sessionId], references: [id])
 
   @@index([instanceId])
+  @@index([instanceId, messageTimestamp(sort: Desc)])
 }
 
 model MessageUpdate {
