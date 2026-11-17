@@ -13,7 +13,7 @@ import { reviewExportDenial } from '@api/guards/review-export.guard';
 import { reviewPage } from '@api/integrations/mcp/tools/review.tools';
 import { ReviewExportRouter } from '@api/routes/review-export.router';
 import { MAX_REVIEW_MESSAGES, ReviewExportService } from '@api/services/review-export.service';
-import { clientRouteAllowed, CLIENT_MODULES, normalizeClientPath } from '@utils/client-access';
+import { CLIENT_MODULES, clientRouteAllowed, normalizeClientPath } from '@utils/client-access';
 import {
   conversationJid,
   conversationMarkdown,

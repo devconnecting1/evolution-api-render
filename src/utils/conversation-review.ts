@@ -69,7 +69,7 @@ const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const CPF = /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g;
 const CNPJ = /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g;
 /** A run with at least 8 digits, allowing the separators of phones and documents. */
-const DIGIT_RUN = /\+?\(?\d[\d\s().\/-]{6,}\d/g;
+const DIGIT_RUN = /\+?\(?\d[\d\s()./-]{6,}\d/g;
 const DATE = /^\d{1,2}\/\d{1,2}(\/\d{2,4})?$/;
 
 /** E-mails, CPF, CNPJ and long runs of digits (phones, documents, process numbers) out of a text. Dates stay. */

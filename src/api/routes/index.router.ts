@@ -39,11 +39,11 @@ import { ProcessosRouter } from './processos.router';
 import { ProxyRouter } from './proxy.router';
 import { PublicStatusRouter } from './public-status.router';
 import { RetentionRouter } from './retention.router';
+import { ReviewExportRouter } from './review-export.router';
 import { MessageRouter } from './sendMessage.router';
 import { SettingsRouter } from './settings.router';
 import { TeamRouter } from './team.router';
 import { TemplateRouter } from './template.router';
-import { ReviewExportRouter } from './review-export.router';
 import { UsageRouter } from './usage.router';
 import { ViewsRouter } from './view.router';
 
