@@ -1,3 +1,4 @@
+import { aiReplyIndex, deriveSender, ResolvedSender, senderLabel } from '@utils/message-sender';
 import { z } from 'zod';
 
 import { connectionStateOf, resolveInstance, resolveLoadedInstance } from '../mcp.instance';
@@ -19,31 +20,68 @@ import {
   ToolContent,
 } from '../mcp.util';
 
-/** The registry of bot message ids keeps each id for 10 minutes: older messages cannot be told apart. */
-const BOT_REGISTRY_WINDOW_SECONDS = 10 * 60;
-
 export const IMAGE_INLINE_MAX_BYTES = 1.5 * 1024 * 1024;
 export const BASE64_MAX_BYTES = 2 * 1024 * 1024;
 
 const SENDER_NOTE =
-  'sender: "contact" = o contato; "bot" = enviada pela IA (só detectável nos últimos 10 min); "me" = enviada pelo número da instância (pessoa da equipe, API ou IA: o banco não guarda a origem).';
+  'sender: "cliente" = o contato; "ia" = resposta automática (IA, avisos da agenda, resposta de chamada); "equipe_painel" = pessoa da equipe pelo painel; "equipe_celular" = pessoa da equipe no celular ou no WhatsApp Web; "api" = outro sistema pela API; "nao_identificado" = mensagem antiga do número sem origem gravada.';
 
-async function senderOf(ctx: McpContext, instanceId: string, key: any, timestamp: number | null): Promise<string> {
-  if (!key?.fromMe) return 'contact';
-
-  const recent = timestamp && Date.now() / 1000 - timestamp <= BOT_REGISTRY_WINDOW_SECONDS + 60;
-  if (recent && key.id) {
-    try {
-      if (await ctx.deps.isBotMessageId(instanceId, key.id)) return 'bot';
-    } catch {
-      // informative only
-    }
+/** The AI answers kept in the bot sessions of a contact (exact text match for old rows without `sentBy`). */
+async function aiRepliesOf(ctx: McpContext, instanceId: string, jids: string[]): Promise<Set<string>> {
+  try {
+    const sessions =
+      (await ctx.deps.prisma.integrationSession.findMany({
+        where: { instanceId, remoteJid: { in: jids } },
+        orderBy: { updatedAt: 'desc' },
+        take: 5,
+        select: { context: true },
+      })) ?? [];
+    return aiReplyIndex(sessions);
+  } catch {
+    return new Set();
   }
-
-  return 'me';
 }
 
-export async function messageView(ctx: McpContext, instanceId: string, record: any) {
+export type SenderResolver = (record: any) => Promise<ResolvedSender>;
+
+/**
+ * Who wrote each message: the stored `sentBy`; for older rows the key (contact, phone) and, for a 3EB0... id of
+ * the number, the registry of bot ids or an exact match with an AI answer of the contact's bot sessions. The
+ * sessions are read at most once per contact, and only when a row needs them.
+ */
+export function createSenderResolver(ctx: McpContext, instanceId: string): SenderResolver {
+  const replies = new Map<string, Promise<Set<string>>>();
+  return async (record: any) => {
+    const sender = deriveSender(record);
+    if (sender !== 'unknown') return sender;
+
+    const key = record?.key ?? {};
+    if (key.id) {
+      try {
+        if (await ctx.deps.isBotMessageId(instanceId, key.id)) return 'ai';
+      } catch {
+        // informative only
+      }
+    }
+
+    const jid = typeof key.remoteJid === 'string' ? key.remoteJid : '';
+    if (!jid) return 'unknown';
+    let pending = replies.get(jid);
+    if (!pending) {
+      const jids = [jid, key.remoteJidAlt].filter((value) => typeof value === 'string' && value);
+      pending = aiRepliesOf(ctx, instanceId, jids);
+      replies.set(jid, pending);
+    }
+    return deriveSender(record, await pending);
+  };
+}
+
+export async function messageView(
+  ctx: McpContext,
+  instanceId: string,
+  record: any,
+  resolveSender: SenderResolver = createSenderResolver(ctx, instanceId),
+) {
   const key = record?.key ?? {};
   const timestamp = toNumber(record?.messageTimestamp);
   const media = mediaInfo(record?.message);
@@ -53,7 +91,7 @@ export async function messageView(ctx: McpContext, instanceId: string, record: a
     messageId: key.id ?? null,
     remoteJid: key.remoteJid ?? null,
     fromMe: !!key.fromMe,
-    sender: await senderOf(ctx, instanceId, key, timestamp),
+    sender: senderLabel(await resolveSender(record)),
     senderName: key.fromMe ? null : (record?.pushName ?? null),
     participant: key.participant || undefined,
     timestamp: isoFromSeconds(timestamp),
@@ -144,7 +182,7 @@ export const getMessages = defineTool({
   name: 'get_messages',
   title: 'Mensagens de um contato',
   description:
-    'Lê as mensagens de uma conversa, da mais nova para a mais antiga (página 1 = mais recentes), como o findMessages: texto, quem enviou (contato, IA ou número da instância), data, tipo, se tem mídia e o messageId (use em get_media). Junta LID e telefone do mesmo contato.',
+    'Lê as mensagens de uma conversa, da mais nova para a mais antiga (página 1 = mais recentes), como o findMessages: texto, quem escreveu (cliente, IA, equipe pelo painel, equipe no celular, API ou não identificado), data, tipo, se tem mídia e o messageId (use em get_media). Junta LID e telefone do mesmo contato.',
   input: {
     instance: instanceArg,
     contact: contactArg,
@@ -166,7 +204,8 @@ export const getMessages = defineTool({
     const box = result?.messages ?? {};
     const records: any[] = Array.isArray(box.records) ? box.records : [];
     const messages = [];
-    for (const record of records) messages.push(await messageView(ctx, resolved.id, record));
+    const resolveSender = createSenderResolver(ctx, resolved.id);
+    for (const record of records) messages.push(await messageView(ctx, resolved.id, record, resolveSender));
 
     return jsonResult({
       instance: resolved.name,
@@ -231,7 +270,8 @@ export const searchMessagesTool = defineTool({
     });
 
     const messages = [];
-    for (const row of rows ?? []) messages.push(await messageView(ctx, resolved.id, row));
+    const resolveSender = createSenderResolver(ctx, resolved.id);
+    for (const row of rows ?? []) messages.push(await messageView(ctx, resolved.id, row, resolveSender));
 
     return jsonResult({
       instance: resolved.name,

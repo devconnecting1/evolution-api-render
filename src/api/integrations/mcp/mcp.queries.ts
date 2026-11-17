@@ -55,7 +55,7 @@ export async function searchMessages(prisma: any, provider: string, params: Sear
   const toFilter = params.toSeconds ? Prisma.sql`AND ${col('messageTimestamp')} <= ${params.toSeconds}` : Prisma.empty;
 
   return await prisma.$queryRaw`
-    SELECT ${col('id')}, ${col('key')}, ${col('pushName')}, ${col('messageType')}, ${col('message')}, ${col('messageTimestamp')}
+    SELECT ${col('id')}, ${col('key')}, ${col('pushName')}, ${col('messageType')}, ${col('message')}, ${col('messageTimestamp')}, ${col('sentBy')}
     FROM ${table}
     WHERE ${col('instanceId')} = ${params.instanceId}
       AND (${textFilter})

@@ -800,6 +800,7 @@ export class ChannelStartupService {
         instanceId: true,
         source: true,
         contextInfo: true,
+        sentBy: true,
         MessageUpdate: {
           select: {
             status: true,

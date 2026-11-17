@@ -16,6 +16,7 @@ import { Events, wa } from '@api/types/wa.types';
 import { AudioConverter, Chatwoot, ConfigService, Openai, S3 } from '@config/env.config';
 import { BadRequestException, InternalServerErrorException } from '@exceptions';
 import { createJid } from '@utils/createJid';
+import { sentByForReceived, sentByForSend } from '@utils/message-sender';
 import { sendTelemetry } from '@utils/sendTelemetry';
 import axios from 'axios';
 import { isBase64, isURL } from 'class-validator';
@@ -198,7 +199,7 @@ export class EvolutionStartupService extends ChannelStartupService {
         }
 
         await this.prismaRepository.message.create({
-          data: messageRaw,
+          data: { ...messageRaw, sentBy: sentByForReceived(messageRaw?.key?.fromMe, false) },
         });
 
         await this.updateContact({
@@ -525,7 +526,7 @@ export class EvolutionStartupService extends ChannelStartupService {
         });
 
       await this.prismaRepository.message.create({
-        data: messageRaw,
+        data: { ...messageRaw, sentBy: sentByForSend(false) },
       });
 
       return messageRaw;
