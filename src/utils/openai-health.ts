@@ -170,6 +170,11 @@ export class OpenaiHealthRegistry {
   forget(credsId: string): void {
     this.byKey.delete(credsId);
   }
+
+  /** Estados em memória, sem a chave nem o id (status público agregado). */
+  list(): KeyHealth[] {
+    return [...this.byKey.values()];
+  }
 }
 
 /**
