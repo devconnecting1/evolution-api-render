@@ -32,6 +32,7 @@ const EXPECTED_TOOLS = [
   'list_chats',
   'get_messages',
   'search_messages',
+  'find_ai_issues',
   'get_media',
   'get_bot_config',
   'list_paused_contacts',
@@ -134,6 +135,7 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
       systemMessages: ['Você é a assistente do escritório.'],
       expire: 0,
       keywordFinish: '#sair',
+      unknownMessage: 'Desculpe, não entendi.',
       humanResumeMinutes: 30,
       triggerType: 'all',
       openaiCredsId: 'cred-1',
@@ -184,7 +186,35 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     resolveEquivalentJids: async (jid: string) => [jid],
   };
 
+  // find_ai_issues reads the period (range + keyset) and get_messages may open a conversation by message id
+  const issueRows = [
+    {
+      id: 'q1',
+      key: { id: 'Q1', remoteJid: '5511988887777@s.whatsapp.net', fromMe: false },
+      messageType: 'conversation',
+      message: { conversation: 'Quanto custa a consulta?' },
+      messageTimestamp: Math.floor(Date.parse('2026-11-12T10:00:00-03:00') / 1000),
+      sentBy: 'contact',
+    },
+    {
+      id: 'q2',
+      key: { id: '3EB0Q2', remoteJid: '5511988887777@s.whatsapp.net', fromMe: true },
+      messageType: 'conversation',
+      message: { conversation: 'Desculpe, não entendi.' },
+      messageTimestamp: Math.floor(Date.parse('2026-11-12T10:00:20-03:00') / 1000),
+      sentBy: 'ai',
+    },
+  ];
+
   const prisma: any = {
+    message: {
+      findMany: async ({ where }: any) => (where.instanceId === 'inst-a' && !where.OR ? issueRows : []),
+      findFirst: async ({ where }: any) => {
+        const row = issueRows.find((r) => r.key.id === where.key.equals);
+        return where.instanceId === 'inst-a' && row ? row : null;
+      },
+    },
+    instanceLimits: { findUnique: async () => null },
     instance: {
       findMany: async ({ where, take }: any) => instances.filter((row) => matches(row, where)).slice(0, take ?? 100),
     },
@@ -670,6 +700,42 @@ describe('MCP: tools', () => {
     }
   });
 
+  test('find_ai_issues: masked conversations with flags; get_messages opens one by message_id', async () => {
+    const { json, result } = await callTool(h.url, 'find_ai_issues', {
+      instance: 'escritorio',
+      from_date: '2026-11-12',
+      to_date: '2026-11-12',
+    });
+    assert.ok(!result.isError, JSON.stringify(result));
+    assert.equal(json.totals.conversations, 1);
+    assert.equal(json.totals.flaggedConversations, 1);
+    const [conversation] = json.conversations;
+    assert.equal(conversation.ref, '****7777');
+    assert.deepEqual(conversation.counts, { cliente: 1, ia: 1 });
+    assert.deepEqual(
+      conversation.flags.map((f: any) => [f.type, f.severity, f.messageId]),
+      [['fallback_sent', 'alta', '3EB0Q2']],
+    );
+    assert.doesNotMatch(JSON.stringify(json), /988887777/);
+
+    const opened = await callTool(h.url, 'get_messages', { instance: 'escritorio', message_id: '3EB0Q2' });
+    assert.ok(!opened.result.isError, opened.text);
+    assert.equal(h.calls.fetchMessages.at(-1).where.key.remoteJid, '5511988887777@s.whatsapp.net');
+
+    const missing = await callTool(h.url, 'get_messages', { instance: 'escritorio', message_id: 'NOPE1' });
+    assert.equal(missing.result.isError, true);
+    const neither = await callTool(h.url, 'get_messages', { instance: 'escritorio' });
+    assert.equal(neither.result.isError, true);
+    assert.match(neither.text, /contact ou message_id/);
+
+    const tooLong = await callTool(h.url, 'find_ai_issues', {
+      instance: 'escritorio',
+      from_date: '2026-10-01',
+      to_date: '2026-11-12',
+    });
+    assert.equal(tooLong.result.isError, true);
+  });
+
   test('get_messages needs a loaded instance', async () => {
     const { result, text } = await callTool(h.url, 'get_messages', { instance: 'clinica', contact: '5511988887777' });
     assert.equal(result.isError, true);
@@ -1036,7 +1102,20 @@ describe('MCP: tools', () => {
     assert.deepEqual(body.result.prompts.map((prompt: any) => prompt.name).sort(), [
       'resumo_do_dia',
       'revisar_atendimento',
+      'revisar_ia_semana',
     ]);
+
+    const week = await rpc(
+      h.url,
+      'prompts/get',
+      { name: 'revisar_ia_semana', arguments: { instance: 'escritorio', to: '2026-11-15' } },
+      bearer(GLOBAL_KEY),
+    );
+    const text = week.body.result.messages[0].content.text;
+    assert.match(text, /de 2026-11-09 a 2026-11-15/);
+    assert.match(text, /find_ai_issues/);
+    assert.match(text, /get_messages com o message_id/);
+    assert.match(text, /Não aplique nenhuma mudança/);
 
     const review = await rpc(
       h.url,
