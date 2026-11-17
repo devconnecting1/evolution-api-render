@@ -1,0 +1,7 @@
+[
+  { "event": { "id": "evt-3", "serviceId": "srv-x", "timestamp": "2026-11-16T05:27:10.000Z", "type": "server_available", "details": {} }, "cursor": "c3" },
+  { "event": { "id": "evt-2", "serviceId": "srv-x", "timestamp": "2026-11-16T05:26:40.000Z", "type": "server_failed", "details": { "reason": { "oomKilled": { "memoryLimit": "512Mi" } } } }, "cursor": "c2" },
+  { "event": { "id": "evt-1", "serviceId": "srv-x", "timestamp": "2026-11-15T22:22:20.917Z", "type": "deploy_ended", "details": { "deployId": "dep-1", "deployStatus": "succeeded", "reason": {}, "status": 2 } }, "cursor": "c1" },
+  { "event": { "id": "evt-0", "serviceId": "srv-x", "timestamp": "2026-11-15T21:00:00.000Z", "type": "build_ended", "details": { "buildId": "bld-0", "buildStatus": "failed", "status": 3 } }, "cursor": "c0" },
+  { "event": { "id": "evt-9", "serviceId": "srv-x", "timestamp": "2026-11-15T20:00:00.000Z", "type": "server_failed", "details": { "reason": { "nonZeroExit": 1 } } }, "cursor": "c9" }
+]

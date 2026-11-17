@@ -882,3 +882,39 @@ describe('LeadsService: list, edit, export, backfill', () => {
     assert.equal(item.awaiting, 3);
   });
 });
+
+describe('LeadsService: reasoning level of the analysis', () => {
+  const run = async (reasoningEffort: string | null, model = 'gpt-6-luna') => {
+    const t = setup({ answers: [qualified] });
+    t.conversation();
+    t.service.afterBotReply({
+      instance: t.channel,
+      instanceId: 'inst-1',
+      instanceName: 'escritorio',
+      remoteJid: CLIENT,
+      apiKey: 'sk-test',
+      model,
+      reasoningEffort,
+    });
+    await t.service.idle();
+    return t.extractor.requests[0];
+  };
+
+  test('automatic: the model default, with room for its medium level', async () => {
+    const body = await run(null);
+    assert.equal('reasoning_effort' in body, false);
+    assert.equal(body.max_completion_tokens, 4000);
+  });
+
+  test('same level as the bot, with more room for high', async () => {
+    const body = await run('high');
+    assert.equal(body.reasoning_effort, 'high');
+    assert.equal(body.max_completion_tokens, 8000);
+  });
+
+  test('models without reasoning never get it', async () => {
+    const body = await run('high', 'gpt-4o-mini');
+    assert.equal('reasoning_effort' in body, false);
+    assert.equal(body.max_tokens, 600);
+  });
+});

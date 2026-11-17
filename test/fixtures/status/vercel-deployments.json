@@ -1,0 +1,7 @@
+{
+  "deployments": [
+    { "uid": "dpl_2", "name": "whatsai", "url": "whatsai-2.vercel.app", "created": 1794800000000, "readyState": "ERROR", "target": "production", "meta": { "githubCommitMessage": "segredo nao deve vazar" } },
+    { "uid": "dpl_1", "name": "whatsai", "url": "whatsai-1.vercel.app", "created": 1794700000000, "readyState": "READY", "target": "production" }
+  ],
+  "pagination": { "count": 2, "next": null }
+}

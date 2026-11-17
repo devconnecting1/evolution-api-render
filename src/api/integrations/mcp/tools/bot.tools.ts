@@ -7,6 +7,7 @@ import {
 } from '@utils/openaiMedia';
 import { z } from 'zod';
 
+import { reasoningProfile, resolveReasoningEffort } from '../../chatbot/openai/reasoning-effort';
 import { ResolvedInstance, resolveInstance } from '../mcp.instance';
 import { changedArgs, contactArg, defineTool, instanceArg, READ_ONLY } from '../mcp.tool';
 import { McpContext } from '../mcp.types';
@@ -21,6 +22,14 @@ const truncatePrompt = (value: unknown) =>
 
 const messagesList = (value: unknown) => (Array.isArray(value) ? value.map(truncatePrompt) : (value ?? null));
 
+/** "high" / "medium (padrão do modelo)" / "não se aplica" for the bot's model. */
+function describeEffort(model: string | null | undefined, configured: unknown): string {
+  const effort = resolveReasoningEffort(model, configured);
+  if (!effort.effective) return 'não se aplica (modelo sem raciocínio)';
+  const tools = reasoningProfile(model)?.toolsOnlyWithNone ? '; pedidos com ferramentas vão com "none"' : '';
+  return (effort.send ?? `${effort.effective} (padrão do modelo)`) + tools;
+}
+
 function botView(bot: any, creds: Map<string, any>) {
   const cred = creds.get(bot.openaiCredsId);
 
@@ -32,6 +41,8 @@ function botView(bot: any, creds: Map<string, any>) {
     model: bot.model ?? null,
     maxTokens: bot.maxTokens ?? null,
     tokenParam: bot.tokenParam ?? null,
+    reasoningEffort: bot.reasoningEffort ?? 'auto',
+    reasoningEffortEffective: describeEffort(bot.model, bot.reasoningEffort),
     assistantId: bot.assistantId ?? null,
     // may carry a token in the query string: only its shape is shown
     functionUrl: maskUrl(bot.functionUrl),
@@ -441,6 +452,12 @@ export const updateBotSettings = defineTool({
       .max(32000)
       .optional()
       .describe('Limite de tokens da resposta. Modelos de raciocínio (gpt-5.x, gpt-6, o-series) pedem 2000 ou mais.'),
+    reasoning_effort: z
+      .enum(['auto', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'])
+      .optional()
+      .describe(
+        'Quanto o modelo pensa antes de responder. "auto" = padrão do modelo (medium no gpt-6-luna). "none" = responde sem pensar (mais rápido); "low" = recomendado pela OpenAI para atendimento; "high" = triagem mais cuidadosa (alguns segundos a mais); "xhigh"/"max" só com teste que mostre ganho. Nível que o modelo não aceita vai para o mais próximo. No gpt-6-luna/sol, pedidos com ferramentas (agenda, transferir_para_equipe) vão sempre com "none". Com high ou mais, use max_tokens de 8000 ou mais.',
+      ),
     token_param: z
       .enum(['auto', 'max_tokens', 'max_completion_tokens'])
       .optional()
@@ -520,6 +537,7 @@ export const updateBotSettings = defineTool({
     const direct: [keyof typeof args, string][] = [
       ['max_tokens', 'maxTokens'],
       ['token_param', 'tokenParam'],
+      ['reasoning_effort', 'reasoningEffort'],
       ['history_messages', 'historyMessages'],
       ['transcribe_audio', 'transcribeAudio'],
       ['max_audio_seconds', 'maxAudioSeconds'],

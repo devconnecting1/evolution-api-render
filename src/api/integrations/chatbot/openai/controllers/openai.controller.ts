@@ -17,6 +17,14 @@ import OpenAI from 'openai';
 import { BaseChatbotController } from '../../base-chatbot.controller';
 import { ReplyMeta } from '../../reply-ticket';
 import { extractAdReferral } from '../ai-context';
+import { botModelList } from '../openai-models';
+import { normalizeReasoningEffort } from '../reasoning-effort';
+
+/** 'auto' (or null) is stored as null = model default; undefined leaves the column as it is. */
+function reasoningEffortField(value: OpenaiDto['reasoningEffort']): string | null | undefined {
+  if (value === undefined) return undefined;
+  return normalizeReasoningEffort(value);
+}
 
 export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto> {
   constructor(
@@ -107,6 +115,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       userMessages: data.userMessages,
       maxTokens: data.maxTokens,
       tokenParam: data.tokenParam,
+      reasoningEffort: reasoningEffortField(data.reasoningEffort),
       humanResumeMinutes: data.humanResumeMinutes,
       transcribeAudio: data.transcribeAudio,
       transcriptionModel: data.transcriptionModel,
@@ -131,6 +140,7 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
       userMessages: data.userMessages,
       maxTokens: data.maxTokens,
       tokenParam: data.tokenParam,
+      reasoningEffort: reasoningEffortField(data.reasoningEffort),
       humanResumeMinutes: data.humanResumeMinutes,
       transcribeAudio: data.transcribeAudio,
       transcriptionModel: data.transcriptionModel,
@@ -600,7 +610,8 @@ export class OpenaiController extends BaseChatbotController<OpenaiBot, OpenaiDto
 
       const models: any = await this.client.models.list();
 
-      return models?.body?.data;
+      // Only the models the bot can call (no audio, image, pro or cyber models), each with a short note (openai-models.ts)
+      return botModelList(models?.body?.data);
     } catch (error) {
       this.logger.error(error);
       throw new Error('Error fetching models');

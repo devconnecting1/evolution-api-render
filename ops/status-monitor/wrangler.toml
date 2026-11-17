@@ -1,0 +1,19 @@
+# Monitor externo do status do WhatsAI (Cloudflare Workers, plano gratuito).
+# Passo a passo no README.md desta pasta. Nada aqui é secreto: tokens vão como `wrangler secret put`.
+name = "whatsai-status-monitor"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+# A cada 5 minutos = 288 execuções/dia, cada uma com UMA gravação no KV (limite grátis: 1.000/dia).
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Crie o namespace com `npx wrangler kv namespace create STATUS_KV` e cole o id abaixo.
+[[kv_namespaces]]
+binding = "STATUS_KV"
+id = "COLE_AQUI_O_ID_DO_NAMESPACE"
+
+[vars]
+API_URL = "https://evolution-api-x93o.onrender.com"
+SITE_URL = "https://whatsaibr.vercel.app/"

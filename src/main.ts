@@ -8,6 +8,7 @@ import { redisDailyStore } from '@api/repository/db-activity.redis';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { HttpStatus, router } from '@api/routes/index.router';
 import { eventManager, instanceDatabases, processosService, waMonitor } from '@api/server.module';
+import { publicStatusService } from '@api/services/public-status.service';
 import {
   Auth,
   configService,
@@ -183,6 +184,9 @@ async function bootstrap() {
 
   // "Processos": in-process ticker (5 min; touches the database only when something is due)
   if (configService.get<Processos>('PROCESSOS').TICKER) processosService.startTicker();
+
+  // Status público: registro em memória a cada 5 min (sem banco; histórico no Redis)
+  void publicStatusService.start().catch((error) => logger.error('Status: ' + (error?.message ?? error)));
 
   initWA().catch((error) => {
     logger.error('Error loading instances: ' + error);

@@ -10,9 +10,11 @@
     <title>Status | WhatsAI</title>
     <meta
       name="description"
-      content="Status público do WhatsAI: API, banco de dados, site, painel e conexões de WhatsApp, verificados a cada cinco minutos."
+      content="Status público do WhatsAI: WhatsApp, respostas da IA, API, banco de dados, site, painel e serviços de terceiros, com 90 dias de histórico."
     />
     <link rel="canonical" href="https://whatsaibr.vercel.app/status" />
+    <!-- Monitor externo (ops/status-monitor): endereço do Cloudflare Worker, sem barra no fim. Vazio = desligado. -->
+    <meta name="whatsai-status-monitor" content="" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Status | WhatsAI" />
     <meta property="og:description" content="Status público da operação do WhatsAI, com histórico e incidentes recentes." />
@@ -21,7 +23,7 @@
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=3" />
     <link rel="stylesheet" href="/assets/tokens.css?v=3" />
-    <link rel="stylesheet" href="/status/status.css?v=6" />
+    <link rel="stylesheet" href="/status/status.css?v=7" />
   </head>
   <body class="st-page">
     <a class="st-skip" href="#conteudo">Pular para o conteúdo</a>
@@ -55,12 +57,17 @@
           <p class="st-lead" id="st-summary">A página consulta o status público do WhatsAI.</p>
           <p class="st-recommendation" id="st-recommendation">Aguarde a primeira verificação.</p>
           <p class="st-cadence">
-            Verificação a cada <span id="st-cadence">5 minutos</span>.
+            Registro a cada <span id="st-cadence">5 minutos</span>. <span id="st-coverage"></span>
             <a href="#como-medimos">Como medimos</a>
           </p>
         </section>
 
         <div class="st-alert" id="st-alert" role="alert" hidden></div>
+
+        <div class="st-toolbar" role="group" aria-label="Período do histórico">
+          <button type="button" class="st-range-btn" data-range="90d" aria-pressed="true">90 dias</button>
+          <button type="button" class="st-range-btn" data-range="3d" aria-pressed="false">3 dias</button>
+        </div>
 
         <section class="st-groups" id="st-groups" aria-live="polite" aria-busy="true" aria-label="Componentes do WhatsAI">
           <div class="st-skeleton-group" aria-hidden="true">
@@ -75,8 +82,9 @@
           <span><i data-state="no_data" aria-hidden="true"></i>Sem dados</span>
           <span><i data-state="outage" aria-hidden="true"></i>Indisponível</span>
           <span><i data-state="degraded" aria-hidden="true"></i>Degradado</span>
+          <span><i data-state="maintenance" aria-hidden="true"></i>Manutenção</span>
           <span><i data-state="operational" aria-hidden="true"></i>Operacional</span>
-          <span class="st-legend-note">Cada barra representa 3 horas e mostra o pior estado do período. Clique em uma barra para ver o detalhe.</span>
+          <span class="st-legend-note" id="st-legend-note">Cada barra representa um dia (UTC) e mostra o pior estado registrado. Clique para ver o tempo no ar e a cobertura do dia.</span>
         </div>
 
         <section class="st-incidents" aria-labelledby="st-incidents-title">
@@ -96,39 +104,46 @@
             <details>
               <summary>O que é monitorado?</summary>
               <p>
-                A API do WhatsAI, o banco de dados, o site e o painel na Vercel e as conexões de WhatsApp dos clientes.
-                A página não mostra nomes de clientes, números, mensagens ou chaves.
+                As conexões de WhatsApp dos clientes (WhatsApp Web e API oficial da Meta), as respostas da IA, a API
+                do WhatsAI no Render, o banco de dados no Neon, o cache Redis, o site e o painel na Vercel, e as páginas
+                de status públicas de Render, Neon, Vercel e OpenAI. A Meta não publica um status em JSON e fica de
+                fora. A página não mostra nomes de clientes, números, mensagens ou chaves.
               </p>
             </details>
             <details>
               <summary>A cada quanto tempo o status é atualizado?</summary>
               <p>
-                A API faz uma verificação a cada cinco minutos e guarda o resultado. O intervalo protege o banco gratuito
-                de consultas em segundo plano e mantém a página rápida. Um estado pode levar até cinco minutos para
-                aparecer aqui.
+                A API registra o estado de cada componente a cada cinco minutos enquanto está no ar, só com dados que
+                já estão em memória. O site é testado com uma requisição HEAD e os provedores são lidos no máximo a
+                cada cinco minutos, só enquanto alguém consulta o status. O banco nunca é acordado só para esta
+                página: a saúde dele vem das consultas da própria aplicação, do estado do endpoint no Neon ou de uma
+                sondagem a cada 30 minutos no máximo.
               </p>
             </details>
             <details>
               <summary>O que significam os estados?</summary>
               <p>
-                <strong>Operacional:</strong> o componente responde normalmente. <strong>Degradado:</strong> há falhas
-                parciais ou lentidão. <strong>Indisponível:</strong> o componente não responde. <strong>Sem dados:</strong>
-                ainda não há uma verificação para aquele componente ou período.
+                <strong>Operacional:</strong> o componente responde normalmente. <strong>Manutenção:</strong> houve um
+                reinício ou deploy. <strong>Degradado:</strong> há falhas parciais ou lentidão. <strong>Indisponível:</strong>
+                o componente não responde. <strong>Sem dados:</strong> ninguém verificou o componente naquele período.
               </p>
             </details>
             <details>
-              <summary>Por que o histórico tem lacunas?</summary>
+              <summary>O que é a cobertura (“dados de X% do período”)?</summary>
               <p>
-                O histórico é gravado quando o status é consultado e há mudança de estado ou o início de uma faixa nova de
-                3 horas. Não existe um monitor externo rodando a cada segundo, e não acordamos o banco à toa. Períodos sem
-                consulta aparecem como “Sem dados”, em vez de inventar disponibilidade.
+                É a parte do período que realmente foi observada. A porcentagem de tempo no ar é calculada só sobre o
+                tempo observado; o resto aparece como “Sem dados”, nunca como disponível. Quando a API está fora do ar
+                ela não consegue registrar nada; por isso existe um monitor externo, independente da nossa
+                infraestrutura, que testa a API e o site a cada cinco minutos e tem o histórico juntado a esta página.
               </p>
             </details>
             <details>
               <summary>Como consumir o status de forma programática?</summary>
               <p>
-                O JSON público fica em <a href="https://evolution-api-x93o.onrender.com/status">/status</a> na API. Não
-                exige chave e devolve estado atual, componentes, histórico de 3 dias e incidentes recentes.
+                O JSON público fica em <a href="https://evolution-api-x93o.onrender.com/status">/status</a> na API
+                (estado atual, 90 dias por componente, faixas de 3 horas e incidentes). Para monitores externos há
+                <a href="https://evolution-api-x93o.onrender.com/status/ping">/status/ping</a>, que responde só da
+                memória. Nenhum dos dois exige chave.
               </p>
             </details>
             <details>
@@ -147,7 +162,7 @@
       <div class="st-wrap st-foot-in">
         <div class="st-foot-brand">
           <a class="st-brand" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
-          <p>Status público da operação. Atualizado a cada cinco minutos.</p>
+          <p>Status público da operação. Registro a cada cinco minutos, com 90 dias de histórico.</p>
         </div>
         <nav class="st-foot-col" aria-label="Produto">
           <p>Produto</p>
@@ -166,7 +181,7 @@
       </div>
       <div class="st-wrap st-foot-legal">
         <p>© 2026 WhatsAI. Todos os direitos reservados.</p>
-        <p>Horários em UTC; a página mostra o horário local do navegador.</p>
+        <p>Barras diárias em UTC; horários dos incidentes no fuso do navegador.</p>
       </div>
       <div class="st-foot-wordmark-wrap">
         <a class="st-foot-wordmark" href="/" aria-label="WhatsAI, página inicial">WhatsAI</a>
@@ -174,6 +189,6 @@
     </footer>
 
     <noscript>Ative o JavaScript para ver o status atualizado.</noscript>
-    <script src="/status/status.js?v=9" defer></script>
+    <script src="/status/status.js?v=10" defer></script>
   </body>
 </html>
