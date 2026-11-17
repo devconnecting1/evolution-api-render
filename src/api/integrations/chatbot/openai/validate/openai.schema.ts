@@ -114,6 +114,7 @@ export const openaiSettingSchema: JSONSchema7 = {
     ignoreJids: { type: 'array', items: { type: 'string' } },
     openaiIdFallback: { type: 'string' },
     ethicsProfile: { type: 'string', enum: ['none', 'advocacia'] },
+    handoffTool: { type: 'boolean' },
   },
   required: [
     'openaiCredsId',

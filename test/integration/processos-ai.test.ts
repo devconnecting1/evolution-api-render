@@ -5,7 +5,7 @@ import { after, before, describe, test } from 'node:test';
 
 import { setProcessAiContextProvider } from '@utils/processos/aiContext';
 
-import { waitFor } from '../helpers/fakes';
+import { waitFor, withoutContextNote } from '../helpers/fakes';
 import { OpenaiHarness, SKIP_INTEGRATION } from '../helpers/integration';
 
 /** The OpenAI bot receives the "Processos" block only when the contact asks about a process, never saved in history. */
@@ -35,7 +35,8 @@ describe('Processos: AI context in the OpenAI bot (integration)', { skip: SKIP_I
 
     await t.client(jid, 'Oi, tem novidade no meu processo?');
     await waitFor(() => h.openai.requests.length >= 1, 5000, 'first completion');
-    const messages = h.openai.requests[0].messages;
+    // The dynamic context note (date, hours) sits between this block and the question: skip it
+    const messages = withoutContextNote(h.openai.requests[0].messages);
     assert.equal(messages.at(-2).role, 'system');
     assert.match(messages.at(-2).content, /Processo nº X/);
     assert.equal(messages.at(-1).role, 'user');
