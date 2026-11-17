@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import { EventController } from '@api/integrations/event/event.controller';
-import { DbActivityTracker, describeQuery } from '@api/repository/db-activity';
+import { dbActivity, DbActivityTracker, describeQuery } from '@api/repository/db-activity';
 import { ChannelStartupService } from '@api/services/channel.service';
 
 /**
@@ -76,6 +76,8 @@ describe('neon diet: event config cache', () => {
 
     const ttl = EventController.CONFIG_TTL_MS;
     EventController.CONFIG_TTL_MS = -1;
+    // TTL vencido só relê com o banco acordado (softCacheValid): outra consulta acabou de rodar
+    dbActivity.record('SELECT 1');
     try {
       await controller.get('Escritorio');
       assert.equal(calls.length, 3);

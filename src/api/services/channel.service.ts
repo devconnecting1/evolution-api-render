@@ -6,6 +6,7 @@ import { ChatwootService } from '@api/integrations/chatbot/chatwoot/services/cha
 import { DifyService } from '@api/integrations/chatbot/dify/services/dify.service';
 import { OpenaiService } from '@api/integrations/chatbot/openai/services/openai.service';
 import { TypebotService } from '@api/integrations/chatbot/typebot/services/typebot.service';
+import { softCacheValid } from '@api/repository/db-activity';
 import { PrismaRepository, Query } from '@api/repository/repository.service';
 import { eventManager, waMonitor } from '@api/server.module';
 import { Events, wa } from '@api/types/wa.types';
@@ -213,13 +214,15 @@ export class ChannelStartupService {
   /**
    * Configurações lidas a cada lote de eventos do WhatsApp. Ficam em memória (atualizadas pelo
    * setSettings) para que eventos de presença/confirmação não acordem o banco; o TTL só cobre
-   * alterações feitas fora da API.
+   * alterações feitas fora da API e, vencido, só relê com o banco já acordado (softCacheValid).
    */
   private settingsCache: { value: any; at: number } | null = null;
   public static SETTINGS_TTL_MS = 60 * 60_000;
 
   public async findSettings() {
-    if (this.settingsCache && Date.now() - this.settingsCache.at < ChannelStartupService.SETTINGS_TTL_MS) {
+    // Depois do TTL, só relê quando o banco já está acordado: um evento do WhatsApp de madrugada não liga o
+    // Neon só para conferir configurações que só mudam pela API (até 24 h de atraso para edição direta no banco)
+    if (this.settingsCache && softCacheValid(this.settingsCache.at, ChannelStartupService.SETTINGS_TTL_MS)) {
       return this.settingsCache.value ? { ...this.settingsCache.value } : null;
     }
 
@@ -800,6 +803,7 @@ export class ChannelStartupService {
         instanceId: true,
         source: true,
         contextInfo: true,
+        sentBy: true,
         MessageUpdate: {
           select: {
             status: true,

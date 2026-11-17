@@ -3551,3 +3551,682 @@ body.wa-page #duvidas {
     width: 46%;
   }
 }
+
+/* ================================================================== comparacao com o ElevenLabs (E3 a E10) */
+/* Cabecalho de secao unico (E4): rotulo pequeno, titulo leve a esquerda; texto e link em pilula a direita no
+   computador, empilhado no celular. Substitui .wa-section-head, .wa-cards-head e .wa-frontier-head na landing. */
+.wa-shead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  align-items: end;
+  gap: 16px clamp(32px, 6vw, 96px);
+  margin-bottom: clamp(28px, 4vw, 48px);
+}
+
+.wa-shead-label {
+  margin: 0 0 12px;
+  color: var(--wa-fg-3);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.wa-shead-title {
+  margin: 0;
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: var(--type-title-lh);
+  letter-spacing: var(--type-title-ls);
+}
+
+.wa-shead-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.wa-shead-side p {
+  margin: 0;
+  color: var(--wa-fg-3);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-ls);
+}
+
+.wa-shead + .wa-feature-grid,
+.wa-shead + .wa-frontier-grid,
+.wa-shead + .wa-card-grid,
+.wa-shead + .wa-plans,
+.wa-shead + .wa-faq-grid,
+.wa-shead + .wa-tour {
+  margin-top: 0;
+}
+
+.wa-pill {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border: 1px solid var(--wa-line-strong);
+  border-radius: 999px;
+  color: var(--wa-fg);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.wa-pill:hover {
+  background: var(--wa-card);
+}
+
+.wa-pill .wa-ico {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 860px) {
+  .wa-shead {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* ------------------------------------------------------------------ hero: texto e exemplo de conversa (E3) */
+.wa-hero-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+  align-items: start;
+  gap: 32px clamp(40px, 5vw, 80px);
+}
+
+.wa-demo {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--wa-card-2);
+}
+
+.wa-demo-top {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: 4px;
+}
+
+.wa-demo-cap {
+  margin: 0;
+  color: var(--wa-fg-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.wa-demo-cap span {
+  color: var(--wa-fg-3);
+  font-weight: 400;
+}
+
+.wa-demo-toggle {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--wa-fg-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wa-demo-toggle[hidden] {
+  display: none;
+}
+
+.wa-demo-toggle:hover {
+  background: var(--wa-bg);
+  color: var(--wa-fg);
+}
+
+.wa-demo-toggle .wa-ico {
+  width: 14px;
+  height: 14px;
+}
+
+.wa-demo-ico-play,
+.wa-demo.is-paused .wa-demo-ico-pause {
+  display: none;
+}
+
+.wa-demo.is-paused .wa-demo-ico-play {
+  display: inline;
+}
+
+.wa-demo-tabs,
+.wa-tour-tabs {
+  display: inline-flex;
+  max-width: 100%;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 3px;
+  overflow-x: auto;
+  border-radius: 999px;
+  background: var(--wa-card-3);
+  scrollbar-width: none;
+}
+
+.wa-demo-tabs::-webkit-scrollbar,
+.wa-tour-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.wa-demo-tabs [role="tab"],
+.wa-tour-tabs [role="tab"] {
+  min-height: 34px;
+  flex: none;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--wa-fg-2);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.wa-demo-tabs [role="tab"]:hover,
+.wa-tour-tabs [role="tab"]:hover {
+  color: var(--wa-fg);
+}
+
+.wa-demo-tabs [aria-selected="true"],
+.wa-tour-tabs [aria-selected="true"] {
+  background: var(--wa-bg);
+  color: var(--wa-fg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* sem JavaScript as abas nao funcionam: fica so a primeira (o estado final dela) */
+html:not(.js) .wa-demo-tabs [aria-selected="false"] {
+  display: none;
+}
+
+.wa-demo-screen {
+  overflow: hidden;
+  border: 1px solid var(--wa-line);
+  border-radius: 10px;
+  background: var(--wa-bg);
+}
+
+.wa-demo-panel[hidden] {
+  display: none;
+}
+
+.wa-demo-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--wa-line);
+}
+
+.wa-demo-head p {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.wa-demo-head b {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wa-demo-head small {
+  color: var(--wa-fg-3);
+  font-size: 12px;
+}
+
+.wa-demo-avatar {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--wa-card-2);
+  color: var(--wa-fg-2);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.wa-demo-log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 14px;
+  list-style: none;
+}
+
+.wa-msg {
+  display: block;
+  max-width: 86%;
+  padding: 6px 10px 6px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.42;
+}
+
+.wa-msg p {
+  display: inline;
+  margin: 0;
+}
+
+.wa-msg time {
+  float: right;
+  margin: 5px 0 0 10px;
+  font-size: 10.5px;
+  line-height: 1.2;
+  opacity: 0.62;
+}
+
+.wa-msg--in {
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  background: var(--wa-card-2);
+}
+
+.wa-msg--ai,
+.wa-msg--team {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: var(--wa-fg);
+  color: var(--wa-bg);
+}
+
+.wa-msg-who {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.72;
+}
+
+.wa-msg-who .wa-ico {
+  width: 12px;
+  height: 12px;
+}
+
+.wa-demo-chip {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 4px 10px;
+  border: 1px solid var(--wa-warn-line);
+  border-radius: 999px;
+  background: var(--wa-warn-bg);
+  color: var(--wa-warn);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.wa-demo-chip .wa-ico {
+  width: 13px;
+  height: 13px;
+}
+
+/* animacao: so com JS e sem "reduzir movimento"; as mensagens ocupam o lugar desde o inicio (sem pulo de layout) */
+.wa-demo.is-anim [data-step] {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.wa-demo.is-anim [data-step].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 1023px) {
+  .wa-hero-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wa-demo {
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wa-demo {
+    padding: 10px;
+  }
+  .wa-demo-log {
+    min-height: 0;
+    padding: 12px;
+  }
+  .wa-msg {
+    max-width: 92%;
+    font-size: 13px;
+  }
+}
+
+/* ------------------------------------------------------------------ produto em abas (E4) com capturas legiveis (E5) */
+.wa-tour-tabs {
+  margin-bottom: 20px;
+}
+
+.wa-tour-tabs [role="tab"] {
+  min-height: 40px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+
+html:not(.js) .wa-tour-tabs {
+  display: none;
+}
+
+.wa-tour-panel[hidden] {
+  display: none;
+}
+
+.wa-tour-panel + .wa-tour-panel {
+  margin-top: clamp(48px, 6vw, 80px);
+}
+
+.js .wa-tour-panel + .wa-tour-panel {
+  margin-top: 0;
+}
+
+.wa-tour-panel:focus-visible {
+  outline: 2px solid var(--wa-accent);
+  outline-offset: 6px;
+}
+
+.wa-tour-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  align-items: start;
+  gap: 12px clamp(32px, 6vw, 96px);
+}
+
+.wa-tour-copy h3 {
+  margin: 0;
+  font-size: var(--type-heading-size);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.wa-tour-copy p {
+  margin: 0 0 12px;
+  color: var(--wa-fg-3);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+}
+
+.wa-tour-shot {
+  margin: 24px 0 0;
+  padding: clamp(12px, 2.8vw, 40px);
+  border-radius: 14px;
+  background: var(--wa-card-2);
+}
+
+.wa-tour-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--wa-line);
+  border-radius: 8px;
+  background: var(--wa-bg);
+  box-shadow: 0 18px 40px -26px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 860px) {
+  .wa-tour-copy {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wa-tour-copy h3 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 719px) {
+  .wa-tour-shot {
+    padding: 12px;
+  }
+  .wa-tour-shot img {
+    max-width: 420px;
+    margin-inline: auto;
+  }
+}
+
+/* faixa escura (#painel): copia em cima e o recorte da visao geral em largura cheia, legivel */
+.wa-spotlight--stack {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.wa-spotlight--stack .wa-spot-copy {
+  order: -1;
+  max-width: 760px;
+}
+
+.wa-spotlight--stack .wa-spot-shot {
+  width: 100%;
+  border-radius: 10px;
+}
+
+/* ------------------------------------------------------------------ carrossel do hero (E6 + E5) */
+/* No computador os quatro cartoes cabem inteiros; sem rolagem, as setas somem (.is-static, do landing.js). */
+@media (min-width: 1200px) {
+  .wa-hcarousel {
+    --wa-hc-visible: 4;
+  }
+}
+
+.wa-hcarousel.is-static .wa-hc-foot {
+  display: none;
+}
+
+.wa-hcard-media {
+  border: 0;
+  border-radius: 14px;
+  background: var(--wa-card-2);
+}
+
+.wa-hcard-shot {
+  border-color: var(--wa-line);
+  border-radius: 8px;
+}
+
+.wa-hcard-action {
+  border-radius: 999px;
+}
+
+/* No celular o texto sai de cima da captura (sem o degrade escuro que parecia imagem quebrada). */
+@media (max-width: 719px) {
+  .wa-hcard-media {
+    min-height: 0;
+    aspect-ratio: 4 / 5;
+    padding: 0;
+    border-color: transparent;
+    background: var(--wa-card-2);
+  }
+
+  .wa-hcard-media::after {
+    display: none;
+  }
+
+  .wa-hcard-shot {
+    inset: 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+    border: 1px solid var(--wa-line);
+    object-position: top center;
+  }
+
+  .wa-hcard-copy {
+    position: static;
+    padding-top: 14px;
+    color: var(--wa-fg);
+  }
+
+  .wa-hcard-title {
+    color: var(--wa-fg);
+    font-size: 18px;
+  }
+
+  .wa-hcard-text {
+    color: var(--wa-fg-3);
+  }
+
+  .wa-hcard-action,
+  .wa-hcard-action:hover {
+    min-height: 40px;
+    border-color: var(--wa-line-strong);
+    background: transparent;
+    color: var(--wa-fg);
+  }
+}
+
+@media (max-width: 359px) {
+  .wa-hcard-media {
+    min-height: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ status medido (E7) */
+.wa-status {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0 0;
+}
+
+.wa-status[hidden] {
+  display: none;
+}
+
+.wa-status-in {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 12px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--wa-card);
+  color: var(--wa-fg);
+  font-size: 14px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.wa-status-in:hover .wa-status-more {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.wa-status-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--wa-fg-3);
+}
+
+.wa-status[data-state="operational"] .wa-status-dot {
+  background: var(--c-ok);
+}
+
+.wa-status[data-state="degraded"] .wa-status-dot {
+  background: var(--c-warn-border);
+}
+
+.wa-status[data-state="outage"] .wa-status-dot {
+  background: var(--c-bad-border);
+}
+
+.wa-status-title {
+  font-weight: 500;
+}
+
+.wa-status-meta {
+  color: var(--wa-fg-3);
+}
+
+.wa-status-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.wa-status-more .wa-ico {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 600px) {
+  .wa-status-in {
+    justify-content: flex-start;
+    border-radius: 14px;
+  }
+}
+
+/* o cabecalho sticky (aviso aberto) usa o padding do proprio fluxo; ver site-shell.css */
+body.wa-page.has-annc {
+  padding-top: 0;
+}
+
+@media (max-width: 480px) {
+  /* tres abas de produto cabem na largura do celular, quebrando o texto em vez de rolar */
+  .wa-tour-tabs {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-radius: 14px;
+  }
+
+  .wa-tour-tabs [role="tab"] {
+    min-height: 44px;
+    padding: 6px 8px;
+    border-radius: 11px;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  /* no celular o botao de pausa mostra so o icone; o texto continua como nome acessivel */
+  .wa-demo-toggle [data-demo-toggle-label] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .wa-demo-toggle {
+    width: 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .wa-demo-toggle .wa-ico {
+    width: 16px;
+    height: 16px;
+  }
+}

@@ -12,6 +12,7 @@
  * - Messages to the client: only booking confirmation, reminders and confirm/cancel/reschedule acknowledgments
  *   (src/utils/agenda.ts). The team numbers get short internal notices.
  */
+import { dbActivity } from '@api/repository/db-activity';
 import { runWithInstance } from '@api/repository/instance-db';
 import { Logger } from '@config/logger.config';
 import {
@@ -59,10 +60,15 @@ import type { GoogleCalendarService } from './google-calendar.service';
 
 const CACHE_TTL_MS = 30_000;
 const TICK_INTERVAL_MS = 60_000;
-/** Without anything due, the database is checked again after this (writes in this process reset it). */
+/** Without anything due, the database is checked again after this (writes in this process reset it)... */
 const TICK_MAX_SLEEP_MS = 6 * 3_600_000;
-/** Reminders reach at most 72 h + the evening shift before the start. */
-const TICK_HORIZON_MS = (MAX_REMINDER_HOURS + 24) * 3_600_000 + TICK_MAX_SLEEP_MS;
+/**
+ * ...but only if the database is already awake (another query just ran): the re-check alone never wakes Neon.
+ * It waits at most this long, and never past the next reminder already known.
+ */
+const TICK_MAX_IDLE_MS = 24 * 3_600_000;
+/** Reminders reach at most 72 h + the evening shift before the start (+ the longest sleep between checks). */
+const TICK_HORIZON_MS = (MAX_REMINDER_HOURS + 24) * 3_600_000 + TICK_MAX_IDLE_MS;
 const TICK_BATCH = 500;
 const ICS_PAST_DAYS = 30;
 const ICS_FUTURE_DAYS = 180;
@@ -90,6 +96,8 @@ type AgendaOptions = {
   providers?: Partial<Record<AgendaProviderName, AgendaProvider>>;
   /** Google Agenda of the instance, when connected: copy of the appointments + its busy times. */
   google?: GoogleCalendarService;
+  /** Is the database already awake? (default: the query log, db-activity.ts) */
+  dbAwake?: () => boolean;
 };
 
 export type CreateInput = {
@@ -151,6 +159,11 @@ export class AgendaService {
   private timer: NodeJS.Timeout | null = null;
   private running = false;
   private nextRunAt = 0;
+  /**
+   * Set when the last tick found nothing due: the next run is only a re-check for changes made outside this
+   * process, so it waits for the database to be awake until this time (next known reminder or 24 h).
+   */
+  private idleUntil = 0;
   private dedicated = new Set<string>();
   /** Dedicated databases whose agenda is off (cleared when the settings change in this process). */
   private readonly knownOff = new Set<string>();
@@ -769,7 +782,12 @@ export class AgendaService {
   }
 
   private async runIfDue(): Promise<void> {
-    if (this.running || this.now().getTime() < this.nextRunAt) return;
+    const now = this.now().getTime();
+    if (this.running || now < this.nextRunAt) return;
+    // Idle re-check: piggyback on a query that already woke the database instead of waking it ourselves
+    if (this.nextRunAt !== 0 && now < this.idleUntil && !(this.options.dbAwake ?? (() => dbActivity.isAwake()))()) {
+      return;
+    }
     await this.tick().catch((error) => this.logger.error(`Agenda tick failed: ${error?.message ?? error}`));
   }
 
@@ -782,6 +800,8 @@ export class AgendaService {
     const now = this.now();
     const stats = { running: false, checked: 0, sent: 0, skipped: 0, failed: 0, waiting: 0, nextRunAt: '' };
     let next = now.getTime() + TICK_MAX_SLEEP_MS;
+    /** Earliest reminder known to be waiting, even past the 6 h sleep. */
+    let earliestWait = Infinity;
     try {
       const rows: any[] = await this.enabledSettingsRows();
       const settingsById = new Map<string, AgendaSettings>();
@@ -822,6 +842,7 @@ export class AgendaService {
 
           if (decision.action === 'wait') {
             if (decision.at) {
+              earliestWait = Math.min(earliestWait, decision.at.getTime());
               next = Math.min(next, decision.at.getTime());
               stats.waiting++;
             }
@@ -872,6 +893,8 @@ export class AgendaService {
       }
     } finally {
       this.running = false;
+      const somethingDue = next < now.getTime() + TICK_MAX_SLEEP_MS;
+      this.idleUntil = somethingDue ? 0 : Math.min(earliestWait, now.getTime() + TICK_MAX_IDLE_MS);
       this.nextRunAt = Math.max(next, now.getTime() + TICK_INTERVAL_MS - 1000);
       stats.nextRunAt = new Date(this.nextRunAt).toISOString();
     }

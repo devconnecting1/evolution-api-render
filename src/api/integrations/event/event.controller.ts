@@ -1,4 +1,5 @@
 import { EventDto } from '@api/integrations/event/event.dto';
+import { softCacheValid } from '@api/repository/db-activity';
 import { PrismaRepository } from '@api/repository/repository.service';
 import { WAMonitoringService } from '@api/services/monitor.service';
 import { wa } from '@api/types/wa.types';
@@ -155,7 +156,8 @@ export class EventController {
     const instanceId = this.monitor.waInstances[instanceName].instanceId;
     const cacheKey = `${this.name}:${instanceId}`;
     const cached = EventController.configCache.get(cacheKey);
-    if (cached && Date.now() - cached.at < EventController.CONFIG_TTL_MS) {
+    // Vencido o TTL, só relê com o banco já acordado (até 24 h): ver softCacheValid
+    if (cached && softCacheValid(cached.at, EventController.CONFIG_TTL_MS)) {
       return cached.value;
     }
 
