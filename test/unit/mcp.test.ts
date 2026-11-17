@@ -10,6 +10,7 @@ import { createMcpRouter } from '@api/integrations/mcp/mcp.router';
 import { McpDeps } from '@api/integrations/mcp/mcp.types';
 import { maskSecret, maskUrl, normalizeRecipient, scrubSecrets } from '@api/integrations/mcp/mcp.util';
 import { TOOL_NAMES } from '@api/integrations/mcp/tools';
+import { currentInstanceId } from '@api/repository/instance-db/instance-context';
 import { AgendaService } from '@api/services/agenda.service';
 import { LeadsService } from '@api/services/leads.service';
 import { UsageService } from '@api/services/usage.service';
@@ -93,6 +94,9 @@ type Calls = {
   fetchMessages: any[];
   sessionCreate: any[];
   settingsUpdate: any[];
+  audit: any[];
+  /** Instance of the database context when a raw query ran (instance-db routing). */
+  rawQueryContext: (string | null)[];
 };
 
 function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
@@ -103,6 +107,8 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     fetchMessages: [],
     sessionCreate: [],
     settingsUpdate: [],
+    audit: [],
+    rawQueryContext: [],
   };
 
   const instances = [
@@ -136,6 +142,7 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
       systemMessages: ['Você é a assistente do escritório.'],
       expire: 0,
       keywordFinish: '#sair',
+      functionUrl: 'https://hooks.example.com/fn?token=secret-fn-token-123',
       unknownMessage: 'Desculpe, não entendi.',
       humanResumeMinutes: 30,
       triggerType: 'all',
@@ -227,13 +234,31 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
   ];
 
   const prisma: any = {
+    // search_messages runs a raw query: it must run inside the database context of the instance
+    $queryRaw: async () => {
+      calls.rawQueryContext.push(currentInstanceId() ?? null);
+      return [];
+    },
     // find_ai_issues and export_conversations_for_review read the same period query; each test picks its rows
     message: {
       findMany: async ({ where }: any) =>
         where.instanceId === 'inst-a' && !where.OR ? (periodRows.current === 'export' ? exportRows : issueRows) : [],
       findFirst: async ({ where }: any) => {
-        const row = issueRows.find((r) => r.key.id === where.key.equals);
-        return where.instanceId === 'inst-a' && row ? row : null;
+        if (where.instanceId !== 'inst-a') return null;
+        // get_media of a video with a signed S3 link (masked in the answer)
+        if (where.key?.equals === 'MSG-VID') {
+          return {
+            id: 'db9',
+            key: { id: 'MSG-VID', remoteJid: '5511988887777@s.whatsapp.net', fromMe: false },
+            messageType: 'videoMessage',
+            message: {
+              videoMessage: { mimetype: 'video/mp4', fileLength: 1000, seconds: 3 },
+              mediaUrl: 'https://s3.example.com/bucket/video.mp4?X-Amz-Signature=signed-secret-abc',
+            },
+            messageTimestamp: 1_790_000_300,
+          };
+        }
+        return issueRows.find((r) => r.key.id === where.key?.equals) ?? null;
       },
     },
     instanceLimits: { findUnique: async () => null },
@@ -348,6 +373,7 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
       getOverview: async () => ({ providers: [{ name: 'neon', apiToken: 'neon-secret-token-000111' }], alerts: [] }),
     },
     isBotMessageId: async () => false,
+    audit: { record: (entry: any) => void calls.audit.push(entry) },
     logger: { error: () => undefined, warn: () => undefined },
     config: {
       apiKey: GLOBAL_KEY,
@@ -796,11 +822,17 @@ describe('MCP: tools', () => {
   });
 
   test('send_text_message validates the number before sending', async () => {
-    const bad = await callTool(h.url, 'send_text_message', { instance: 'escritorio', number: '123456789', text: 'oi' });
+    const bad = await callTool(h.url, 'send_text_message', {
+      confirm: true,
+      instance: 'escritorio',
+      number: '123456789',
+      text: 'oi',
+    });
     assert.equal(bad.result.isError, true);
     assert.equal(h.calls.sendText.length, 0);
 
     const { json, result } = await callTool(h.url, 'send_text_message', {
+      confirm: true,
       instance: 'escritorio',
       number: '+55 (11) 98888-7777',
       text: 'Olá! Recebemos sua mensagem.',
@@ -848,6 +880,7 @@ describe('MCP: tools', () => {
 
   test('update_bot_settings sends the whole bot with the whitelisted changes and returns the previous values', async () => {
     const { json, result } = await callTool(h.url, 'update_bot_settings', {
+      confirm: true,
       instance: 'escritorio',
       system_prompt: 'Novo prompt',
       pause_minutes: 45,
@@ -862,13 +895,14 @@ describe('MCP: tools', () => {
     assert.equal(call.data.triggerType, 'all');
     assert.deepEqual(json.changes.systemMessages.before, ['Você é a assistente do escritório.']);
 
-    const empty = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio' });
+    const empty = await callTool(h.url, 'update_bot_settings', { confirm: true, instance: 'escritorio' });
     assert.equal(empty.result.isError, true);
   });
 
   test('update_bot_settings: ethics profile of the instance (OAB) without touching the bot', async () => {
     const before = h.calls.updateBot.length;
     const { json, result } = await callTool(h.url, 'update_bot_settings', {
+      confirm: true,
       instance: 'escritorio',
       ethics_profile: 'advocacia',
     });
@@ -880,6 +914,7 @@ describe('MCP: tools', () => {
 
   test('update_bot_settings: tokens, memory, media, failure message and debounce', async () => {
     const { json, result } = await callTool(h.url, 'update_bot_settings', {
+      confirm: true,
       instance: 'escritorio',
       max_tokens: 2500,
       history_messages: 30,
@@ -900,7 +935,11 @@ describe('MCP: tools', () => {
     assert.equal(call.data.debounceTime, 10);
     assert.ok(json.changes.maxTokens);
 
-    const invalid = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio', token_param: 'turbo' });
+    const invalid = await callTool(h.url, 'update_bot_settings', {
+      confirm: true,
+      instance: 'escritorio',
+      token_param: 'turbo',
+    });
     assert.equal(invalid.result.isError, true);
   });
 
@@ -940,6 +979,7 @@ describe('MCP: tools', () => {
     assert.equal(slots.json.slots.length, 2);
 
     const created = await callTool(h.url, 'create_appointment', {
+      confirm: true,
       instance: 'escritorio',
       contact: '5511988887777',
       start: slots.json.slots[0].startsAt,
@@ -950,6 +990,7 @@ describe('MCP: tools', () => {
     assert.match(h.agendaSent[0].text, /Seu agendamento está marcado/);
 
     const taken = await callTool(h.url, 'create_appointment', {
+      confirm: true,
       instance: 'escritorio',
       contact: '5511977776666',
       start: slots.json.slots[0].startsAt,
@@ -960,6 +1001,7 @@ describe('MCP: tools', () => {
     const list = await callTool(h.url, 'list_appointments', { instance: 'escritorio' });
     assert.equal(list.json.count, 1);
     const cancelled = await callTool(h.url, 'cancel_appointment', {
+      confirm: true,
       instance: 'escritorio',
       id: list.json.appointments[0].id,
       notify_client: false,
@@ -981,13 +1023,14 @@ describe('MCP: tools', () => {
     assert.equal(tool.annotations.destructiveHint, true);
     assert.equal(tool.annotations.readOnlyHint, false);
 
-    const first = await callTool(h.url, 'update_limits', { instance: 'escritorio', plan: 'Essencial' });
+    const first = await callTool(h.url, 'update_limits', { confirm: true, instance: 'escritorio', plan: 'Essencial' });
     assert.ok(!first.result.isError, first.text);
     assert.equal(first.json.previous, null);
     assert.equal(first.json.limits.monthlyResponses, 2000);
     assert.equal(first.json.limits.overLimitAction, 'continue');
 
     const second = await callTool(h.url, 'update_limits', {
+      confirm: true,
       instance: 'escritorio',
       daily_responses: 300,
       business_hours: { enabled: true, mode: 'inside', week: { sat: [['09:00', '13:00']] } },
@@ -999,11 +1042,15 @@ describe('MCP: tools', () => {
     assert.deepEqual(second.json.limits.businessHours.week.sat, [['09:00', '13:00']]);
     assert.deepEqual(second.json.limits.businessHours.week.mon, [['09:00', '18:00']]);
 
-    const invalid = await callTool(h.url, 'update_limits', { instance: 'escritorio', over_limit_action: 'message' });
+    const invalid = await callTool(h.url, 'update_limits', {
+      confirm: true,
+      instance: 'escritorio',
+      over_limit_action: 'message',
+    });
     assert.equal(invalid.result.isError, true);
     assert.match(invalid.text, /mensagem/);
 
-    const empty = await callTool(h.url, 'update_limits', { instance: 'escritorio' });
+    const empty = await callTool(h.url, 'update_limits', { confirm: true, instance: 'escritorio' });
     assert.equal(empty.result.isError, true);
 
     const usage = await callTool(h.url, 'get_usage', { instance: 'escritorio' });
@@ -1014,7 +1061,7 @@ describe('MCP: tools', () => {
     const other = await callTool(
       h.url,
       'update_limits',
-      { instance: 'clinica', plan: 'Premium' },
+      { confirm: true, instance: 'clinica', plan: 'Premium' },
       bearer('token-of-escritorio-0123456789'),
     );
     assert.equal(other.result.isError, true);
@@ -1084,11 +1131,11 @@ describe('MCP: tools', () => {
     assert.equal(tool('analyze_leads').annotations.destructiveHint, false);
     assert.equal(tool('refresh_leads_waiting').annotations.destructiveHint, false);
 
-    const gone = await callTool(h.url, 'delete_lead', { instance: 'escritorio', id: 'lead-a1' });
+    const gone = await callTool(h.url, 'delete_lead', { confirm: true, instance: 'escritorio', id: 'lead-a1' });
     assert.ok(!gone.result.isError, gone.text);
     assert.equal(gone.json.removed, true);
     assert.equal(gone.json.lead.id, 'lead-a1');
-    const again = await callTool(h.url, 'delete_lead', { instance: 'escritorio', id: 'lead-a1' });
+    const again = await callTool(h.url, 'delete_lead', { confirm: true, instance: 'escritorio', id: 'lead-a1' });
     assert.equal(again.result.isError, true);
   });
 
@@ -1177,5 +1224,166 @@ describe('MCP: tools', () => {
       bearer(GLOBAL_KEY),
     );
     assert.match(review.body.result.messages[0].content.text, /NÃO envie/);
+  });
+});
+
+describe('MCP: segurança (confirmação, contexto do banco, registro de ações e máscaras)', () => {
+  let h: Harness;
+
+  before(async () => {
+    h = await startServer();
+  });
+
+  after(() => h.server.close());
+
+  const CONFIRMED_TOOLS = [
+    'send_text_message',
+    'delete_lead',
+    'update_limits',
+    'update_bot_settings',
+    'create_appointment',
+    'update_appointment',
+    'cancel_appointment',
+  ];
+
+  test('only the tools that send to a customer or are hard to undo take `confirm`', async () => {
+    const { body } = await rpc(h.url, 'tools/list', {}, bearer(GLOBAL_KEY));
+    const withConfirm = body.result.tools
+      .filter((tool: any) => tool.inputSchema?.properties?.confirm)
+      .map((tool: any) => tool.name)
+      .sort();
+    assert.deepEqual(withConfirm, [...CONFIRMED_TOOLS].sort());
+  });
+
+  test('without confirm: a preview, nothing sent, saved or removed, nothing in the audit log', async () => {
+    const before = { sent: h.calls.sendText.length, bot: h.calls.updateBot.length, audit: h.calls.audit.length };
+
+    const send = await callTool(h.url, 'send_text_message', {
+      instance: 'escritorio',
+      number: '5511988887777',
+      text: 'Olá',
+    });
+    assert.equal(send.json.preview, true);
+    assert.equal(send.json.to, '5511988887777');
+    assert.equal(send.json.text, 'Olá');
+    assert.match(send.json.note, /confirm=true/);
+
+    const lead = await callTool(h.url, 'delete_lead', { instance: 'escritorio', id: 'lead-a1' });
+    assert.equal(lead.json.preview, true);
+    assert.equal(lead.json.lead.id, 'lead-a1');
+    const still = await callTool(h.url, 'get_lead', { instance: 'escritorio', id: 'lead-a1' });
+    assert.ok(!still.result.isError, 'the lead is still there');
+
+    const limits = await callTool(h.url, 'update_limits', { instance: 'escritorio', daily_responses: 10 });
+    assert.equal(limits.json.preview, true);
+    assert.deepEqual(limits.json.changes, { daily_responses: 10 });
+    assert.ok('current' in limits.json);
+
+    const bot = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio', time_per_char: 40 });
+    assert.equal(bot.json.preview, true);
+    assert.deepEqual(bot.json.changes, { time_per_char: 40 });
+    const effort = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio', reasoning_effort: 'low' });
+    assert.equal(effort.json.preview, true, 'reasoning_effort also needs confirm');
+    assert.deepEqual(effort.json.changes, { reasoning_effort: 'low' });
+    const empty = await callTool(h.url, 'update_bot_settings', { instance: 'escritorio' });
+    assert.equal(empty.result.isError, true, 'the preview validates like the real call');
+
+    const cancel = await callTool(h.url, 'cancel_appointment', { instance: 'escritorio', id: 'qualquer' });
+    assert.equal(cancel.json.preview, true);
+    const reschedule = await callTool(h.url, 'update_appointment', {
+      instance: 'escritorio',
+      id: 'qualquer',
+      start: '2026-12-01T10:00',
+    });
+    assert.equal(reschedule.json.preview, true);
+
+    assert.equal(h.calls.sendText.length, before.sent);
+    assert.equal(h.calls.updateBot.length, before.bot);
+    assert.equal(h.agendaSent.length, 0);
+    assert.equal(h.calls.audit.length, before.audit);
+  });
+
+  test('agenda: confirmation only when the customer is notified', async () => {
+    const quiet = await callTool(h.url, 'cancel_appointment', {
+      instance: 'escritorio',
+      id: 'nao-existe',
+      notify_client: false,
+    });
+    assert.notEqual(quiet.json?.preview, true, 'notify_client=false runs without confirm');
+    const internal = await callTool(h.url, 'update_appointment', {
+      instance: 'escritorio',
+      id: 'nao-existe',
+      status: 'confirmado',
+    });
+    assert.notEqual(internal.json?.preview, true, 'a status change does not message the customer');
+  });
+
+  test('update_bot_settings: time_per_char and split_messages reach the bot', async () => {
+    const { json, result } = await callTool(h.url, 'update_bot_settings', {
+      confirm: true,
+      instance: 'escritorio',
+      time_per_char: 0,
+      split_messages: true,
+    });
+    assert.ok(!result.isError, JSON.stringify(result));
+    const sent = h.calls.updateBot.at(-1).data;
+    assert.equal(sent.timePerChar, 0);
+    assert.equal(sent.splitMessages, true);
+    assert.equal(json.updated, true);
+
+    const tooSlow = await callTool(h.url, 'update_bot_settings', {
+      confirm: true,
+      instance: 'escritorio',
+      time_per_char: 1001,
+    });
+    assert.equal(tooSlow.result.isError, true);
+  });
+
+  test('write tools are recorded as "mcp" (with the instance and a masked target); reads and errors are not', async () => {
+    const start = h.calls.audit.length;
+    await callTool(h.url, 'send_text_message', {
+      confirm: true,
+      instance: 'escritorio',
+      number: '5511988887777',
+      text: 'oi',
+    });
+    await callTool(h.url, 'list_chats', { instance: 'escritorio' });
+    await callTool(h.url, 'send_text_message', { confirm: true, instance: 'escritorio', number: '123', text: 'oi' });
+
+    const entries = h.calls.audit.slice(start);
+    assert.equal(entries.length, 1);
+    assert.deepEqual(
+      { ...entries[0] },
+      {
+        actor: 'MCP (chave global)',
+        actorKind: 'mcp',
+        type: 'conversas',
+        action: 'Enviar mensagem de texto',
+        instanceName: 'escritorio',
+        target: '+55 11 9****-7777',
+        method: 'MCP',
+        path: '/mcp/send_text_message',
+        status: 200,
+        ip: null,
+      },
+    );
+  });
+
+  test('every tool runs inside the database context of its instance (global key and instance token)', async () => {
+    const start = h.calls.rawQueryContext.length;
+    await callTool(h.url, 'search_messages', { instance: 'escritorio', text: 'consulta' });
+    await callTool(h.url, 'search_messages', { text: 'consulta' }, bearer('token-of-clinica-0123456789'));
+    assert.deepEqual(h.calls.rawQueryContext.slice(start), ['inst-a', 'inst-b']);
+  });
+
+  test('functionUrl of the bot and mediaUrl of a media are masked', async () => {
+    const bot = await callTool(h.url, 'get_bot_config', { instance: 'escritorio' });
+    const text = JSON.stringify(bot.json);
+    assert.doesNotMatch(text, /secret-fn-token-123/);
+    assert.match(text, /hooks\.example\.com\/fn\?token=\*\*\*\*/);
+
+    const media = await callTool(h.url, 'get_media', { instance: 'escritorio', message_id: 'MSG-VID' });
+    assert.ok(!media.result.isError, media.text);
+    assert.equal(media.json.mediaUrl, 'https://s3.example.com/bucket/video.mp4?X-Amz-Signature=****');
   });
 });

@@ -1,5 +1,6 @@
 import {
   agendaService,
+  auditLogService,
   leadsService,
   openaiController,
   openaiHealthService,
@@ -35,6 +36,7 @@ export function defaultMcpDeps(): McpDeps {
     agenda: agendaService,
     openaiHealth: openaiHealthService,
     isBotMessageId,
+    audit: auditLogService,
     logger,
     config: {
       apiKey: configService.get<Auth>('AUTHENTICATION').API_KEY.KEY,

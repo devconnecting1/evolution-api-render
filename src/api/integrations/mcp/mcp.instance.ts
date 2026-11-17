@@ -31,7 +31,15 @@ export function requireGlobal(ctx: McpContext, what: string): void {
  */
 export async function resolveInstance(ctx: McpContext, name?: string | null): Promise<ResolvedInstance> {
   const requested = typeof name === 'string' && name.trim() ? name.trim() : null;
+  const cacheKey = requested ?? '';
+  const cached = ctx.instanceCache?.get(cacheKey);
+  if (cached) return cached;
+  const pending = lookupInstance(ctx, requested);
+  ctx.instanceCache?.set(cacheKey, pending);
+  return pending;
+}
 
+async function lookupInstance(ctx: McpContext, requested: string | null): Promise<ResolvedInstance> {
   if (ctx.auth.scope === 'instance' && requested && requested !== ctx.auth.instanceName) {
     throw new McpToolError(`este token só dá acesso à instância "${ctx.auth.instanceName}".`);
   }

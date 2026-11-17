@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { resolveInstance } from '../mcp.instance';
-import { defineTool, instanceArg, READ_ONLY } from '../mcp.tool';
+import { changedArgs, defineTool, instanceArg, READ_ONLY } from '../mcp.tool';
 import { jsonResult, McpToolError } from '../mcp.util';
 
 export const getUsage = defineTool({
@@ -87,6 +87,19 @@ export const updateLimits = defineTool({
       .describe('Mensagem fora do horário (modo inside).'),
   },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  confirm: {
+    preview: async (args, ctx) => {
+      const changes = changedArgs(args);
+      if (!Object.keys(changes).length) throw new McpToolError('nenhum campo para alterar foi informado.');
+      const resolved = await resolveInstance(ctx, args.instance);
+      return {
+        action: 'alterar o plano e os limites da IA',
+        instance: resolved.name,
+        current: await ctx.deps.usage.getLimits(resolved.id),
+        changes,
+      };
+    },
+  },
   run: async (args, ctx) => {
     const fields: [string, string][] = [
       ['plan', 'planName'],

@@ -9,9 +9,9 @@ import { z } from 'zod';
 
 import { reasoningProfile, resolveReasoningEffort } from '../../chatbot/openai/reasoning-effort';
 import { ResolvedInstance, resolveInstance } from '../mcp.instance';
-import { contactArg, defineTool, instanceArg, READ_ONLY } from '../mcp.tool';
+import { changedArgs, contactArg, defineTool, instanceArg, READ_ONLY } from '../mcp.tool';
 import { McpContext } from '../mcp.types';
-import { isoDate, jsonResult, maskSecret, McpToolError, normalizeContactJid } from '../mcp.util';
+import { isoDate, jsonResult, maskSecret, maskUrl, McpToolError, normalizeContactJid } from '../mcp.util';
 
 const MAX_PROMPT_CHARS = 20_000;
 
@@ -44,7 +44,8 @@ function botView(bot: any, creds: Map<string, any>) {
     reasoningEffort: bot.reasoningEffort ?? 'auto',
     reasoningEffortEffective: describeEffort(bot.model, bot.reasoningEffort),
     assistantId: bot.assistantId ?? null,
-    functionUrl: bot.functionUrl ?? null,
+    // may carry a token in the query string: only its shape is shown
+    functionUrl: maskUrl(bot.functionUrl),
     systemMessages: messagesList(bot.systemMessages),
     assistantMessages: messagesList(bot.assistantMessages),
     userMessages: messagesList(bot.userMessages),
@@ -498,8 +499,28 @@ export const updateBotSettings = defineTool({
       .max(120)
       .optional()
       .describe('Segundos esperando o cliente terminar de digitar antes de responder (recomendado ~10).'),
+    time_per_char: z
+      .number()
+      .int()
+      .min(0)
+      .max(1000)
+      .optional()
+      .describe('Milissegundos de "digitando..." por caractere da resposta (0 a 1000; o total fica entre 1 e 20 s).'),
+    split_messages: z.boolean().optional().describe('Dividir a resposta em várias mensagens nas linhas em branco.'),
   },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  confirm: {
+    preview: async (args, ctx) => {
+      const changes = changedArgs(args);
+      if (!Object.keys(changes).length) throw new McpToolError('nenhum campo para alterar foi informado.');
+      return {
+        action: 'alterar o bot OpenAI (os valores atuais são substituídos)',
+        instance: (await resolveInstance(ctx, args.instance)).name,
+        bot_id: args.bot_id ?? null,
+        changes,
+      };
+    },
+  },
   run: async (args, ctx) => {
     if (args.system_prompt && args.system_messages) {
       throw new McpToolError('use system_prompt ou system_messages, não os dois.');
@@ -525,6 +546,8 @@ export const updateBotSettings = defineTool({
       ['max_document_mb', 'maxDocumentMB'],
       ['unknown_message', 'unknownMessage'],
       ['debounce_seconds', 'debounceTime'],
+      ['time_per_char', 'timePerChar'],
+      ['split_messages', 'splitMessages'],
     ];
     for (const [arg, field] of direct) if (args[arg] !== undefined) changes[field] = args[arg];
 

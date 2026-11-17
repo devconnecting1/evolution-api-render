@@ -245,6 +245,14 @@ export const deleteLead = defineTool({
     'Remove a ficha de lead (só a triagem; a conversa não é apagada). Uma mensagem nova do contato pode criar a ficha de novo; para tirar da fila sem apagar, prefira update_lead com status "descartado". Destrutiva: confirme com o usuário. Devolve a ficha removida.',
   input: { instance: instanceArg, id: z.string().min(1).max(64).describe('id do lead.') },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  confirm: {
+    preview: async (args, ctx) => {
+      const resolved = await resolveInstance(ctx, args.instance);
+      const lead = await ctx.deps.leads.get(resolved.id, args.id);
+      if (!lead) throw new McpToolError('lead não encontrado nesta instância.');
+      return { action: 'remover esta ficha de lead (a conversa fica)', instance: resolved.name, lead };
+    },
+  },
   run: async (args, ctx) => {
     const resolved = await resolveInstance(ctx, args.instance);
     const lead = await userErrors(() => ctx.deps.leads.remove(resolved.id, args.id));
