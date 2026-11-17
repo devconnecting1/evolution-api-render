@@ -783,7 +783,7 @@ Níveis por modelo (páginas oficiais da OpenAI, nov/2026; tabela em `src/api/in
 | gpt-5.4-nano | - | sim | desliga em 01/04/2027 |
 | o4-mini | - | - | desligado em 23/10/2026 |
 
-- **Leitura de PDF:** pela documentação, só os modelos da família gpt-5.x (até 5.5) e os gpt-4.x aceitam arquivo; gpt-6-luna e os outros GPT-6 aceitam texto e imagem. Com eles, o bot manda o PDF, a OpenAI recusa e o bot repete uma vez com a descrição do documento (seção 12.10).
+- **Leitura de PDF:** pela documentação, só os modelos da família gpt-5.x (até 5.5) e os gpt-4.x aceitam arquivo; gpt-6-luna e os outros GPT-6 aceitam texto e imagem. Com eles, o bot manda o PDF, a OpenAI recusa e o bot repete uma vez com a descrição do documento (seção 12.10). O mesmo vale para uma **imagem** que a OpenAI recusa (arquivo corrompido, formato não suportado ou download quebrado): o bot repete uma vez com "[o contato enviou uma imagem que não pôde ser aberta...]" e a IA pede que a pessoa descreva ou envie de novo, em vez de mandar a mensagem de falha.
 - **Transcrição de áudio:** padrão `gpt-transcribe` (atual, US$ 0,0045/min). A reserva `whisper-1` e os `gpt-4o(-mini)-transcribe` desligam em 26/02/2027.
 - **Leads:** sem `extractionModel`, a triagem usa o modelo do bot; a reserva interna sem bot passou de `gpt-4o-mini` para `gpt-6-luna`.
 

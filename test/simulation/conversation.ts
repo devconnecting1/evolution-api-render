@@ -22,7 +22,8 @@ import {
 import { questionSlot } from './scripted-model';
 import { OfficeInstance, TranscriptEvent, World } from './world';
 
-const PNG_BASE64 = Buffer.from('sim-png-bytes').toString('base64');
+// A real 1x1 PNG: with the real model the photo must be a valid image (fake bytes are rejected by OpenAI)
+const PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 const PDF_BASE64 = plainPdf(2).toString('base64');
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;

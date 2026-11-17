@@ -264,7 +264,7 @@ async function runEval() {
 
   const createModel = (clock: VirtualClock) =>
     createRealModelFactory({ clock, reasoningEffort: effort, maxConcurrent: 6 });
-  const world = { apiKey, model: botModel, realModel: true };
+  const world = { apiKey, model: botModel, realModel: true, reasoningEffort: effort };
   const matrix = await runMatrixShard({
     count: COUNT,
     seed: SEED,

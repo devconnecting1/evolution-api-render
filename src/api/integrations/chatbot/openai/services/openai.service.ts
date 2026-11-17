@@ -1296,8 +1296,9 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
   }
 
   /**
-   * Call Chat Completions; if the model rejects the PDF file input (400), retry once with each document replaced
-   * by its description, so the customer still gets an answer.
+   * Call Chat Completions; if the model rejects the PDF file input or an image (400: model without PDF support,
+   * corrupt or unsupported image), retry once with each rejected part replaced by its description, so the customer
+   * still gets an answer instead of the failure message.
    */
   private async createChatCompletionWithFiles(
     client: OpenAI,
@@ -1310,25 +1311,29 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       return await this.createChatCompletion(client, openaiBot, messages, tokenParam, extra);
     } catch (error) {
       const current = messages[messages.length - 1];
-      const hasFiles = Array.isArray(current?.content) && current.content.some((part: any) => part?.type === 'file');
-      if (!hasFiles || !this.isFileInputRejectedError(error)) throw error;
+      const parts: any[] = Array.isArray(current?.content) ? current.content : [];
+      const fileRejected = parts.some((part) => part?.type === 'file') && this.isFileInputRejectedError(error);
+      const imageRejected = parts.some((part) => part?.type === 'image_url') && this.isImageInputRejectedError(error);
+      if (!fileRejected && !imageRejected) throw error;
 
       this.logger.warn(
-        `Model ${openaiBot.model} rejected the PDF file input (${error?.status ?? error?.response?.status}: ` +
-          `${error?.message}); retrying once with the document described as text`,
+        `Model ${openaiBot.model} rejected the ${fileRejected ? 'PDF file input' : 'image'} ` +
+          `(${error?.status ?? error?.response?.status}: ${error?.message}); retrying once with it described as text`,
       );
 
       messages[messages.length - 1] = {
         ...current,
         content: this.mergeTextParts(
-          current.content.map((part: any) =>
-            part?.type === 'file'
-              ? {
-                  type: 'text',
-                  text: describeDocument({ fileName: part.file?.filename, typeLabel: 'PDF', isPdf: true }),
-                }
-              : part,
-          ),
+          parts.map((part: any) => {
+            if (fileRejected && part?.type === 'file') {
+              return {
+                type: 'text',
+                text: describeDocument({ fileName: part.file?.filename, typeLabel: 'PDF', isPdf: true }),
+              };
+            }
+            if (imageRejected && part?.type === 'image_url') return { type: 'text', text: MEDIA_TEXT.imageUnreadable };
+            return part;
+          }),
         ),
       };
 
@@ -1400,6 +1405,21 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
       this.logger.warn(`Model ${openaiBot.model} does not accept tools: answering without tools`);
       return this.createChatCompletionWithFiles(client, openaiBot, messages, tokenParam);
     }
+  }
+
+  /** A 400 of OpenAI about an image input (corrupt, unsupported format, could not be downloaded or decoded). */
+  private isImageInputRejectedError(error: any): boolean {
+    const status = error?.status ?? error?.response?.status;
+    if (status !== 400) return false;
+    if (this.isUnsupportedTokenParamError(error, 'max_tokens')) return false;
+    if (this.isUnsupportedTokenParamError(error, 'max_completion_tokens')) return false;
+
+    const body = error?.error ?? error?.response?.data?.error ?? {};
+    const text = [error?.message, body?.message, body?.param, error?.param, body?.code, error?.code]
+      .filter(Boolean)
+      .join(' ');
+
+    return /image/i.test(text);
   }
 
   /** A 400 of OpenAI about the file input (model without PDF support, invalid or unreadable file). */
