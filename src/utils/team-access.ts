@@ -78,6 +78,8 @@ const OWNER_ONLY: Rule[] = [
   // plano e limites: ler pode (tela de uso), mudar é do dono
   { methods: WRITE, pattern: /^\/usage\/limits\/:i$/ },
   { methods: ANY, pattern: /^\/(client-access|team|admin)(\/.*)?$/ },
+  // conversas exportadas para revisão: também fora da chave só de leitura
+  { methods: ANY, pattern: /^\/export(\/.*)?$/ },
 ];
 
 /** Exportações: a Equipe atende e configura, mas não leva os dados embora (o Dono e a chave global levam). */

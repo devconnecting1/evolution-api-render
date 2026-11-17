@@ -1,0 +1,32 @@
+/* whatsai-patch:exportar-revisao - "Exportar conversas para revisão" card (Plano e limites > Exportar dados).
+   Only var(--m-*) tokens, so light and dark both apply. */
+#root .wc-review {
+  margin-top: 16px;
+}
+#root .wc-review-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 4px;
+}
+#root .wc-review-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--m-text-2);
+}
+#root .wc-review-field .wu-input {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  #root .wc-review-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+  #root .wc-review-field:last-child {
+    grid-column: 1 / -1;
+  }
+}

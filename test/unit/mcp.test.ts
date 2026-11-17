@@ -70,6 +70,7 @@ const EXPECTED_TOOLS = [
   'update_agenda_settings',
   'get_database_info',
   'get_openai_health',
+  'export_conversations_for_review',
 ];
 
 // --------------------------------------------------------------------------------------------- fakes
@@ -206,9 +207,30 @@ function fakeDeps(overrides: Partial<McpDeps['config']> = {}) {
     },
   ];
 
+  const exportRows = [
+    {
+      id: 'r1',
+      key: { id: 'R1', remoteJid: '5511988887777@s.whatsapp.net', fromMe: false },
+      messageType: 'conversation',
+      message: { conversation: 'Meu e-mail é maria@exemplo.com' },
+      messageTimestamp: Math.floor(Date.parse('2026-11-12T10:00:00-03:00') / 1000),
+      sentBy: 'contact',
+    },
+    {
+      id: 'r2',
+      key: { id: '3EB0R2', remoteJid: '5511988887777@s.whatsapp.net', fromMe: true },
+      messageType: 'conversation',
+      message: { conversation: 'Recebido, obrigado!' },
+      messageTimestamp: Math.floor(Date.parse('2026-11-12T10:01:00-03:00') / 1000),
+      sentBy: 'ai',
+    },
+  ];
+
   const prisma: any = {
+    // find_ai_issues and export_conversations_for_review read the same period query; each test picks its rows
     message: {
-      findMany: async ({ where }: any) => (where.instanceId === 'inst-a' && !where.OR ? issueRows : []),
+      findMany: async ({ where }: any) =>
+        where.instanceId === 'inst-a' && !where.OR ? (periodRows.current === 'export' ? exportRows : issueRows) : [],
       findFirst: async ({ where }: any) => {
         const row = issueRows.find((r) => r.key.id === where.key.equals);
         return where.instanceId === 'inst-a' && row ? row : null;
@@ -409,6 +431,9 @@ async function callTool(url: string, name: string, args: any, headers = bearer(G
 }
 
 // --------------------------------------------------------------------------------------------- tests
+
+/** Which rows the period query of the MCP harness returns (see the prisma mock). */
+const periodRows: { current: 'issues' | 'export' } = { current: 'issues' };
 
 describe('MCP: helpers', () => {
   test('safeEqual compares in constant time and never matches empty values', () => {
@@ -734,6 +759,34 @@ describe('MCP: tools', () => {
       to_date: '2026-11-12',
     });
     assert.equal(tooLong.result.isError, true);
+  });
+
+  test('export_conversations_for_review: masked plain text of the period, with a cursor', async () => {
+    periodRows.current = 'export';
+    try {
+      const { result, text } = await callTool(h.url, 'export_conversations_for_review', {
+        instance: 'escritorio',
+        from_date: '2026-11-12',
+        to_date: '2026-11-12',
+      });
+      assert.ok(!result.isError, text);
+      assert.match(text, /1 conversas, 2 mensagens/);
+      assert.match(text, /## Conversa \*\*\*\*7777 · 12\/11\/2026/);
+      assert.match(text, /\[10:00\] Cliente: Meu e-mail é \[e-mail\]/);
+      assert.match(text, /\[10:01\] IA: Recebido, obrigado!/);
+      assert.match(text, /Fim: não há mais conversas/);
+      assert.doesNotMatch(text, /maria@exemplo|988887777/);
+
+      const tooLong = await callTool(h.url, 'export_conversations_for_review', {
+        instance: 'escritorio',
+        from_date: '2026-10-01',
+        to_date: '2026-11-12',
+      });
+      assert.equal(tooLong.result.isError, true);
+      assert.match(tooLong.text, /31 dias/);
+    } finally {
+      periodRows.current = 'issues';
+    }
   });
 
   test('get_messages needs a loaded instance', async () => {

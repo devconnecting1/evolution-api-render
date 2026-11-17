@@ -180,6 +180,12 @@ const RULES: Rule[] = [
     type: 'exportacao',
     action: 'Exportou os leads',
   },
+  {
+    methods: ['GET'],
+    pattern: new RegExp(`^/export/review/${I}$`),
+    type: 'exportacao',
+    action: 'Exportou conversas para revisão',
+  },
   // agenda
   {
     methods: ['POST'],

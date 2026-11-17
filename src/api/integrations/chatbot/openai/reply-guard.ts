@@ -29,8 +29,13 @@ export const MAX_QUESTIONS_PER_MESSAGE = 1;
 export const MAX_REPLY_CHARS = 600;
 /** How many previous AI replies of the conversation are kept for the comparison (session.context.botReplies). */
 export const PREVIOUS_REPLIES_KEPT = 20;
-/** Sent when nothing is left after the guard (never an empty message). */
-export const FALLBACK_ACKNOWLEDGEMENT = 'Certo, entendi. Obrigado pelas informações!';
+/**
+ * Sent when nothing is left after the guard (never an empty message). Neutral: the assistant speaks as "a
+ * assistente", so no gendered word ("obrigado/obrigada").
+ */
+export const FALLBACK_ACKNOWLEDGEMENT = 'Certo, entendi. Vou passar isso para a equipe.';
+/** Tried in order when the reply would be empty or a copy of an earlier one (the first not sent yet wins). */
+export const SHORT_ACKNOWLEDGEMENTS = [FALLBACK_ACKNOWLEDGEMENT, 'Combinado!', 'Certo!', 'Perfeito.', 'Anotado.'];
 
 export type GuardPolicy = { advocacia?: boolean };
 
@@ -119,14 +124,33 @@ export function jaccard(a: string[], b: string[]): number {
   return common / (left.size + right.size - common);
 }
 
+/** Same text once accents, case, punctuation and spacing are ignored. */
+const sameText = (a: string, b: string) => {
+  const norm = (text: string) =>
+    fold(text)
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  return norm(a) === norm(b);
+};
+
 export const isQuestion = (sentence: string): boolean => /\?\s*["')\]]*\s*$/.test(sentence.trim());
+
+/**
+ * Sentences of one line: a sentence ends at . ! ? … followed by a space (or the end), so the dots of numbers
+ * ("OAB/RJ 000.000", "R$ 1.500", "nº 0001234-56.2026") and of abbreviations without a space never split it.
+ */
+const lineSentences = (line: string): string[] =>
+  line
+    .split(/(?<=[.!?…]["')\]]*)\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
 
 /** Sentences of a text (paragraph and line breaks also end a sentence). */
 export function splitSentences(text: string): string[] {
   if (typeof text !== 'string') return [];
   const result: string[] = [];
   for (const line of text.split(/\n+/)) {
-    const parts = line.match(/[^.!?…]+(?:[.!?…]+["')\]]*|$)/g) ?? [];
+    const parts = lineSentences(line);
     for (const part of parts) if (part.trim()) result.push(part.trim());
   }
   return result;
@@ -140,7 +164,7 @@ export function removeSentences(text: string, remove: (sentence: string) => bool
       paragraph
         .split('\n')
         .map((line) =>
-          (line.match(/[^.!?…]+(?:[.!?…]+["')\]]*|$)/g) ?? [])
+          lineSentences(line)
             .map((part) => part.trim())
             .filter((part) => part && !remove(part))
             .join(' '),
@@ -218,6 +242,12 @@ export function analyzeReply(candidate: string, previousReplies: string[], polic
 
     if (isQuestion(sentence)) {
       const words = tokens(sentence, true);
+      // The very same question (short ones too: "Como você se chama?")
+      const same = previousQuestions.find((item) => sameText(item.sentence, sentence));
+      if (same) {
+        issues.push({ kind: 'repeated_question', sentence, previous: same.sentence });
+        continue;
+      }
       if (words.length < MIN_QUESTION_TOKENS) continue;
       const match = previousQuestions.find(
         (item) =>
@@ -262,18 +292,43 @@ export function regenerationInstruction(issues: GuardIssue[]): string {
 // ------------------------------------------------------------------------------------------- shaping
 
 /** Keeps only the last question of the text (the others are removed). Returns the text and how many were cut. */
+/** A question that only makes sense after the previous one ("Se sim, em que mês?", "Caso não, ..."). */
+const DEPENDENT_QUESTION =
+  /^(se sim|se n[aã]o|se for|e se|caso (sim|n[aã]o|tenha|seja)|ou (seja|ent[aã]o)|e quando|desde quando)\b/i;
+
+/**
+ * Keeps one question: the last one, unless it is a follow-up of the question before it (then that main question
+ * is kept and the follow-up dropped, or "O bebê já nasceu? Se sim, em que mês?" would become "Se sim, em que mês?").
+ */
 export function keepLastQuestion(text: string): { text: string; trimmed: number } {
   const questions = splitSentences(text).filter(isQuestion);
   if (questions.length <= MAX_QUESTIONS_PER_MESSAGE) return { text, trimmed: 0 };
-  let toDrop = questions.length - MAX_QUESTIONS_PER_MESSAGE;
+  let keep = questions.length - 1;
+  while (keep > 0 && DEPENDENT_QUESTION.test(questions[keep])) keep--;
+  let index = -1;
   const result = removeSentences(text, (sentence) => {
-    if (toDrop > 0 && isQuestion(sentence)) {
-      toDrop--;
-      return true;
-    }
-    return false;
+    if (!isQuestion(sentence)) return false;
+    index++;
+    return index !== keep;
   });
   return { text: result, trimmed: questions.length - MAX_QUESTIONS_PER_MESSAGE };
+}
+
+/** Removes sentences said twice in the same reply (keeps the first), e.g. a rambling draft. */
+export function dropRepeatedWithin(text: string): { text: string; removed: number } {
+  const seen: string[][] = [];
+  let removed = 0;
+  const result = removeSentences(text, (sentence) => {
+    const words = tokens(sentence, isQuestion(sentence));
+    if (words.length < MIN_SENTENCE_TOKENS) return false;
+    if (seen.some((previous) => jaccard(words, previous) >= SENTENCE_SIMILARITY_THRESHOLD)) {
+      removed++;
+      return true;
+    }
+    seen.push(words);
+    return false;
+  });
+  return { text: result, removed };
 }
 
 /** Cuts a long text at a sentence boundary, keeping its (last) question at the end. */
@@ -353,6 +408,10 @@ export async function guardReply(input: {
     }
   }
 
+  const within = dropRepeatedWithin(text);
+  text = within.text;
+  replyGuardStats.repeatsRemoved += within.removed;
+
   const single = keepLastQuestion(text);
   text = single.text;
   replyGuardStats.questionsTrimmed += single.trimmed;
@@ -362,8 +421,11 @@ export async function guardReply(input: {
   if (limited.truncated) replyGuardStats.truncated++;
 
   let fallback = false;
-  if (!text.trim()) {
-    text = FALLBACK_ACKNOWLEDGEMENT;
+  // Never the very same message as an earlier reply (what is left after removing repetitions can be, e.g. a
+  // short "Está tudo anotado." said again), and never an empty one: a short acknowledgement not used yet
+  if (!text.trim() || previous.some((reply) => sameText(reply, text))) {
+    text =
+      SHORT_ACKNOWLEDGEMENTS.find((ack) => !previous.some((reply) => sameText(reply, ack))) ?? FALLBACK_ACKNOWLEDGEMENT;
     fallback = true;
     replyGuardStats.fallbacks++;
   }
