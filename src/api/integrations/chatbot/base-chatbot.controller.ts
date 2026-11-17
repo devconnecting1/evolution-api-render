@@ -23,6 +23,7 @@ import { jidNormalizedUser } from 'baileys';
 
 import { BaseChatbotDto } from './base-chatbot.dto';
 import { ChatbotController, ChatbotControllerInterface, EmitData } from './chatbot.controller';
+import { ReplyMeta } from './reply-ticket';
 
 // Common settings interface for all chatbot integrations
 export interface ChatbotSettings {
@@ -901,6 +902,15 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
     return content;
   }
 
+  /**
+   * Context of the message that must survive the debounce merge (only the last message of a burst reaches the
+   * service), e.g. the Click-to-WhatsApp ad of the first message. Read with currentReplyTicket().meta.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected getReplyMeta(msg: any): ReplyMeta {
+    return {};
+  }
+
   /** Integration-specific values added to the merged settings handed to processBot. */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected getAdditionalMergedSettings(bot: any, settings: any): Record<string, any> {
@@ -1368,6 +1378,7 @@ export abstract class BaseChatbotController<BotType = any, BotData extends BaseC
               msg,
             );
           },
+          this.getReplyMeta(msg),
         );
       } else {
         await this.processBot(
