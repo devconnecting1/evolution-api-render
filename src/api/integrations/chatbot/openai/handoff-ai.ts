@@ -1,7 +1,9 @@
 /**
  * "Transferir para a equipe" (OpenaiSetting.handoffTool, off by default): a function tool the model calls when
- * the customer asks for a person, distrusts the AI ("é golpe?") or reports an urgency (prazo, audiência, prisão,
- * corte de energia...). The AI still sends its short reply ("vou chamar alguém da equipe"); right after it the
+ * the customer asks for a person, distrusts the AI ("é golpe?") or reports a concrete urgency (prazo, audiência,
+ * prisão, corte de energia...). The prompt lists what is NOT a reason (greetings, short or confused messages, a plain
+ * account of the case, price, an old client asking about the process): with the broad wording the real model
+ * (reasoning `none`, the only level with tools) handed over 42% of ordinary first messages (18/11/2026). The AI still sends its short reply ("vou chamar alguém da equipe"); right after it the
  * session is paused the same way as "Assumir conversa" / pause_bot_for_contact (manual pause: only the team
  * reactivates it) and the team numbers of "Leads" get an internal notice.
  *
@@ -33,8 +35,10 @@ export function handoffTool() {
     function: {
       name: HANDOFF_TOOL_NAME,
       description:
-        'Passa a conversa para uma pessoa da equipe e pausa o atendimento automático deste cliente. Use quando o ' +
-        'cliente pedir para falar com uma pessoa/advogado, desconfiar do atendimento ou relatar urgência.',
+        'Passa a conversa para uma pessoa da equipe e pausa o atendimento automático deste cliente. Use SOMENTE ' +
+        'quando o cliente pedir para falar com uma pessoa/advogado, disser que desconfia do atendimento ou relatar ' +
+        'uma urgência concreta. Não use para cumprimentos, dúvidas, relatos comuns do caso, perguntas de preço ou ' +
+        'de andamento de processo.',
       parameters: {
         type: 'object',
         properties: {
@@ -54,7 +58,11 @@ export function handoffTool() {
 export function handoffSystemPrompt(): string {
   return [
     'Transferência para a equipe (ferramenta disponível nesta conversa):',
-    `- Chame ${HANDOFF_TOOL_NAME} quando o cliente pedir para falar com uma pessoa ou com o advogado, desconfiar do atendimento ("é golpe?", "é robô?") ou relatar urgência (prazo correndo, audiência, prisão, corte de serviço essencial, risco à saúde).`,
+    `- Chame ${HANDOFF_TOOL_NAME} SOMENTE em um destes casos:`,
+    '  1) o cliente pede para falar com uma pessoa, atendente ou advogado;',
+    '  2) o cliente diz que desconfia do atendimento ("é golpe?", "é robô?", "é pegadinha?");',
+    '  3) urgência concreta: prazo ou audiência nos próximos dias, prisão, corte de serviço essencial, cirurgia ou tratamento negado, risco à saúde.',
+    '- Em todo o resto, NÃO chame: continue a triagem normalmente, com uma pergunta. Exemplos em que NÃO se transfere: cumprimento ("oi", "bom dia"), mensagem curta ou confusa ("assim", "não entendi"), pessoa que só conta o caso (demissão, FGTS atrasado, benefício do INSS), arquivo sem texto, pergunta de preço, cliente antigo perguntando do processo (anote e diga que a equipe verifica o andamento), pedido que você não pode fazer (explique e siga).',
     '- Depois de chamar, responda numa frase curta que uma pessoa da equipe vai continuar o atendimento por aqui. Não faça mais perguntas.',
     '- Não prometa prazo de retorno nem resultado.',
   ].join('\n');

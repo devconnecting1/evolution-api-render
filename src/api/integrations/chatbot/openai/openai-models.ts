@@ -28,7 +28,7 @@ const CATALOG: Record<string, OpenaiModelInfo> = {
   'gpt-6.1-sol': { note: `para casos complexos · ${times(10)}`, status: 'current', outputPrice: 10 },
   'gpt-6-sol': { note: times(10), status: 'current', outputPrice: 10 },
   'gpt-6-astra': { note: `o mais capaz · ${times(50)}`, status: 'current', outputPrice: 50 },
-  'gpt-5.6-luna': { note: `barato · ferramentas com raciocínio · ${times(1.2)}`, status: 'current', outputPrice: 1.2 },
+  'gpt-5.6-luna': { note: `barato · ${times(1.2)}`, status: 'current', outputPrice: 1.2 },
   'gpt-5.6-terra': { note: times(12), status: 'current', outputPrice: 12 },
   'gpt-5.6-sol': { note: times(20), status: 'current', outputPrice: 20 },
   'gpt-5.5': { note: times(30), status: 'current', outputPrice: 30 },

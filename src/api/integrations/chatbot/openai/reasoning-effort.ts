@@ -2,9 +2,8 @@
  * Reasoning effort of the OpenAI models (Chat Completions `reasoning_effort`).
  *
  * Levels and defaults come from the official model pages (developers.openai.com/api/docs/models, Nov 2026):
- * - gpt-6-luna, gpt-6-sol: none, low, medium (default), high, xhigh, max. In Chat Completions these models only
- *   accept function calling with `none`, so a request with tools always goes with `none`.
- * - gpt-5.6-* (luna, terra, sol): the same levels, with function calling at any level.
+ * - gpt-6-luna, gpt-6-sol: none, low, medium (default), high, xhigh, max.
+ * - gpt-5.6-* (luna, terra, sol): the same levels.
  * - gpt-6-astra, gpt-6.1-sol: low, medium (default), high, xhigh, max (no `none`: HTTP 400).
  * - gpt-6.1-terra: none, low, medium (default), high, xhigh, max.
  * - gpt-5.5: none, low, medium (default), high, xhigh.
@@ -12,6 +11,11 @@
  * - gpt-5.2: none (default), low, medium, high, xhigh. gpt-5.1: none (default), low, medium, high.
  * - gpt-5 (mini, nano): minimal, low, medium (default), high.
  * - o-series (o1, o3, o4-mini): low, medium (default), high.
+ * Function calling in Chat Completions (measured with the API, 18/11/2026): gpt-6-luna, gpt-6-sol, gpt-6.1-terra,
+ * gpt-5.6-*, gpt-5.5 and gpt-5.4 only accept tools with `none` (any other level, or the parameter left out on a
+ * model whose default is not `none`, is a 400 "Function tools with reasoning_effort are not supported"), so a
+ * request with tools always goes with `none`. gpt-5.2, gpt-5.1, gpt-5 and the o-series accept tools at any level.
+ * gpt-6-astra and gpt-6.1-sol do not accept tools in Chat Completions at all (the bot answers without them).
  * Models without reasoning (gpt-4o, gpt-4.1...) never get the parameter.
  *
  * The bot stores `null` for "automatic": the model's own default, except a request with tools on a model that only
@@ -30,7 +34,7 @@ export interface ReasoningProfile {
   levels: ReasoningEffortLevel[];
   /** Level the model uses when the parameter is not sent. */
   defaultLevel: ReasoningEffortLevel;
-  /** Chat Completions accepts function calling only with `none` (gpt-6-luna, gpt-6-sol). */
+  /** Chat Completions accepts function calling only with `none` (gpt-6-luna/sol, gpt-6.1-terra, 5.6, 5.5, 5.4). */
   toolsOnlyWithNone: boolean;
 }
 
@@ -59,14 +63,14 @@ export function reasoningProfile(model: string | null | undefined): ReasoningPro
   });
 
   if (/^gpt-6\.1-sol\b/.test(id) || /^gpt-6(\.\d+)?-astra\b/.test(id)) return profile(NO_NONE, 'medium');
-  if (/^gpt-6\.1-terra\b/.test(id)) return profile(ALL, 'medium');
+  if (/^gpt-6\.1-terra\b/.test(id)) return profile(ALL, 'medium', true);
   if (/^gpt-6(\.0)?-(luna|sol)\b/.test(id)) return profile(ALL, 'medium', true);
-  if (/^gpt-5\.6-/.test(id)) return profile(ALL, 'medium');
+  if (/^gpt-5\.6-/.test(id)) return profile(ALL, 'medium', true);
   // Other gpt-6 variants not listed above: the levels every reasoning model accepts
   if (/^gpt-6/.test(id)) return profile(O_SERIES, 'medium');
   if (/^gpt-5(\.\d+)?-pro\b/.test(id)) return profile(['high'], 'high');
-  if (/^gpt-5\.5\b/.test(id)) return profile(UP_TO_XHIGH, 'medium');
-  if (/^gpt-5\.4\b/.test(id)) return profile(UP_TO_XHIGH, 'none');
+  if (/^gpt-5\.5\b/.test(id)) return profile(UP_TO_XHIGH, 'medium', true);
+  if (/^gpt-5\.4\b/.test(id)) return profile(UP_TO_XHIGH, 'none', true);
   if (/^gpt-5\.2\b/.test(id)) return profile(UP_TO_XHIGH, 'none');
   if (/^gpt-5\.[13]\b/.test(id)) return profile(UP_TO_HIGH, 'none');
   if (/^gpt-5-chat\b/.test(id)) return null;
@@ -128,6 +132,20 @@ export function resolveReasoningEffort(
 
   const level = closestSupportedLevel(wanted, profile.levels);
   return { send: level, effective: level, ...(level !== wanted ? { adjusted: 'unsupported' as const } : {}) };
+}
+
+/**
+ * A 400 of OpenAI refusing tools together with a reasoning level ("Function tools with reasoning_effort are not
+ * supported for <model> in /v1/chat/completions ... set reasoning_effort to 'none'"). The model takes both, just
+ * not at the same time: the request is retried with `none`, never without the parameter (the default level would
+ * be refused again) and never by switching reasoning off for the model.
+ */
+export function isToolsWithReasoningError(error: any): boolean {
+  const status = error?.status ?? error?.response?.status;
+  if (status !== 400) return false;
+  const body = error?.error ?? error?.response?.data?.error ?? {};
+  const message = String(error?.message ?? body?.message ?? '');
+  return /function tools?|\btools?\b/i.test(message) && /reasoning[_.]?effort/i.test(message);
 }
 
 /** A 400 of OpenAI about the reasoning_effort parameter (unsupported parameter or value). */
