@@ -25,7 +25,7 @@ export function compact(check: ConversationCheck, world: World, result: Conversa
     .transcript(result.office, result.chatJid)
     .map(
       (event) =>
-        `${event.who === 'bot' ? 'IA' : event.who === 'team' ? 'Equipe' : 'Cliente'}${event.delivered === false ? ' (não entregue)' : ''}: ${event.text.replace(/\s+/g, ' ').slice(0, 160)}`,
+        `${event.who === 'bot' ? 'IA' : event.who === 'team' ? 'Equipe' : 'Cliente'}${event.delivered === false ? ' (não entregue)' : ''}: ${event.text.replace(/\s+/g, ' ').slice(0, 1200)}`,
     );
   return {
     ...check,

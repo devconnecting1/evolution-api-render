@@ -601,7 +601,7 @@ export async function runGolden(
           failures: check.failures,
           transcript: transcriptEvents.map(
             (event) =>
-              `${event.who === 'bot' ? 'IA' : event.who === 'team' ? 'Equipe' : 'Cliente'}${event.delivered === false ? ' (não entregue)' : ''}: ${event.text.replace(/\s+/g, ' ').slice(0, 160)}`,
+              `${event.who === 'bot' ? 'IA' : event.who === 'team' ? 'Equipe' : 'Cliente'}${event.delivered === false ? ' (não entregue)' : ''}: ${event.text.replace(/\s+/g, ' ').slice(0, 1200)}`,
           ),
         };
       });
