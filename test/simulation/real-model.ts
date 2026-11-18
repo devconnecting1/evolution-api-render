@@ -172,6 +172,11 @@ export async function judgeAll(
     averages,
     worst,
     // Every judged conversation (fictitious data only), for reading the results afterwards
-    all: valid.map((item) => ({ id: item.id, failures: item.failures, score: item.score, transcript: item.transcript })),
+    all: valid.map((item) => ({
+      id: item.id,
+      failures: item.failures,
+      score: item.score,
+      transcript: item.transcript,
+    })),
   };
 }
