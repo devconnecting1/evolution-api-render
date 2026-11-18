@@ -22,6 +22,8 @@ export const SENTENCE_SIMILARITY_THRESHOLD = 0.8;
 export const QUESTION_SIMILARITY_THRESHOLD = 0.6;
 /** Statements shorter than this (content words) are never treated as repetitions ("Entendi.", "Obrigado!"). */
 export const MIN_SENTENCE_TOKENS = 4;
+/** A paragraph this similar to an earlier one of the same reply is the answer repeated (model glitch). */
+export const PARAGRAPH_SIMILARITY_THRESHOLD = 0.7;
 /** Questions with fewer content words are never treated as repetitions ("Tudo bem?"). */
 export const MIN_QUESTION_TOKENS = 2;
 export const MAX_QUESTIONS_PER_MESSAGE = 1;
@@ -314,13 +316,53 @@ export function keepLastQuestion(text: string): { text: string; trimmed: number 
   return { text: result, trimmed: questions.length - MAX_QUESTIONS_PER_MESSAGE };
 }
 
-/** Removes sentences said twice in the same reply (keeps the first), e.g. a rambling draft. */
+/**
+ * Removes a paragraph that repeats an earlier one of the same reply. A model sometimes returns its whole answer
+ * twice ("Olá! ... energia elétrica?\n\nOlá! ... energia elétrica?"); only the first copy is kept.
+ */
+export function dropRepeatedParagraphs(text: string): { text: string; removed: number } {
+  const paragraphs = text.split(/\n{2,}/);
+  if (paragraphs.length < 2) return { text, removed: 0 };
+  const seen: string[][] = [];
+  const kept: string[] = [];
+  let removed = 0;
+  for (const paragraph of paragraphs) {
+    const words = tokens(paragraph);
+    if (
+      words.length >= MIN_SENTENCE_TOKENS &&
+      seen.some((previous) => jaccard(words, previous) >= PARAGRAPH_SIMILARITY_THRESHOLD)
+    ) {
+      removed++;
+      continue;
+    }
+    if (words.length) seen.push(words);
+    kept.push(paragraph);
+  }
+  return { text: kept.join('\n\n').trim(), removed };
+}
+
+/**
+ * Removes sentences said twice in the same reply (keeps the first), e.g. a rambling draft. Short sentences
+ * ("Olá!", "Certo.") are compared word for word; longer ones by similarity.
+ */
 export function dropRepeatedWithin(text: string): { text: string; removed: number } {
   const seen: string[][] = [];
+  const seenShort = new Set<string>();
   let removed = 0;
   const result = removeSentences(text, (sentence) => {
     const words = tokens(sentence, isQuestion(sentence));
-    if (words.length < MIN_SENTENCE_TOKENS) return false;
+    if (words.length < MIN_SENTENCE_TOKENS) {
+      const key = fold(sentence)
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+      if (!key) return false;
+      if (seenShort.has(key)) {
+        removed++;
+        return true;
+      }
+      seenShort.add(key);
+      return false;
+    }
     if (seen.some((previous) => jaccard(words, previous) >= SENTENCE_SIMILARITY_THRESHOLD)) {
       removed++;
       return true;
@@ -407,6 +449,10 @@ export async function guardReply(input: {
       else replyGuardStats.policyRemoved++;
     }
   }
+
+  const paragraphs = dropRepeatedParagraphs(text);
+  text = paragraphs.text;
+  replyGuardStats.repeatsRemoved += paragraphs.removed;
 
   const within = dropRepeatedWithin(text);
   text = within.text;

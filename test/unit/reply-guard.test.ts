@@ -5,6 +5,7 @@ import { describe, test } from 'node:test';
 
 import {
   analyzeReply,
+  dropRepeatedParagraphs,
   dropRepeatedWithin,
   FALLBACK_ACKNOWLEDGEMENT,
   guardReply,
@@ -196,5 +197,30 @@ describe('reply guard: shape', () => {
     assert.equal(truncated, true);
     assert.ok(text.length <= MAX_REPLY_CHARS);
     assert.ok(text.endsWith('Em qual cidade você mora?'));
+  });
+});
+
+describe('reply guard: the model returns the answer twice', () => {
+  test('the whole answer repeated in a second paragraph keeps one copy (real gpt-6-luna output)', async () => {
+    const twice =
+      'Olá! Sou a assistente virtual do Escritório Modelo de Advocacia. Você está falando sobre uma interrupção de energia elétrica? \n\n' +
+      'Olá! Sou a assistente virtual do Escritório Modelo de Advocacia. Você está falando sobre uma interrupção de energia elétrica?';
+    const result = await guardReply({ candidate: twice, previousReplies: [] });
+    assert.equal(
+      result.text,
+      'Olá! Sou a assistente virtual do Escritório Modelo de Advocacia. Você está falando sobre uma interrupção de energia elétrica?',
+    );
+  });
+
+  test('a short sentence said twice in the same reply is dropped the second time ("Olá!")', () => {
+    assert.equal(
+      dropRepeatedWithin('Olá! Tudo bem com você hoje, posso ajudar? Olá!').text,
+      'Olá! Tudo bem com você hoje, posso ajudar?',
+    );
+  });
+
+  test('different paragraphs stay', () => {
+    const text = 'Recebi a sua mensagem sobre o FGTS.\n\nEm qual cidade você mora?';
+    assert.equal(dropRepeatedParagraphs(text).text, text);
   });
 });
