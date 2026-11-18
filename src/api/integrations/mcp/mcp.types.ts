@@ -52,6 +52,7 @@ export interface McpDeps {
     saveSettings: (instanceId: string, input: Record<string, any>) => Promise<{ previous: any; settings: any }>;
     listOab: (instanceId: string) => Promise<any[]>;
     addOab: (instanceId: string, input: Record<string, any>) => Promise<any>;
+    previewNotices: (instanceId: string, input?: Record<string, any>) => Promise<any>;
   };
   /** "Leads (triagem)" (LeadsService): the same instance the REST routes and the bot use. */
   leads: {

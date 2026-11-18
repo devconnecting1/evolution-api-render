@@ -7,6 +7,7 @@ import {
   oabWatchSchema,
   processBulkSchema,
   processCreateSchema,
+  processPreviewSchema,
   processSettingsSchema,
   processUpdateSchema,
   publicationsSeenSchema,
@@ -77,6 +78,11 @@ export class ProcessosRouter extends RouterBroker {
         `${base}/settings`,
         ...guards,
         handle(processSettingsSchema, ProcessSettingsDto, (i, d) => processosController.saveSettings(i, d)),
+      )
+      .post(
+        `${base}/preview`,
+        ...guards,
+        handle(processPreviewSchema, ProcessSettingsDto, (i, d) => processosController.previewNotices(i, d)),
       )
       .get(
         `${base}/oab`,

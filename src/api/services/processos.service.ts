@@ -12,6 +12,7 @@ import { DATAJUD_ALIASES, extractCnjCandidates, onlyDigits, parseCnj } from '@ut
 import { DATAJUD_PUBLIC_KEY, fetchDataJudProcess, FetchLike, SourceError } from '@utils/processos/datajud';
 import { fetchDjenByOab } from '@utils/processos/djen';
 import {
+  buildNoticePreview,
   clientMessageText,
   DEFAULT_CLIENT_TEMPLATE,
   isQuietNow,
@@ -189,6 +190,31 @@ export class ProcessosService {
       ? []
       : ((await this.leadsNumbers([instanceId])).get(instanceId) ?? []);
     return { configured: !!row, ...view, leadsNumbers };
+  }
+
+  /**
+   * Preview of the notices with the saved settings or the unsaved values of the panel (template, quiet hours,
+   * numbers). Sends nothing.
+   */
+  async previewNotices(instanceId: string, input: Record<string, any> = {}) {
+    if (input.clientMessageTemplate !== undefined && input.clientMessageTemplate !== null) {
+      const problem = validateClientTemplate(input.clientMessageTemplate);
+      if (problem) throw new ProcessosError(400, problem);
+    }
+    const saved = await this.getSettings(instanceId);
+    const own = Array.isArray(input.notifyNumbers)
+      ? [...new Set(input.notifyNumbers.map(normalizeNotifyNumber).filter(Boolean) as string[])]
+      : saved.notifyNumbers;
+    const leads = own.length ? [] : ((await this.leadsNumbers([instanceId])).get(instanceId) ?? []);
+    const numbers = own.length ? own : leads;
+    return buildNoticePreview({
+      template: input.clientMessageTemplate !== undefined ? input.clientMessageTemplate : saved.clientMessageTemplate,
+      clientName: typeof input.clientName === 'string' ? input.clientName.slice(0, 80) : undefined,
+      quietHours: input.quietHours !== undefined ? normalizeQuietHours(input.quietHours) : saved.quietHours,
+      numbers,
+      numbersFrom: own.length ? 'processos' : leads.length ? 'leads' : 'nenhum',
+      now: this.now(),
+    });
   }
 
   async saveSettings(instanceId: string, input: Record<string, any>) {

@@ -95,6 +95,14 @@ describe('Processos: MCP tools', () => {
           calls.push(['saveSettings', instanceId, input]);
           return { previous: { enabled: false }, settings: { enabled: true, ...input } };
         },
+        previewNotices: async (instanceId, input) => {
+          calls.push(['previewNotices', instanceId, input]);
+          return {
+            client: { text: 'Olá, Ana. Houve uma atualização no seu processo.', rules: [] },
+            team: {},
+            quiet: {},
+          };
+        },
         listOab: async () => [{ id: 'o1', numeroOab: '123456', ufOab: 'RJ', label: null, active: true }],
         addOab: async (instanceId, input) => {
           calls.push(['addOab', instanceId, input]);
@@ -187,6 +195,23 @@ describe('Processos: MCP tools', () => {
     assert.equal(synced.json.ok, true);
     const pubs = await callTool('list_publications', { unseen: true });
     assert.equal(pubs.json.total, 0);
+  });
+
+  test('preview_process_notices is read-only, maps the arguments and sends nothing', async () => {
+    const body = await rpc('tools/list', {});
+    const tool = body.result.tools.find((t: any) => t.name === 'preview_process_notices');
+    assert.equal(tool.annotations.readOnlyHint, true);
+    const got = await callTool('preview_process_notices', {
+      client_name: 'Ana',
+      client_message_template: 'Oi, {nome}',
+    });
+    assert.ok(!got.result.isError, got.text);
+    assert.equal(got.json.sent, false);
+    assert.match(got.json.preview.client.text, /Ana/);
+    assert.deepEqual(calls.find((c) => c[0] === 'previewNotices')[2], {
+      clientMessageTemplate: 'Oi, {nome}',
+      clientName: 'Ana',
+    });
   });
 
   test('get_process_settings shows settings and OABs; update_process_settings maps names and adds an OAB', async () => {

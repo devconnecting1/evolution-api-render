@@ -7,7 +7,7 @@
  */
 import { isValidTimeZone, zonedParts } from '@utils/usageLimits';
 
-import { tribunalLabel } from './cnj';
+import { cnjCheckDigits, formatCnj, tribunalLabel } from './cnj';
 
 export const DEFAULT_CLIENT_TEMPLATE =
   'Olá, {nome}. Houve uma atualização no seu processo. O escritório vai analisar e entrar em contato.';
@@ -133,4 +133,74 @@ export function clientMessageText(template: string | null | undefined, name: str
 export function normalizeNotifyNumber(value: unknown): string | null {
   const digits = String(value ?? '').replace(/\D/g, '');
   return digits.length >= 10 && digits.length <= 15 ? digits : null;
+}
+
+/** Fictitious process of the preview: valid CNJ number of the TJRJ (8.19), never a real case. */
+export function sampleProcess(): { apelido: string; numeroCnj: string; tribunalAlias: string } {
+  const [sequencial, ano, j, tr, origem] = ['0001234', '2026', '8', '19', '0001'];
+  const digits = sequencial + cnjCheckDigits(sequencial, ano, j, tr, origem) + ano + j + tr + origem;
+  return { apelido: 'Exemplo: Maria x Banco Exemplo', numeroCnj: formatCnj(digits), tribunalAlias: 'tjrj' };
+}
+
+export type NoticePreview = {
+  client: { text: string; rules: string[] };
+  team: { movement: string; publication: string; numbers: string[]; numbersFrom: 'processos' | 'leads' | 'nenhum' };
+  quiet: { now: boolean; sendsAt: string | null; label: string };
+};
+
+/**
+ * What the team and the client would receive, with the instance settings (or the unsaved values of the panel) and a
+ * fictitious process. Nothing is sent: the panel shows it so the office sees the exact texts before switching on.
+ */
+export function buildNoticePreview(input: {
+  template: string | null | undefined;
+  clientName?: string | null;
+  quietHours: QuietHours;
+  numbers: string[];
+  numbersFrom: 'processos' | 'leads' | 'nenhum';
+  now?: Date;
+}): NoticePreview {
+  const now = input.now ?? new Date();
+  const process = sampleProcess();
+  const day = (offset: number) => new Date(now.getTime() - offset * 24 * 3600_000);
+  const movement = teamMovementText(process, [
+    { occurredAt: day(0), name: 'Juntada de Petição', complement: 'Petição de manifestação da parte autora' },
+    { occurredAt: day(1), name: 'Conclusos para decisão', complement: null },
+  ]);
+  const publication = teamPublicationText({
+    siglaTribunal: 'TJRJ',
+    processNumber: process.numeroCnj,
+    tipo: 'Intimação',
+    texto: 'Fica a parte autora intimada para se manifestar sobre a contestação no prazo legal. (texto de exemplo)',
+    link: null,
+  });
+  const quietNow = isQuietNow(input.quietHours, now);
+  const sendsAt = quietNow ? quietEndsAt(input.quietHours, now) : null;
+  const hhmm = (date: Date) =>
+    new Intl.DateTimeFormat('pt-BR', {
+      timeZone: input.quietHours.timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  return {
+    client: {
+      text: clientMessageText(input.template, input.clientName === undefined ? 'Maria Silva' : input.clientName),
+      rules: [
+        'Só para processo com "Avisar cliente" ligado e um contato vinculado pela equipe.',
+        'No máximo 1 aviso a cada 20 horas por processo.',
+        'Nunca em segredo de justiça. Nunca vai o conteúdo, prazo ou decisão.',
+        'A primeira importação de um processo não avisa ninguém.',
+      ],
+    },
+    team: { movement, publication, numbers: input.numbers, numbersFrom: input.numbersFrom },
+    quiet: {
+      now: quietNow,
+      sendsAt: sendsAt ? sendsAt.toISOString() : null,
+      label: quietNow
+        ? `Agora é horário de silêncio: um aviso agora sairia às ${hhmm(sendsAt as Date)}.`
+        : input.quietHours.enabled
+          ? `Fora do horário de silêncio (${input.quietHours.start}–${input.quietHours.end}): um aviso agora sairia na hora.`
+          : 'Horário de silêncio desligado: os avisos saem na hora.',
+    },
+  };
 }

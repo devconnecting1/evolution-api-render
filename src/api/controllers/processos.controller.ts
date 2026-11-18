@@ -69,5 +69,12 @@ export class ProcessosController {
       ...(await this.service.saveSettings(id, body)),
     }));
 
+  previewNotices = (instance: InstanceDto, body: any) =>
+    this.withInstance(instance, async (id, name) => ({
+      instance: name,
+      sent: false,
+      preview: await this.service.previewNotices(id, body ?? {}),
+    }));
+
   tick = (force: boolean) => this.run(() => this.service.tick({ force }));
 }
