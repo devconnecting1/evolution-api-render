@@ -63,6 +63,16 @@ const REASONING_MODEL = /^(ft:)?(o\d|gpt-5|gpt-6)/i;
 const MAX_TOKENS = 600;
 const MAX_REASONING_TOKENS = 2500;
 /** Room for the analysis by reasoning level (reasoning tokens count inside the limit and are billed as output). */
+/** Time limit of the analysis by reasoning level: more thinking takes longer (30 s timed out with "high"). */
+const REASONING_TIMEOUT_MS_BY_LEVEL: Record<string, number> = {
+  none: 30_000,
+  minimal: 30_000,
+  low: 45_000,
+  medium: 60_000,
+  high: 120_000,
+  xhigh: 240_000,
+  max: 240_000,
+};
 const REASONING_TOKENS_BY_LEVEL: Record<string, number> = {
   none: 2500,
   minimal: 2500,
@@ -763,7 +773,11 @@ export class LeadsService {
       if (!reasoning) body.temperature = 0;
       try {
         const completion: any = await client.chat.completions.create(body, {
-          timeout: this.options.timeoutMs ?? OPENAI_TIMEOUT_MS,
+          timeout:
+            this.options.timeoutMs ??
+            (reasoning
+              ? (REASONING_TIMEOUT_MS_BY_LEVEL[effort.effective ?? 'medium'] ?? OPENAI_TIMEOUT_MS)
+              : OPENAI_TIMEOUT_MS),
         } as any);
         const usage = completion?.usage;
         if (usage) {

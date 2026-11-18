@@ -291,12 +291,15 @@ export function createLeadsTables(options: { instances?: { id: string; name: str
 /** Fake OpenAI client: records each request and answers with the queued JSON objects (or errors). */
 export function createFakeExtractor(answers: any[] = []) {
   const requests: any[] = [];
+  /** Request options of each call (timeout), in the same order as `requests`. */
+  const options: any[] = [];
   const queue = [...answers];
   const client = {
     chat: {
       completions: {
-        create: async (body: any) => {
+        create: async (body: any, requestOptions?: any) => {
           requests.push(structuredClone(body));
+          options.push(requestOptions ?? null);
           const next = queue.length > 1 ? queue.shift() : queue[0];
           if (next instanceof Error) throw next;
           return {
@@ -307,7 +310,7 @@ export function createFakeExtractor(answers: any[] = []) {
       },
     },
   };
-  return { client: client as any, requests, push: (answer: any) => queue.push(answer) };
+  return { client: client as any, requests, options, push: (answer: any) => queue.push(answer) };
 }
 
 /** A complete extraction answer with every field (override what the test needs). */

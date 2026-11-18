@@ -897,7 +897,7 @@ describe('LeadsService: reasoning level of the analysis', () => {
       reasoningEffort,
     });
     await t.service.idle();
-    return t.extractor.requests[0];
+    return Object.assign(t.extractor.requests[0], { _timeout: t.extractor.options[0]?.timeout });
   };
 
   test('automatic: the model default, with room for its medium level', async () => {
@@ -906,10 +906,16 @@ describe('LeadsService: reasoning level of the analysis', () => {
     assert.equal(body.max_completion_tokens, 4000);
   });
 
-  test('same level as the bot, with more room for high', async () => {
+  test('same level as the bot, with more room and more time for high', async () => {
     const body = await run('high');
     assert.equal(body.reasoning_effort, 'high');
     assert.equal(body.max_completion_tokens, 8000);
+    assert.equal(body._timeout, 120_000, '30 s timed out with high in production');
+  });
+
+  test('time limit: 60 s on the model default (medium), 30 s without reasoning', async () => {
+    assert.equal((await run(null))._timeout, 60_000);
+    assert.equal((await run('high', 'gpt-4o-mini'))._timeout, 30_000);
   });
 
   test('models without reasoning never get it', async () => {
