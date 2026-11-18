@@ -17,9 +17,11 @@ import type { KeyHealth } from '@utils/openai-health';
 
 import {
   BUCKET_MS,
+  bucketStart,
   DAY_MS,
   dayKey,
   emptyStore,
+  HISTORY_BUCKET_DAYS,
   HISTORY_BUCKETS,
   HISTORY_DAYS,
   mergeStores,
@@ -130,7 +132,8 @@ export type PublicStatus = {
   history: PublicBucket[];
   days: PublicDay[];
   incidents: PublicIncident[];
-  coverage: { last3d: number; last90d: number; since: string | null };
+  /** last3d: mesmo valor de last7d, mantido para páginas antigas em cache (a janela agora é de 7 dias). */
+  coverage: { last7d: number; last3d: number; last90d: number; since: string | null };
   nextCheckSeconds: number;
   historyDays: number;
   bucketHours: number;
@@ -845,7 +848,7 @@ export class PublicStatusService {
     const state = this.overall(evaluated);
     const { title, summary } = this.headline(evaluated, state);
     const history = this.publicHistory(now);
-    const coverage3d = history.reduce((total, bucket) => total + bucket.coverage, 0) / Math.max(1, history.length);
+    const coverage7d = history.reduce((total, bucket) => total + bucket.coverage, 0) / Math.max(1, history.length);
     const oldest = this.oldestData(now);
     const period90 = Math.max(1, Math.min(HISTORY_DAYS * DAY_MS, now - oldest));
     const covered90 = this.store.days.reduce((total, day) => total + dayCoverageSeconds(day, 'api'), 0) * 1000;
@@ -862,12 +865,13 @@ export class PublicStatusService {
       days,
       incidents: this.publicIncidents(now, evaluated),
       coverage: {
-        last3d: Math.round(coverage3d * 10) / 10,
+        last7d: Math.round(coverage7d * 10) / 10,
+        last3d: Math.round(coverage7d * 10) / 10,
         last90d: Math.min(100, Math.round((covered90 / period90) * 1000) / 10),
         since: this.store.days.length ? `${this.store.days[0].d}T00:00:00.000Z` : null,
       },
       nextCheckSeconds: TICK_MS / 1000,
-      historyDays: 3,
+      historyDays: HISTORY_BUCKET_DAYS,
       bucketHours: 3,
       notes: [
         'A API registra o estado a cada 5 minutos enquanto está no ar; períodos sem registro aparecem como “Sem dados” e reduzem a cobertura.',
@@ -911,7 +915,7 @@ export class PublicStatusService {
   }
 
   private publicHistory(now: number): PublicBucket[] {
-    const current = Math.floor(now / BUCKET_MS) * BUCKET_MS;
+    const current = bucketStart(now);
     const byStart = new Map(this.store.buckets.map((item) => [item.t, item]));
     const result: PublicBucket[] = [];
     for (let i = HISTORY_BUCKETS - 1; i >= 0; i--) {

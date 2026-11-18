@@ -44,7 +44,7 @@ export interface Env {
 }
 
 export const HISTORY_KEY = 'history:v1';
-const SAMPLE_WINDOW_MS = 3 * 24 * 3_600_000;
+const SAMPLE_WINDOW_MS = 7 * 24 * 3_600_000;
 const DAYS = 90;
 const PROVIDER_EVERY_MS = 15 * 60_000;
 const PING_TIMEOUT_MS = 20_000;

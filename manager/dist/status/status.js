@@ -1,7 +1,9 @@
 /*
  * WhatsAI: pagina publica de status.
  *
- * Le GET /status da API (sem chave): estado atual, 90 dias por componente, faixas de 3 horas e incidentes. Quando a
+ * Le GET /status da API (sem chave): estado atual, 90 dias por componente, faixas de 12 horas (7 dias) e incidentes.
+ * A pagina refaz as faixas de 12 horas (00h-12h e 12h-24h de Brasilia) a partir do que a API mandar: faixas de 3 horas
+ * (versao anterior da API) ou de 12 horas, entao funciona durante a troca de versao. Quando a
  * meta tag "whatsai-status-monitor" tem o endereco do monitor externo (ops/status-monitor, Cloudflare Worker), a
  * pagina tambem le GET /history dele e junta as verificacoes externas: periodos em que a API estava fora do ar (e
  * nao podia registrar nada) passam a aparecer como indisponiveis, e a cobertura conta essas verificacoes.
@@ -13,7 +15,10 @@
   var API_BASE = 'https://evolution-api-x93o.onrender.com';
   var REFRESH_FALLBACK_MS = 60_000;
   var TIMEOUT_MS = 15_000;
-  var BUCKET_MS = 3 * 60 * 60 * 1000;
+  var BUCKET_MS = 12 * 60 * 60 * 1000;
+  /** Faixas de 12 h comecam as 00h e 12h de Brasilia (03h e 15h UTC). */
+  var BUCKET_OFFSET_MS = 3 * 60 * 60 * 1000;
+  var HISTORY_SLOTS = 14;
   var DAY_MS = 24 * 60 * 60 * 1000;
   var RANGE_KEY = 'whatsai-status-range';
 
@@ -74,9 +79,9 @@
   var legendNote = document.getElementById('st-legend-note');
   var rangeButtons = Array.prototype.slice.call(document.querySelectorAll('[data-range]'));
 
-  var range = '90d';
+  var range = '7d';
   try {
-    if (window.localStorage.getItem(RANGE_KEY) === '3d') range = '3d';
+    if (window.localStorage.getItem(RANGE_KEY) === '90d') range = '90d';
   } catch (error) {
     // preferencia opcional
   }
@@ -181,16 +186,68 @@
    * Junta o historico do monitor externo ao da API. So preenche ou piora: um periodo que a API registrou como
    * operacional e o monitor viu fora fica "Indisponivel"; um periodo sem registro da API ganha o que o monitor viu.
    */
+  function bucketStart(ms) {
+    return Math.floor((ms - BUCKET_OFFSET_MS) / BUCKET_MS) * BUCKET_MS + BUCKET_OFFSET_MS;
+  }
+
+  /**
+   * As faixas da API (3 h na versao anterior, 12 h na atual) viram 14 faixas de 12 h: pior estado visto e a
+   * cobertura somada. Faixa sem nada registrado fica "Sem dados".
+   */
+  function twelveHourHistory(history, sourceMs, now) {
+    var current = bucketStart(now);
+    var slots = [];
+    var byStart = {};
+    for (var i = HISTORY_SLOTS - 1; i >= 0; i--) {
+      var start = current - i * BUCKET_MS;
+      var slot = { start: new Date(start).toISOString(), coverage: 0, components: {}, covered: 0 };
+      slots.push(slot);
+      byStart[start] = slot;
+    }
+    (history || []).forEach(function (bucket) {
+      var from = parseDate(bucket.start);
+      if (!from) return;
+      var slot = byStart[bucketStart(from.getTime())];
+      if (!slot) return;
+      var span = Math.max(0, Math.min(sourceMs, now - from.getTime()));
+      slot.covered += ((Number(bucket.coverage) || 0) / 100) * span;
+      Object.keys(bucket.components || {}).forEach(function (id) {
+        var state = validState(bucket.components[id]);
+        if (state === 'no_data') return;
+        if (!slot.components[id] || RANK[state] > RANK[slot.components[id]]) slot.components[id] = state;
+      });
+    });
+    slots.forEach(function (slot) {
+      var span = Math.max(1, Math.min(BUCKET_MS, now - new Date(slot.start).getTime()));
+      slot.coverage = Math.round(Math.min(100, (slot.covered / span) * 100) * 10) / 10;
+      delete slot.covered;
+    });
+    return slots;
+  }
+
+  function withTwelveHours(data) {
+    var copy = JSON.parse(JSON.stringify(data));
+    var sourceMs = Number(copy.historyDays) === 3 ? 3 * 60 * 60 * 1000 : BUCKET_MS;
+    copy.history = twelveHourHistory(copy.history, sourceMs, Date.now());
+    copy.coverage = copy.coverage || {};
+    if (Number(copy.historyDays) !== 7 || typeof copy.coverage.last7d !== 'number') {
+      copy.coverage.last7d = Math.round(
+        (copy.history.reduce(function (total, bucket) { return total + bucket.coverage; }, 0) / copy.history.length) * 10,
+      ) / 10;
+    }
+    return copy;
+  }
+
   function mergeMonitor(data, monitor) {
-    if (!monitor || !Array.isArray(monitor.samples)) return data;
-    var merged = JSON.parse(JSON.stringify(data));
+    var merged = withTwelveHours(data);
+    if (!monitor || !Array.isArray(monitor.samples)) return merged;
 
     var buckets = {};
     var days = {};
     monitor.samples.forEach(function (sample) {
       if (!Array.isArray(sample) || sample.length < 4) return;
       var at = Number(sample[0]) * 1000;
-      var key = Math.floor(at / BUCKET_MS) * BUCKET_MS;
+      var key = bucketStart(at);
       var bucket = buckets[key] || (buckets[key] = { n: 0, apiDown: 0, siteDown: 0 });
       bucket.n++;
       if (!sample[1]) bucket.apiDown++;
@@ -261,7 +318,7 @@
     var history = merged.history || [];
     if (history.length) {
       merged.coverage = merged.coverage || {};
-      merged.coverage.last3d = Math.round(
+      merged.coverage.last7d = Math.round(
         (history.reduce(function (total, bucket) { return total + (Number(bucket.coverage) || 0); }, 0) / history.length) * 10,
       ) / 10;
     }
@@ -296,8 +353,8 @@
 
   function slotsFor(componentId, data) {
     var slots = [];
-    if (range === '3d') {
-      (data.history || []).slice(-24).forEach(function (bucket) {
+    if (range === '7d') {
+      (data.history || []).slice(-HISTORY_SLOTS).forEach(function (bucket) {
         var state = validState(bucket.components && bucket.components[componentId]);
         var from = parseDate(bucket.start);
         var to = from ? new Date(from.getTime() + BUCKET_MS) : null;
@@ -310,7 +367,7 @@
           lines: [STATE_MEANING[state], 'Dados de ' + percent(bucket.coverage || 0) + ' do período (todos os componentes).'],
         });
       });
-      while (slots.length < 24) slots.unshift({ state: 'no_data', label: 'Sem registro', lines: [STATE_MEANING.no_data] });
+      while (slots.length < HISTORY_SLOTS) slots.unshift({ state: 'no_data', label: 'Sem registro', lines: [STATE_MEANING.no_data] });
       return slots;
     }
     (data.days || []).slice(-90).forEach(function (day) {
@@ -396,7 +453,7 @@
       .map(function (key) { return counts[key] + ' ' + stateLabel(key).toLowerCase(); });
     wrap.setAttribute(
       'aria-label',
-      'Histórico de ' + (range === '3d' ? '3 dias' : '90 dias') + ' de ' + componentName + ': ' + parts.join(', ') +
+      'Histórico de ' + (range === '7d' ? '7 dias' : '90 dias') + ' de ' + componentName + ': ' + parts.join(', ') +
         '. Use as setas para escolher um período e Enter para ver o detalhe.',
     );
     return { bars: wrap, detail: detail };
@@ -423,7 +480,7 @@
     var head = el('div', 'st-group-head');
     head.append(el('h2', null, name));
     var span = el('div', 'st-range');
-    span.append(el('span', null, range === '3d' ? '3 dias atrás' : '90 dias atrás'), el('span', null, 'Agora'));
+    span.append(el('span', null, range === '7d' ? '7 dias atrás' : '90 dias atrás'), el('span', null, 'Agora'));
     head.append(span);
     return head;
   }
@@ -488,8 +545,8 @@
     groups.setAttribute('aria-busy', 'false');
     if (legendNote) {
       legendNote.textContent =
-        range === '3d'
-          ? 'Cada barra representa 3 horas e mostra o pior estado registrado. Clique em uma barra para ver o detalhe e a cobertura.'
+        range === '7d'
+          ? 'Cada barra representa 12 horas (00h–12h e 12h–24h, horário de Brasília) e mostra o pior estado registrado. Clique em uma barra para ver o detalhe e a cobertura.'
           : 'Cada barra representa um dia (UTC) e mostra o pior estado registrado. Clique para ver o tempo no ar e a cobertura do dia.';
     }
   }
@@ -535,7 +592,7 @@
     if (!coverageNote) return;
     var coverage = data.coverage || {};
     var parts = [];
-    if (range === '3d') parts.push('Dados de ' + percent(coverage.last3d || 0) + ' dos últimos 3 dias');
+    if (range === '7d') parts.push('Dados de ' + percent(coverage.last7d || 0) + ' dos últimos 7 dias');
     else parts.push('Dados de ' + percent(coverage.last90d || 0) + ' do período registrado');
     if (coverage.since) parts.push('registro desde ' + dateLocal(coverage.since));
     parts.push(data.monitor ? 'com o monitor externo' : 'sem monitor externo');
@@ -659,7 +716,7 @@
   }
 
   function setRange(next) {
-    range = next === '3d' ? '3d' : '90d';
+    range = next === '90d' ? '90d' : '7d';
     try {
       window.localStorage.setItem(RANGE_KEY, range);
     } catch (error) {
