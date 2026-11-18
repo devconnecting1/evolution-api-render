@@ -755,8 +755,8 @@ Níveis por modelo (páginas oficiais da OpenAI, nov/2026; tabela em `src/api/in
 
 - **`none` não é "automático":** é a IA respondendo sem pensar antes (mais rápida, menos cuidadosa). "Automático" usa o padrão do modelo (`medium` no gpt-6-luna).
 - **Recomendação:** `high` para triagens com regras (advocacia, saúde); `low` para dúvidas simples e rápidas (a OpenAI recomenda `low` para atendimento/chat). `xhigh` e `max` só quando um teste mostrar ganho: são mais lentos e gastam mais. Os tokens de raciocínio são cobrados como saída e entram no `maxTokens`: com `high` ou mais, use `maxTokens` de 8000 ou mais (no gpt-6-luna, 8000 tokens de saída custam cerca de US$ 0,004).
-- **Ferramentas:** no gpt-6-luna e no gpt-6-sol, o Chat Completions só aceita ferramentas (agenda, `transferir_para_equipe`) com `none`. Uma resposta que oferece ferramentas vai com `none` (aviso uma vez por bot no log); as outras usam o nível escolhido. Para usar ferramentas com raciocínio é preciso migrar para a Responses API (não feito) ou usar o gpt-5.6-luna, que aceita ferramentas em qualquer nível. O gpt-6-astra, o gpt-6.1-sol e o gpt-6.1-terra não aceitam ferramentas no Chat Completions: o bot responde sem elas.
-- **Onde vale o mesmo nível:** a resposta do bot e a triagem de leads (a análise da conversa usa o nível do bot da instância; como não oferece ferramentas, mantém o nível escolhido também no gpt-6-luna). O espaço da análise cresce com o nível: 2.500 tokens até `low`, 4.000 em `medium` (o automático do gpt-6-luna), 8.000 em `high` e 16.000 em `xhigh`/`max`. A agenda e a transferência fazem parte da resposta do bot (com ferramentas, `none` no gpt-6-luna/sol). Transcrição de áudio e o teste da chave não usam raciocínio.
+- **Ferramentas:** no Chat Completions, gpt-6-luna, gpt-6-sol, gpt-6.1-terra, gpt-5.6-\*, gpt-5.5 e gpt-5.4 só aceitam ferramentas (agenda, `transferir_para_equipe`) com `none` (medido na API em 18/11/2026). Uma resposta que oferece ferramentas vai com `none` (aviso uma vez por bot no log); as outras usam o nível escolhido. Se um modelo recusar ferramentas junto com um nível (400 "Function tools with reasoning_effort"), a resposta sai de novo com `none` e o modelo fica memorizado para as próximas com ferramentas, sem desligar o raciocínio das respostas sem ferramentas. gpt-5.2, gpt-5.1, gpt-5 e a série o aceitam ferramentas em qualquer nível. O gpt-6-astra e o gpt-6.1-sol não aceitam ferramentas no Chat Completions: o bot responde sem elas. Para usar ferramentas com raciocínio nos modelos atuais é preciso migrar para a Responses API (não feito).
+- **Onde vale o mesmo nível:** a resposta do bot e a triagem de leads (a análise da conversa usa o nível do bot da instância; como não oferece ferramentas, mantém o nível escolhido também no gpt-6-luna). O espaço da análise cresce com o nível: 2.500 tokens até `low`, 4.000 em `medium` (o automático do gpt-6-luna), 8.000 em `high` e 16.000 em `xhigh`/`max`. A agenda e a transferência fazem parte da resposta do bot (com ferramentas, `none` nos modelos listados acima). Transcrição de áudio e o teste da chave não usam raciocínio.
 - Nível que o modelo não aceita vai para o mais próximo (`minimal` vira `low`; `max` vira `xhigh` no gpt-5.4). Se a OpenAI ainda responder 400 sobre `reasoning_effort`, a chamada é repetida uma vez sem o parâmetro e o modelo fica memorizado sem ele (só em memória).
 
 ### 12.14 Modelos da OpenAI: o que funciona no bot (nov/2026)
@@ -766,21 +766,21 @@ Níveis por modelo (páginas oficiais da OpenAI, nov/2026; tabela em `src/api/in
 | Modelo | US$ por 1M tokens (entrada / saída) | Ferramentas no Chat Completions | Situação |
 | --- | --- | --- | --- |
 | gpt-6-luna | 0,10 / 0,50 | só com raciocínio `none` | atual, **recomendado** |
-| gpt-5.6-luna | 0,20 / 1,20 | sim | atual |
-| gpt-6.1-terra | 1 / 5 | não (só Responses API) | atual |
+| gpt-5.6-luna | 0,20 / 1,20 | só com `none` | atual |
+| gpt-6.1-terra | 1 / 5 | só com `none` | atual |
 | gpt-6.1-sol | 2 / 10 | não (só Responses API) | atual |
 | gpt-6-sol | 2 / 10 | só com `none` | atual |
-| gpt-5.4-mini | 0,75 / 4,50 | sim | atual |
-| gpt-5.6-terra | 2 / 12 | sim | atual |
-| gpt-5.2 | 1,75 / 14 | sim | atual |
-| gpt-5.4 | 2,50 / 15 | sim | atual |
-| gpt-5.6-sol | 4 / 20 | sim | atual |
-| gpt-5.5 | 5 / 30 | sim | atual |
+| gpt-5.4-mini | 0,75 / 4,50 | só com `none` (o padrão dele) | atual |
+| gpt-5.6-terra | 2 / 12 | só com `none` | atual |
+| gpt-5.2 | 1,75 / 14 | sim, em qualquer nível | atual |
+| gpt-5.4 | 2,50 / 15 | só com `none` (o padrão dele) | atual |
+| gpt-5.6-sol | 4 / 20 | só com `none` | atual |
+| gpt-5.5 | 5 / 30 | só com `none` | atual |
 | chat-latest | 5 / 30 | sim | atual (muda sem aviso) |
 | gpt-6-astra | 10 / 50 | não | atual, o mais capaz |
 | gpt-5, gpt-5-mini, gpt-5-nano, o3 | - | sim | **desliga em 11/12/2026** |
 | gpt-4.1, gpt-4.1-mini, gpt-4o, gpt-4o-mini | - | sim | **desliga em 14/01/2027** |
-| gpt-5.4-nano | - | sim | desliga em 01/04/2027 |
+| gpt-5.4-nano | - | só com `none` (o padrão dele) | desliga em 01/04/2027 |
 | o4-mini | - | - | desligado em 23/10/2026 |
 
 - **Leitura de PDF:** pela documentação, só os modelos da família gpt-5.x (até 5.5) e os gpt-4.x aceitam arquivo; gpt-6-luna e os outros GPT-6 aceitam texto e imagem. Com eles, o bot manda o PDF, a OpenAI recusa e o bot repete uma vez com a descrição do documento (seção 12.10). O mesmo vale para uma **imagem** que a OpenAI recusa (arquivo corrompido, formato não suportado ou download quebrado): o bot repete uma vez com "[o contato enviou uma imagem que não pôde ser aberta...]" e a IA pede que a pessoa descreva ou envie de novo, em vez de mandar a mensagem de falha.

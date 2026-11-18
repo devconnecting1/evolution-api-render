@@ -52,7 +52,12 @@ import {
   stripAdMarkerFromMessage,
 } from '../ai-context';
 import { buildHandoffContext, HANDOFF_FAREWELL, handoffNotificationText, HandoffRequest } from '../handoff-ai';
-import { isReasoningEffortError, resolveReasoningEffort } from '../reasoning-effort';
+import {
+  isReasoningEffortError,
+  isToolsWithReasoningError,
+  reasoningProfile,
+  resolveReasoningEffort,
+} from '../reasoning-effort';
 import { guardReply, PREVIOUS_REPLIES_KEPT } from '../reply-guard';
 
 type TokenParamName = 'max_tokens' | 'max_completion_tokens';
@@ -73,6 +78,8 @@ const learnedTokenParamByModel = new Map<string, TokenParamName>();
 const modelsWithoutReasoningEffort = new Set<string>();
 /** Bots already warned that tools forced `reasoning_effort: none` (one log line per bot and process). */
 const warnedToolsEffort = new Set<string>();
+/** Models that refused tools with a reasoning level (learned from a 400): their requests with tools go with `none`. */
+const modelsToolsOnlyWithNone = new Set<string>();
 
 /** Errors already logged in full, to avoid duplicated stack traces when rethrown. */
 const loggedOpenaiErrors = new WeakSet<object>();
@@ -1506,18 +1513,38 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
           `requests with tools of bot ${openaiBot.id} go with "none"`,
       );
     }
-    const buildParams = (param: TokenParamName) => {
+    const toolsEffort = () => (withTools && modelsToolsOnlyWithNone.has(model) ? 'none' : undefined);
+    const buildParams = (param: TokenParamName, forceEffort?: 'none') => {
       const params: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = { ...extra, model: openaiBot.model, messages };
       params[param] = maxTokens;
-      if (effort.send && !modelsWithoutReasoningEffort.has(model)) (params as any).reasoning_effort = effort.send;
+      const send = forceEffort ?? toolsEffort() ?? effort.send;
+      if (forceEffort || (send && !modelsWithoutReasoningEffort.has(model))) (params as any).reasoning_effort = send;
       return params;
     };
-    // A model that rejects reasoning_effort (400) is remembered and called again once without it
+    // A model that rejects reasoning_effort (400) is remembered and called again once without it. A model that only
+    // refuses tools together with a level is called again with `none` (and learned for the next requests with tools).
     const create = async (param: TokenParamName) => {
       const params = buildParams(param);
       try {
         return await client.chat.completions.create(params);
       } catch (error) {
+        if (withTools && (params as any).reasoning_effort !== 'none' && isToolsWithReasoningError(error)) {
+          // Without `none` (gpt-6-astra, gpt-6.1-sol) the model takes no tools at all: the tool loop answers without them
+          if (reasoningProfile(model)?.levels.includes('none') === false) throw error;
+          try {
+            const completion = await client.chat.completions.create(buildParams(param, 'none'));
+            modelsToolsOnlyWithNone.add(model);
+            this.logger.warn(
+              `Model ${model} only accepts tools with reasoning_effort "none" (${error?.message}); ` +
+                'requests with tools go with "none" from now on',
+            );
+            return completion;
+          } catch (retryError) {
+            // `none` refused too: the original refusal makes the tool loop answer without tools
+            if (isReasoningEffortError(retryError)) throw error;
+            throw retryError;
+          }
+        }
         if (!('reasoning_effort' in params) || !isReasoningEffortError(error)) throw error;
         modelsWithoutReasoningEffort.add(model);
         this.logger.warn(
