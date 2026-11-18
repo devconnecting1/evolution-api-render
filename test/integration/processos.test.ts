@@ -319,4 +319,28 @@ describe('Processos (integration, PostgreSQL)', { skip: SKIP_INTEGRATION }, () =
     await dueTick();
     assert.ok(sent.some((x) => x.number === '5521911112222' && /Petição juntada/.test(x.text)));
   });
+
+  test('preview: saved settings or unsaved values, Leads numbers, invalid template refused, nothing sent', async () => {
+    sent.length = 0;
+    const preview = await service.previewNotices(instanceId, {});
+    assert.deepEqual(preview.team.numbers, ['5521911112222'], 'no numbers of its own: the Leads numbers');
+    assert.equal(preview.team.numbersFrom, 'leads');
+    assert.match(preview.client.text, /^Olá, Maria\. Houve uma atualização no seu processo/);
+    assert.match(preview.team.movement, /^Nova movimentação — Exemplo: Maria x Banco Exemplo \(TJRJ\)/);
+
+    const custom = await service.previewNotices(instanceId, {
+      clientMessageTemplate: 'Oi, {nome}, temos novidade.',
+      clientName: 'Ana Souza',
+      notifyNumbers: ['5521933334444'],
+    });
+    assert.equal(custom.client.text, 'Oi, Ana, temos novidade.');
+    assert.deepEqual(custom.team.numbers, ['5521933334444']);
+    assert.equal(custom.team.numbersFrom, 'processos');
+
+    await assert.rejects(
+      service.previewNotices(instanceId, { clientMessageTemplate: 'Saiu {movimento}' }),
+      (error: any) => error.status === 400 && /só aceita o campo \{nome\}/.test(error.message),
+    );
+    assert.equal(sent.length, 0, 'the preview never sends');
+  });
 });

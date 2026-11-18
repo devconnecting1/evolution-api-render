@@ -93,3 +93,15 @@ export const processSettingsSchema: JSONSchema7 = {
     clientMessageTemplate: text(500, 'clientMessageTemplate'),
   },
 };
+
+/** POST /processos/{instancia}/preview: the unsaved values of the panel (all optional) and a sample client name. */
+export const processPreviewSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    notifyNumbers: processSettingsSchema.properties!.notifyNumbers,
+    quietHours: processSettingsSchema.properties!.quietHours,
+    clientMessageTemplate: processSettingsSchema.properties!.clientMessageTemplate,
+    clientName: text(80, 'clientName'),
+  },
+};

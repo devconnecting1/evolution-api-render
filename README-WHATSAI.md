@@ -902,6 +902,7 @@ O modo URL dá **acesso global**: trate a URL como senha (ela pode aparecer em l
 | `list_publications` | leitura | Intimações/publicações do DJEN das OABs acompanhadas |
 | `sync_process` | escrita | Consulta o DataJud agora para um processo (1 por minuto) |
 | `get_process_settings` | leitura | Configurações de Processos (ligado, intervalo, dias do DJEN, números da equipe) e as OABs acompanhadas |
+| `preview_process_notices` | leitura | Prévia, sem enviar nada, do texto exato que a equipe e o cliente receberiam (processo fictício). Aceita um modelo de mensagem e um nome para testar antes de salvar |
 | `update_process_settings` | escrita | Altera essas configurações (lista de números substitui a atual) e pode adicionar uma OAB. Devolve os valores anteriores |
 | `list_leads` | leitura | Leads da instância (triagem): filtros por status (ou `aguardando`), área, prioridade, texto e data; ordem padrão prioridade alta e depois a maior espera; contagem por visão (seção 16) |
 | `get_lead` | leitura | Ficha completa de um lead: resumo, prioridade e motivo, o que falta saber, próximo passo, parte contrária, documentos citados, origem, datas |
@@ -1167,6 +1168,7 @@ Acompanhamento dos processos do escritório: o sistema consulta os andamentos p�
 - **Cliente** (desligado por padrão, por processo; só para o contato que a equipe vinculou ao processo, nunca por nome): **só a frase neutra** `Olá, {nome}. Houve uma atualização no seu processo. O escritório vai analisar e entrar em contato.` Nunca vai o conteúdo, prazos, decisões, valores ou chances; o modelo aceita apenas o campo `{nome}`. No máximo 1 aviso a cada 20 h por processo. Nunca em segredo de justiça.
 - **Horário de silêncio** (padrão 20:00–08:00, `America/Sao_Paulo`): os avisos ficam guardados e saem quando o horário acaba. Se o WhatsApp estiver desconectado, tentam de novo; depois de 3 dias são descartados.
 - Os avisos saem marcados como mensagem do bot (não pausam a IA).
+- **Prévia dos avisos** (Processos > Configurações, sem enviar nada): mostra o texto exato que o cliente e a equipe receberiam, com um processo fictício (TJRJ) e os valores do formulário, mesmo antes de salvar (mensagem para o cliente, horário de silêncio, números da equipe). Também mostra se agora é horário de silêncio e quando o aviso sairia. Na API: `POST /processos/{instancia}/preview`; no MCP: `preview_process_notices`.
 
 ### 17.3 IA
 
@@ -1196,6 +1198,7 @@ Mesmas guardas das outras rotas (chave global ou token da instância). Erros em 
 | OABs | `GET` / `POST /processos/{instancia}/oab`, `PUT` / `DELETE .../oab/{oabId}` |
 | Publicações (`unseen`, `tribunal`, `from`, `to`, `page`) / marcar vistas (`ids` ou `all`) | `GET /processos/{instancia}/publicacoes` / `POST .../publicacoes/seen` |
 | Configurações | `GET` / `POST /processos/{instancia}/settings` |
+| Prévia dos avisos (nada é enviado; aceita `clientMessageTemplate`, `quietHours`, `notifyNumbers`, `clientName`) | `POST /processos/{instancia}/preview` |
 | Contadores (badge) / CSV | `GET /processos/{instancia}/badge` / `GET .../export.csv` |
 | Rodada (cron) | `POST /processos/tick` (só chave global) |
 
@@ -1207,7 +1210,7 @@ curl -X POST "$SERVER_URL/processos/$INSTANCE/oab" -H "apikey: $APIKEY" -H "Cont
   -d '{ "numeroOab": "123456", "ufOab": "RJ", "label": "Dra. Fulana" }'
 ```
 
-MCP: `list_processes`, `get_process`, `add_process`, `list_publications`, `sync_process`, `get_process_settings`, `update_process_settings`.
+MCP: `list_processes`, `get_process`, `add_process`, `list_publications`, `sync_process`, `get_process_settings`, `preview_process_notices`, `update_process_settings`.
 
 **O escritório precisa informar:** número(s) e UF da OAB de cada advogado (e as variações com letra, se houver), a lista de processos (pode colar como vier), os números da equipe que recebem avisos, e, para cada processo em que o cliente deve ser avisado ou a IA pode responder, o WhatsApp do cliente (com a autorização dele).
 

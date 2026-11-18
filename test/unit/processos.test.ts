@@ -11,6 +11,7 @@ import { aliasFor, cnjCheckDigits, extractCnjCandidates, formatCnj, isValidCnj, 
 import { fetchDataJudProcess, parseDataJudDate, parseDataJudResponse, SourceError } from '@utils/processos/datajud';
 import { fetchDjenByOab, htmlToText, parseDjenResponse } from '@utils/processos/djen';
 import {
+  buildNoticePreview,
   clientMessageText,
   DEFAULT_CLIENT_TEMPLATE,
   isQuietNow,
@@ -244,6 +245,57 @@ describe('Processos: notification texts and policy', () => {
     assert.equal(isQuietNow(quiet, new Date('2026-11-04T18:00:00Z')), false, '15:00');
     assert.equal(quietEndsAt(quiet, new Date('2026-11-04T01:00:00Z')).toISOString(), '2026-11-04T11:00:00.000Z');
     assert.equal(isQuietNow({ ...quiet, enabled: false }, new Date('2026-11-04T01:00:00Z')), false);
+  });
+});
+
+describe('Processos: preview of the notices (nothing is sent)', () => {
+  const quiet = normalizeQuietHours({ enabled: true, start: '20:00', end: '08:00', timezone: 'America/Sao_Paulo' });
+
+  test('exact texts of the team and the client with a fictitious TJRJ process', () => {
+    const preview = buildNoticePreview({
+      template: null,
+      quietHours: quiet,
+      numbers: ['5521999990000'],
+      numbersFrom: 'processos',
+      now: new Date('2026-11-04T18:00:00Z'),
+    });
+    assert.equal(preview.client.text, clientMessageText(null, 'Maria Silva'));
+    assert.match(
+      preview.team.movement,
+      /^Nova movimentação — Exemplo: Maria x Banco Exemplo \(TJRJ\)\n04\/11\/2026 · Juntada de Petição/,
+    );
+    assert.match(preview.team.movement, new RegExp(`Processo ${TJRJ.replace(/\./g, '\\.')}$`));
+    assert.equal(isValidCnj(TJRJ.replace(/\D/g, '')), true, 'the sample number is a valid CNJ');
+    assert.match(preview.team.publication, /^Nova intimação\/publicação no DJEN — TJRJ · /);
+    assert.deepEqual(preview.team.numbers, ['5521999990000']);
+    assert.equal(preview.quiet.now, false);
+    assert.equal(preview.quiet.sendsAt, null);
+    assert.match(preview.quiet.label, /sairia na hora/);
+    assert.ok(preview.client.rules.some((rule) => /segredo de justiça/.test(rule)));
+  });
+
+  test('during the quiet hours it says when the notice would go; template and name follow the input', () => {
+    const preview = buildNoticePreview({
+      template: 'Oi, {nome}! Temos novidade no seu processo, vamos te ligar.',
+      clientName: '',
+      quietHours: quiet,
+      numbers: [],
+      numbersFrom: 'nenhum',
+      now: new Date('2026-11-04T01:00:00Z'),
+    });
+    assert.equal(preview.client.text, 'Oi! Temos novidade no seu processo, vamos te ligar.');
+    assert.equal(preview.quiet.now, true);
+    assert.equal(preview.quiet.sendsAt, '2026-11-04T11:00:00.000Z');
+    assert.match(preview.quiet.label, /sairia às 08:00/);
+    // an invalid template never reaches the client, not even in the preview
+    const invalid = buildNoticePreview({
+      template: 'Saiu {movimento}',
+      quietHours: { ...quiet, enabled: false },
+      numbers: [],
+      numbersFrom: 'nenhum',
+    });
+    assert.equal(invalid.client.text, clientMessageText(null, 'Maria Silva'));
+    assert.match(invalid.quiet.label, /desligado/);
   });
 });
 

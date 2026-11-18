@@ -210,3 +210,13 @@
   .wp-oab-form { grid-template-columns: 1fr 64px; }
   .wp-grid2 { grid-template-columns: 1fr; }
 }
+/*whatsai-patch:processos-previa:css*/
+.wp-pv { display: grid; gap: 8px; margin-top: 8px; padding: 12px; border: 1px solid var(--m-border); border-radius: var(--m-radius-card); background: var(--m-bg); }
+.wp-pv h3 { margin: 0; }
+.wp-pv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.wp-pv-item { margin: 0 0 8px; }
+.wp-pv-who { font-size: 12px; color: var(--m-tint-text); margin-bottom: 4px; }
+.wp-pv-bubble { margin: 0; padding: 8px 10px; border-radius: 8px 8px 8px 2px; background: var(--m-surface); border: 1px solid var(--m-border); color: var(--m-text); font-size: 13px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.wp-pv-rules { margin: 4px 0 0; padding-left: 18px; list-style: disc; font-size: 12px; color: var(--m-tint-text); }
+.wp-pv-rules li + li { margin-top: 2px; }
+.wp-callout[data-tone="ok"] { border-left-color: var(--m-primary); }

@@ -32,4 +32,6 @@ export class ProcessSettingsDto {
   notifyNumbers?: string[];
   quietHours?: { enabled?: boolean; start?: string; end?: string; timezone?: string };
   clientMessageTemplate?: string | null;
+  /** Preview only: sample client name. */
+  clientName?: string;
 }

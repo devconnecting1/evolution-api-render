@@ -238,6 +238,30 @@ export const getProcessSettings = defineTool({
   },
 });
 
+export const previewProcessNotices = defineTool({
+  name: 'preview_process_notices',
+  title: 'Prévia dos avisos de Processos',
+  description:
+    'Mostra, sem enviar nada, o texto exato que a equipe e o cliente receberiam pelo WhatsApp numa nova movimentação ou intimação, com as configurações da instância e um processo fictício. Aceita um modelo de mensagem e um nome de cliente para testar antes de salvar.',
+  input: {
+    instance: instanceArg,
+    client_message_template: z.string().max(500).optional().describe('Modelo para testar (só aceita {nome}).'),
+    client_name: z.string().max(80).optional().describe('Nome de exemplo do cliente (padrão: Maria Silva).'),
+  },
+  annotations: READ_ONLY,
+  run: async ({ instance, client_message_template, client_name }, ctx) => {
+    const svc = service(ctx);
+    const resolved = await resolveInstance(ctx, instance);
+    const preview = await call(() =>
+      svc.previewNotices(resolved.id, {
+        ...(client_message_template !== undefined ? { clientMessageTemplate: client_message_template } : {}),
+        ...(client_name !== undefined ? { clientName: client_name } : {}),
+      }),
+    );
+    return jsonResult({ instance: resolved.name, sent: false, preview });
+  },
+});
+
 export const updateProcessSettings = defineTool({
   name: 'update_process_settings',
   title: 'Alterar configurações de Processos',
@@ -295,5 +319,6 @@ export const processosTools = [
   listPublications,
   syncProcess,
   getProcessSettings,
+  previewProcessNotices,
   updateProcessSettings,
 ];

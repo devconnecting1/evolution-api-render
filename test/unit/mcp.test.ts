@@ -51,6 +51,7 @@ const EXPECTED_TOOLS = [
   'list_publications',
   'sync_process',
   'get_process_settings',
+  'preview_process_notices',
   'update_process_settings',
   'list_leads',
   'get_lead',
