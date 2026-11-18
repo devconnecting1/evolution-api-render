@@ -3,15 +3,20 @@
  *
  * - days: 90 dias (UTC) com segundos operacional / degradado / fora / manutenção por componente. O que não foi
  *   observado não entra em nenhuma das quatro contas: a cobertura é real, nunca presumida.
- * - buckets: 24 faixas de 3 horas (3 dias) com o pior estado visto e os segundos cobertos.
+ * - buckets: 14 faixas de 12 horas (7 dias), alinhadas ao horário de Brasília (00h–12h e 12h–24h, UTC-3), com o
+ *   pior estado visto e os segundos cobertos. Faixas de 3 horas gravadas antes (até 17/11/2026) são somadas na faixa
+ *   de 12 horas que as contém ao ler o histórico, sem perder nada.
  * - incidents: até 120 incidentes dos últimos 90 dias, com tipo fixo e os números usados nos textos.
  * - boot / seen: início do processo atual e o último sinal de vida gravado (para medir a lacuna de um reinício).
  */
 import { INCIDENT_TYPES, IncidentType, PublicState, Severity, STATE_RANK } from './signals';
 
 export const DAY_MS = 24 * 3_600_000;
-export const BUCKET_MS = 3 * 3_600_000;
-export const HISTORY_BUCKETS = 24;
+export const BUCKET_MS = 12 * 3_600_000;
+/** As faixas começam às 00h e 12h de Brasília (03h e 15h UTC; o Brasil não tem horário de verão desde 2019). */
+export const BUCKET_OFFSET_MS = 3 * 3_600_000;
+export const HISTORY_BUCKETS = 14;
+export const HISTORY_BUCKET_DAYS = (HISTORY_BUCKETS * BUCKET_MS) / DAY_MS;
 export const HISTORY_DAYS = 90;
 const MAX_INCIDENTS = 120;
 /** Uma amostra cobre no máximo este intervalo desde a anterior; acima disso o período fica sem dados. */
@@ -40,6 +45,27 @@ export type StatusStore = {
 
 const SLOT: Partial<Record<PublicState, number>> = { operational: 0, degraded: 1, outage: 2, maintenance: 3 };
 const SEVERITIES: Severity[] = ['maintenance', 'degraded', 'outage'];
+
+/** Início da faixa de 12 horas que contém `ms`. */
+export function bucketStart(ms: number): number {
+  return Math.floor((ms - BUCKET_OFFSET_MS) / BUCKET_MS) * BUCKET_MS + BUCKET_OFFSET_MS;
+}
+
+/** Junta faixas com o mesmo início (inclusive as de 3 horas antigas): pior estado e soma dos segundos cobertos. */
+function foldBuckets(buckets: StoredBucket[]): StoredBucket[] {
+  const byStart = new Map<number, StoredBucket>();
+  for (const bucket of buckets) {
+    const t = bucketStart(bucket.t);
+    const target = byStart.get(t) ?? { t, c: {}, m: 0 };
+    byStart.set(t, target);
+    target.m = Math.min(BUCKET_MS / 1000, Math.round((target.m + bucket.m) * 10) / 10);
+    for (const [id, state] of Object.entries(bucket.c)) {
+      const previous = target.c[id];
+      if (!previous || STATE_RANK[state] > STATE_RANK[previous]) target.c[id] = state;
+    }
+  }
+  return [...byStart.values()].sort((a, b) => a.t - b.t);
+}
 
 export function emptyStore(): StatusStore {
   return { v: 2, days: [], buckets: [], incidents: [], boot: null, seen: null };
@@ -88,6 +114,7 @@ export function normalizeStore(raw: unknown): StatusStore {
     for (const [id, state] of Object.entries(bucket.c ?? {})) if (safeId(id) && isState(state)) c[id] = state;
     store.buckets.push({ t, c, m: Math.max(0, finite(bucket.m) ?? 0) });
   }
+  store.buckets = foldBuckets(store.buckets);
   for (const item of Array.isArray(value.incidents) ? value.incidents : []) {
     const a = finite(item?.a);
     const c = safeId(item?.c);
@@ -142,7 +169,7 @@ export function recordSample(store: StatusStore, states: Record<string, PublicSt
   let cursor = start;
   while (cursor < to) {
     const dayEnd = (Math.floor(cursor / DAY_MS) + 1) * DAY_MS;
-    const bucketEnd = (Math.floor(cursor / BUCKET_MS) + 1) * BUCKET_MS;
+    const bucketEnd = bucketStart(cursor) + BUCKET_MS;
     const end = Math.min(to, dayEnd, bucketEnd);
     const seconds = (end - cursor) / 1000;
     addDay(store, dayKey(cursor), states, seconds);
@@ -166,7 +193,7 @@ function addDay(store: StatusStore, key: string, states: Record<string, PublicSt
 }
 
 function markBucket(store: StatusStore, states: Record<string, PublicState>, at: number, seconds: number) {
-  const t = Math.floor(at / BUCKET_MS) * BUCKET_MS;
+  const t = bucketStart(at);
   let bucket = store.buckets.find((item) => item.t === t);
   if (!bucket) {
     bucket = { t, c: {}, m: 0 };
@@ -180,11 +207,11 @@ function markBucket(store: StatusStore, states: Record<string, PublicState>, at:
   }
 }
 
-/** Remove o que passou da janela (90 dias, 3 dias de faixas, 120 incidentes). */
+/** Remove o que passou da janela (90 dias, 7 dias de faixas, 120 incidentes). */
 export function pruneStore(store: StatusStore, now: number) {
   const oldestDay = dayKey(now - (HISTORY_DAYS - 1) * DAY_MS);
   store.days = store.days.filter((day) => day.d >= oldestDay).sort((a, b) => a.d.localeCompare(b.d));
-  const oldestBucket = Math.floor(now / BUCKET_MS) * BUCKET_MS - (HISTORY_BUCKETS - 1) * BUCKET_MS;
+  const oldestBucket = bucketStart(now) - (HISTORY_BUCKETS - 1) * BUCKET_MS;
   store.buckets = store.buckets.filter((bucket) => bucket.t >= oldestBucket).sort((a, b) => a.t - b.t);
   store.incidents = store.incidents
     .filter((item) => (item.b ?? now) >= now - HISTORY_DAYS * DAY_MS)

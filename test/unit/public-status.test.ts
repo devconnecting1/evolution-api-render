@@ -12,7 +12,10 @@ import {
   TICK_MS,
 } from '@api/services/public-status.core';
 import {
+  BUCKET_MS,
+  bucketStart,
   emptyStore,
+  HISTORY_BUCKETS,
   MAX_SAMPLE_GAP_MS,
   mergeStores,
   normalizeStore,
@@ -318,6 +321,52 @@ describe('status: histórico compacto', () => {
     assert.equal(garbage.incidents.length, 1);
     assert.equal(garbage.incidents[0].d, undefined);
     assert.deepEqual(normalizeStore('{"v":1}'), emptyStore());
+  });
+
+  test('faixas de 12 horas no horário de Brasília (00h–12h e 12h–24h), 7 dias', () => {
+    // 17/11 02:59 em Brasília (05:59 UTC) cai na faixa 00h–12h de Brasília, que começa às 03:00 UTC
+    assert.equal(new Date(bucketStart(Date.UTC(2026, 10, 17, 5, 59))).toISOString(), '2026-11-17T03:00:00.000Z');
+    assert.equal(new Date(bucketStart(Date.UTC(2026, 10, 17, 15, 0))).toISOString(), '2026-11-17T15:00:00.000Z');
+    assert.equal(new Date(bucketStart(Date.UTC(2026, 10, 17, 2, 59))).toISOString(), '2026-11-16T15:00:00.000Z');
+    assert.equal(BUCKET_MS, 12 * 3_600_000);
+    assert.equal(HISTORY_BUCKETS, 14);
+
+    const store = emptyStore();
+    const start = Date.UTC(2026, 10, 17, 3, 0);
+    recordSample(store, { api: 'operational' }, start - 2 * MIN, start + 3 * MIN);
+    assert.deepEqual(
+      store.buckets.map((bucket) => [new Date(bucket.t).toISOString(), bucket.m]),
+      [
+        ['2026-11-16T15:00:00.000Z', 120],
+        ['2026-11-17T03:00:00.000Z', 180],
+      ],
+      'a amostra é dividida na virada da faixa',
+    );
+    pruneStore(store, start + 8 * 86_400_000);
+    assert.equal(store.buckets.length, 0, 'mais de 7 dias: fora');
+  });
+
+  test('faixas de 3 horas gravadas antes viram a faixa de 12 horas que as contém, sem perder nada', () => {
+    const h = 3_600_000;
+    const day = Date.UTC(2026, 10, 17, 0, 0);
+    const old = normalizeStore({
+      v: 2,
+      days: [],
+      buckets: [
+        { t: day + 3 * h, c: { api: 'operational' }, m: 10_800 },
+        { t: day + 6 * h, c: { api: 'degraded' }, m: 10_800 },
+        { t: day + 9 * h, c: { api: 'operational', site: 'outage' }, m: 5_400 },
+        { t: day + 15 * h, c: { api: 'operational' }, m: 10_800 },
+      ],
+      incidents: [],
+    });
+    assert.deepEqual(
+      old.buckets.map((bucket) => [new Date(bucket.t).toISOString(), bucket.c, bucket.m]),
+      [
+        ['2026-11-17T03:00:00.000Z', { api: 'degraded', site: 'outage' }, 27_000],
+        ['2026-11-17T15:00:00.000Z', { api: 'operational' }, 10_800],
+      ],
+    );
   });
 
   test('junta o guardado com o desta execução sem perder nada', () => {
@@ -720,14 +769,16 @@ describe('status: site, WhatsApp, IA e terceiros', () => {
   test('cobertura honesta: sem registro anterior, só o período observado conta', async () => {
     const { service, clock } = setup();
     let status = await service.getStatus();
-    assert.equal(status.history.length, 24);
+    assert.equal(status.history.length, 14);
+    assert.equal(status.historyDays, 7);
     assert.equal(status.days.length, 90);
     assert.equal(status.days.filter((day) => Object.keys(day.components).length).length, 0);
     clock.now += 5 * MIN;
     await service.tick();
     clock.now += 31_000;
     status = await service.getStatus();
-    assert.ok(status.coverage.last3d > 0 && status.coverage.last3d < 5);
+    assert.ok(status.coverage.last7d > 0 && status.coverage.last7d < 5);
+    assert.equal(status.coverage.last3d, status.coverage.last7d, 'alias para páginas antigas em cache');
     assert.equal(status.days.at(-1)!.components.api.state, 'operational');
     assert.ok(component(status, 'api').coverage90 > 0);
   });

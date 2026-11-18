@@ -15,7 +15,7 @@ A cada 5 minutos (Cron Trigger `*/5 * * * *`):
    (metastatus.com) não publica JSON e fica de fora.
 4. Opcional, a cada 15 minutos, se você cadastrar tokens **somente leitura** (veja abaixo): último deploy do Render,
    estado do endpoint e cota de compute do Neon, último deploy de produção da Vercel.
-5. Grava **uma** chave no Workers KV (`history:v1`) com: amostras dos últimos 3 dias, disponibilidade diária de 90
+5. Grava **uma** chave no Workers KV (`history:v1`) com: amostras dos últimos 7 dias, disponibilidade diária de 90
    dias e incidentes (`api_unreachable`, `site_down`, `upstream_incident`, `deploy_failed`, `db_quota_risk`,
    `db_suspended_quota`). Um incidente de API ou site só abre depois de 2 falhas seguidas (10 min).
 
