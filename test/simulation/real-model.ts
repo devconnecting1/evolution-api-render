@@ -145,8 +145,11 @@ export async function judgeAll(
 ) {
   const client = new OpenAI({ apiKey, maxRetries: 0, timeout: 120_000 });
   const limit = semaphore(maxConcurrent);
+  // No message of the AI (group, reaction, paused contact): silence is the expected behaviour, not a bad answer
+  const silent = conversations.filter((item) => !item.transcript.some((line) => line.startsWith('IA:')));
+  const toJudge = conversations.filter((item) => !silent.includes(item));
   const scored = await Promise.all(
-    conversations.map((item) =>
+    toJudge.map((item) =>
       limit(async () => ({ ...item, score: await judgeConversation(client, model, item.transcript) })),
     ),
   );
@@ -161,5 +164,14 @@ export async function judgeAll(
     .sort((a, b) => a.score!.media - b.score!.media || b.failures - a.failures)
     .slice(0, 10)
     .map((item) => ({ id: item.id, score: item.score, transcript: item.transcript }));
-  return { model, judged: valid.length, unjudged: scored.length - valid.length, averages, worst };
+  return {
+    model,
+    judged: valid.length,
+    unjudged: scored.length - valid.length,
+    silent: silent.map((item) => item.id),
+    averages,
+    worst,
+    // Every judged conversation (fictitious data only), for reading the results afterwards
+    all: valid.map((item) => ({ id: item.id, failures: item.failures, score: item.score, transcript: item.transcript })),
+  };
 }
