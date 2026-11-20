@@ -416,7 +416,7 @@
       slots.forEach(function (slot, position) {
         slot.setAttribute('aria-pressed', position === active ? 'true' : 'false');
       });
-      if (focus) slots[active].focus();
+      if (focus) slots[active].focus({ preventScroll: true });
     }
 
     function activate(index) {

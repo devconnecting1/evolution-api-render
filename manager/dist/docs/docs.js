@@ -98,14 +98,14 @@
       menu.hidden = false;
       button.setAttribute('aria-expanded', 'true');
       var checked = menu.querySelector('[aria-checked="true"]') || menu.querySelector('button');
-      if (checked) checked.focus();
+      if (checked) checked.focus({ preventScroll: true });
     }
 
     function closeMenu(returnFocus) {
       if (menu.hidden) return;
       menu.hidden = true;
       button.setAttribute('aria-expanded', 'false');
-      if (returnFocus) button.focus();
+      if (returnFocus) button.focus({ preventScroll: true });
     }
 
     button.addEventListener('click', function (event) {
@@ -127,16 +127,16 @@
       var index = items.indexOf(document.activeElement);
       if (event.key === 'ArrowDown') {
         event.preventDefault();
-        items[(index + 1 + items.length) % items.length].focus();
+        items[(index + 1 + items.length) % items.length].focus({ preventScroll: true });
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
-        items[(index - 1 + items.length) % items.length].focus();
+        items[(index - 1 + items.length) % items.length].focus({ preventScroll: true });
       } else if (event.key === 'Home') {
         event.preventDefault();
-        items[0].focus();
+        items[0].focus({ preventScroll: true });
       } else if (event.key === 'End') {
         event.preventDefault();
-        items[items.length - 1].focus();
+        items[items.length - 1].focus({ preventScroll: true });
       } else if (event.key === 'Escape') {
         event.preventDefault();
         closeMenu(true);
@@ -236,10 +236,10 @@
       var last = focusables[focusables.length - 1];
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
-        last.focus();
+        last.focus({ preventScroll: true });
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
-        first.focus();
+        first.focus({ preventScroll: true });
       }
     });
 
@@ -627,7 +627,7 @@
         input.value = '';
         clear.hidden = true;
         render('');
-        input.focus();
+        input.focus({ preventScroll: true });
       });
     }
 
@@ -643,7 +643,7 @@
       var isCommandK = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
       if ((isSlash && !typing) || isCommandK) {
         event.preventDefault();
-        input.focus();
+        input.focus({ preventScroll: true });
         input.select();
       }
     });
