@@ -14,6 +14,7 @@
  * - a tabela fica no banco principal (CONTROL_MODELS), porque a cobrança é consultada antes de saber a instância.
  */
 import type { Billing } from '@config/env.config';
+import QRCode from 'qrcode';
 
 export const BILLING_STATUSES = ['pago', 'pendente', 'atrasado'] as const;
 export type BillingStatus = (typeof BILLING_STATUSES)[number];
@@ -224,8 +225,17 @@ export function pixCode(input: {
   return payload + crc16(payload);
 }
 
-/** How the client pays: Pix key (with "copia e cola" for the open amount) and bank transfer data. */
-export function paymentView(provider: Billing | undefined, open: { cents: number; period: string | null }) {
+export type PixChargeReason = 'open' | 'plan' | null;
+
+/**
+ * How the client pays: Pix key, "copia e cola" and bank transfer data. `charge` is the amount the code carries: the open
+ * entries, or the plan's monthly price when the current month has no entry yet; with no amount the code still works and
+ * the client types the value in the bank app.
+ */
+export function paymentView(
+  provider: Billing | undefined,
+  charge: { cents: number; period: string | null; reason?: PixChargeReason },
+) {
   const pix = normalizePixKey(provider?.PIX_KEY);
   const bankName = provider?.BANK_NAME?.trim() || null;
   const account = provider?.BANK_ACCOUNT?.trim() || null;
@@ -241,24 +251,55 @@ export function paymentView(provider: Billing | undefined, open: { cents: number
           holderDoc: provider?.PROVIDER_DOC || null,
         }
       : null;
-  const code =
-    pix && open.cents > 0
-      ? pixCode({
-          key: pix.key,
-          name: provider?.PROVIDER_NAME || '',
-          city: provider?.PROVIDER_CITY || '',
-          amountCents: open.cents,
-          txid: 'WHATSAI' + String(open.period || '').replace(/\D/g, ''),
-        })
-      : null;
+  const cents = charge.cents > 0 ? charge.cents : 0;
+  const code = pix
+    ? pixCode({
+        key: pix.key,
+        name: provider?.PROVIDER_NAME || '',
+        city: provider?.PROVIDER_CITY || '',
+        amountCents: cents,
+        txid: cents ? 'WHATSAI' + String(charge.period || '').replace(/\D/g, '') : undefined,
+      })
+    : null;
   return {
     configured: Boolean(pix || bank),
     pix: pix ? { key: pix.key, type: pix.type, holder: provider?.PROVIDER_NAME || null } : null,
     pixCode: code,
-    pixAmountCents: code ? open.cents : 0,
+    pixAmountCents: code ? cents : 0,
+    pixPeriod: code && cents ? charge.period : null,
+    pixReason: (code && cents ? charge.reason || 'open' : null) as PixChargeReason,
+    /** Why there is no "copia e cola": the receiver's name and city are part of the code. */
+    pixMissing: pix && !code ? ['BILLING_PROVIDER_NAME', 'BILLING_PROVIDER_CITY'] : [],
     bank,
     invalidPixKey: Boolean(provider?.PIX_KEY && !pix),
   };
+}
+
+/** QR Code of the "copia e cola" as an SVG data URL (shown in an <img>, so it never runs as markup). */
+export async function pixQrDataUrl(code: string | null): Promise<string | null> {
+  if (!code) return null;
+  try {
+    const svg = await QRCode.toString(code, {
+      type: 'svg',
+      errorCorrectionLevel: 'M',
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' },
+    });
+    return 'data:image/svg+xml;base64,' + Buffer.from(svg, 'utf8').toString('base64');
+  } catch {
+    return null;
+  }
+}
+
+/** Month ("YYYY-MM") in Brasília time, the reference of a monthly charge. */
+export function currentPeriod(now: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value || '';
+  return `${get('year')}-${get('month')}`;
 }
 
 /** First day of the oldest period still open (pending or overdue), or null when everything is paid. */
@@ -277,8 +318,12 @@ export class BillingService {
     return (this.deps.now ?? (() => new Date()))();
   }
 
-  /** History of the instance, newest month first, with totals and the provider data for the receipts. */
-  public async list(instanceId: string) {
+  /**
+   * History of the instance, newest month first, with totals, the provider data for the receipts and how to pay.
+   * `plan.priceCents` (the plan's monthly price) is the amount of the Pix code when nothing is open and the current
+   * month has no entry yet.
+   */
+  public async list(instanceId: string, plan: { name?: string | null; priceCents?: number | null } = {}) {
     const entries = await this.deps.prisma.billingEntry.findMany({
       where: { instanceId },
       orderBy: [{ period: 'desc' }, { createdAt: 'desc' }],
@@ -297,7 +342,30 @@ export class BillingService {
       nextDueDate: openPeriod ? `${openPeriod}-01` : null,
       paymentMethod: paidWithMethod.length ? paidWithMethod[0].method : null,
       provider: providerView(this.deps.provider()),
-      payment: paymentView(this.deps.provider(), { cents: sum('pendente') + sum('atrasado'), period: openPeriod }),
+      payment: await this.payment(entries, openPeriod, sum('pendente') + sum('atrasado'), plan),
+    };
+  }
+
+  private async payment(
+    entries: { period: string }[],
+    openPeriod: string | null,
+    openCents: number,
+    plan: { name?: string | null; priceCents?: number | null },
+  ) {
+    let charge: { cents: number; period: string | null; reason: PixChargeReason } = {
+      cents: openCents,
+      period: openPeriod,
+      reason: openCents > 0 ? 'open' : null,
+    };
+    if (!openCents && plan.priceCents && plan.priceCents > 0) {
+      const period = currentPeriod(this.now());
+      if (!entries.some((e) => e.period === period)) charge = { cents: plan.priceCents, period, reason: 'plan' };
+    }
+    const view = paymentView(this.deps.provider(), charge);
+    return {
+      ...view,
+      planName: charge.reason === 'plan' ? plan.name || null : null,
+      pixQr: await pixQrDataUrl(view.pixCode),
     };
   }
 

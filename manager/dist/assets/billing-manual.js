@@ -135,11 +135,13 @@
 
   function editDialog(ctx, entry) {
     var isNew = !entry;
+    var plan = (ctx.data && ctx.data.plan) || {};
+    var planPrice = plan.priceCents || 0;
     var today = new Date();
     var month = entry ? entry.period : today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
     var f = {
       period: h('input', { type: 'month', id: 'wa-bm-period', required: true, value: month }),
-      amount: h('input', { type: 'text', id: 'wa-bm-amount', inputmode: 'decimal', required: true, placeholder: '437,00', value: entry ? (entry.amountCents / 100).toFixed(2).replace('.', ',') : '' }),
+      amount: h('input', { type: 'text', id: 'wa-bm-amount', inputmode: 'decimal', required: true, placeholder: '437,00', value: entry ? (entry.amountCents / 100).toFixed(2).replace('.', ',') : planPrice ? (planPrice / 100).toFixed(2).replace('.', ',') : '' }),
       status: h('select', { id: 'wa-bm-status' }, Object.keys(STATUS).map(function (k) { return h('option', { value: k, text: STATUS[k][0], selected: (entry ? entry.status : 'pendente') === k }); })),
       method: h('select', { id: 'wa-bm-method' }, [h('option', { value: '', text: 'Não informar' })].concat(Object.keys(METHODS).map(function (k) { return h('option', { value: k, text: METHODS[k], selected: entry && entry.method === k }); }))),
       paidAt: h('input', { type: 'date', id: 'wa-bm-paid', value: entry && entry.paidAt ? String(entry.paidAt).slice(0, 10) : '' }),
@@ -150,7 +152,7 @@
       return h('div', { class: 'wa-bm-field' }, [h('label', { for: id, text: label }), input, hint ? h('p', { class: 'wa-bm-hint', text: hint }) : null]);
     };
     var form = h('form', { class: 'wa-bm-form', novalidate: true }, [
-      h('div', { class: 'wa-bm-row' }, [field('wa-bm-period', 'Mês de referência', f.period), field('wa-bm-amount', 'Valor (R$)', f.amount)]),
+      h('div', { class: 'wa-bm-row' }, [field('wa-bm-period', 'Mês de referência', f.period), field('wa-bm-amount', 'Valor (R$)', f.amount, isNew && planPrice ? 'Mensalidade do plano ' + plan.name + '. Mude se houver número adicional, excedente ou desconto.' : null)]),
       h('div', { class: 'wa-bm-row' }, [field('wa-bm-status', 'Situação', f.status), field('wa-bm-method', 'Forma de pagamento', f.method)]),
       field('wa-bm-paid', 'Pago em', f.paidAt, 'Vazio e marcado como pago: fica a data de hoje.'),
       field('wa-bm-note', 'Observação (aparece no recibo)', f.note),
@@ -292,15 +294,29 @@
         ]),
       ];
       if (pay.pixCode) {
-        pixRows.push(h('div', { class: 'wa-bm-pay-row' }, [
-          h('div', null, [
-            h('span', { class: 'wa-bm-pay-label', text: 'Pix copia e cola' }),
-            h('strong', { class: 'wa-bm-pay-value', text: money(pay.pixAmountCents) + (data.openPeriod ? ' · ' + monthLabel(data.openPeriod) : '') }),
-            h('span', { class: 'wa-bm-pay-meta', text: 'Já vem com o valor em aberto. No app do banco: Pix > Pix copia e cola.' }),
+        var valueText = pay.pixAmountCents ? money(pay.pixAmountCents) + (pay.pixPeriod ? ' · ' + monthLabel(pay.pixPeriod) : '') : 'Valor digitado no app';
+        var why = pay.pixReason === 'plan'
+          ? 'Mensalidade do plano ' + (pay.planName || '') + '.'
+          : pay.pixReason === 'open'
+            ? 'Valor em aberto.'
+            : 'Nada em aberto agora: o código leva só a chave e o valor é digitado no app do banco.';
+        pixRows.push(h('div', { class: 'wa-bm-pay-row wa-bm-pay-qrrow' }, [
+          pay.pixQr
+            ? h('figure', { class: 'wa-bm-pay-qr' }, [
+                h('img', { src: pay.pixQr, width: '168', height: '168', alt: 'QR Code do Pix' + (pay.pixAmountCents ? ' de ' + money(pay.pixAmountCents) : '') + ' para ' + (pay.pix.holder || 'o recebedor') }),
+              ])
+            : null,
+          h('div', { class: 'wa-bm-pay-qrtext' }, [
+            h('span', { class: 'wa-bm-pay-label', text: 'QR Code e Pix copia e cola' }),
+            h('strong', { class: 'wa-bm-pay-value', text: valueText }),
+            h('span', { class: 'wa-bm-pay-meta', text: why }),
+            h('span', { class: 'wa-bm-pay-meta', text: 'No app do banco: Pix > Ler QR Code, ou Pix > Pix copia e cola.' }),
             h('code', { class: 'wa-bm-pay-code', text: pay.pixCode }),
+            h('div', null, [copyButton('Copiar código', pay.pixCode, status)]),
           ]),
-          copyButton('Copiar código', pay.pixCode, status),
         ]));
+      } else if (!isClient() && pay.pixMissing && pay.pixMissing.length) {
+        pixRows.push(h('p', { class: 'wa-bm-pay-meta', text: 'O QR Code precisa de ' + pay.pixMissing.join(' e ') + ' no servidor.' }));
       }
       blocks.push(h('div', { class: 'wa-bm-pay-block' }, [h('h3', { class: 'wa-bm-pay-h', text: 'Pix' })].concat(pixRows)));
     }
@@ -322,8 +338,8 @@
       h('div', { class: 'wa-bm-card-head' }, [h('div', null, [
         h('h2', { id: 'wa-bm-pay-title', class: 'wa-bm-card-title', text: 'Como pagar' }),
         h('p', { class: 'wa-bm-muted', text: isClient()
-          ? 'O pagamento é conferido manualmente. Quando for registrado, o recibo aparece no histórico abaixo.'
-          : 'É isto que o cliente vê na área dele (módulo Plano). O código Pix já vem com o valor em aberto.' }),
+          ? 'Pague pelo QR Code, pelo Pix copia e cola ou por transferência. O pagamento é conferido manualmente e o recibo aparece no histórico abaixo.'
+          : 'É isto que o cliente vê na área dele (módulo Plano). O QR Code leva o valor em aberto ou, sem lançamento no mês, a mensalidade do plano.' }),
       ])]),
       h('div', { class: 'wa-bm-pay-body' }, blocks),
       status,
@@ -430,6 +446,7 @@
 
     ctx.reload = function () {
       request('GET', '/usage/billing/' + encodeURIComponent(ctx.name)).then(function (data) {
+        ctx.data = data || {};
         live.textContent = '';
         var provider = (data && data.provider) || { configured: false, missing: [] };
         if (!isClient() && !provider.configured) {

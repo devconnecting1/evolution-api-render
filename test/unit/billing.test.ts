@@ -2,6 +2,8 @@ import '../helpers/setup';
 import '@exceptions';
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, test } from 'node:test';
 
 import {
@@ -13,10 +15,12 @@ import {
   oldestOpenPeriod,
   paymentView,
   pixCode,
+  pixQrDataUrl,
   providerView,
   validateBillingInput,
 } from '@api/services/billing.service';
 import { clientRouteAllowed, normalizeClientPath } from '@utils/client-access';
+import { PLAN_PRICES_BRL } from '@utils/usageLimits';
 
 const NAME = 'Loja Exemplo';
 const INST = 'inst-1';
@@ -284,8 +288,15 @@ describe('billing: como o cliente paga (Pix e transferência)', () => {
       { PIX_KEY: '529.982.247-25', PROVIDER_NAME: 'X', PROVIDER_CITY: 'Rio' },
       { cents: 0, period: null },
     );
-    assert.equal(none.pixCode, null);
+    // sem valor o código continua válido: o cliente digita o valor no app do banco
+    assert.ok(none.pixCode && !none.pixCode.includes('5406'), 'sem campo de valor');
+    assert.ok((none.pixCode as string).includes('0503***'), 'sem identificador');
     assert.equal(none.pixAmountCents, 0);
+    assert.equal(none.pixReason, null);
+    assert.deepEqual(paymentView({ PIX_KEY: '529.982.247-25' }, { cents: 100, period: '2026-11' }).pixMissing, [
+      'BILLING_PROVIDER_NAME',
+      'BILLING_PROVIDER_CITY',
+    ]);
     const bad = paymentView({ PIX_KEY: '123' }, { cents: 100, period: '2026-11' });
     assert.equal(bad.pix, null);
     assert.equal(bad.invalidPixKey, true);
@@ -312,5 +323,59 @@ describe('billing: como o cliente paga (Pix e transferência)', () => {
     });
     assert.equal(paymentView({ BANK_NAME: 'Banco Exemplo' }, { cents: 0, period: null }).bank, null);
     assert.equal(paymentView(undefined, { cents: 0, period: null }).configured, false);
+  });
+});
+
+describe('billing: valor do plano e QR Code do Pix', () => {
+  const PROVIDER = {
+    PROVIDER_NAME: 'Prestador Exemplo',
+    PROVIDER_DOC: '529.982.247-25',
+    PROVIDER_CITY: 'Rio de Janeiro',
+    PIX_KEY: '529.982.247-25',
+  };
+
+  test('os preços dos planos são os mesmos da página inicial e do README comercial', () => {
+    const root = join(__dirname, '..', '..');
+    const landing = readFileSync(join(root, 'manager', 'dist', 'landing', 'index.html'), 'utf8');
+    const commercial = readFileSync(join(root, 'readmes', 'README-COMERCIAL.md'), 'utf8');
+    const brl = (n: number) => 'R$ ' + n.toLocaleString('pt-BR');
+    for (const [plan, price] of Object.entries(PLAN_PRICES_BRL)) {
+      assert.ok(landing.includes('<strong>' + brl(price) + '</strong><span>/mês</span>'), `${plan} na página inicial`);
+      assert.ok(commercial.includes('**' + brl(price) + '**'), `${plan} no README comercial`);
+    }
+  });
+
+  test('sem cobrança no mês, o código usa a mensalidade do plano; com o mês lançado, usa o que está em aberto', async () => {
+    const { svc } = service(fakePrisma(), PROVIDER);
+    const empty = await svc.list(INST, { name: 'Essencial', priceCents: 43700 });
+    assert.equal(empty.payment.pixReason, 'plan');
+    assert.equal(empty.payment.pixAmountCents, 43700);
+    assert.equal(empty.payment.pixPeriod, '2026-11');
+    assert.equal(empty.payment.planName, 'Essencial');
+    assert.ok((empty.payment.pixCode as string).includes('0513WHATSAI202611'));
+    assert.match(empty.payment.pixQr as string, /^data:image\/svg\+xml;base64,/);
+    const svg = Buffer.from((empty.payment.pixQr as string).split(',')[1], 'base64').toString('utf8');
+    assert.match(svg, /^<svg[^>]*viewBox/);
+    assert.ok(!/<script|on\w+=/i.test(svg), 'só desenho, sem script');
+
+    await svc.create(INST, { period: '2026-11', amountCents: 50000, status: 'pendente' });
+    const open = await svc.list(INST, { name: 'Essencial', priceCents: 43700 });
+    assert.equal(open.payment.pixReason, 'open');
+    assert.equal(open.payment.pixAmountCents, 50000);
+    assert.equal(open.payment.planName, null);
+
+    const paid = service(fakePrisma(), PROVIDER).svc;
+    await paid.create(INST, { period: '2026-11', amountCents: 43700, status: 'pago' });
+    const done = await paid.list(INST, { name: 'Essencial', priceCents: 43700 });
+    assert.equal(done.payment.pixReason, null);
+    assert.equal(done.payment.pixAmountCents, 0);
+    assert.ok(done.payment.pixQr, 'QR sem valor continua disponível');
+
+    const custom = await service(fakePrisma(), PROVIDER).svc.list(INST, { name: 'Personalizado', priceCents: null });
+    assert.equal(custom.payment.pixReason, null);
+  });
+
+  test('sem chave não há QR', async () => {
+    assert.equal(await pixQrDataUrl(null), null);
   });
 });

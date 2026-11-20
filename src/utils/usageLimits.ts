@@ -56,6 +56,12 @@ export const HOURS_MODES: HoursMode[] = ['always', 'inside', 'outside'];
 export const PLAN_NAMES = ['Essencial', 'Profissional', 'Premium', 'Personalizado'] as const;
 /** Monthly AI answers included in each plan (readmes/README-COMERCIAL.md). */
 export const PLAN_PRESETS: Record<string, number> = { Essencial: 2000, Profissional: 5000, Premium: 10000 };
+/**
+ * Monthly price of each plan in BRL, the same as the landing page ("Planos") and readmes/README-COMERCIAL.md; used as
+ * the default amount of a monthly charge. "Personalizado" has no list price. test/unit/billing.test.ts keeps the three
+ * in sync.
+ */
+export const PLAN_PRICES_BRL: Record<string, number> = { Essencial: 437, Profissional: 767, Premium: 1427 };
 /** Overage is billed in blocks of 1,000 answers (R$ 49 each). */
 export const OVERAGE_BLOCK = 1000;
 export const OVERAGE_BLOCK_PRICE_BRL = 49;

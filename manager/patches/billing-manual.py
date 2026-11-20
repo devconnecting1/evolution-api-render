@@ -28,7 +28,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 BUNDLE = os.path.join(ROOT, 'manager', 'dist', 'assets', 'index-b29a5d7a.js')
 INDEX = os.path.join(ROOT, 'manager', 'dist', 'index.html')
 ASSETS = os.path.join(ROOT, 'manager', 'dist', 'assets')
-ASSET_VERSION = '2'
+ASSET_VERSION = '3'
 MIN_CACHE_VERSION = 78
 SCRIPT_TAG = '/assets/index-b29a5d7a.js?v='
 ANCHOR = "className:'wc-panel',role:'tabpanel',id:'wc-panel-cobranca'"

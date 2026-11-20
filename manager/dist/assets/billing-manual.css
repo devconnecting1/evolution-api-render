@@ -768,3 +768,47 @@
   flex: none;
   white-space: nowrap;
 }
+
+/* QR Code do Pix */
+.wa-bm-pay-qrrow {
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.wa-bm-pay-qr {
+  flex: none;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: #ffffff;
+  line-height: 0;
+}
+
+.wa-bm-pay-qr img {
+  display: block;
+  width: 168px;
+  height: 168px;
+  image-rendering: pixelated;
+}
+
+.wa-bm-pay-qrtext {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.wa-bm-pay-qrtext > div {
+  margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+  .wa-bm-pay-qrrow {
+    align-items: center;
+  }
+
+  .wa-bm-pay-qr img {
+    width: 200px;
+    height: 200px;
+  }
+}
