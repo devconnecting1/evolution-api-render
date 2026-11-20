@@ -23,7 +23,7 @@
     <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2?v=1" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/geist.css?v=3" />
     <link rel="stylesheet" href="/assets/tokens.css?v=3" />
-    <link rel="stylesheet" href="/status/status.css?v=8" />
+    <link rel="stylesheet" href="/status/status.css?v=9" />
     <script src="/status/theme.js?v=1"></script>
   </head>
   <body class="st-page">
@@ -79,10 +79,32 @@
 
         <div class="st-alert" id="st-alert" role="alert" hidden></div>
 
-        <div class="st-toolbar" role="group" aria-label="Período do histórico">
+        <div class="st-toolbar" role="group" aria-label="Visualização do histórico">
           <button type="button" class="st-range-btn" data-range="7d" aria-pressed="true">7 dias</button>
           <button type="button" class="st-range-btn" data-range="90d" aria-pressed="false">90 dias</button>
+          <button type="button" class="st-range-btn" data-range="cal" aria-pressed="false">Calendário</button>
         </div>
+
+        <section class="st-calendar" id="st-calendar" aria-labelledby="st-cal-title" hidden>
+          <h2 class="st-sr-only" id="st-cal-title">Calendário de disponibilidade</h2>
+          <div class="st-cal-controls">
+            <label class="st-cal-field" for="st-cal-component">
+              <span>Componente</span>
+              <select id="st-cal-component"></select>
+            </label>
+            <div class="st-cal-nav">
+              <button type="button" class="st-cal-step" id="st-cal-prev" aria-label="Mês anterior">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </button>
+              <p class="st-cal-period" id="st-cal-period" aria-live="polite"></p>
+              <button type="button" class="st-cal-step" id="st-cal-next" aria-label="Próximo mês">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </button>
+            </div>
+          </div>
+          <div class="st-cal-months" id="st-cal-months"></div>
+          <div class="st-bar-detail st-cal-detail" id="st-cal-detail" aria-live="polite" hidden></div>
+        </section>
 
         <section class="st-groups" id="st-groups" aria-live="polite" aria-busy="true" aria-label="Componentes do WhatsAI">
           <div class="st-skeleton-group" aria-hidden="true">
@@ -105,7 +127,12 @@
         <section class="st-incidents" aria-labelledby="st-incidents-title">
           <div class="st-section-head">
             <h2 id="st-incidents-title">Incidentes recentes</h2>
-            <span>Últimos 90 dias</span>
+            <span id="st-incidents-count">Últimos 90 dias</span>
+          </div>
+          <div class="st-inc-filter" role="group" aria-label="Filtrar incidentes" id="st-inc-filter" hidden>
+            <button type="button" class="st-range-btn" data-inc-filter="all" aria-pressed="true">Todos</button>
+            <button type="button" class="st-range-btn" data-inc-filter="problems" aria-pressed="false">Falhas</button>
+            <button type="button" class="st-range-btn" data-inc-filter="maintenance" aria-pressed="false">Manutenções</button>
           </div>
           <div class="st-incident-list" id="st-incidents" aria-live="polite">
             <p class="st-empty">Carregando incidentes…</p>
@@ -204,6 +231,6 @@
     </footer>
 
     <noscript>Ative o JavaScript para ver o status atualizado.</noscript>
-    <script src="/status/status.js?v=12" defer></script>
+    <script src="/status/status.js?v=13" defer></script>
   </body>
 </html>
