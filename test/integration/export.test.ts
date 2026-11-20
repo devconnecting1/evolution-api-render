@@ -239,7 +239,8 @@ describe('export and billing (integration)', { skip: SKIP_INTEGRATION }, () => {
     const body = (await response.json()) as any;
     assert.equal(body.instance, a.name);
     assert.equal(body.source, 'manual');
-    assert.deepEqual(body.plan, { name: 'Essencial', monthlyResponses: 2000, configured: true });
+    // priceCents: the plan's monthly price (landing page), the default amount of the Pix code
+    assert.deepEqual(body.plan, { name: 'Essencial', monthlyResponses: 2000, configured: true, priceCents: 43700 });
     assert.equal(body.nextDueDate, null);
     assert.equal(body.openPeriod, null);
     assert.equal(body.paymentMethod, null);
@@ -247,5 +248,9 @@ describe('export and billing (integration)', { skip: SKIP_INTEGRATION }, () => {
     assert.deepEqual(body.history, []);
     assert.equal(body.provider.configured, false);
     assert.deepEqual(body.provider.missing, ['BILLING_PROVIDER_NAME', 'BILLING_PROVIDER_DOC', 'BILLING_PROVIDER_CITY']);
+    // no Pix key or bank in the test server: nothing to pay with, no QR
+    assert.equal(body.payment.configured, false);
+    assert.equal(body.payment.pixCode, null);
+    assert.equal(body.payment.pixQr, null);
   });
 });

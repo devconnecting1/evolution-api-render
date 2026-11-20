@@ -2,12 +2,19 @@
  * Fakes shared by the unit and integration tests: a WhatsApp channel instance (what `waMonitor.waInstances[name]`
  * holds), an OpenAI client and message builders. No network is ever used.
  */
+import { randomBytes } from 'node:crypto';
+
 import { registerBotMessageId } from '@utils/botMessageRegistry';
 import OpenAI from 'openai';
 
 let sequence = 0;
+/**
+ * Unique id for test rows. node --test runs each file in its own process, each with its own `sequence`, so time plus
+ * sequence alone repeated across files created in the same millisecond (Instance_name_key collisions in CI); the
+ * process id and a random part keep ids apart across processes.
+ */
 export const nextId = (prefix = 'ID') =>
-  `${prefix}${Date.now().toString(36)}${(++sequence).toString(36)}`.toUpperCase();
+  `${prefix}${Date.now().toString(36)}${process.pid.toString(36)}${randomBytes(3).toString('hex')}${(++sequence).toString(36)}`.toUpperCase();
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
