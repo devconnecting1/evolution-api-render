@@ -336,7 +336,18 @@ export type Openai = { ENABLED: boolean; API_KEY_GLOBAL?: string };
 /** "Processos": DataJud public key (default: the current one published by the CNJ), optional DJEN relay, ticker. */
 export type Processos = { DATAJUD_API_KEY: string; DATAJUD_BASE_URL?: string; DJEN_BASE_URL?: string; TICKER: boolean };
 /** Dados do prestador (pessoa física) que saem no recibo de cobrança; nunca no código. */
-export type Billing = { PROVIDER_NAME?: string; PROVIDER_DOC?: string; PROVIDER_CITY?: string };
+export type Billing = {
+  PROVIDER_NAME?: string;
+  PROVIDER_DOC?: string;
+  PROVIDER_CITY?: string;
+  /** Chave Pix que o cliente usa para pagar (CPF, CNPJ, e-mail, telefone ou chave aleatória). */
+  PIX_KEY?: string;
+  BANK_NAME?: string;
+  BANK_CODE?: string;
+  BANK_BRANCH?: string;
+  BANK_ACCOUNT?: string;
+  BANK_ACCOUNT_TYPE?: string;
+};
 export type Dify = { ENABLED: boolean };
 export type N8n = { ENABLED: boolean };
 export type Evoai = { ENABLED: boolean };
@@ -848,6 +859,12 @@ export class ConfigService {
         PROVIDER_NAME: process.env?.BILLING_PROVIDER_NAME || undefined,
         PROVIDER_DOC: process.env?.BILLING_PROVIDER_DOC || undefined,
         PROVIDER_CITY: process.env?.BILLING_PROVIDER_CITY || undefined,
+        PIX_KEY: process.env?.BILLING_PIX_KEY || undefined,
+        BANK_NAME: process.env?.BILLING_BANK_NAME || undefined,
+        BANK_CODE: process.env?.BILLING_BANK_CODE || undefined,
+        BANK_BRANCH: process.env?.BILLING_BANK_BRANCH || undefined,
+        BANK_ACCOUNT: process.env?.BILLING_BANK_ACCOUNT || undefined,
+        BANK_ACCOUNT_TYPE: process.env?.BILLING_BANK_ACCOUNT_TYPE || undefined,
       },
       DIFY: {
         ENABLED: process.env?.DIFY_ENABLED === 'true',

@@ -2,17 +2,25 @@ import '../helpers/setup';
 import '@exceptions';
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, test } from 'node:test';
 
 import {
   BillingNotFoundError,
   BillingService,
   BillingValidationError,
+  crc16,
+  normalizePixKey,
   oldestOpenPeriod,
+  paymentView,
+  pixCode,
+  pixQrDataUrl,
   providerView,
   validateBillingInput,
 } from '@api/services/billing.service';
 import { clientRouteAllowed, normalizeClientPath } from '@utils/client-access';
+import { PLAN_PRICES_BRL } from '@utils/usageLimits';
 
 const NAME = 'Loja Exemplo';
 const INST = 'inst-1';
@@ -228,5 +236,146 @@ describe('billing: client access', () => {
 
   test('without the module "plano" the client does not see the billing', () => {
     assert.equal(allowed('GET', url, ['conversas', 'leads', 'conexao']), false);
+  });
+});
+
+describe('billing: como o cliente paga (Pix e transferência)', () => {
+  test('Pix copia e cola igual ao exemplo do manual do BR Code do Banco Central', () => {
+    assert.equal(
+      pixCode({ key: '123e4567-e12b-12d1-a456-426655440000', name: 'Fulano de Tal', city: 'BRASILIA' }),
+      '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-4266554400005204000053039865802BR5913Fulano de Tal6008BRASILIA62070503***63041D3D',
+    );
+    assert.equal(crc16('123456789'), '29B1');
+  });
+
+  test('normaliza a chave como o DICT guarda e recusa o que não é chave', () => {
+    assert.deepEqual(normalizePixKey('529.982.247-25'), { key: '52998224725', type: 'cpf' });
+    assert.equal(normalizePixKey('111.111.111-11'), null);
+    assert.equal(normalizePixKey('529.982.247-24'), null);
+    assert.deepEqual(normalizePixKey('11.222.333/0001-81'), { key: '11222333000181', type: 'cnpj' });
+    assert.deepEqual(normalizePixKey('+55 (21) 99999-0000'), { key: '+5521999990000', type: 'phone' });
+    assert.deepEqual(normalizePixKey('Pessoa@Exemplo.com'), { key: 'pessoa@exemplo.com', type: 'email' });
+    assert.equal(normalizePixKey(''), null);
+    assert.equal(normalizePixKey('qualquer coisa'), null);
+  });
+
+  test('código com valor em aberto, mês no txid, nome e cidade sem acentos e CRC válido', () => {
+    const view = paymentView(
+      {
+        PROVIDER_NAME: 'Prestador Exemplo',
+        PROVIDER_DOC: '529.982.247-25',
+        PROVIDER_CITY: 'Niterói',
+        PIX_KEY: '529.982.247-25',
+      },
+      { cents: 43700, period: '2026-11' },
+    );
+    assert.equal(view.configured, true);
+    assert.deepEqual(view.pix, { key: '52998224725', type: 'cpf', holder: 'Prestador Exemplo' });
+    assert.equal(view.pixAmountCents, 43700);
+    const code = view.pixCode as string;
+    assert.ok(code.includes('0111' + '52998224725'), 'chave na conta do recebedor');
+    assert.ok(code.includes('5406437.00'), 'valor');
+    assert.ok(code.includes('5917Prestador Exemplo'), 'nome');
+    assert.ok(code.includes('6007Niteroi'), 'cidade sem acento');
+    assert.ok(code.includes('0513WHATSAI202611'), 'mês no txid');
+    assert.equal(code.slice(-4), crc16(code.slice(0, -4)));
+    assert.equal(view.bank, null);
+    assert.equal(view.invalidPixKey, false);
+  });
+
+  test('sem nada em aberto não há código; chave inválida é sinalizada; transferência pede instituição e conta', () => {
+    const none = paymentView(
+      { PIX_KEY: '529.982.247-25', PROVIDER_NAME: 'X', PROVIDER_CITY: 'Rio' },
+      { cents: 0, period: null },
+    );
+    // sem valor o código continua válido: o cliente digita o valor no app do banco
+    assert.ok(none.pixCode && !none.pixCode.includes('5406'), 'sem campo de valor');
+    assert.ok((none.pixCode as string).includes('0503***'), 'sem identificador');
+    assert.equal(none.pixAmountCents, 0);
+    assert.equal(none.pixReason, null);
+    assert.deepEqual(paymentView({ PIX_KEY: '529.982.247-25' }, { cents: 100, period: '2026-11' }).pixMissing, [
+      'BILLING_PROVIDER_NAME',
+      'BILLING_PROVIDER_CITY',
+    ]);
+    const bad = paymentView({ PIX_KEY: '123' }, { cents: 100, period: '2026-11' });
+    assert.equal(bad.pix, null);
+    assert.equal(bad.invalidPixKey, true);
+    assert.equal(bad.configured, false);
+    const bankOnly = paymentView(
+      {
+        BANK_NAME: 'Banco Exemplo',
+        BANK_ACCOUNT: '12345-6',
+        BANK_BRANCH: '0001',
+        PROVIDER_NAME: 'Prestador',
+        PROVIDER_DOC: '000',
+      },
+      { cents: 100, period: '2026-11' },
+    );
+    assert.equal(bankOnly.configured, true);
+    assert.deepEqual(bankOnly.bank, {
+      name: 'Banco Exemplo',
+      code: null,
+      branch: '0001',
+      account: '12345-6',
+      accountType: null,
+      holder: 'Prestador',
+      holderDoc: '000',
+    });
+    assert.equal(paymentView({ BANK_NAME: 'Banco Exemplo' }, { cents: 0, period: null }).bank, null);
+    assert.equal(paymentView(undefined, { cents: 0, period: null }).configured, false);
+  });
+});
+
+describe('billing: valor do plano e QR Code do Pix', () => {
+  const PROVIDER = {
+    PROVIDER_NAME: 'Prestador Exemplo',
+    PROVIDER_DOC: '529.982.247-25',
+    PROVIDER_CITY: 'Rio de Janeiro',
+    PIX_KEY: '529.982.247-25',
+  };
+
+  test('os preços dos planos são os mesmos da página inicial e do README comercial', () => {
+    const root = join(__dirname, '..', '..');
+    const landing = readFileSync(join(root, 'manager', 'dist', 'landing', 'index.html'), 'utf8');
+    const commercial = readFileSync(join(root, 'readmes', 'README-COMERCIAL.md'), 'utf8');
+    const brl = (n: number) => 'R$ ' + n.toLocaleString('pt-BR');
+    for (const [plan, price] of Object.entries(PLAN_PRICES_BRL)) {
+      assert.ok(landing.includes('<strong>' + brl(price) + '</strong><span>/mês</span>'), `${plan} na página inicial`);
+      assert.ok(commercial.includes('**' + brl(price) + '**'), `${plan} no README comercial`);
+    }
+  });
+
+  test('sem cobrança no mês, o código usa a mensalidade do plano; com o mês lançado, usa o que está em aberto', async () => {
+    const { svc } = service(fakePrisma(), PROVIDER);
+    const empty = await svc.list(INST, { name: 'Essencial', priceCents: 43700 });
+    assert.equal(empty.payment.pixReason, 'plan');
+    assert.equal(empty.payment.pixAmountCents, 43700);
+    assert.equal(empty.payment.pixPeriod, '2026-11');
+    assert.equal(empty.payment.planName, 'Essencial');
+    assert.ok((empty.payment.pixCode as string).includes('0513WHATSAI202611'));
+    assert.match(empty.payment.pixQr as string, /^data:image\/svg\+xml;base64,/);
+    const svg = Buffer.from((empty.payment.pixQr as string).split(',')[1], 'base64').toString('utf8');
+    assert.match(svg, /^<svg[^>]*viewBox/);
+    assert.ok(!/<script|on\w+=/i.test(svg), 'só desenho, sem script');
+
+    await svc.create(INST, { period: '2026-11', amountCents: 50000, status: 'pendente' });
+    const open = await svc.list(INST, { name: 'Essencial', priceCents: 43700 });
+    assert.equal(open.payment.pixReason, 'open');
+    assert.equal(open.payment.pixAmountCents, 50000);
+    assert.equal(open.payment.planName, null);
+
+    const paid = service(fakePrisma(), PROVIDER).svc;
+    await paid.create(INST, { period: '2026-11', amountCents: 43700, status: 'pago' });
+    const done = await paid.list(INST, { name: 'Essencial', priceCents: 43700 });
+    assert.equal(done.payment.pixReason, null);
+    assert.equal(done.payment.pixAmountCents, 0);
+    assert.ok(done.payment.pixQr, 'QR sem valor continua disponível');
+
+    const custom = await service(fakePrisma(), PROVIDER).svc.list(INST, { name: 'Personalizado', priceCents: null });
+    assert.equal(custom.payment.pixReason, null);
+  });
+
+  test('sem chave não há QR', async () => {
+    assert.equal(await pixQrDataUrl(null), null);
   });
 });

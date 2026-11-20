@@ -8,7 +8,7 @@ import {
 } from '@api/services/billing.service';
 import { UsageService, UsageValidationError } from '@api/services/usage.service';
 import { BadRequestException, NotFoundException } from '@exceptions';
-import { OVERAGE_BLOCK, OVERAGE_BLOCK_PRICE_BRL, PLAN_PRESETS } from '@utils/usageLimits';
+import { OVERAGE_BLOCK, OVERAGE_BLOCK_PRICE_BRL, PLAN_PRESETS, PLAN_PRICES_BRL } from '@utils/usageLimits';
 
 /** "Plano e limites" (GET/POST /usage/limits/:instanceName, GET /usage/summary/:instanceName). */
 export class UsageController {
@@ -64,7 +64,8 @@ export class UsageController {
     const row = await this.instanceOf(instance);
     const stored = await this.usage.getLimits(row.id);
     const limits = stored ?? (await this.usage.getEffectiveLimits(row.id));
-    const billing = await this.billing.list(row.id);
+    const price = limits.planName ? PLAN_PRICES_BRL[limits.planName] : undefined;
+    const billing = await this.billing.list(row.id, { name: limits.planName, priceCents: price ? price * 100 : null });
 
     return {
       instance: row.name,
@@ -77,6 +78,8 @@ export class UsageController {
         name: limits.planName,
         monthlyResponses: limits.monthlyResponses,
         configured: stored !== null,
+        /** Monthly price of the plan (landing page); null for "Personalizado" or no plan. */
+        priceCents: price ? price * 100 : null,
       },
       /** First day of the oldest open period; null when everything is paid. */
       nextDueDate: billing.nextDueDate,
@@ -84,6 +87,7 @@ export class UsageController {
       paymentMethod: billing.paymentMethod,
       totals: billing.totals,
       provider: billing.provider,
+      payment: billing.payment,
       history: billing.entries.map((entry: any) => ({
         id: entry.id,
         period: entry.period,

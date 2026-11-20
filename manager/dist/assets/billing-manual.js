@@ -135,11 +135,13 @@
 
   function editDialog(ctx, entry) {
     var isNew = !entry;
+    var plan = (ctx.data && ctx.data.plan) || {};
+    var planPrice = plan.priceCents || 0;
     var today = new Date();
     var month = entry ? entry.period : today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
     var f = {
       period: h('input', { type: 'month', id: 'wa-bm-period', required: true, value: month }),
-      amount: h('input', { type: 'text', id: 'wa-bm-amount', inputmode: 'decimal', required: true, placeholder: '437,00', value: entry ? (entry.amountCents / 100).toFixed(2).replace('.', ',') : '' }),
+      amount: h('input', { type: 'text', id: 'wa-bm-amount', inputmode: 'decimal', required: true, placeholder: '437,00', value: entry ? (entry.amountCents / 100).toFixed(2).replace('.', ',') : planPrice ? (planPrice / 100).toFixed(2).replace('.', ',') : '' }),
       status: h('select', { id: 'wa-bm-status' }, Object.keys(STATUS).map(function (k) { return h('option', { value: k, text: STATUS[k][0], selected: (entry ? entry.status : 'pendente') === k }); })),
       method: h('select', { id: 'wa-bm-method' }, [h('option', { value: '', text: 'Não informar' })].concat(Object.keys(METHODS).map(function (k) { return h('option', { value: k, text: METHODS[k], selected: entry && entry.method === k }); }))),
       paidAt: h('input', { type: 'date', id: 'wa-bm-paid', value: entry && entry.paidAt ? String(entry.paidAt).slice(0, 10) : '' }),
@@ -150,7 +152,7 @@
       return h('div', { class: 'wa-bm-field' }, [h('label', { for: id, text: label }), input, hint ? h('p', { class: 'wa-bm-hint', text: hint }) : null]);
     };
     var form = h('form', { class: 'wa-bm-form', novalidate: true }, [
-      h('div', { class: 'wa-bm-row' }, [field('wa-bm-period', 'Mês de referência', f.period), field('wa-bm-amount', 'Valor (R$)', f.amount)]),
+      h('div', { class: 'wa-bm-row' }, [field('wa-bm-period', 'Mês de referência', f.period), field('wa-bm-amount', 'Valor (R$)', f.amount, isNew && planPrice ? 'Mensalidade do plano ' + plan.name + '. Mude se houver número adicional, excedente ou desconto.' : null)]),
       h('div', { class: 'wa-bm-row' }, [field('wa-bm-status', 'Situação', f.status), field('wa-bm-method', 'Forma de pagamento', f.method)]),
       field('wa-bm-paid', 'Pago em', f.paidAt, 'Vazio e marcado como pago: fica a data de hoje.'),
       field('wa-bm-note', 'Observação (aparece no recibo)', f.note),
@@ -227,6 +229,121 @@
     document.addEventListener('keydown', onKey);
     document.body.appendChild(overlay);
     overlay.querySelector('.wa-bm-primary').focus();
+  }
+
+  // ------------------------------------------------------------------------------------------ como pagar
+  var KEY_LABEL = { cpf: 'CPF', cnpj: 'CNPJ', email: 'e-mail', phone: 'telefone', random: 'chave aleatória' };
+
+  function keyDisplay(pix) {
+    var k = String(pix.key || '');
+    if (pix.type === 'cpf' && k.length === 11) return k.slice(0, 3) + '.' + k.slice(3, 6) + '.' + k.slice(6, 9) + '-' + k.slice(9);
+    if (pix.type === 'cnpj' && k.length === 14) return k.slice(0, 2) + '.' + k.slice(2, 5) + '.' + k.slice(5, 8) + '/' + k.slice(8, 12) + '-' + k.slice(12);
+    return k;
+  }
+
+  /** Copies text and says so next to the button; falls back to a selected field when the clipboard API is blocked. */
+  function copyButton(label, text, status) {
+    var b = button(label, 'wa-bm-ghost wa-bm-sm');
+    b.addEventListener('click', function () {
+      function done(ok) {
+        status.textContent = ok ? 'Copiado.' : 'Não foi possível copiar. Selecione o texto e copie.';
+        setTimeout(function () { if (status.textContent === 'Copiado.') status.textContent = ''; }, 4000);
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallback()); });
+      } else done(fallback());
+      function fallback() {
+        var t = h('textarea', { class: 'wa-bm-copybuf', readonly: true, 'aria-hidden': 'true', tabindex: '-1' });
+        t.value = text;
+        document.body.appendChild(t);
+        t.select();
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+        t.remove();
+        b.focus({ preventScroll: true });
+        return ok;
+      }
+    });
+    return b;
+  }
+
+  function payCard(data) {
+    var pay = data.payment || { configured: false };
+    if (!pay.configured) {
+      if (isClient()) return null;
+      return h('section', { class: 'wa-bm-card wa-bm-pay', 'aria-labelledby': 'wa-bm-pay-title' }, [
+        h('div', { class: 'wa-bm-card-head' }, [h('div', null, [
+          h('h2', { id: 'wa-bm-pay-title', class: 'wa-bm-card-title', text: 'Como pagar' }),
+          h('p', { class: 'wa-bm-muted', text: pay.invalidPixKey
+            ? 'A chave em BILLING_PIX_KEY não é uma chave Pix válida (CPF, CNPJ, e-mail, telefone com +55 ou chave aleatória). Corrija no servidor.'
+            : 'Configure BILLING_PIX_KEY (e, se quiser, BILLING_BANK_NAME, BILLING_BANK_BRANCH e BILLING_BANK_ACCOUNT) no servidor para o cliente ver como pagar na área dele.' }),
+        ])]),
+      ]);
+    }
+    var status = h('p', { class: 'wa-bm-copied', role: 'status', 'aria-live': 'polite' });
+    var blocks = [];
+    if (pay.pix) {
+      var pixRows = [
+        h('div', { class: 'wa-bm-pay-row' }, [
+          h('div', null, [
+            h('span', { class: 'wa-bm-pay-label', text: 'Chave Pix (' + (KEY_LABEL[pay.pix.type] || 'chave') + ')' }),
+            h('strong', { class: 'wa-bm-pay-value', text: keyDisplay(pay.pix) }),
+            pay.pix.holder ? h('span', { class: 'wa-bm-pay-meta', text: 'Recebedor: ' + pay.pix.holder }) : null,
+          ]),
+          copyButton('Copiar chave', pay.pix.key, status),
+        ]),
+      ];
+      if (pay.pixCode) {
+        var valueText = pay.pixAmountCents ? money(pay.pixAmountCents) + (pay.pixPeriod ? ' · ' + monthLabel(pay.pixPeriod) : '') : 'Valor digitado no app';
+        var why = pay.pixReason === 'plan'
+          ? 'Mensalidade do plano ' + (pay.planName || '') + '.'
+          : pay.pixReason === 'open'
+            ? 'Valor em aberto.'
+            : 'Nada em aberto agora: o código leva só a chave e o valor é digitado no app do banco.';
+        pixRows.push(h('div', { class: 'wa-bm-pay-row wa-bm-pay-qrrow' }, [
+          pay.pixQr
+            ? h('figure', { class: 'wa-bm-pay-qr' }, [
+                h('img', { src: pay.pixQr, width: '168', height: '168', alt: 'QR Code do Pix' + (pay.pixAmountCents ? ' de ' + money(pay.pixAmountCents) : '') + ' para ' + (pay.pix.holder || 'o recebedor') }),
+              ])
+            : null,
+          h('div', { class: 'wa-bm-pay-qrtext' }, [
+            h('span', { class: 'wa-bm-pay-label', text: 'QR Code e Pix copia e cola' }),
+            h('strong', { class: 'wa-bm-pay-value', text: valueText }),
+            h('span', { class: 'wa-bm-pay-meta', text: why }),
+            h('span', { class: 'wa-bm-pay-meta', text: 'No app do banco: Pix > Ler QR Code, ou Pix > Pix copia e cola.' }),
+            h('code', { class: 'wa-bm-pay-code', text: pay.pixCode }),
+            h('div', null, [copyButton('Copiar código', pay.pixCode, status)]),
+          ]),
+        ]));
+      } else if (!isClient() && pay.pixMissing && pay.pixMissing.length) {
+        pixRows.push(h('p', { class: 'wa-bm-pay-meta', text: 'O QR Code precisa de ' + pay.pixMissing.join(' e ') + ' no servidor.' }));
+      }
+      blocks.push(h('div', { class: 'wa-bm-pay-block' }, [h('h3', { class: 'wa-bm-pay-h', text: 'Pix' })].concat(pixRows)));
+    }
+    if (pay.bank) {
+      var b = pay.bank;
+      var lines = [
+        ['Instituição', b.name + (b.code ? ' (código ' + b.code + ')' : '')],
+        b.branch ? ['Agência', b.branch] : null,
+        ['Conta', b.account + (b.accountType ? ' · ' + b.accountType : '')],
+        b.holder ? ['Titular', b.holder] : null,
+        b.holderDoc ? ['CPF do titular', b.holderDoc] : null,
+      ].filter(Boolean);
+      blocks.push(h('div', { class: 'wa-bm-pay-block' }, [
+        h('h3', { class: 'wa-bm-pay-h', text: 'Transferência (TED)' }),
+        h('dl', { class: 'wa-bm-pay-list' }, lines.reduce(function (acc, l) { return acc.concat([h('dt', { text: l[0] }), h('dd', { text: l[1] })]); }, [])),
+      ]));
+    }
+    return h('section', { class: 'wa-bm-card wa-bm-pay', 'aria-labelledby': 'wa-bm-pay-title' }, [
+      h('div', { class: 'wa-bm-card-head' }, [h('div', null, [
+        h('h2', { id: 'wa-bm-pay-title', class: 'wa-bm-card-title', text: 'Como pagar' }),
+        h('p', { class: 'wa-bm-muted', text: isClient()
+          ? 'Pague pelo QR Code, pelo Pix copia e cola ou por transferência. O pagamento é conferido manualmente e o recibo aparece no histórico abaixo.'
+          : 'É isto que o cliente vê na área dele (módulo Plano). O QR Code leva o valor em aberto ou, sem lançamento no mês, a mensalidade do plano.' }),
+      ])]),
+      h('div', { class: 'wa-bm-pay-body' }, blocks),
+      status,
+    ]);
   }
 
   // ------------------------------------------------------------------------------------------ sections
@@ -329,12 +446,15 @@
 
     ctx.reload = function () {
       request('GET', '/usage/billing/' + encodeURIComponent(ctx.name)).then(function (data) {
+        ctx.data = data || {};
         live.textContent = '';
         var provider = (data && data.provider) || { configured: false, missing: [] };
         if (!isClient() && !provider.configured) {
           live.appendChild(h('p', { class: 'wa-bm-note', text: 'Os recibos saem sem os seus dados até você configurar ' + provider.missing.join(', ') + ' no servidor.' }));
         }
         live.appendChild(summary(data || {}));
+        var pay = payCard(data || {});
+        if (pay) live.appendChild(pay);
         live.appendChild(historyTable(ctx, data || {}));
         body.setAttribute('aria-busy', 'false');
       }, function (e) {

@@ -644,3 +644,171 @@
     margin: 18mm;
   }
 }
+
+/* Como pagar: Pix (chave e copia e cola com o valor em aberto) e transferência */
+.wa-bm-pay-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0;
+}
+
+.wa-bm-pay-block {
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--m-border);
+}
+
+.wa-bm-pay-block + .wa-bm-pay-block {
+  border-left: 1px solid var(--m-border);
+}
+
+.wa-bm-pay-h {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--m-text);
+}
+
+.wa-bm-pay-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.wa-bm-pay-row + .wa-bm-pay-row {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--m-border);
+}
+
+.wa-bm-pay-row > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.wa-bm-pay-label,
+.wa-bm-pay-meta {
+  font-size: 12px;
+  color: var(--m-text-2);
+}
+
+.wa-bm-pay-meta {
+  color: var(--m-text-3);
+}
+
+.wa-bm-pay-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--m-text);
+  overflow-wrap: anywhere;
+}
+
+.wa-bm-pay-code {
+  display: block;
+  max-height: 3.2em;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--m-text-3);
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.wa-bm-pay-list {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.wa-bm-pay-list dt {
+  color: var(--m-text-2);
+}
+
+.wa-bm-pay-list dd {
+  margin: 0;
+  color: var(--m-text);
+  overflow-wrap: anywhere;
+}
+
+.wa-bm-copied {
+  min-height: 0;
+  margin: 0;
+  padding: 0 16px;
+  font-size: 12px;
+  color: var(--m-text-2);
+}
+
+.wa-bm-copied:not(:empty) {
+  padding: 0 16px 12px;
+}
+
+.wa-bm-copybuf {
+  position: fixed;
+  top: -1000px;
+  left: -1000px;
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .wa-bm-pay-block + .wa-bm-pay-block {
+    border-left: 0;
+  }
+
+  .wa-bm-pay-row {
+    flex-direction: column;
+  }
+}
+
+.wa-bm-pay-row .wa-bm-btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* QR Code do Pix */
+.wa-bm-pay-qrrow {
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.wa-bm-pay-qr {
+  flex: none;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-field);
+  background: #ffffff;
+  line-height: 0;
+}
+
+.wa-bm-pay-qr img {
+  display: block;
+  width: 168px;
+  height: 168px;
+  image-rendering: pixelated;
+}
+
+.wa-bm-pay-qrtext {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.wa-bm-pay-qrtext > div {
+  margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+  .wa-bm-pay-qrrow {
+    align-items: center;
+  }
+
+  .wa-bm-pay-qr img {
+    width: 200px;
+    height: 200px;
+  }
+}
