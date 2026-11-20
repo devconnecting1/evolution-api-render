@@ -21,6 +21,12 @@
   var HISTORY_SLOTS = 14;
   var DAY_MS = 24 * 60 * 60 * 1000;
   var RANGE_KEY = 'whatsai-status-range';
+  var CAL_KEY = 'whatsai-status-calendar';
+  /** Meses mostrados de uma vez no calendario (como o Uptime do GitHub Status). */
+  var CAL_MONTHS = 3;
+  var CAL_DAYS = 90;
+  /** Incidentes mostrados antes de "Mostrar mais". */
+  var INC_PAGE = 8;
 
   var monitorMeta = document.querySelector('meta[name="whatsai-status-monitor"]');
   var MONITOR_URL = monitorMeta && /^https:\/\/[^\s"'<>]+$/.test(monitorMeta.content || '') ? monitorMeta.content.replace(/\/$/, '') : '';
@@ -78,13 +84,32 @@
   var recommendation = document.getElementById('st-recommendation');
   var legendNote = document.getElementById('st-legend-note');
   var rangeButtons = Array.prototype.slice.call(document.querySelectorAll('[data-range]'));
+  var calendarBox = document.getElementById('st-calendar');
+  var calSelect = document.getElementById('st-cal-component');
+  var calPrev = document.getElementById('st-cal-prev');
+  var calNext = document.getElementById('st-cal-next');
+  var calPeriod = document.getElementById('st-cal-period');
+  var calMonths = document.getElementById('st-cal-months');
+  var calDetail = document.getElementById('st-cal-detail');
+  var incCount = document.getElementById('st-incidents-count');
+  var incFilterBox = document.getElementById('st-inc-filter');
+  var incFilterButtons = Array.prototype.slice.call(document.querySelectorAll('[data-inc-filter]'));
 
   var range = '7d';
+  var calComponent = 'api';
   try {
-    if (window.localStorage.getItem(RANGE_KEY) === '90d') range = '90d';
+    var savedRange = window.localStorage.getItem(RANGE_KEY);
+    if (savedRange === '90d' || savedRange === 'cal') range = savedRange;
+    calComponent = window.localStorage.getItem(CAL_KEY) || 'api';
   } catch (error) {
     // preferencia opcional
   }
+  /** 0 = a janela termina no mes atual; 1 = um mes antes, e assim por diante. */
+  var calOffset = 0;
+  var calOptionsKey = '';
+  var incFilter = 'all';
+  var incLimit = INC_PAGE;
+  var lastShown = null;
 
   var lastData = null;
   var lastMonitor = null;
@@ -551,41 +576,374 @@
     }
   }
 
+  function isMaintenance(incident) {
+    return (incident.severity || incident.state) === 'maintenance';
+  }
+
+  function dayHeading(value) {
+    var date = parseDate(value);
+    if (!date) return 'Data indisponível';
+    var today = new Date();
+    var yesterday = new Date(today.getTime() - DAY_MS);
+    var label = date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' }).replace(/\./g, '');
+    if (date.toDateString() === today.toDateString()) return 'Hoje · ' + label;
+    if (date.toDateString() === yesterday.toDateString()) return 'Ontem · ' + label;
+    return label;
+  }
+
+  function incidentRow(incident) {
+    var row = el('article', 'st-incident');
+    var severity = incident.severity || incident.state;
+    row.dataset.state = severity === 'outage' ? 'outage' : severity === 'maintenance' ? 'maintenance' : 'degraded';
+    row.append(el('span', 'st-incident-date', timeLocal(incident.start)));
+
+    var main = el('div', 'st-incident-main');
+    main.append(el('span', 'st-incident-mark', severity === 'maintenance' ? 'i' : '!'));
+    var body = el('div');
+    var head = el('p', 'st-incident-title');
+    var kind = el('span', 'st-incident-type', TYPE_LABEL[incident.type] || 'Incidente');
+    head.append(kind, document.createTextNode(incident.title || 'Incidente'));
+    body.append(head);
+    if (incident.detail) body.append(el('p', 'st-incident-detail', incident.detail));
+    var interval = timeLocal(incident.start) + '–' + (incident.end ? timeLocal(incident.end) : 'agora') + ' (horário local)';
+    var source = incident.external ? ' · registrado pelo monitor externo' : '';
+    body.append(el('p', 'st-incident-meta', (incident.name ? incident.name + ' · ' : '') + interval + source));
+    main.append(body);
+    row.append(main);
+    row.append(el('span', 'st-incident-duration', incident.end ? duration(incident.durationSeconds) : 'em andamento'));
+    return row;
+  }
+
   function renderIncidents(data) {
     incidents.textContent = '';
     if (lastFailed && !data.incidents) {
+      if (incFilterBox) incFilterBox.hidden = true;
       incidents.append(el('p', 'st-empty', 'Não foi possível carregar os incidentes agora.'));
       return;
     }
-    var list = Array.isArray(data.incidents) ? data.incidents : [];
-    if (!list.length) {
+    var all = Array.isArray(data.incidents) ? data.incidents.slice() : [];
+    var problems = all.filter(function (incident) { return !isMaintenance(incident); }).length;
+    var counts = { all: all.length, problems: problems, maintenance: all.length - problems };
+    if (incCount) {
+      incCount.textContent = 'Últimos 90 dias · ' + all.length + (all.length === 1 ? ' registro' : ' registros');
+    }
+    if (incFilterBox) {
+      incFilterBox.hidden = all.length < 2 || !counts.problems || !counts.maintenance;
+      incFilterButtons.forEach(function (button) {
+        var key = button.dataset.incFilter;
+        var name = key === 'problems' ? 'Falhas' : key === 'maintenance' ? 'Manutenções' : 'Todos';
+        button.textContent = name + ' (' + counts[key] + ')';
+        button.setAttribute('aria-pressed', key === incFilter ? 'true' : 'false');
+      });
+      if (incFilterBox.hidden) incFilter = 'all';
+    }
+    if (!all.length) {
       var since = data.coverage && data.coverage.since ? ' desde ' + dateLocal(data.coverage.since) : '';
       incidents.append(el('p', 'st-empty', 'Nenhum incidente registrado' + since + '.'));
       return;
     }
 
-    list.slice(0, 40).forEach(function (incident) {
-      var row = el('article', 'st-incident');
-      var severity = incident.severity || incident.state;
-      row.dataset.state = severity === 'outage' ? 'outage' : severity === 'maintenance' ? 'maintenance' : 'degraded';
-      row.append(el('span', 'st-incident-date', dateLocal(incident.start)));
-
-      var main = el('div', 'st-incident-main');
-      main.append(el('span', 'st-incident-mark', severity === 'maintenance' ? 'i' : '!'));
-      var body = el('div');
-      var head = el('p', 'st-incident-title');
-      var kind = el('span', 'st-incident-type', TYPE_LABEL[incident.type] || 'Incidente');
-      head.append(kind, document.createTextNode(incident.title || 'Incidente'));
-      body.append(head);
-      if (incident.detail) body.append(el('p', 'st-incident-detail', incident.detail));
-      var interval = timeLocal(incident.start) + '–' + (incident.end ? timeLocal(incident.end) : 'agora') + ' (horário local)';
-      var source = incident.external ? ' · registrado pelo monitor externo' : '';
-      body.append(el('p', 'st-incident-meta', (incident.name ? incident.name + ' · ' : '') + interval + source));
-      main.append(body);
-      row.append(main);
-      row.append(el('span', 'st-incident-duration', incident.end ? duration(incident.durationSeconds) : 'em andamento'));
-      incidents.append(row);
+    var list = all.filter(function (incident) {
+      if (incFilter === 'problems') return !isMaintenance(incident);
+      if (incFilter === 'maintenance') return isMaintenance(incident);
+      return true;
     });
+    // Em andamento primeiro; depois do mais recente para o mais antigo
+    list.sort(function (a, b) {
+      var openA = a.end ? 0 : 1;
+      var openB = b.end ? 0 : 1;
+      if (openA !== openB) return openB - openA;
+      return (parseDate(b.start) || 0) - (parseDate(a.start) || 0);
+    });
+
+    var open = list.filter(function (incident) { return !incident.end; });
+    var closed = list.filter(function (incident) { return incident.end; });
+    if (open.length) {
+      var openGroup = el('section', 'st-inc-day');
+      openGroup.dataset.open = 'true';
+      openGroup.append(el('h3', 'st-inc-day-title', 'Em andamento'));
+      open.forEach(function (incident) { openGroup.append(incidentRow(incident)); });
+      incidents.append(openGroup);
+    }
+
+    var visible = closed.slice(0, Math.max(0, incLimit - open.length));
+    var currentDay = '';
+    var group = null;
+    visible.forEach(function (incident) {
+      var date = parseDate(incident.start);
+      var key = date ? date.toDateString() : '?';
+      if (key !== currentDay) {
+        currentDay = key;
+        group = el('section', 'st-inc-day');
+        group.append(el('h3', 'st-inc-day-title', dayHeading(incident.start)));
+        incidents.append(group);
+      }
+      group.append(incidentRow(incident));
+    });
+
+    var hidden = closed.length - visible.length;
+    if (hidden > 0) {
+      var more = el('button', 'st-inc-more', 'Mostrar mais (' + hidden + (hidden === 1 ? ' restante)' : ' restantes)'));
+      more.type = 'button';
+      more.addEventListener('click', function () {
+        var firstNew = visible.length;
+        incLimit += INC_PAGE * 2;
+        renderIncidents(lastShown || data);
+        // leva o foco para o primeiro incidente que apareceu, sem rolar a página
+        var rows = incidents.querySelectorAll('.st-incident');
+        var target = rows[open.length + firstNew];
+        if (target) {
+          target.tabIndex = -1;
+          target.focus({ preventScroll: true });
+        }
+      });
+      incidents.append(more);
+    } else if (!list.length) {
+      incidents.append(el('p', 'st-empty', 'Nenhum registro deste tipo nos últimos 90 dias.'));
+    }
+  }
+
+  // ------------------------------------------------------------------------------------------- calendário
+
+  function utcDayStart(ms) {
+    var date = new Date(ms);
+    return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  }
+
+  function isoDay(ms) {
+    return new Date(ms).toISOString().slice(0, 10);
+  }
+
+  function monthName(year, month) {
+    return new Date(Date.UTC(year, month, 15)).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  }
+
+  function calendarComponents(data) {
+    var out = [];
+    (data.groups || []).forEach(function (group) {
+      (group.components || []).forEach(function (component) {
+        if (component && component.id) out.push({ id: component.id, name: component.name || component.id, group: group.name || '' });
+      });
+    });
+    return out;
+  }
+
+  function fillCalendarSelect(components) {
+    var key = components.map(function (item) { return item.id + ':' + item.name; }).join('|');
+    if (key !== calOptionsKey) {
+      calOptionsKey = key;
+      calSelect.textContent = '';
+      var byGroup = {};
+      var order = [];
+      components.forEach(function (item) {
+        if (!byGroup[item.group]) {
+          byGroup[item.group] = el('optgroup');
+          byGroup[item.group].label = item.group || 'Componentes';
+          order.push(item.group);
+        }
+        var option = el('option', null, item.name);
+        option.value = item.id;
+        byGroup[item.group].append(option);
+      });
+      order.forEach(function (name) { calSelect.append(byGroup[name]); });
+    }
+    if (!components.some(function (item) { return item.id === calComponent; })) {
+      calComponent = components.length ? components[0].id : '';
+    }
+    calSelect.value = calComponent;
+  }
+
+  function incidentsOnDay(data, componentId, dayMs) {
+    var dayEnd = dayMs + DAY_MS;
+    return (Array.isArray(data.incidents) ? data.incidents : []).filter(function (incident) {
+      if (incident.component !== componentId) return false;
+      var start = parseDate(incident.start);
+      var end = incident.end ? parseDate(incident.end) : new Date();
+      if (!start || !end) return false;
+      return start.getTime() < dayEnd && end.getTime() >= dayMs;
+    });
+  }
+
+  function renderCalendar(data) {
+    if (!calendarBox) return;
+    var components = calendarComponents(data);
+    fillCalendarSelect(components);
+    var component = components.filter(function (item) { return item.id === calComponent; })[0];
+    var componentName = component ? component.name : 'Componente';
+
+    var cells = {};
+    (data.days || []).forEach(function (day) {
+      if (day && day.date && day.components && day.components[calComponent]) cells[day.date] = day.components[calComponent];
+    });
+
+    var today = utcDayStart(Date.now());
+    var first = today - (CAL_DAYS - 1) * DAY_MS;
+    var firstDate = new Date(first);
+    var todayDate = new Date(today);
+    var totalMonths = (todayDate.getUTCFullYear() - firstDate.getUTCFullYear()) * 12 + todayDate.getUTCMonth() - firstDate.getUTCMonth() + 1;
+    var maxOffset = Math.max(0, totalMonths - CAL_MONTHS);
+    calOffset = Math.max(0, Math.min(calOffset, maxOffset));
+    calPrev.disabled = calOffset >= maxOffset;
+    calNext.disabled = calOffset <= 0;
+
+    var months = [];
+    for (var k = CAL_MONTHS - 1; k >= 0; k--) {
+      var back = calOffset + k;
+      var year = todayDate.getUTCFullYear();
+      var month = todayDate.getUTCMonth() - back;
+      while (month < 0) {
+        month += 12;
+        year -= 1;
+      }
+      months.push({ year: year, month: month });
+    }
+    var firstName = monthName(months[0].year, months[0].month);
+    var lastName = monthName(months[months.length - 1].year, months[months.length - 1].month);
+    calPeriod.textContent = months[0].year === months[months.length - 1].year
+      ? firstName.replace(/ de \d+$/, '') + ' a ' + lastName
+      : firstName + ' a ' + lastName;
+
+    calMonths.textContent = '';
+    calDetail.hidden = true;
+    calDetail.textContent = '';
+    var allButtons = [];
+
+    months.forEach(function (info) {
+      var section = el('section', 'st-cal-month');
+      var headId = 'st-cal-m-' + info.year + '-' + info.month;
+      section.setAttribute('aria-labelledby', headId);
+      var head = el('div', 'st-cal-month-head');
+      var name = monthName(info.year, info.month);
+      var heading = el('h3', null, name.charAt(0).toUpperCase() + name.slice(1));
+      heading.id = headId;
+      head.append(heading);
+
+      var monthStart = Date.UTC(info.year, info.month, 1);
+      var daysInMonth = new Date(Date.UTC(info.year, info.month + 1, 0)).getUTCDate();
+      var weighted = 0;
+      var observed = 0;
+      var inWindow = 0;
+      for (var d = 0; d < daysInMonth; d++) {
+        var ms = monthStart + d * DAY_MS;
+        if (ms < first || ms > today) continue;
+        inWindow++;
+        var cell = cells[isoDay(ms)];
+        if (cell && cell.coverage > 0 && cell.uptime !== null && cell.uptime !== undefined) {
+          weighted += cell.uptime * cell.coverage;
+          observed += cell.coverage;
+        }
+      }
+      var summaryText = observed ? percent(weighted / observed) + ' no ar' : 'Sem dados';
+      var summary = el('span', 'st-cal-month-uptime', summaryText);
+      summary.title = observed
+        ? summaryText + ' no tempo observado · dados de ' + percent(observed / Math.max(1, inWindow)) + ' dos dias do mês'
+        : 'Nenhuma verificação registrada neste mês';
+      head.append(summary);
+      section.append(head);
+
+      var grid = el('div', 'st-cal-grid');
+      ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach(function (letter) {
+        var wd = el('span', 'st-cal-wd', letter);
+        wd.setAttribute('aria-hidden', 'true');
+        grid.append(wd);
+      });
+      var lead = new Date(monthStart).getUTCDay();
+      for (var b = 0; b < lead; b++) grid.append(el('span', 'st-cal-pad'));
+
+      var monthButtons = [];
+      for (var day = 0; day < daysInMonth; day++) {
+        var dayMs = monthStart + day * DAY_MS;
+        var label = new Date(dayMs).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).replace(/\./g, '');
+        if (dayMs > today || dayMs < first) {
+          var off = el('span', 'st-cal-day');
+          off.dataset.state = dayMs > today ? 'future' : 'outside';
+          off.title = label + (dayMs > today ? ' · ainda não chegou' : ' · fora dos 90 dias guardados');
+          grid.append(off);
+          continue;
+        }
+        var dayCell = cells[isoDay(dayMs)];
+        var state = validState(dayCell && dayCell.state);
+        var button = el('button', 'st-cal-day');
+        button.type = 'button';
+        button.dataset.state = state;
+        if (dayMs === today) button.dataset.today = 'true';
+        button.tabIndex = -1;
+        button.setAttribute('aria-pressed', 'false');
+        button.setAttribute('aria-controls', 'st-cal-detail');
+        button.title = label + ' · ' + stateLabel(state);
+        button.setAttribute('aria-label', label + (dayMs === today ? ' (hoje)' : '') + ': ' + stateLabel(state));
+        button._st = { day: dayMs, label: label, state: state, cell: dayCell };
+        monthButtons.push(button);
+        allButtons.push(button);
+        grid.append(button);
+      }
+      grid.setAttribute('role', 'group');
+      grid.setAttribute('aria-label', 'Dias de ' + name + ' para ' + componentName + '. Use as setas para escolher um dia e Enter para ver o detalhe.');
+      section.append(grid);
+      calMonths.append(section);
+    });
+
+    var active = allButtons.length - 1;
+    function setActive(index, focus) {
+      if (!allButtons.length) return;
+      active = Math.max(0, Math.min(index, allButtons.length - 1));
+      allButtons.forEach(function (button, position) {
+        button.tabIndex = position === active ? 0 : -1;
+      });
+      if (focus) allButtons[active].focus({ preventScroll: true });
+    }
+    function activate(index) {
+      setActive(index, false);
+      allButtons.forEach(function (button, position) {
+        button.setAttribute('aria-pressed', position === active ? 'true' : 'false');
+      });
+      var info = allButtons[active]._st;
+      var lines = [STATE_MEANING[info.state]];
+      if (info.cell) lines.push(percent(info.cell.uptime) + ' no ar no tempo observado · dados de ' + percent(info.cell.coverage) + ' do dia.');
+      var found = incidentsOnDay(data, calComponent, info.day);
+      if (found.length) {
+        found.forEach(function (incident) {
+          lines.push(
+            (TYPE_LABEL[incident.type] || 'Incidente') + ': ' + (incident.title || 'Incidente') + ' · ' + timeLocal(incident.start) + '–' +
+              (incident.end ? timeLocal(incident.end) : 'agora') + ' (horário local)',
+          );
+        });
+      } else if (info.state !== 'no_data') {
+        lines.push('Nenhum incidente registrado neste dia.');
+      }
+      showDetail(calDetail, componentName, info.label + ' (UTC)', info.state, lines);
+    }
+    allButtons.forEach(function (button, index) {
+      button.addEventListener('click', function () {
+        activate(index);
+      });
+      button.addEventListener('keydown', function (event) {
+        var step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 7, ArrowUp: -7 }[event.key];
+        if (step || event.key === 'Home' || event.key === 'End') {
+          event.preventDefault();
+          var next = event.key === 'Home' ? 0 : event.key === 'End' ? allButtons.length - 1 : index + step;
+          setActive(next, true);
+          activate(active);
+        }
+      });
+    });
+    setActive(active, false);
+    if (legendNote) {
+      legendNote.textContent =
+        'Cada quadrado é um dia (UTC) de ' + componentName + ' e mostra o pior estado registrado. Toque em um dia para ver o tempo no ar, a cobertura e os incidentes.';
+    }
+  }
+
+  function renderHistory(shown) {
+    var calendar = range === 'cal' && calendarBox;
+    groups.hidden = !!calendar;
+    if (calendarBox) calendarBox.hidden = !calendar;
+    if (calendar) {
+      renderCalendar(shown);
+      groups.setAttribute('aria-busy', 'false');
+    } else {
+      renderGroups(shown);
+    }
   }
 
   function renderCoverage(data) {
@@ -613,8 +971,9 @@
       cadence.textContent = minutes + (minutes === 1 ? ' minuto' : ' minutos');
     }
     hero.setAttribute('aria-busy', 'false');
+    lastShown = shown;
     renderCoverage(shown);
-    renderGroups(shown);
+    renderHistory(shown);
     renderIncidents(shown);
     window.clearTimeout(refreshTimer);
     if (!document.hidden) {
@@ -656,8 +1015,9 @@
       nextCheckSeconds: 60,
     };
     var shown = mergeMonitor(fallback, monitor);
+    lastShown = shown;
     renderCoverage(shown);
-    renderGroups(shown);
+    renderHistory(shown);
     renderIncidents(shown);
     if (error && window.console && console.warn) console.warn('Status indisponível:', error);
     window.clearTimeout(refreshTimer);
@@ -716,7 +1076,7 @@
   }
 
   function setRange(next) {
-    range = next === '90d' ? '90d' : '7d';
+    range = next === '90d' || next === 'cal' ? next : '7d';
     try {
       window.localStorage.setItem(RANGE_KEY, range);
     } catch (error) {
@@ -726,7 +1086,41 @@
       button.setAttribute('aria-pressed', button.dataset.range === range ? 'true' : 'false');
     });
     if (lastData) render(lastData);
+    else if (lastShown) {
+      renderCoverage(lastShown);
+      renderHistory(lastShown);
+    }
   }
+
+  if (calSelect) {
+    calSelect.addEventListener('change', function () {
+      calComponent = calSelect.value;
+      try {
+        window.localStorage.setItem(CAL_KEY, calComponent);
+      } catch (error) {
+        // preferencia opcional
+      }
+      if (lastShown) renderCalendar(lastShown);
+    });
+    calPrev.addEventListener('click', function () {
+      calOffset += 1;
+      if (lastShown) renderCalendar(lastShown);
+      if (calPrev.disabled) calNext.focus({ preventScroll: true });
+    });
+    calNext.addEventListener('click', function () {
+      calOffset = Math.max(0, calOffset - 1);
+      if (lastShown) renderCalendar(lastShown);
+      if (calNext.disabled) calPrev.focus({ preventScroll: true });
+    });
+  }
+
+  incFilterButtons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      incFilter = button.dataset.incFilter || 'all';
+      incLimit = INC_PAGE;
+      if (lastShown) renderIncidents(lastShown);
+    });
+  });
 
   rangeButtons.forEach(function (button) {
     button.addEventListener('click', function () {

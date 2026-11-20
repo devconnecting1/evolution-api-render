@@ -414,11 +414,14 @@ flowchart TD
 - `GET /admin/db-activity` e a ferramenta MCP `get_database_info` mostram o que acordou o banco (só verbo/tabela,
   sem valores) e não gravam nada.
 - **Status público** em `/status` (página) e `GET /status` (JSON, sem chave): lê só as visões locais Sistema e
-  WhatsApp, em agregado; cache de 5 minutos; histórico de 3 dias em faixas de 3 horas e incidentes de 90 dias em
-  `GlobalSetting` (`public-status:v1`), gravados quando o estado muda ou começa uma faixa nova de 3 horas, sem timer.
-  Sem nomes, números, mensagens, tokens ou chaves. O topo é um cartão com a cor do estado e uma recomendação; cada
-  faixa de 3 horas abre o período, o estado, o significado e a ação. `/observability` redireciona (308) para `/status`;
-  a aba do manager continua privada.
+  WhatsApp, em agregado; cache de 5 minutos; histórico de 7 dias em faixas de 12 horas, 90 dias por componente e
+  incidentes de 90 dias em `GlobalSetting` (`public-status:v1`). Sem nomes, números, mensagens, tokens ou chaves. O
+  topo é um cartão com a cor do estado e uma recomendação. A página tem três visões: 7 dias (faixas de 12 horas),
+  90 dias (barras diárias) e Calendário (3 meses por vez, um quadrado por dia, escolha do componente e setas para
+  voltar até o início dos 90 dias; o dia mostra tempo no ar, cobertura e incidentes daquele componente). Os
+  incidentes ficam agrupados por dia, os em andamento primeiro, com filtro Todos / Falhas / Manutenções e 8 por vez
+  ("Mostrar mais"). Tudo é montado no navegador a partir do mesmo `GET /status`. `/observability` redireciona (308)
+  para `/status`; a aba do manager continua privada.
 
 ### 7.10 Retenção (LGPD)
 
