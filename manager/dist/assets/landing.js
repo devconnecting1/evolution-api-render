@@ -214,7 +214,7 @@ const ANNC_VALUE = 'piloto-14d';
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && menuBtn.getAttribute('aria-expanded') === 'true') {
         setOpen(false);
-        menuBtn.focus();
+        menuBtn.focus({ preventScroll: true });
       }
     });
     window.matchMedia('(min-width: 960px)').addEventListener('change', function (mq) {
@@ -237,7 +237,7 @@ const ANNC_VALUE = 'piloto-14d';
         const panel = document.getElementById(t.getAttribute('aria-controls'));
         if (panel) panel.hidden = !on;
       });
-      if (focus) tab.focus();
+      if (focus) tab.focus({ preventScroll: true });
     };
     tabs.forEach(function (t, i) {
       t.addEventListener('click', function () {
@@ -369,7 +369,7 @@ const ANNC_VALUE = 'piloto-14d';
       current = i;
       step = 0;
       start();
-      if (focus) tabs[i].focus();
+      if (focus) tabs[i].focus({ preventScroll: true });
     };
     tabs.forEach(function (t, i) {
       t.addEventListener('click', function () {
@@ -478,8 +478,8 @@ const ANNC_VALUE = 'piloto-14d';
         }
         const skip = document.querySelector('.wa-skip');
         const brand = document.querySelector('.wa-brand');
-        if (brand) brand.focus();
-        else if (skip) skip.focus();
+        if (brand) brand.focus({ preventScroll: true });
+        else if (skip) skip.focus({ preventScroll: true });
       });
     }
   }

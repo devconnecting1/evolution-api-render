@@ -78,7 +78,7 @@
     if (!open) closeMegas();
     if (open && focusFirst && firstLink) {
       window.setTimeout(function () {
-        firstLink.focus();
+        firstLink.focus({ preventScroll: true });
       }, 0);
     }
   }
@@ -120,7 +120,7 @@
         e.preventDefault();
         btn.click();
         var first = panel.querySelector('a');
-        if (first) first.focus();
+        if (first) first.focus({ preventScroll: true });
       }
     });
   });
@@ -139,12 +139,12 @@
     })[0];
     if (openTrigger) {
       closeMegas();
-      openTrigger.focus();
+      openTrigger.focus({ preventScroll: true });
       return;
     }
     if (menuOpen()) {
       setMenu(false);
-      if (menuBtn) menuBtn.focus();
+      if (menuBtn) menuBtn.focus({ preventScroll: true });
     }
   });
 
@@ -161,10 +161,10 @@
     var last = items[items.length - 1];
     if (e.shiftKey && document.activeElement === first) {
       e.preventDefault();
-      last.focus();
+      last.focus({ preventScroll: true });
     } else if (!e.shiftKey && document.activeElement === last) {
       e.preventDefault();
-      first.focus();
+      first.focus({ preventScroll: true });
     }
   });
 
