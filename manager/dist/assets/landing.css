@@ -175,8 +175,8 @@ small {
   z-index: 100;
   padding: 8px 16px;
   border-radius: var(--r-ctl);
-  background: var(--primary);
-  color: #fff;
+  background: var(--c-btn-bg);
+  color: var(--c-btn-text);
   font-size: 14px;
   text-decoration: none;
 }

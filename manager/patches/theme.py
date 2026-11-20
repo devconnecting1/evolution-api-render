@@ -85,7 +85,7 @@ COMPONENT = r'''const WaTheme=(()=>{
   function read(){try{const v=localStorage.getItem(KEY);return v==='light'||v==='dark'?v:'system'}catch(e){return 'system'}}
   function isDark(p){return p==='dark'||(p==='system'&&!!mq&&mq.matches)}
   function apply(p){const d=document.documentElement,dark=isDark(p);d.setAttribute('data-theme',dark?'dark':'light');d.setAttribute('data-theme-pref',p);
-    const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#10100e':'#f5f5f5');}
+    const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#0d0d0d':'#ffffff');}
   function set(p){try{localStorage.setItem(KEY,p)}catch(e){}apply(p);subs.forEach(f=>f(p));}
   if(mq){const on=()=>{const p=read();if(p==='system'){apply(p);subs.forEach(f=>f(p))}};if(mq.addEventListener)mq.addEventListener('change',on);else if(mq.addListener)mq.addListener(on);}
   try{apply(read())}catch(e){}
@@ -179,7 +179,7 @@ BAR_NEW = r'''  function Bar({instance}){
 THEME_SCRIPT = ('    <script>(function(){var p="system",d=document.documentElement;try{p=localStorage.getItem("wa-theme")||"system"}catch(e){}'
                 'var k=p==="dark"||(p!=="light"&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);'
                 'd.setAttribute("data-theme",k?"dark":"light");d.setAttribute("data-theme-pref",p==="light"||p==="dark"?p:"system");'
-                'var m=document.querySelector(\'meta[name="theme-color"]\');if(m)m.setAttribute("content",k?"#10100e":"#f5f5f5")})()</script>\n')
+                'var m=document.querySelector(\'meta[name="theme-color"]\');if(m)m.setAttribute("content",k?"#0d0d0d":"#ffffff")})()</script>\n')
 
 
 def patch_component(s):
@@ -218,7 +218,7 @@ def patch_html(h):
     h = rep(h, '<meta name="color-scheme" content="light" />', '<meta name="color-scheme" content="light dark" />',
             'index.html color-scheme')
     h = rep(h, '<meta name="theme-color" content="#ffffff" />',
-            '<meta name="theme-color" content="#f5f5f5" />\n' + THEME_SCRIPT.rstrip('\n'), 'index.html theme-color')
+            '<meta name="theme-color" content="#ffffff" />\n' + THEME_SCRIPT.rstrip('\n'), 'index.html theme-color')
     anchor = '    <script type="module" crossorigin'
     h = rep(h, anchor, '    ' + html_marker('html') + '\n    <link rel="stylesheet" href="/assets/theme.css?v=5" />\n' + anchor,
             'index.html bundle script')
