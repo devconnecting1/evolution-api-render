@@ -4230,3 +4230,20 @@ body.wa-page.has-annc {
     height: 16px;
   }
 }
+
+/* "Sempre um passo à frente": recortes reais do painel (1120x500, capturados em 2x, dados fictícios) no lugar dos
+   desenhos genéricos. A proporção é a mesma nos três cartões, então as imagens ficam alinhadas; o tema troca a captura
+   (.wa-shot-light / .wa-shot-dark), como nas outras seções. */
+.wa-frontier-shot {
+  height: auto;
+  aspect-ratio: 1120 / 500;
+  margin: 22px 0 0;
+  background: var(--wa-bg);
+}
+
+.wa-frontier-shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left top;
+}
