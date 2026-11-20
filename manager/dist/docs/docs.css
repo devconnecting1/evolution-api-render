@@ -1145,11 +1145,12 @@ td strong {
   width: 24px;
   height: 24px;
   padding: 4px;
-  background: var(--d-accent);
+  background: var(--d-btn-bg);
   border-radius: 50%;
-  color: #ffffff;
+  /* o símbolo usa a cor do texto do botão: branco no claro, preto no escuro (o círculo inverte junto) */
+  color: var(--d-btn-text);
   fill: none;
-  stroke: #ffffff;
+  stroke: currentColor;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -1196,13 +1197,16 @@ td strong {
 }
 .callout-warn .callout-ico {
   background: var(--d-warn-border);
+  color: #ffffff;
 }
 .callout-bad .callout-ico {
   background: var(--d-bad-border);
+  color: #ffffff;
 }
 .callout-note .callout-ico,
 .callout-ok .callout-ico {
-  background: var(--d-accent);
+  background: var(--d-btn-bg);
+  color: var(--d-btn-text);
 }
 
 /* passos */

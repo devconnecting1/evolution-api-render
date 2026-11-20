@@ -80,7 +80,7 @@
   --t3-face: #fffff2;
   --t3-face-2: #e8e7cc;
   --t3-side: #b7b597;
-  --t3-ink: #ffffe3;
+  --t3-ink: #ffffff;
 }
 .t3--cream .t3-disc {
   background:
@@ -124,12 +124,12 @@
 .t3-stage:hover .t3-c { --t3-rz: -8deg; }
 /* dark theme: the deep tile gets a light rim, shadows go darker */
 :root[data-theme='dark'] .t3--deep .t3-face {
-  outline: 1px solid rgba(255, 255, 227, 0.1);
+  outline: 1px solid rgba(255, 255, 255, 0.1);
   outline-offset: -1px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) .t3--deep .t3-face {
-    outline: 1px solid rgba(255, 255, 227, 0.1);
+    outline: 1px solid rgba(255, 255, 255, 0.1);
     outline-offset: -1px;
   }
 }
@@ -207,7 +207,7 @@
   border-radius: 12px;
   background: linear-gradient(155deg, #2a2a26, #11110f);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 1px 2px 0 #050504, 2px 4px 0 #050504, 4px 10px 14px rgba(20, 18, 12, 0.22);
-  color: #ffffe3;
+  color: #ffffff;
 }
 .sec-ico .ico {
   width: 20px;

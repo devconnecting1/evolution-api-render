@@ -12,13 +12,13 @@
 /* ------------------------------------------------------------------ faixas sem o verde antigo */
 .hero.band::before {
   background:
-    radial-gradient(900px 420px at 50% -8%, rgba(255, 255, 227, 0.08), transparent 70%),
+    radial-gradient(900px 420px at 50% -8%, rgba(255, 255, 255, 0.08), transparent 70%),
     radial-gradient(720px 520px at 96% 100%, rgba(255, 255, 255, 0.04), transparent 70%),
     var(--deep);
 }
 .cta-in.band {
   background:
-    radial-gradient(640px 360px at 100% 0%, rgba(255, 255, 227, 0.08), transparent 70%),
+    radial-gradient(640px 360px at 100% 0%, rgba(255, 255, 255, 0.08), transparent 70%),
     var(--deep);
 }
 .checks li::before {
@@ -362,10 +362,10 @@
 
 @media (prefers-color-scheme: dark) {
   .mod-card {
-    background: #171714;
+    background: #141414;
   }
   .ask-chat {
-    border: 1px solid #2e2e29;
+    border: 1px solid #272727;
   }
 }
 
@@ -530,7 +530,7 @@
   z-index: 1;
 }
 .plan-px .chip-sm {
-  background: rgba(255, 255, 227, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--lime);
 }
 .plan-px :focus-visible {
@@ -551,14 +551,14 @@
    creme no topo (onde ficam os pixels) e borda creme, para se destacar sem cor nova */
 @media (prefers-color-scheme: dark) {
   .plan.plan-px {
-    border-color: rgba(255, 255, 227, 0.26);
+    border-color: rgba(255, 255, 255, 0.26);
     background:
-      radial-gradient(130% 70% at 50% 0%, rgba(255, 255, 227, 0.07), transparent 62%),
+      radial-gradient(130% 70% at 50% 0%, rgba(255, 255, 255, 0.07), transparent 62%),
       linear-gradient(180deg, #22221c 0%, #191915 55%, #151512 100%);
-    box-shadow: 0 0 0 1px rgba(255, 255, 227, 0.06), 0 24px 60px -32px rgba(255, 255, 227, 0.18);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 24px 60px -32px rgba(255, 255, 255, 0.18);
   }
   .plan-px .chip-sm {
-    background: rgba(255, 255, 227, 0.14);
+    background: rgba(255, 255, 255, 0.14);
   }
 }
 
