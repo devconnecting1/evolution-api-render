@@ -140,6 +140,127 @@ export function providerView(provider: Billing | undefined) {
   return { name, doc, city, configured: missing.length === 0, missing };
 }
 
+export type PixKeyType = 'cpf' | 'cnpj' | 'email' | 'phone' | 'random';
+
+function cpfValid(d: string): boolean {
+  if (!/^\d{11}$/.test(d) || /^(\d)\1{10}$/.test(d)) return false;
+  const digit = (len: number) => {
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += Number(d[i]) * (len + 1 - i);
+    const r = (sum * 10) % 11;
+    return r === 10 ? 0 : r;
+  };
+  return digit(9) === Number(d[9]) && digit(10) === Number(d[10]);
+}
+
+/** Normalizes a Pix key the way the DICT stores it, or null when it is not a valid key. */
+export function normalizePixKey(raw: string | undefined | null): { key: string; type: PixKeyType } | null {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))
+    return { key: value.toLowerCase(), type: 'random' };
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 77)
+    return { key: value.toLowerCase(), type: 'email' };
+  if (/^\+\d{12,13}$/.test(value.replace(/[\s()-]/g, ''))) return { key: value.replace(/[\s()-]/g, ''), type: 'phone' };
+  const digits = value.replace(/\D/g, '');
+  if (/^[\d.\-/\s]+$/.test(value) && digits.length === 11 && cpfValid(digits)) return { key: digits, type: 'cpf' };
+  if (/^[\d.\-/\s]+$/.test(value) && digits.length === 14) return { key: digits, type: 'cnpj' };
+  return null;
+}
+
+/** Field of the Pix BR Code (EMV): id + two-digit length + value. */
+function emv(id: string, value: string): string {
+  return id + String(value.length).padStart(2, '0') + value;
+}
+
+/** CRC16-CCITT (poly 0x1021, start 0xFFFF), as the BR Code standard asks. */
+export function crc16(payload: string): string {
+  let crc = 0xffff;
+  for (let i = 0; i < payload.length; i++) {
+    crc ^= payload.charCodeAt(i) << 8;
+    for (let b = 0; b < 8; b++) crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+
+/** Text the BR Code accepts in name and city: no accents, only letters, digits and spaces. */
+function emvText(value: string, max: number): string {
+  return value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max)
+    .trim();
+}
+
+/**
+ * Static "Pix copia e cola" (BR Code of the Banco Central) for a key, with the amount when there is one. The bank app
+ * shows the receiver's name and city and the amount; `txid` identifies the month in the statement.
+ */
+export function pixCode(input: {
+  key: string;
+  name: string;
+  city: string;
+  amountCents?: number;
+  txid?: string;
+}): string | null {
+  const key = normalizePixKey(input.key);
+  const name = emvText(input.name || '', 25);
+  const city = emvText(input.city || '', 15);
+  if (!key || !name || !city) return null;
+  const txid =
+    String(input.txid || '')
+      .replace(/[^A-Za-z0-9]/g, '')
+      .slice(0, 25) || '***';
+  let payload =
+    emv('00', '01') +
+    emv('26', emv('00', 'br.gov.bcb.pix') + emv('01', key.key)) +
+    emv('52', '0000') +
+    emv('53', '986');
+  if (input.amountCents && input.amountCents > 0) payload += emv('54', (input.amountCents / 100).toFixed(2));
+  payload += emv('58', 'BR') + emv('59', name) + emv('60', city) + emv('62', emv('05', txid)) + '6304';
+  return payload + crc16(payload);
+}
+
+/** How the client pays: Pix key (with "copia e cola" for the open amount) and bank transfer data. */
+export function paymentView(provider: Billing | undefined, open: { cents: number; period: string | null }) {
+  const pix = normalizePixKey(provider?.PIX_KEY);
+  const bankName = provider?.BANK_NAME?.trim() || null;
+  const account = provider?.BANK_ACCOUNT?.trim() || null;
+  const bank =
+    bankName && account
+      ? {
+          name: bankName,
+          code: provider?.BANK_CODE?.trim() || null,
+          branch: provider?.BANK_BRANCH?.trim() || null,
+          account,
+          accountType: provider?.BANK_ACCOUNT_TYPE?.trim() || null,
+          holder: provider?.PROVIDER_NAME || null,
+          holderDoc: provider?.PROVIDER_DOC || null,
+        }
+      : null;
+  const code =
+    pix && open.cents > 0
+      ? pixCode({
+          key: pix.key,
+          name: provider?.PROVIDER_NAME || '',
+          city: provider?.PROVIDER_CITY || '',
+          amountCents: open.cents,
+          txid: 'WHATSAI' + String(open.period || '').replace(/\D/g, ''),
+        })
+      : null;
+  return {
+    configured: Boolean(pix || bank),
+    pix: pix ? { key: pix.key, type: pix.type, holder: provider?.PROVIDER_NAME || null } : null,
+    pixCode: code,
+    pixAmountCents: code ? open.cents : 0,
+    bank,
+    invalidPixKey: Boolean(provider?.PIX_KEY && !pix),
+  };
+}
+
 /** First day of the oldest period still open (pending or overdue), or null when everything is paid. */
 export function oldestOpenPeriod(entries: { period: string; status: string }[]): string | null {
   const open = entries
@@ -176,6 +297,7 @@ export class BillingService {
       nextDueDate: openPeriod ? `${openPeriod}-01` : null,
       paymentMethod: paidWithMethod.length ? paidWithMethod[0].method : null,
       provider: providerView(this.deps.provider()),
+      payment: paymentView(this.deps.provider(), { cents: sum('pendente') + sum('atrasado'), period: openPeriod }),
     };
   }
 

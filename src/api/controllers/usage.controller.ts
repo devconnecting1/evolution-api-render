@@ -84,6 +84,7 @@ export class UsageController {
       paymentMethod: billing.paymentMethod,
       totals: billing.totals,
       provider: billing.provider,
+      payment: billing.payment,
       history: billing.entries.map((entry: any) => ({
         id: entry.id,
         period: entry.period,

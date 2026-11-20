@@ -8,7 +8,11 @@ import {
   BillingNotFoundError,
   BillingService,
   BillingValidationError,
+  crc16,
+  normalizePixKey,
   oldestOpenPeriod,
+  paymentView,
+  pixCode,
   providerView,
   validateBillingInput,
 } from '@api/services/billing.service';
@@ -228,5 +232,85 @@ describe('billing: client access', () => {
 
   test('without the module "plano" the client does not see the billing', () => {
     assert.equal(allowed('GET', url, ['conversas', 'leads', 'conexao']), false);
+  });
+});
+
+describe('billing: como o cliente paga (Pix e transferência)', () => {
+  test('Pix copia e cola igual ao exemplo do manual do BR Code do Banco Central', () => {
+    assert.equal(
+      pixCode({ key: '123e4567-e12b-12d1-a456-426655440000', name: 'Fulano de Tal', city: 'BRASILIA' }),
+      '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-4266554400005204000053039865802BR5913Fulano de Tal6008BRASILIA62070503***63041D3D',
+    );
+    assert.equal(crc16('123456789'), '29B1');
+  });
+
+  test('normaliza a chave como o DICT guarda e recusa o que não é chave', () => {
+    assert.deepEqual(normalizePixKey('529.982.247-25'), { key: '52998224725', type: 'cpf' });
+    assert.equal(normalizePixKey('111.111.111-11'), null);
+    assert.equal(normalizePixKey('529.982.247-24'), null);
+    assert.deepEqual(normalizePixKey('11.222.333/0001-81'), { key: '11222333000181', type: 'cnpj' });
+    assert.deepEqual(normalizePixKey('+55 (21) 99999-0000'), { key: '+5521999990000', type: 'phone' });
+    assert.deepEqual(normalizePixKey('Pessoa@Exemplo.com'), { key: 'pessoa@exemplo.com', type: 'email' });
+    assert.equal(normalizePixKey(''), null);
+    assert.equal(normalizePixKey('qualquer coisa'), null);
+  });
+
+  test('código com valor em aberto, mês no txid, nome e cidade sem acentos e CRC válido', () => {
+    const view = paymentView(
+      {
+        PROVIDER_NAME: 'Prestador Exemplo',
+        PROVIDER_DOC: '529.982.247-25',
+        PROVIDER_CITY: 'Niterói',
+        PIX_KEY: '529.982.247-25',
+      },
+      { cents: 43700, period: '2026-11' },
+    );
+    assert.equal(view.configured, true);
+    assert.deepEqual(view.pix, { key: '52998224725', type: 'cpf', holder: 'Prestador Exemplo' });
+    assert.equal(view.pixAmountCents, 43700);
+    const code = view.pixCode as string;
+    assert.ok(code.includes('0111' + '52998224725'), 'chave na conta do recebedor');
+    assert.ok(code.includes('5406437.00'), 'valor');
+    assert.ok(code.includes('5917Prestador Exemplo'), 'nome');
+    assert.ok(code.includes('6007Niteroi'), 'cidade sem acento');
+    assert.ok(code.includes('0513WHATSAI202611'), 'mês no txid');
+    assert.equal(code.slice(-4), crc16(code.slice(0, -4)));
+    assert.equal(view.bank, null);
+    assert.equal(view.invalidPixKey, false);
+  });
+
+  test('sem nada em aberto não há código; chave inválida é sinalizada; transferência pede instituição e conta', () => {
+    const none = paymentView(
+      { PIX_KEY: '529.982.247-25', PROVIDER_NAME: 'X', PROVIDER_CITY: 'Rio' },
+      { cents: 0, period: null },
+    );
+    assert.equal(none.pixCode, null);
+    assert.equal(none.pixAmountCents, 0);
+    const bad = paymentView({ PIX_KEY: '123' }, { cents: 100, period: '2026-11' });
+    assert.equal(bad.pix, null);
+    assert.equal(bad.invalidPixKey, true);
+    assert.equal(bad.configured, false);
+    const bankOnly = paymentView(
+      {
+        BANK_NAME: 'Banco Exemplo',
+        BANK_ACCOUNT: '12345-6',
+        BANK_BRANCH: '0001',
+        PROVIDER_NAME: 'Prestador',
+        PROVIDER_DOC: '000',
+      },
+      { cents: 100, period: '2026-11' },
+    );
+    assert.equal(bankOnly.configured, true);
+    assert.deepEqual(bankOnly.bank, {
+      name: 'Banco Exemplo',
+      code: null,
+      branch: '0001',
+      account: '12345-6',
+      accountType: null,
+      holder: 'Prestador',
+      holderDoc: '000',
+    });
+    assert.equal(paymentView({ BANK_NAME: 'Banco Exemplo' }, { cents: 0, period: null }).bank, null);
+    assert.equal(paymentView(undefined, { cents: 0, period: null }).configured, false);
   });
 });

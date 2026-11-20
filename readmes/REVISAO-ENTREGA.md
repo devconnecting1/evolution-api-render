@@ -108,6 +108,10 @@ válido para o carnê-leão. Hoje `UsageController.getBilling` responde `source:
   No portal do cliente, só leitura e só quando o código tiver o módulo `plano`.
 - Referência pronta para reaproveitar (não mesclar, foi feita sobre um main antigo):
   branch `wip/cobranca-manual-referencia` (`billing.service.ts`, `billing.router.ts`, migrations e a tela).
+- "Como pagar" na Cobrança (área do cliente e prévia no painel): chave Pix de `BILLING_PIX_KEY` com "Copiar chave",
+  "Pix copia e cola" (BR Code estático do Banco Central) já com o valor em aberto e o mês no identificador, e dados de
+  transferência de `BILLING_BANK_NAME`, `BILLING_BANK_CODE`, `BILLING_BANK_BRANCH`, `BILLING_BANK_ACCOUNT` e
+  `BILLING_BANK_ACCOUNT_TYPE` (titular = nome e CPF do prestador). Tudo nas variáveis do servidor, nunca no código.
 
 ## 4. V como o dono decidiu (registro de ações e acesso por pessoa)
 

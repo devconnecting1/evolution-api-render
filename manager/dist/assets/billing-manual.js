@@ -229,6 +229,107 @@
     overlay.querySelector('.wa-bm-primary').focus();
   }
 
+  // ------------------------------------------------------------------------------------------ como pagar
+  var KEY_LABEL = { cpf: 'CPF', cnpj: 'CNPJ', email: 'e-mail', phone: 'telefone', random: 'chave aleatória' };
+
+  function keyDisplay(pix) {
+    var k = String(pix.key || '');
+    if (pix.type === 'cpf' && k.length === 11) return k.slice(0, 3) + '.' + k.slice(3, 6) + '.' + k.slice(6, 9) + '-' + k.slice(9);
+    if (pix.type === 'cnpj' && k.length === 14) return k.slice(0, 2) + '.' + k.slice(2, 5) + '.' + k.slice(5, 8) + '/' + k.slice(8, 12) + '-' + k.slice(12);
+    return k;
+  }
+
+  /** Copies text and says so next to the button; falls back to a selected field when the clipboard API is blocked. */
+  function copyButton(label, text, status) {
+    var b = button(label, 'wa-bm-ghost wa-bm-sm');
+    b.addEventListener('click', function () {
+      function done(ok) {
+        status.textContent = ok ? 'Copiado.' : 'Não foi possível copiar. Selecione o texto e copie.';
+        setTimeout(function () { if (status.textContent === 'Copiado.') status.textContent = ''; }, 4000);
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallback()); });
+      } else done(fallback());
+      function fallback() {
+        var t = h('textarea', { class: 'wa-bm-copybuf', readonly: true, 'aria-hidden': 'true', tabindex: '-1' });
+        t.value = text;
+        document.body.appendChild(t);
+        t.select();
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+        t.remove();
+        b.focus({ preventScroll: true });
+        return ok;
+      }
+    });
+    return b;
+  }
+
+  function payCard(data) {
+    var pay = data.payment || { configured: false };
+    if (!pay.configured) {
+      if (isClient()) return null;
+      return h('section', { class: 'wa-bm-card wa-bm-pay', 'aria-labelledby': 'wa-bm-pay-title' }, [
+        h('div', { class: 'wa-bm-card-head' }, [h('div', null, [
+          h('h2', { id: 'wa-bm-pay-title', class: 'wa-bm-card-title', text: 'Como pagar' }),
+          h('p', { class: 'wa-bm-muted', text: pay.invalidPixKey
+            ? 'A chave em BILLING_PIX_KEY não é uma chave Pix válida (CPF, CNPJ, e-mail, telefone com +55 ou chave aleatória). Corrija no servidor.'
+            : 'Configure BILLING_PIX_KEY (e, se quiser, BILLING_BANK_NAME, BILLING_BANK_BRANCH e BILLING_BANK_ACCOUNT) no servidor para o cliente ver como pagar na área dele.' }),
+        ])]),
+      ]);
+    }
+    var status = h('p', { class: 'wa-bm-copied', role: 'status', 'aria-live': 'polite' });
+    var blocks = [];
+    if (pay.pix) {
+      var pixRows = [
+        h('div', { class: 'wa-bm-pay-row' }, [
+          h('div', null, [
+            h('span', { class: 'wa-bm-pay-label', text: 'Chave Pix (' + (KEY_LABEL[pay.pix.type] || 'chave') + ')' }),
+            h('strong', { class: 'wa-bm-pay-value', text: keyDisplay(pay.pix) }),
+            pay.pix.holder ? h('span', { class: 'wa-bm-pay-meta', text: 'Recebedor: ' + pay.pix.holder }) : null,
+          ]),
+          copyButton('Copiar chave', pay.pix.key, status),
+        ]),
+      ];
+      if (pay.pixCode) {
+        pixRows.push(h('div', { class: 'wa-bm-pay-row' }, [
+          h('div', null, [
+            h('span', { class: 'wa-bm-pay-label', text: 'Pix copia e cola' }),
+            h('strong', { class: 'wa-bm-pay-value', text: money(pay.pixAmountCents) + (data.openPeriod ? ' · ' + monthLabel(data.openPeriod) : '') }),
+            h('span', { class: 'wa-bm-pay-meta', text: 'Já vem com o valor em aberto. No app do banco: Pix > Pix copia e cola.' }),
+            h('code', { class: 'wa-bm-pay-code', text: pay.pixCode }),
+          ]),
+          copyButton('Copiar código', pay.pixCode, status),
+        ]));
+      }
+      blocks.push(h('div', { class: 'wa-bm-pay-block' }, [h('h3', { class: 'wa-bm-pay-h', text: 'Pix' })].concat(pixRows)));
+    }
+    if (pay.bank) {
+      var b = pay.bank;
+      var lines = [
+        ['Instituição', b.name + (b.code ? ' (código ' + b.code + ')' : '')],
+        b.branch ? ['Agência', b.branch] : null,
+        ['Conta', b.account + (b.accountType ? ' · ' + b.accountType : '')],
+        b.holder ? ['Titular', b.holder] : null,
+        b.holderDoc ? ['CPF do titular', b.holderDoc] : null,
+      ].filter(Boolean);
+      blocks.push(h('div', { class: 'wa-bm-pay-block' }, [
+        h('h3', { class: 'wa-bm-pay-h', text: 'Transferência (TED)' }),
+        h('dl', { class: 'wa-bm-pay-list' }, lines.reduce(function (acc, l) { return acc.concat([h('dt', { text: l[0] }), h('dd', { text: l[1] })]); }, [])),
+      ]));
+    }
+    return h('section', { class: 'wa-bm-card wa-bm-pay', 'aria-labelledby': 'wa-bm-pay-title' }, [
+      h('div', { class: 'wa-bm-card-head' }, [h('div', null, [
+        h('h2', { id: 'wa-bm-pay-title', class: 'wa-bm-card-title', text: 'Como pagar' }),
+        h('p', { class: 'wa-bm-muted', text: isClient()
+          ? 'O pagamento é conferido manualmente. Quando for registrado, o recibo aparece no histórico abaixo.'
+          : 'É isto que o cliente vê na área dele (módulo Plano). O código Pix já vem com o valor em aberto.' }),
+      ])]),
+      h('div', { class: 'wa-bm-pay-body' }, blocks),
+      status,
+    ]);
+  }
+
   // ------------------------------------------------------------------------------------------ sections
   function chip(status) {
     var s = STATUS[status] || [status, 'off'];
@@ -335,6 +436,8 @@
           live.appendChild(h('p', { class: 'wa-bm-note', text: 'Os recibos saem sem os seus dados até você configurar ' + provider.missing.join(', ') + ' no servidor.' }));
         }
         live.appendChild(summary(data || {}));
+        var pay = payCard(data || {});
+        if (pay) live.appendChild(pay);
         live.appendChild(historyTable(ctx, data || {}));
         body.setAttribute('aria-busy', 'false');
       }, function (e) {
