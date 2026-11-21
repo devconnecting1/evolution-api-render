@@ -96,7 +96,9 @@ describe('OpenaiService guardrails', () => {
     assert.equal(messages.at(-2).role, 'system');
     assert.ok(messages.at(-2).content.startsWith(CONTEXT_NOTE_HEADER));
     assert.match(messages.at(-2).content, /- Agora: .+ \(horário de Brasília/);
-    assert.equal(messages[0].content, 'Você é a assistente do escritório.', 'static prompt stays first');
+    // static prompt first: the scam safety rules of the server, then the prompt of the client
+    assert.match(messages[0].content, /^SEGURANÇA CONTRA GOLPES/);
+    assert.equal(messages[1].content, 'Você é a assistente do escritório.', 'static prompt stays first');
   });
 
   test('a repeated question is regenerated once; the new answer is sent and remembered', async () => {

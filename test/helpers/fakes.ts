@@ -200,5 +200,15 @@ export const isContextNote = (message: any) =>
   typeof message.content === 'string' &&
   message.content.startsWith('Contexto desta conversa (nota interna do sistema');
 
-/** Messages of a request without the context note (tests about the static prompt and the history). */
-export const withoutContextNote = (messages: any[]) => messages.filter((message) => !isContextNote(message));
+/** The scam safety rules (src/utils/fraud-safety.ts) the server adds to every answer, before the client's prompt. */
+export const isFraudSafety = (message: any) =>
+  message?.role === 'system' &&
+  typeof message.content === 'string' &&
+  message.content.startsWith('SEGURANÇA CONTRA GOLPES');
+
+/**
+ * Messages of a request without what the server adds on its own (the context note and the scam safety rules):
+ * tests about the static prompt of the client and the history.
+ */
+export const withoutContextNote = (messages: any[]) =>
+  messages.filter((message) => !isContextNote(message) && !isFraudSafety(message));
