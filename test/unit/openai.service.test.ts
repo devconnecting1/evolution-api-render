@@ -232,10 +232,12 @@ describe('OpenaiService: ethics profile and fixed messages', { concurrency: true
     const t = setup({ settings: { ethicsProfile: 'advocacia' } });
     t.openai.reply('ok');
     await t.ask();
-    const [first, second] = t.openai.requests[0].messages;
+    const [first, safety, second] = t.openai.requests[0].messages;
     assert.equal(first.role, 'system');
     assert.match(first.content, /REGRAS ÉTICAS DA ADVOCACIA/);
     assert.match(first.content, /Não informe valores, descontos, gratuidade/);
+    // the scam safety rules come right after the ethics rules, still above the prompt of the client
+    assert.match(safety.content, /^SEGURANÇA CONTRA GOLPES/);
     assert.equal(second.content, 'Você é a assistente do escritório.');
   });
 

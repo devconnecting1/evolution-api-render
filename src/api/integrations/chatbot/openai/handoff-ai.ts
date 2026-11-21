@@ -36,8 +36,9 @@ export function handoffTool() {
       name: HANDOFF_TOOL_NAME,
       description:
         'Passa a conversa para uma pessoa da equipe e pausa o atendimento automático deste cliente. Use SOMENTE ' +
-        'quando o cliente pedir para falar com uma pessoa/advogado, disser que desconfia do atendimento ou relatar ' +
-        'uma urgência concreta. Não use para cumprimentos, dúvidas, relatos comuns do caso, perguntas de preço ou ' +
+        'quando o cliente pedir para falar com uma pessoa/advogado, disser que desconfia do atendimento, relatar ' +
+        'uma urgência concreta ou contar que caiu ou está caindo num golpe (alguém se passando pela empresa, pelo ' +
+        'advogado ou por banco, pedindo pagamento ou dados). Não use para cumprimentos, dúvidas, relatos comuns do caso, perguntas de preço ou ' +
         'de andamento de processo.',
       parameters: {
         type: 'object',
@@ -61,9 +62,10 @@ export function handoffSystemPrompt(): string {
     `- Chame ${HANDOFF_TOOL_NAME} SOMENTE em um destes casos:`,
     '  1) o cliente pede para falar com uma pessoa, atendente ou advogado;',
     '  2) o cliente diz que desconfia do atendimento ("é golpe?", "é robô?", "é pegadinha?");',
-    '  3) urgência concreta: prazo ou audiência nos próximos dias, prisão, corte de serviço essencial, cirurgia ou tratamento negado, risco à saúde.',
+    '  3) urgência concreta: prazo ou audiência nos próximos dias, prisão, corte de serviço essencial, cirurgia ou tratamento negado, risco à saúde;',
+    '  4) golpe: alguém se passou pela empresa, pelo advogado, por tribunal ou banco pedindo pagamento, Pix ou dados, ou a pessoa diz que já pagou ou enviou dados a um golpista (motivo urgencia). Antes, dê as orientações de segurança contra golpes na mesma resposta.',
     '- Em todo o resto, NÃO chame: continue a triagem normalmente, com uma pergunta. Exemplos em que NÃO se transfere: cumprimento ("oi", "bom dia"), mensagem curta ou confusa ("assim", "não entendi"), pessoa que só conta o caso (demissão, FGTS atrasado, benefício do INSS), arquivo sem texto, pergunta de preço, cliente antigo perguntando do processo (anote e diga que a equipe verifica o andamento), pedido que você não pode fazer (explique e siga).',
-    '- Depois de chamar, responda numa frase curta que uma pessoa da equipe vai continuar o atendimento por aqui. Não faça mais perguntas.',
+    '- Depois de chamar, responda numa frase curta que uma pessoa da equipe vai continuar o atendimento por aqui (no caso de golpe, junto com as orientações de segurança). Não faça mais perguntas.',
     '- Não prometa prazo de retorno nem resultado.',
   ].join('\n');
 }
