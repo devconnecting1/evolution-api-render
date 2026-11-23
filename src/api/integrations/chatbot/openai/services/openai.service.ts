@@ -7,6 +7,7 @@ import { Integration } from '@api/types/wa.types';
 import { ConfigService, Language, Openai as OpenaiConfig } from '@config/env.config';
 import { IntegrationSession, OpenaiBot, OpenaiSetting } from '@prisma/client';
 import { ethicsSystemPrompt } from '@utils/ethics';
+import { fraudSafetyPrompt } from '@utils/fraud-safety';
 import { hasHumanWrittenSince, isHumanPaused, withManualPause } from '@utils/humanPause';
 import { openaiHealthRegistry } from '@utils/openai-health';
 import {
@@ -690,10 +691,12 @@ export class OpenaiService extends BaseChatbotService<OpenaiBot, OpenaiSetting> 
     const filled = (list: unknown): string[] =>
       (Array.isArray(list) ? list : []).filter((item): item is string => typeof item === 'string' && !!item.trim());
 
-    // Ethics profile of the instance (e.g. the OAB rules of a law office): first, above the prompt of the client
+    // Ethics profile of the instance (e.g. the OAB rules of a law office): first, above the prompt of the client;
+    // then the scam safety rules, present in every answer (src/utils/fraud-safety.ts)
     const ethics = ethicsSystemPrompt((settings as any)?.ethicsProfile);
     const messagesSystem: any[] = [
       ...(ethics ? [{ role: 'system', content: ethics }] : []),
+      { role: 'system', content: fraudSafetyPrompt() },
       ...filled(openaiBot.systemMessages).map((message) => ({ role: 'system', content: message })),
     ];
     const messagesAssistant: any[] = filled(openaiBot.assistantMessages).map((message) => ({

@@ -136,8 +136,10 @@ describe('OpenaiService + Agenda', () => {
     assert.equal(openai.requests.length, 3);
     assert.equal(openai.requests[0].tool_choice, 'auto');
     assert.ok(openai.requests[0].tools.some((tool: any) => tool.function.name === 'agendar'));
-    assert.equal(openai.requests[0].messages[1].role, 'system');
-    assert.match(openai.requests[0].messages[1].content, /Agenda \(ferramentas/);
+    const agendaPrompt = openai.requests[0].messages.find(
+      (message: any) => message.role === 'system' && /Agenda \(ferramentas/.test(message.content),
+    );
+    assert.ok(agendaPrompt, 'the Agenda tools prompt is a system message');
     assert.ok('max_completion_tokens' in openai.requests[0]);
     assert.deepEqual(texts(waInstance), ['Agendado! Até lá.']);
     const rows = [...tables.appointment.rows.values()];

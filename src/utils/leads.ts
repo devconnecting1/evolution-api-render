@@ -29,6 +29,7 @@ export const URGENT_TYPES = [
   'despejo',
   'corte_beneficio',
   'liminar',
+  'golpe',
 ] as const;
 export type UrgentType = (typeof URGENT_TYPES)[number];
 export const URGENT_LABELS: Record<UrgentType, string> = {
@@ -39,6 +40,7 @@ export const URGENT_LABELS: Record<UrgentType, string> = {
   despejo: 'despejo ou reintegração de posse',
   corte_beneficio: 'corte ou suspensão de benefício, salário ou serviço',
   liminar: 'precisa de liminar',
+  golpe: 'golpe: pagou ou enviou dados a quem se passou pelo escritório, banco ou órgão',
 };
 
 /** Who is on the other side: a new case, someone the office already represents, or no legal matter at all. */
@@ -428,7 +430,7 @@ export function extractionSystemPrompt(areas: string[]): string {
     `4. area: uma destas opções: ${areas.map((area) => `"${area}"`).join(', ')}. Classifique pelo assunto que o cliente descreveu (ex.: conta de luz, banco, loja ou operadora = consumidor; demissão ou verbas = trabalhista; INSS, BPC ou aposentadoria = previdenciário): isso é classificação, não dedução. Use "${OTHER_AREA}" quando o assunto for jurídico mas fora da lista e null só quando o cliente ainda não disse o assunto.`,
     '5. name: o nome que o cliente informou na conversa. O nome do perfil do WhatsApp não conta. Se quem escreve fala por outra pessoa (mãe, filho, cônjuge), name é o nome da pessoa do caso e o resumo diz quem está falando (ex.: "a mãe, Sueli, pergunta pelo processo do filho").',
     '6. city: só o município do cliente, sem bairro (ex.: "Nova Iguaçu", não "Cabuçu"), com a UF se ele disse. Não use a cidade do escritório.',
-    '7. urgentType e urgentFact: preencha SOMENTE quando o cliente citou um fato explícito destes: prazo correndo ou data limite (prazo), audiência marcada (audiencia), intimação ou citação recebida (intimacao), prisão da pessoa ou de familiar (prisao), despejo ou reintegração de posse (despejo), corte ou suspensão de benefício, salário ou serviço essencial (corte_beneficio), necessidade de liminar urgente (liminar). urgentFact é o fato em poucas palavras, com a data se houver (ex.: "audiência em 12/11"). urgentDate é a data do fato no formato AAAA-MM-DD quando o cliente disse dia e mês (use o ano informado; sem ano, o próximo dia com essa data a partir da data das mensagens), null se não disse. urgentResolved é true quando o próprio cliente disse que o problema já foi resolvido (ex.: a energia voltou, o benefício foi restabelecido). Sem fato explícito, urgentType e urgentFact são null. Ansiedade ou pressa do cliente sem fato não é urgência.',
+    '7. urgentType e urgentFact: preencha SOMENTE quando o cliente citou um fato explícito destes: prazo correndo ou data limite (prazo), audiência marcada (audiencia), intimação ou citação recebida (intimacao), prisão da pessoa ou de familiar (prisao), despejo ou reintegração de posse (despejo), corte ou suspensão de benefício, salário ou serviço essencial (corte_beneficio), necessidade de liminar urgente (liminar), golpe em que a pessoa já pagou, fez Pix ou transferência ou enviou dados a alguém que se passou pelo escritório, pelo advogado, por tribunal, banco ou órgão público, ou está sendo pressionada agora a pagar (golpe). urgentFact é o fato em poucas palavras, com a data se houver (ex.: "audiência em 12/11"). urgentDate é a data do fato no formato AAAA-MM-DD quando o cliente disse dia e mês (use o ano informado; sem ano, o próximo dia com essa data a partir da data das mensagens), null se não disse. urgentResolved é true quando o próprio cliente disse que o problema já foi resolvido (ex.: a energia voltou, o benefício foi restabelecido). Sem fato explícito, urgentType e urgentFact são null. Ansiedade ou pressa do cliente sem fato não é urgência.',
     '8. noLegalNeed: true só quando está claro que não há demanda jurídica (engano, propaganda, vendedor, spam, assunto pessoal sem relação com o escritório). Na dúvida, false.',
     '9. summary: até 3 frases objetivas (no máximo 500 caracteres), em terceira pessoa, para o advogado: o que aconteceu, o que a pessoa quer e as datas citadas.',
     '10. missingInfo: até 5 itens curtos do que a equipe ainda precisa saber para avaliar o caso, só os que faltam (ex.: "cidade", "data da demissão", "tem contrato assinado?"). Nunca peça número de documento.',
@@ -657,6 +659,8 @@ export function derivePriority(
     const reason = (text: string) => clip(text, LIMITS.priorityReason);
     // the client said it is already solved: no longer urgent, but the fact stays visible
     if (extraction.urgentResolved) return { priority: 'normal', priorityReason: reason(`Já resolvido: ${fact}`) };
+    // a scam is urgent whenever it happened (the bank devolution works best in the first hours): no countdown
+    if (extraction.urgentType === 'golpe') return { priority: 'alta', priorityReason: reason(`Golpe: ${fact}`) };
     const days = extraction.urgentDate ? daysUntil(extraction.urgentDate, now) : null;
     if (days !== null) {
       if (days < 0 && extraction.urgentType === 'audiencia') {
